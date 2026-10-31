@@ -464,7 +464,14 @@ estimate by its symmetry-class **canonical components**
 2. Compute the Jacobian ``\\mathbf{J} = \\partial\\boldsymbol{F}/\\partial p`` via `ForwardDiff.jacobian`,
 3. Take the Newton step ``\\Delta p = -\\mathbf{J}^{-1}\\boldsymbol{F}(p)`` with backtracking line
    search (Armijo with shrinking factor 1/2, minimum step 1e-6).
-4. Fall back to a single Picard step when the line search fails.
+4. Fall back to a single Picard step when the line search fails, or when the
+   Jacobian vanishes.
+
+The Newton iterations start after Picard steps that bring the iterate within 1 % of
+its own change (they count against `maxiters`): the self-consistent equation may have several roots near percolation,
+and Newton started from the matrix property may head for a non-physical one (a
+negative stiffness beyond the percolation of a stiff phase) where Picard reaches the
+physical one. Newton then refines that root to the requested tolerance.
 
 Compared to the SciML weak-extension path, this is dependency-free and
 specialized to the small parameter spaces of `MeanFieldHomogenization` symmetry
@@ -530,8 +537,13 @@ function _solve_sc(
     Tref = float(promote_type(eltype(p0), eltype(r0)))
     p = collect(Tref, p0)
     r = collect(Tref, r0)
+    # The equation may have several roots (beyond the percolation of a stiff phase,
+    # Newton from the matrix property heads for one of negative stiffness, which the
+    # guard flattens into a zero Jacobian): Picard steps first take the iterate into
+    # the basin of the root the Picard iteration reaches, which Newton then refines.
+    warm = _sc_newton_warm_start!(p, r, residual_vec, maxiters)
     p_best = copy(p); resid_best = Inf
-    for iter in 1:maxiters
+    for iter in (warm + 1):maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
         norm_r = LinearAlgebra.norm(r)
         norm_p = LinearAlgebra.norm(p)
@@ -552,43 +564,8 @@ function _solve_sc(
         end
         # Jacobian via ForwardDiff (strong dependency).
         J = ForwardDiff.jacobian(residual_vec, p)
-        # Solve J·δ = -r with a regularizing fallback if J is singular.
-        δ = try
-            J \ (-r)
-        catch err
-            # Only a singular (or numerically singular) Jacobian is regularized;
-            # any other error is a bug and must surface.
-            err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
-            @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
-            (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
-        end
-        # Backtracking line search (Armijo).  The accepted `r_new` IS the
-        # residual at the new point, so it is carried into the next iteration
-        # instead of being recomputed there — one full RVE pass saved per
-        # Newton step.
-        α_step = one(Tref)
-        accepted = false
-        for _ in 1:30
-            p_new = p .+ α_step .* δ
-            r_new = residual_vec(p_new)
-            if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
-                p .= p_new
-                r .= r_new
-                accepted = true
-                break
-            end
-            α_step /= 2
-            α_step < 1.0e-6 && break
-        end
-        if !accepted
-            # Fall back to a damped Picard step.  `r` is already `F(p)`, and a
-            # Picard step is `p ← F(p) + p`, so no new evaluation is needed
-            # here either; the residual at the updated point is unknown, so it
-            # is refreshed at the top of the next iteration.
-            verbose && @info "SC-Newton: line search failed, taking Picard step"
-            p .= r .+ p
-            r .= residual_vec(p)
-        end
+        δ = _sc_newton_direction(J, r)
+        _sc_newton_update!(p, r, δ, residual_vec, norm_r; verbose)
     end
     @debug "SC-Newton: maxiters reached without convergence" maxiters
     return rebuild(select_best ? p_best : p)
@@ -755,6 +732,59 @@ function _sc_clamp(B::SMatrix{n, n, T}, ε) where {n, T}
 end
 
 _sc_values(B::SMatrix) = map(v -> _scalar_value(real(v)), B)
+
+# One globalized Newton update of `p` along `δ`, `r` being the residual at `p` and
+# kept so: an Armijo backtracking line search, whose accepted residual is carried
+# over (one full RVE pass saved per step), and a Picard step p ← p + F(p) when it
+# fails. Returns whether the line search succeeded.
+function _sc_newton_update!(p, r, δ, residual_vec, norm_r; verbose::Bool = false)
+    α_step = one(eltype(p))
+    for _ in 1:30
+        p_new = p .+ α_step .* δ
+        r_new = residual_vec(p_new)
+        if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            p .= p_new
+            r .= r_new
+            return true
+        end
+        α_step /= 2
+        α_step < 1.0e-6 && break
+    end
+    verbose && @info "SC-Newton: line search failed, taking Picard step"
+    p .= r .+ p
+    r .= residual_vec(p)
+    return false
+end
+
+# The Newton direction J δ = -r, with a tiny Tikhonov regularization when J is
+# singular. A Jacobian that vanishes altogether (a residual made flat by the
+# positivity guard) carries no information: the direction is then the Picard step.
+_sc_newton_direction(J, r) = iszero(J) ? copy(r) : _sc_newton_solve(J, r)
+function _sc_newton_solve(J, r)
+    return try
+        J \ (-r)
+    catch err
+        # Only a singular (or numerically singular) Jacobian is regularized;
+        # any other error is a bug and must surface.
+        err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
+        @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
+        (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
+    end
+end
+
+# Picard steps p ← p + F(p) on the Newton unknowns, until the iterate moves by less
+# than 1 % of its norm or `maxiters` steps: only the basin is chosen here, Newton
+# converging afterwards to the requested tolerance. Returns the number of steps
+# taken, which count against the iteration cap. A recurrence, written as a loop.
+function _sc_newton_warm_start!(p, r, residual_vec, maxiters)
+    for k in 0:(maxiters - 1)
+        LinearAlgebra.norm(r) ≤ LinearAlgebra.norm(p) / 100 && return k
+        MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
+        p .+= r
+        r .= residual_vec(p)
+    end
+    return maxiters
+end
 
 # ── Tens ↔ canonical parameter vector helpers ──────────────────────────────
 #

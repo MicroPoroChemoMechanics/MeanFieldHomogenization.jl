@@ -546,7 +546,7 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return _self_consistent_alv_order2(rve, prop; times, matrix, sc.options...)
+    return _alv_sc_solve(sc, Val(2), rve, prop; times, matrix, sc.options...)
 end
 
 function _homogenize_alv2_dispatch(
@@ -654,7 +654,7 @@ function differential_alv_order2(
         # contribution in the classes of its operators.
         K_r = _as_class_operator(_alv2_phase_kernel(ph.geometry, K_r_law, K_0, times), grid, _algebra_candidates(()))
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
-            _alv_diff_iso_error(name, "the shape")
+            _alv_iso_error("differential_alv_order2", name, "the shape")
         push!(
             solid_data, (
                 name = name, geom = ph.geometry, K_r = K_r,
@@ -798,7 +798,7 @@ function _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, ve
     grid = TimeGrid(times)
     candidates = _algebra_candidates(())
     phases = map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
-    Tp = mapreduce(d -> promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(d.geom))), promote_type, phases)
+    Tp = _sc2_eltype(K_M, data, times)
     step(K) = _sc2_step_in_classes(K, phases)
     return _fixed_point_in_classes(
         step, _as_class_operator(K_M, grid, candidates), Tp, "SC-ALV order 2";
@@ -812,6 +812,51 @@ function _sc2_step_in_classes(K, phases)
         d.f * _maybe_symmetrize_alv2(A, d.sym), d.f * _maybe_symmetrize_alv2(d.K_r * A, d.sym)
     end
     return _as_iso_estimate(reduce(+, last.(terms)) * inv(reduce(+, first.(terms))))
+end
+
+# The matrix kernel and the phases of an order-2 ALV self-consistent cell, read once
+# for the Picard and the Newton solvers (`who` names the caller in the messages).
+# Every phase must keep the estimate isotropic, as the order-2 Hill kernel against
+# it requires.
+function _sc2_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractString)
+    m = host_phase_name(rve, matrix, who)
+    K_M_law = phase_property(rve, m, prop)
+    K_M_law isa ALVProperty ||
+        throw(ArgumentError("$who: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    K_M = _trapezoidal_relaxation(K_M_law, times, 3)
+    data = map([m; inclusion_phase_names(rve, m)]) do name
+        _is_crack_family(rve.amounts[name]) && throw(
+            ArgumentError("$who: phase :$(name) is a crack family, which the order-2 ALV schemes do not support.")
+        )
+        ph = rve.phases[name]
+        sym = phase_symmetrize(rve, name)
+        law = phase_property(rve, name, prop)
+        law isa ALVProperty ||
+            throw(ArgumentError("$who: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+        K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
+        _alv2_keeps_iso(ph.geometry, sym, K_r) ||
+            _alv_iso_error(who, name, "the shape or the anisotropy")
+        f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
+        return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
+    end
+    return K_M, data
+end
+
+# The promoted element type of every input of the order-2 step: kernels, fractions,
+# geometry tensors, and what a layered sphere brings (a dual number in one of its
+# layers, for instance), probed once against the matrix kernel.
+_sc2_eltype(K_M, data, times) = mapreduce(d -> _sc2_phase_eltype(d.geom, d, K_M, times), promote_type, data; init = eltype(K_M))
+_sc2_phase_eltype(geom, d, K_M, times) = promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(geom)))
+_sc2_phase_eltype(s::LayeredSphere, d, K_M, times) =
+    promote_type(typeof(d.f), eltype(gradient_gradient_concentration_alv(s, K_M, times)))
+
+# One order-2 self-consistent step on full matrices, the running estimate `K` to the
+# next: (Σ f·B) ∘ (Σ f·A)^{-1}.
+function _sc2_dense_step(K, data, times)
+    AB = [_sc2_phase_AB(d.geom, d.K_r, K, d.sym, times) for d in data]
+    A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
+    B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
+    return B * volterra_inverse(A; block_size = 3)
 end
 
 """
@@ -844,39 +889,14 @@ function _self_consistent_alv_order2(
         damping::Real = 0.0,
         verbose::Bool = false
     )
-    m = host_phase_name(rve, matrix, "self_consistent_alv_order2")
-    K_M_law = phase_property(rve, m, prop)
-    K_M_law isa ALVProperty ||
-        throw(ArgumentError("self_consistent_alv_order2: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    K_M = _trapezoidal_relaxation(K_M_law, times, 3)
-    data = map([m; inclusion_phase_names(rve, m)]) do name
-        _is_crack_family(rve.amounts[name]) && throw(
-            ArgumentError("self_consistent_alv_order2: phase :$(name) is a crack family, which the order-2 ALV schemes do not support.")
-        )
-        ph = rve.phases[name]
-        sym = phase_symmetrize(rve, name)
-        law = phase_property(rve, name, prop)
-        law isa ALVProperty ||
-            throw(ArgumentError("self_consistent_alv_order2: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-        K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
-        _alv2_keeps_iso(ph.geometry, sym, K_r) ||
-            _alv_diff_iso_error(name, "the shape or the anisotropy")
-        f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
-        return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
-    end
+    K_M, data = _sc2_phases(rve, prop, times, matrix, "self_consistent_alv_order2")
     # Without layered spheres, whose recurrences are written on full matrices, the
     # iteration runs in the classes of the operators.
     any(d -> d.geom isa LayeredSphere, data) ||
         return _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, verbose)
     K = K_M
     for iter in 1:maxiters
-        # The comprehension captures this iteration's estimate, not `K`
-        # itself, which is reassigned below and would be boxed.
-        Kᵢ = K
-        AB = [_sc2_phase_AB(d.geom, d.K_r, Kᵢ, d.sym, times) for d in data]
-        A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
-        B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
-        K_new = B * volterra_inverse(A; block_size = 3)
+        K_new = _sc2_dense_step(K, data, times)
         Δ = norm(K_new - K)
         verbose && @info "SC-ALV order 2, iteration $iter: ‖Δ‖ = $Δ"
         Δ ≤ abstol + reltol * norm(K) && return K_new

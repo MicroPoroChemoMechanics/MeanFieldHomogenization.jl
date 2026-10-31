@@ -844,11 +844,35 @@ function _homogenize_alv_dispatch(
         ),
         kw
     )
-    return _self_consistent_alv(
-        rve, prop; times = times, matrix = matrix,
-        sc.options..., kw_filt...
-    )
+    return _alv_sc_solve(sc, Val(4), rve, prop; times, matrix, sc.options..., kw_filt...)
 end
+
+# The solver of the ALV self-consistent equation that `SelfConsistent(algorithm = …)`
+# selects, at order 4 (`Val(4)`) or 2: the Picard iteration (`AndersonDefault`, the
+# default) or the row-by-row Newton solver (`NewtonDefault`, its `maxiters` per row).
+# The iteration starts from the matrix kernel, or from the Picard estimate for Newton:
+# a seed is refused rather than ignored.
+function _alv_sc_solve(sc::SelfConsistent, order::Val, rve, prop; kw...)
+    _alv_refuse_seed("SelfConsistent", sc.init)
+    return _alv_sc_solve(sc.algorithm, order, rve, prop; kw...)
+end
+_alv_refuse_seed(::AbstractString, ::Nothing) = nothing
+_alv_refuse_seed(scheme::AbstractString, init) = throw(
+    ArgumentError(
+        "homogenize_alv: $scheme(init = $(repr(init))) is not supported for a viscoelastic (ALV) cell, " *
+            "whose iteration starts from the matrix kernel; leave `init` unset"
+    )
+)
+_alv_sc_solve(::AndersonDefault, ::Val{4}, rve, prop; kw...) = _self_consistent_alv(rve, prop; kw...)
+_alv_sc_solve(::AndersonDefault, ::Val{2}, rve, prop; kw...) = _self_consistent_alv_order2(rve, prop; kw...)
+_alv_sc_solve(::NewtonDefault, order::Val, rve, prop; maxiters::Int = 30, kw...) =
+    _self_consistent_alv_newton(order, rve, prop; maxiters_per_row = maxiters, kw...)
+_alv_sc_solve(algorithm, ::Val, rve, prop; kw...) = throw(
+    ArgumentError(
+        "homogenize_alv: SelfConsistent(algorithm = $(algorithm)) is not available for a viscoelastic (ALV) cell; " *
+            "use AndersonDefault() (Picard iteration, the default) or NewtonDefault() (row-by-row Newton)"
+    )
+)
 
 # Asymmetric Self-Consistent ALV.  Same ingredients as `SelfConsistent`
 # but the iteration update is anchored on the matrix property C_M
@@ -865,6 +889,14 @@ function _homogenize_alv_dispatch(
                 (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms, :C_0_op)
         ),
         kw
+    )
+    # The ALV asymmetric scheme has the Picard iteration only, from the matrix kernel.
+    _alv_refuse_seed("AsymmetricSelfConsistent", asc.init)
+    asc.algorithm isa AndersonDefault || throw(
+        ArgumentError(
+            "homogenize_alv: AsymmetricSelfConsistent(algorithm = $(asc.algorithm)) is not available for a " *
+                "viscoelastic (ALV) cell, whose asymmetric scheme is solved by Picard iteration (AndersonDefault())"
+        )
     )
     return _asymmetric_self_consistent_alv(
         rve, prop; times = times, matrix = matrix,

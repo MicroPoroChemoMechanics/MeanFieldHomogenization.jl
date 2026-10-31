@@ -270,12 +270,13 @@ end
 _alv_geom_is_spherical(geom) = false
 _alv_geom_is_spherical(::Ellipsoid{3, Elasticity.Spherical}) = true
 
-# Error message shared by the two ALV differential drivers (order 4 and
-# order 2), naming the offending phase and the two ways out.
-function _alv_diff_iso_error(name::Symbol, what::AbstractString)
+# Error message shared by the ALV schemes whose reference is the running estimate
+# (differential and self-consistent, orders 4 and 2), naming the scheme, the
+# offending phase and the two ways out.
+function _alv_iso_error(who::AbstractString, name::Symbol, what::AbstractString)
     return throw(
         ArgumentError(
-            "differential_alv: $what of phase :$(name) would take the " *
+            "$who: $what of phase :$(name) would take the " *
                 "running effective medium out of the isotropic class, for which " *
                 "no ALV Hill kernel exists. Either give the phase an isotropic " *
                 "orientation average (`symmetrize = :iso` in `add_phase!`), or " *
@@ -391,7 +392,7 @@ function differential_alv(
             # A crack contributes a TI tensor in its own frame; only an
             # isotropic orientation average keeps the running medium iso.
             sym isa IsoSymmetrize ||
-                _alv_diff_iso_error(name, "the transversely isotropic crack contribution")
+                _alv_iso_error("differential_alv", name, "the transversely isotropic crack contribution")
             Rn_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rn, nothing), times)
             Rt_mat = _trapezoidal_relaxation_scalar(get(ph.properties, :Rt, nothing), times)
             push!(
@@ -464,7 +465,7 @@ function _diff_alv_solid_operator(geom, rve, name, prop, sym, times)
         throw(ArgumentError("differential_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     C_r = _relaxation_operator(C_r_law, TimeGrid(times))
     _alv_diff_keeps_iso(geom, sym, C_r) ||
-        _alv_diff_iso_error(name, "the shape or the anisotropy")
+        _alv_iso_error("differential_alv", name, "the shape or the anisotropy")
     return C_r
 end
 
