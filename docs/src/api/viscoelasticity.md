@@ -21,6 +21,10 @@ kelvin_creep
 maxwell_iso
 kelvin_iso
 heaviside_law
+SampledViscoLaw
+operator_law
+precipitated
+dissolved
 ```
 
 ## Trapezoidal discretization
@@ -44,11 +48,10 @@ volterra_left_divide
 ```@docs
 iso_params_from_blocks
 iso_blocks_from_params
-ti_params_from_blocks
-ti_blocks_from_params
-ortho_params_from_blocks
-ortho_blocks_from_params
 ```
+
+The other classes, in any axis or frame, are those of [`VolterraOperator`](@ref) and
+[`convert_class`](@ref).
 
 ## Hill ALV kernel
 
@@ -78,45 +81,6 @@ dilute_contribution_alv
 
 ```@docs
 _alv_diff_keeps_iso
-```
-
-## Schemes — iso fast path
-
-```@docs
-voigt_alv_iso
-reuss_alv_iso
-dilute_alv_iso
-dilute_dual_alv_iso
-mori_tanaka_alv_iso
-maxwell_alv_iso
-dilute_concentration_alv_iso
-dilute_contribution_alv_iso
-```
-
-## Schemes — TI fast path
-
-```@docs
-voigt_alv_ti
-reuss_alv_ti
-dilute_alv_ti
-dilute_dual_alv_ti
-mori_tanaka_alv_ti
-maxwell_alv_ti
-dilute_concentration_alv_ti
-dilute_contribution_alv_ti
-```
-
-## Schemes — ortho fast path
-
-```@docs
-voigt_alv_ortho
-reuss_alv_ortho
-dilute_alv_ortho
-dilute_dual_alv_ortho
-mori_tanaka_alv_ortho
-maxwell_alv_ortho
-dilute_concentration_alv_ortho
-dilute_contribution_alv_ortho
 ```
 
 ## Cracks
@@ -206,13 +170,19 @@ iso_order2_params_from_blocks
 iso_order2_blocks_from_params
 ```
 
-## Structured ALV kernel types
+## Operators, histories and their grid
+
+Usage: [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 ```@docs
-AbstractALVKernel
-ALVKernelISO
-ALVKernelTI
-ALVKernelOrtho
+TimeGrid
+time_grid
+VolterraOperator
+TimeHistory
+operator_value
+convert_class
+DenseClass
+ScalarClass
 ```
 
 ## Orientation symmetrization

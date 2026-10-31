@@ -70,6 +70,7 @@ using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, Dil
     phase_symmetrize,
     VolumeFraction, CrackDensity, amount_value, _is_crack_family
 using ForwardDiff
+using StaticArrays: SMatrix, SVector
 using OrdinaryDiffEqTsit5
 using SpecialFunctions: gamma, expintx
 
@@ -87,15 +88,13 @@ include("rheology_models.jl")
 include("visco_law.jl")
 include("rheology_iso.jl")
 include("trapezoidal.jl")
+include("sampled_law.jl")
 include("volterra_inverse.jl")
+include("volterra_operator.jl")
 include("conversions.jl")
 include("hill_alv.jl")
 include("schemes_alv.jl")
-include("iso_schemes_alv.jl")
-include("ti_schemes_alv.jl")
-include("ortho_schemes_alv.jl")
 include("alv_scheme_algebra.jl")
-include("alv_kernel_types.jl")
 include("schemes_alv_sc.jl")
 include("schemes_alv_sc_newton.jl")
 include("schemes_alv_extra.jl")
@@ -109,27 +108,17 @@ include("alv_order.jl")
 
 # ── Exports ─────────────────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
+export SampledViscoLaw, operator_law, precipitated, dissolved
+export TimeGrid, time_grid, VolterraOperator, TimeHistory, DenseClass, ScalarClass, convert_class, operator_value
 export visco_mode, visco_eval
 export maxwell_relaxation, kelvin_creep, maxwell_iso, kelvin_iso, heaviside_law
 export trapezoidal_matrix
 export volterra_inverse, volterra_product, volterra_divide, volterra_left_divide
 export iso_params_from_blocks, iso_blocks_from_params
-export ti_params_from_blocks, ti_blocks_from_params
-export ortho_params_from_blocks, ortho_blocks_from_params
-export AbstractALVKernel, ALVKernelISO, ALVKernelTI, ALVKernelOrtho
 export hill_kernel, second_hill_kernel
 export dilute_concentration_alv, dilute_contribution_alv
 export voigt_alv, reuss_alv, dilute_alv, dilute_dual_alv
 export mori_tanaka_alv, maxwell_alv
-export voigt_alv_iso, reuss_alv_iso, dilute_alv_iso, dilute_dual_alv_iso
-export mori_tanaka_alv_iso, maxwell_alv_iso
-export dilute_concentration_alv_iso, dilute_contribution_alv_iso
-export voigt_alv_ti, reuss_alv_ti, dilute_alv_ti, dilute_dual_alv_ti
-export mori_tanaka_alv_ti, maxwell_alv_ti
-export dilute_concentration_alv_ti, dilute_contribution_alv_ti
-export voigt_alv_ortho, reuss_alv_ortho, dilute_alv_ortho, dilute_dual_alv_ortho
-export mori_tanaka_alv_ortho, maxwell_alv_ortho
-export dilute_concentration_alv_ortho, dilute_contribution_alv_ortho
 export self_consistent_alv, asymmetric_self_consistent_alv,
     pcw_alv, differential_alv
 export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv

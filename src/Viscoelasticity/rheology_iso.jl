@@ -234,8 +234,7 @@ function ViscoLaw(
         mode::Symbol = :relaxation,
         method::AbstractLaplaceInversion = default_inversion(model)
     )
-    mode in VALID_VISCO_MODES ||
-        throw(ArgumentError("ViscoLaw: mode must be one of $(VALID_VISCO_MODES); got :$mode"))
+    mode = _canonical_mode(mode)
     f = mode === :relaxation ? relaxation : creep
     zero_value = _kernel_zero(model, mode)
     eval_fun = (t, t_p) -> t < t_p ? zero_value : f(model, t - t_p; method)

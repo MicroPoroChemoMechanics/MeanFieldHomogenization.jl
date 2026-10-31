@@ -522,10 +522,13 @@ what makes compact storage possible:
 | ORTHO | ``(o_1,\dots,o_{12})`` | ``36n^2`` | **``12n^2``** (3×) | ``(3n\times 3n)`` block-Volterra + 3 scalars |
 | Generic | full ``6n\times 6n`` | ``36n^2`` | ``36n^2`` | ``(6n\times 6n)`` block-LU |
 
-with ISO ⊂ TI ⊂ ORTHO ⊂ generic. The types [`ALVKernelISO`](@ref),
-[`ALVKernelTI`](@ref) and [`ALVKernelOrtho`](@ref) wrap these compact
-representations as `AbstractMatrix`, so they flow through generic Julia matrix
-code while preserving both the storage saving and the algebraic closure.
+with ISO ⊂ TI ⊂ ORTHO ⊂ generic. Each class, in one frame, is a direct sum of
+small matrix algebras (the blocks of TensND `symmetry_blocks`): a Volterra
+operator of the class is one matrix over the instants for each block, and its
+products and inverses are those of these matrices.
+[`VolterraOperator`](@ref) stores an operator so, for any axis or frame, as an
+`AbstractMatrix` that flows through generic Julia matrix code; its use is shown
+in [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 ## Where to go next
 

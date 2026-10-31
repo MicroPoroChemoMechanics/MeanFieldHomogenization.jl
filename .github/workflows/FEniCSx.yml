@@ -44,6 +44,11 @@ jobs:
       # MUMPS factorizes with OpenMP, whose sums change order from run to run:
       # one thread, so that runs with different numbers of Julia threads compare.
       OMP_NUM_THREADS: '1'
+      # The MPICH of conda-forge talks through UCX, which opens every network
+      # device it finds. Some runners carry an RDMA adapter (mana_0) that UCX
+      # cannot open in InfiniBand mode, and MPI_Init then aborts. The tests run
+      # on one node: shared memory and TCP are all MPI needs.
+      UCX_TLS: 'self,sm,tcp'
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3

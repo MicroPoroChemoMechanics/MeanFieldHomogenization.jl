@@ -20,7 +20,7 @@
 
 """
     hill_kernel(ell::AbstractEllipsoidalInclusion,
-                C0_law::ViscoLaw,
+                C0_law::ALVProperty,
                 times::AbstractVector{<:Real}) -> Matrix
 
 Discrete ALV Hill polarization tensor kernel for the inclusion `ell`
@@ -51,7 +51,7 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
   6. Assemble block-by-block:
      ``[\\widetilde{\\mathbb{P}}]_{ij} = (J_{\\mathrm{long}})_{ij}\\,\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}}) + (J_{\\mathrm{shear}})_{ij}\\,\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}} - \\mathbb{U}^{\\boldsymbol{A}})``.
 """
-hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real}) =
+hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Real}) =
     _hill_kernel_iso(ell, _trapezoidal_relaxation(C0_law, times, 6))
 
 # Steps 2-6 on the 6n×6n RELAXATION matrix of the iso reference (step 1: the
@@ -67,7 +67,7 @@ function _hill_kernel_iso(ell, R_M::AbstractMatrix)
 end
 
 """
-    second_hill_kernel(ell, C0_law::ViscoLaw, times) -> Matrix
+    second_hill_kernel(ell, C0_law::ALVProperty, times) -> Matrix
 
 Discrete ALV second Hill tensor kernel of the inclusion `ell` in an
 **isotropic** ALV matrix described by `C0_law`, the counterpart of
@@ -85,7 +85,7 @@ on it. Same ``6n\\times 6n`` lower-block-triangular Mandel layout as
 `trapezoidal_matrix`; for a law constant in time each diagonal block is the
 elastic ``\\mathbb{Q}``.
 """
-function second_hill_kernel(ell, C0_law::ViscoLaw, times::AbstractVector{<:Real})
+function second_hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Real})
     R_M = _trapezoidal_relaxation(C0_law, times, 6)
     return R_M - R_M * _hill_kernel_iso(ell, R_M) * R_M
 end
@@ -105,3 +105,28 @@ function _alv_hill_blocks(J_long, J_shear, U_M, D_M)
     P .+= kron(J_shear, D_M)
     return P
 end
+
+# The ALV Hill kernel against an isotropic reference stored by its blocks (α, β),
+# built in the class of the geometry tensors of the inclusion (transversely
+# isotropic about the axis of a spheroid, isotropic for a sphere): block k is
+# J_long ⊗ uₖ + J_shear ⊗ dₖ, uₖ and dₖ the blocks of 𝕌ᴬ and 𝕍ᴬ − 𝕌ᴬ.
+function _hill_kernel_op(ell, R::VolterraOperator{<:TensISO{4, 3}})
+    J_long, J_shear = _alv_iso_inverses(R)
+    return _hill_kernel_op(ell, J_long, J_shear, R.grid)
+end
+function _hill_kernel_op(ell, J_long::AbstractMatrix, J_shear::AbstractMatrix, grid::TimeGrid)
+    U = tens_UA(ell)
+    c = _class_of(U)
+    u = _value_blocks(c, U)
+    d = map(-, _value_blocks(c, tens_VA(ell)), u)
+    return VolterraOperator(c, map((uₖ, dₖ) -> kron(J_long, Matrix(uₖ)) + kron(J_shear, Matrix(dₖ)), u, d), grid)
+end
+# The two inverses of an isotropic reference, read on its blocks (α, β).
+function _alv_iso_inverses(R::VolterraOperator{<:TensISO{4, 3}})
+    α, β = R.blocks
+    return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
+end
+
+# A reference of another class: its isotropic part, read on the full matrix, as
+# the dense kernel does.
+_hill_kernel_op(ell, R::VolterraOperator) = VolterraOperator(_hill_kernel_iso(ell, Matrix(R)), R.grid)

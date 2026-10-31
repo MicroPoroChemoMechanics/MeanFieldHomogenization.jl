@@ -46,15 +46,19 @@ separately through the **crack density**.
 A single crack contributes an increment to the macroscopic compliance
 proportional to its size. For a population of ``N`` non-interacting
 penny cracks per unit volume, each of radius ``a``, the (dimensionless)
-**crack density** is ``\varepsilon = N a^3`` (Budiansky–O'Connell), and
-the dilute compliance correction is
+**crack density** is ``\varepsilon = N a^3`` (Budiansky–O'Connell); for elliptic
+cracks of semi-axes ``a \ge b`` it is ``\varepsilon = N a b^2``, consistent with
+``\boldsymbol{B}`` normalized by the half-width ``b``. The dilute compliance correction of
+penny and elliptic cracks is
 
 ```math
 \Delta\mathbb{S} = \frac{4\pi}{3}\,\varepsilon\,\mathbb{H}, \qquad
 \mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n},
 ```
 
-[kachanov1992, kachanov1993](@citet) — ``\mathbb{H}`` is the
+[kachanov1992, kachanov1993](@citet); a ribbon of half-width ``b`` has the density
+``\varepsilon = N b^2`` per unit area and the factors ``\pi`` and ``2/\pi`` instead
+([`delta_inverse_property`](@ref)). ``\mathbb{H}`` is the
 **size-independent compliance contribution tensor**
 ([`inverse_property_contribution`](@ref)), computed once from `B` and the
 crack normal ``\underline{n}``, and reused unchanged across an entire

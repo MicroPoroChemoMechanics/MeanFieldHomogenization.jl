@@ -120,6 +120,10 @@ aging-viscoelastic (ALV) layered-sphere recurrences; the committed
 `*_python.json` dumps let the Julia side be checked WITHOUT a live echoes /
 Python install.
 
+[`alv_harness/`](alv_harness/README.md) holds the Echoes side of a wider ALV comparison
+(spheres and rotated spheroids, DIL/MT/SC, transversely isotropic laws, conduction,
+multiscale), with the discretization and storage conventions read in the Echoes sources.
+
 ## Debug / development scripts (kept, documented, re-runnable)
 
 These are the narrowly-scoped scripts written while settling the Volterra /

@@ -146,6 +146,30 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`,
 `SelfConsistent`, `AsymmetricSelfConsistent`, `DifferentialScheme`.
 
+### Nesting scales, and phases that appear or disappear
+
+The result of [`homogenize_alv`](@ref) is an operator on the time grid, a
+[`VolterraOperator`](@ref). It is a phase of the next scale as it is, on the same
+grid; or the cell itself is, through [`Homogenized`](@ref), homogenized on that
+grid when the outer scale needs it:
+
+```julia
+R_paste = homogenize_alv(paste, MoriTanaka(), :C; times = times)
+add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => R_paste); fraction = :rest)
+# or, without computing it first:
+# add_phase!(concrete, :paste, Ellipsoid(1.0), Dict(:C => Homogenized(paste, MoriTanaka())); fraction = :rest)
+```
+
+[`operator_law`](@ref) turns it back into a law of ``(t, t')``, known on the grid.
+[Aging viscoelastic operators and histories](@ref man-volterra-operators) tells
+more about operators, histories and their shared grid.
+
+A phase that forms during the history is loaded only by the strains that follow its
+formation, and a phase that dissolves stops carrying stress: [`precipitated`](@ref) and
+[`dissolved`](@ref) switch a relaxation kernel on at ``t_s`` or off at ``t_d``, for any law,
+sampled ones included. A hydrating paste is built from them, one phase per step of its
+hydration ([aging basic creep of concrete](@ref app-aging-basic-creep)).
+
 A symmetric companion exists for **conductivity / diffusion /
 permittivity** (order-2 properties, 3 × 3 kernels) — the dispatcher
 inspects the sample type returned by `visco_eval(law, t, t)` and
@@ -153,41 +177,35 @@ routes to the order-2 pipeline automatically (see §6).
 
 ## 4. Reading effective properties
 
-The `(6n × 6n)` output is a Mandel block matrix. Use
-[`iso_params_from_blocks`](@ref) to extract the iso `(α, β)` parameter
-matrices:
+The result is a [`VolterraOperator`](@ref). An isotropic one stores ``\alpha = 3k`` and
+``\beta = 2\mu`` as two ``n\times n`` matrices, the weights of the trapezoidal rule;
+the kernel itself, at the instants of the grid, is that of [`operator_law`](@ref):
 
 ```julia
-α, β = iso_params_from_blocks(C_eff)         # n × n each
-# 3 K_eff(t,t')   = α(t,t')
-# 2 μ_eff(t,t')   = β(t,t')
-
-# Effective shear modulus history : column index = t' = 0 (Heaviside step)
-times_keep = times                            # (length n)
-μ_eff_t = β[:, 1] ./ 2                        # μ(tᵢ, t₁) for i = 1..n
+α, β = C_eff.blocks                           # n × n each: trapezoidal weights, not kernel values
+law = operator_law(C_eff)                     # the kernel C(t, t′) on the grid
+μ_eff = [shear_modulus(visco_eval(law, t, times[1])) for t in times]   # μ(tᵢ, t₁)
 ```
 
-For a **uniaxial creep** test (unit longitudinal stress, all
-components 1, 2, 3 stay the same in iso ; 4, 5, 6 are zero):
+For a **uniaxial creep** test, a unit stress held from ``t_1``, the strain is the creep
+operator applied to that history:
 
 ```julia
-n = length(times)
-J_eff = volterra_inverse(C_eff; block_size = 6)       # creep matrix
-S = zeros(n * 6); for i in 1:n;  S[6 * (i - 1) + 1] = 1.0;  end
-ε = J_eff * S
-ε_xx_t = ε[1:6:end]                            # ε_xx(tᵢ)
+J_eff = inv(C_eff)                            # the creep operator
+σ = TimeHistory(t -> TensND.Tens(Symmetric([1.0 0 0; 0 0 0; 0 0 0])), times)
+ε = J_eff ⊡ σ
+ε_xx = [ε[i][1] for i in eachindex(times)]    # ε_xx(tᵢ)
 ```
 
-For TI (axis = e₃), the 4-tensor Walpole parameters
-`(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)` are extracted similarly:
-
-```julia
-ℓ = ti_params_from_blocks(C_eff)               # NTuple{6, Matrix}
-```
+For any class, the result is stored by the blocks of its class: `C_eff.blocks` holds,
+for a transversely isotropic result, the ``2n\times 2n`` matrix of the ``2\times 2``
+Walpole blocks and the two ``n\times n`` shear ones, and `operator_value(C_eff, i, j)`
+the tensor of the class at a pair of instants (see
+[Aging viscoelastic operators and histories](@ref man-volterra-operators)).
 
 ## [5. Cracks in ALV](@id man-visco-cracks)
 
-### 5.1 Traction-free penny crack
+### 5.1 Traction-free elliptic cracks
 
 ```julia
 add_phase!(rve, :C, PennyCrack(1.0), Dict(:C => law_M);
@@ -195,9 +213,25 @@ add_phase!(rve, :C, PennyCrack(1.0), Dict(:C => law_M);
 C_eff_cracks = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
-`PennyCrack`, `EllipticCrack` and `RibbonCrack` are accepted. The
-dispatcher pre-aggregates crack stiffness and compliance contributions
-and routes them through the appropriate scheme branch.
+Elliptic cracks of any aspect ratio ``\eta = b/a`` (`EllipticCrack(a, b)`, the
+penny included) and of any orientation (`euler_angles`) are accepted, in an
+isotropic matrix. Their COD coefficients are the elastic closed form with every
+quotient a Volterra inverse, in the order of the flat limit of a void ellipsoid
+([`cod_kernel_alv`](@ref)); their compliance is stored in the class of the crack,
+transversely isotropic about the normal of a penny, orthotropic in the frame of an
+ellipse, so that an oriented family is not a dense operator:
+
+```julia
+add_phase!(rve, :C, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)),
+           Dict(:C => law_M); density = 0.05)
+```
+
+The density is ``\varepsilon = N\,a\,b^2``, as in elasticity ([why](@ref th-cod-density),
+and how to convert the densities of other sources). Ribbon cracks are
+not implemented in ALV and are refused. Checked against Echoes on aging
+matrices (tilted ellipses with dilute, Mori–Tanaka and self-consistent schemes,
+two families of different orientations) to ``10^{-13}``: see
+`scripts/bench_echoes/alv_harness`.
 
 ### 5.2 Cracks with finite interface stiffness (Sevostianov)
 
@@ -222,7 +256,8 @@ add_phase!(rve, :CRACK, PennyCrack(1.0),
 C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)
 ```
 
-The scalar COD kernels `B̃_n`, `B̃_t` are post-corrected by the
+The scalar COD kernels `B̃_n` (normal) and `B̃_ℓ`, `B̃_m` (tangential) are
+post-corrected, `Rn` on the first and `Rt` on the other two, by the
 spring-interface construction of [sevostianovIJSS2007](@citet), transposed to
 the Volterra algebra: crack-face and interface compliances add up, at the cost
 of one extra scalar Volterra inverse per direction.
@@ -231,7 +266,7 @@ Limits, all exercised in the test suite :
 
 | Interface | Behavior                                  |
 |:----------|:-------------------------------------------|
-| `Rn = Rt = nothing`   | traction-free penny — `B̃` unchanged |
+| `Rn = Rt = nothing`   | traction-free crack — `B̃` unchanged |
 | `Rn, Rt → 0`          | recovers traction-free                |
 | `Rn, Rt → ∞` (rigid)  | `B̃_eff → 0`, cracks behave as bonded |
 
@@ -414,35 +449,10 @@ The classes, their stored components and the cost of each closure operation
 are tabulated in [Symmetry classes and structured
 storage](@ref th-visco-classes).
 
-Detection is heuristic (`_is_iso_block` / `_is_ti_block` /
-`_is_ortho_block`) — the user never asks for a fast path explicitly,
-and the output is still a dense `(6n × 6n)` `Matrix{T}`.
-
-For user code that wants to keep the compact storage and the type
-information, the structured wrappers
-[`ALVKernelISO`](@ref) / [`ALVKernelTI`](@ref) /
-[`ALVKernelOrtho`](@ref) are `AbstractMatrix{T}` subtypes:
-
-```julia
-M = trapezoidal_matrix(law_M, times)
-K_iso = ALVKernelISO(M)            # extracts (α, β), 18× cheaper storage
-
-# Algebra closure stays in the structured class (no (6n × 6n)
-# materialisation), with auto-promotion iso ⊂ TI ⊂ ortho
-K_prod = K_iso * K_iso             # ALVKernelISO
-K_inv  = volterra_inverse(K_iso)   # ALVKernelISO
-
-K_TI = ALVKernelTI(K_iso)          # promote to TI form
-K_O  = ALVKernelOrtho(K_iso)       # promote to ortho form
-K_iso + K_TI                       # ALVKernelTI (auto-promote)
-K_iso * K_O                        # ALVKernelOrtho
-
-Matrix(K_iso)                      # back to dense (6n × 6n) on demand
-```
-
-**Prototype**: usable for hand-rolled ALV pipelines, but `homogenize_alv`
-does not accept them as inputs — use `Matrix(K)` to cross the boundary
-(`scripts/58_alv_kernel_types.jl`).
+The result of [`homogenize_alv`](@ref) keeps that storage: it is a
+[`VolterraOperator`](@ref) in the cheapest class that holds it, which computes
+as the elastic tensors do (`⊡`, `inv`, `+`) and is an `AbstractMatrix` all the
+same. See [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
 ## 10. Sensitivities (autodiff via ForwardDiff)
 

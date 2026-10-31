@@ -19,7 +19,7 @@
 # =============================================================================
 
 """
-    trapezoidal_matrix(law::ViscoLaw, times::AbstractVector{<:Real}) -> Matrix
+    trapezoidal_matrix(law::AbstractViscoLaw, times::AbstractVector{<:Real}) -> Matrix
 
 Build the discrete ``(Bn)\\times(Bn)`` lower-block-triangular matrix
 representing the Stieltjes integral
@@ -32,7 +32,7 @@ The exact block layout is described at the top of `trapezoidal.jl`.
 The output is type-stable in the element type returned by
 `visco_eval(law, ...)`.
 """
-function trapezoidal_matrix(law::ViscoLaw, times::AbstractVector{<:Real})
+function trapezoidal_matrix(law::AbstractViscoLaw, times::AbstractVector{<:Real})
     n = length(times)
     n ≥ 1 || throw(ArgumentError("trapezoidal_matrix: times must be non-empty"))
     sample = visco_eval(law, times[1], times[1])
@@ -41,7 +41,7 @@ end
 
 # Scalar specialization: M is `n × n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::Number
     )
     n = length(times)
@@ -53,7 +53,7 @@ end
 
 # Tensor specialization (TensND.AbstractTens{4,3}): M is `6n × 6n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::TensND.AbstractTens{4, 3}
     )
     n = length(times)
@@ -66,7 +66,7 @@ end
 
 # Order-2 tensor specialization (TensND.AbstractTens{2,3}): M is `3n × 3n`.
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         ::TensND.AbstractTens{2, 3}
     )
     n = length(times)
@@ -79,7 +79,7 @@ end
 
 # Matrix specialization: dispatches by size (3×3 → 3n×3n, 6×6 → 6n×6n).
 function _trapezoidal_dispatch(
-        law::ViscoLaw, times::AbstractVector{<:Real},
+        law::AbstractViscoLaw, times::AbstractVector{<:Real},
         sample::AbstractMatrix
     )
     n = length(times)
@@ -100,7 +100,7 @@ end
 # ── Scalar case ─────────────────────────────────────────────────────────────
 
 @inline function _fill_trapezoidal_scalar!(
-        M::AbstractMatrix, law::ViscoLaw,
+        M::AbstractMatrix, law::AbstractViscoLaw,
         times::AbstractVector
     )
     n = length(times)
@@ -142,31 +142,41 @@ end
 
 # The block cases, B×B blocks: 6 for a 4-tensor or a 6×6 Mandel matrix, 3 for a
 # 2-tensor or a 3×3 matrix. `convert_sample` turns a kernel value into its B×B
-# block. A per-row cache halves the number of `visco_eval` calls; the weights are
-# the layout at the top of this file.
+# block.
+@inline _fill_trapezoidal_blocks!(
+    M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
+) where {B, F} = (_fill_trapezoidal_classes!((M,), law, times, (Val(B),), x -> (convert_sample(x),)); M)
+
+# Several operators from one law at once, one per block of a symmetry class:
+# `blocks_of` turns a kernel value into the tuple of its blocks, of sizes
+# `sizes` (`Val`s), and block k of every value goes into `Ms[k]`. The law is
+# evaluated once per pair of instants. A per-row cache halves the number of
+# `visco_eval` calls; the weights are the layout at the top of this file.
 # (Threading reverted: see note in `_fill_trapezoidal_scalar!`.)
-@inline function _fill_trapezoidal_blocks!(
-        M::AbstractMatrix, law::ViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
-    ) where {B, F}
+function _fill_trapezoidal_classes!(
+        Ms::Tuple, law::AbstractViscoLaw, times::AbstractVector, sizes::Tuple, blocks_of::F
+    ) where {F}
     n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    cache = Vector{Matrix{T}}(undef, n)
-    @inbounds begin
-        cache[1] = convert_sample(visco_eval(law, times[1], times[1]))
-        _put_block!(M, 1, 1, cache[1], cache[1], +, inv(T(2)), Val(B))
-        for i in 2:n
-            for k in 1:i
-                cache[k] = convert_sample(visco_eval(law, times[i], times[k]))
-            end
-            _put_block!(M, i, 1, cache[1], cache[2], -, inv(T(2)), Val(B))
-            for j in 2:(i - 1)
-                _put_block!(M, i, j, cache[j - 1], cache[j + 1], -, inv(T(2)), Val(B))
-            end
-            _put_block!(M, i, i, cache[i - 1], cache[i], +, inv(T(2)), Val(B))
+    n == 0 && return Ms
+    half = inv(eltype(first(Ms))(2))
+    # `map` over the tuples, unrolled: the blocks have different sizes, so a
+    # zipped loop would not infer.
+    put!(i, j, a, b, op::O) where {O} = (map((M, x, y, s) -> _put_block!(M, i, j, x, y, op, half, s), Ms, a, b, sizes); nothing)
+    b₁ = blocks_of(visco_eval(law, times[1], times[1]))
+    cache = Vector{typeof(b₁)}(undef, n)
+    cache[1] = b₁
+    put!(1, 1, b₁, b₁, +)
+    @inbounds for i in 2:n
+        for k in 1:i
+            cache[k] = blocks_of(visco_eval(law, times[i], times[k]))
         end
+        put!(i, 1, cache[1], cache[2], -)
+        for j in 2:(i - 1)
+            put!(i, j, cache[j - 1], cache[j + 1], -)
+        end
+        put!(i, i, cache[i - 1], cache[i], +)
     end
-    return M
+    return Ms
 end
 
 # Block (i, j) of `M` set to `op(a, b) / 2`, by a loop over its B×B entries:
@@ -180,7 +190,7 @@ end
     return M
 end
 
-_fill_trapezoidal_tensor!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_tensor!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(6), _to_mandel)
-_fill_trapezoidal_mandel!(M::AbstractMatrix, law::ViscoLaw, times::AbstractVector) =
+_fill_trapezoidal_mandel!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(6), identity)

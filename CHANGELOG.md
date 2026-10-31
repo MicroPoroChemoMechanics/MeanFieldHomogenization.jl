@@ -1,5 +1,131 @@
 # Changelog
 
+## v0.25.0 — aging basic creep of concrete, across scales
+
+A minor release: new exported API. Aging viscoelastic homogenization nests across scales,
+and a phase can form or dissolve during the history, which is what a hydrating cement paste
+needs; an Applications page puts the two together for the basic creep of concrete.
+
+### Breaking changes
+
+- Before 1.0 a minor release is breaking for the resolver: a compat entry
+  `MeanFieldHomogenization = "0.24"` does not accept 0.25.0.
+- `homogenize_alv` returns a `VolterraOperator` instead of a `Matrix`. It is an
+  `AbstractMatrix` (the same `6n×6n` matrix, stored by the blocks of its symmetry class),
+  so code that multiplies, inverts, indexes or compares the result keeps working;
+  `Matrix(R)` gives the dense matrix where one is required.
+- `ALVKernelISO`, `ALVKernelTI`, `ALVKernelOrtho` and `AbstractALVKernel` are removed:
+  `VolterraOperator` replaces them, for any axis or frame and at both orders.
+- `cod_kernel_alv` returns the three components `(B_ℓ, B_m, B_n)` of the COD tensor in the
+  crack frame instead of `(B_n, B_t)`: an elliptic crack slides differently along its two
+  axes (for a penny `B_ℓ = B_m` is the former `B_t`). `inverse_property_contribution_alv`
+  and `property_contribution_alv` return a `VolterraOperator`, in the class of the crack.
+- Requires TensND 0.12.
+
+### Added
+
+- `VolterraOperator`, `TimeGrid`, `TimeHistory`: an aging viscoelastic operator has two
+  faces, a function of `(t, t′)` and its matrix on a time grid, and so has a history, a
+  function of `t` and its values on the grid; both are first-class. A `TimeGrid` is shared
+  by every operator and history of one computation and given back by `time_grid` after
+  any computation; two grids are never mixed silently. An operator is built from a law,
+  any function of `(t, t′)`, a constant tensor, or the matrix of an operator already on
+  the grid (`like = C` stores it in the class of `C` after checking it belongs), and it
+  computes as the elastic tensors do: composition (`*`, `⊡`, `⋅`), Volterra inverse
+  (`inv`), `+`, `-`, products by numbers, `I`, and `R ⊡ ε` for the response to a history.
+  It stores one matrix over the instants per block of the symmetry class of its values
+  (TensND `symmetry_blocks`): two `n×n` matrices for an isotropic operator instead of one
+  `6n×6n`. `operator_value`, `convert_class`, `DenseClass`, `ScalarClass`. A manual page
+  for novices, *Aging viscoelastic operators and histories*, and
+  `scripts/58_volterra_operators.jl`.
+- `homogenize_alv` takes as a phase property a law, a `VolterraOperator`, its plain matrix,
+  or a `Homogenized` cell, homogenized on the same grid as in elasticity; `times` may be
+  left out when an operator among the properties carries the grid. The result is stored in
+  the cheapest class that holds it, including the axis or frame of a phase (a TI result
+  about a tilted axis).
+- `precipitated` and `dissolved` on operators as well as on laws.
+- An elastic tensor (a conductivity at order 2) is an ALV phase property, as in Echoes: its
+  kernel is `C H(t - t′)`, its operator block diagonal in the symmetry class of `C`. It was
+  refused at order 4, and taken at order 2 for an operator already discretized.
+- The mode of a law also takes the names that hold at every order, `:property` and
+  `:inverse_property`, and those of conduction, `:conductivity` and `:resistivity`: the same
+  two modes as `:relaxation` and `:creep`.
+- Elliptic cracks of any aspect ratio and any orientation in aging viscoelasticity, as in
+  Echoes: only penny cracks of normal `e₃` were accepted. The COD coefficients are the
+  elastic closed form with every quotient a Volterra inverse, in the order of the flat
+  limit of a void ellipsoid, one expression for the penny and the ellipse; the compliance
+  is stored in the class of the crack, transversely isotropic about the normal of a penny,
+  orthotropic in the frame of an ellipse, rotated once as a tensor. Checked against the
+  flat limit of tilted void ellipsoids, against the elastic closed form with ForwardDiff in
+  the aspect ratio and in an angle, and against Echoes.
+- An aging viscoelastic harness against Echoes, `scripts/bench_echoes/alv_harness`: 29
+  cases (spheres and spheroids, aligned and tilted, TI laws about tilted axes, orientation
+  averages, order 2, two-scale chains, tilted elliptic cracks), the Echoes and the MFH
+  scripts both kept; they agree to 8e-16, and to 1.2e-13 with cracks, which Echoes gives
+  the volume of a flat ellipsoid of thickness 1e-12 (an error proportional to it).
+
+### Changed
+
+- The aging viscoelastic schemes compute in the symmetry classes of their operators instead
+  of on dense `6n×6n` matrices: the Hill kernel is built in the class of the shape of the
+  inclusion (isotropic for a sphere, transversely isotropic about the axis of a spheroid
+  however tilted, orthotropic in the frame of an ellipsoid), the dilute concentration and
+  contribution share one inverse, the self-consistent estimate stays in two isotropic
+  `n×n` blocks across its iterations, and the Volterra inverse of blocks halves the
+  instants into large matrix products. The same holds at order 2 (the Hill kernel of
+  conduction is transversely isotropic about an axis of the inclusion's frame, or
+  orthotropic in it; the self-consistent scheme iterates on its isotropic block, and the
+  differential scheme computes its right-hand side in the classes), in
+  the asymmetric self-consistent scheme, in the right-hand side of
+  the differential scheme, and with cracks in every scheme, the compliance of a crack being
+  a transversely isotropic operator; only layered spheres keep full matrices. At
+  `n = 80` instants: Mori–Tanaka with spheres 9.8 → 1.1 ms, with spheroids along `e₃`
+  25 → 8 ms, with tilted spheroids 64 → 8 ms, isotropic self-consistent 172 → 16 ms. At
+  40 instants: asymmetric self-consistent 48 → 6 ms, differential 67 → 31 ms,
+  self-consistent with cracks 43 → 10 ms; at 50 instants, the order-2 self-consistent
+  scheme 19 → 2.5 ms; at 80 instants, the order-2 differential scheme 88 → 30 ms (199 →
+  46 ms in the `:compliance` formulation); with a family of penny cracks at 50 instants,
+  the dilute, Mori–Tanaka, Maxwell and PCW schemes 7–9 → 2.4–3.4 ms, the asymmetric
+  self-consistent one 160 → 8.4 ms. The differential scheme keeps only its end
+  state (it saved `nsteps + 1` copies of its dense state, never read) and adds its
+  isotropic terms into the derivative in place: at 80 instants 242 → 140 ms, the result
+  unchanged to the bit. On the harness at 50 instants (the *Performance
+  vs Echoes* page), 3.5 to 41 times faster than Echoes in elasticity, 3.2 to 15 times in
+  conduction, 2.4 to 22 times with elliptic cracks. The aging basic creep model of the
+  Applications chapter: the high-performance concrete in 103 s against 499 s.
+
+### Fixed
+
+- The Newton solver of the aging self-consistent scheme (`self_consistent_alv_newton`,
+  internal) added the crack compliance H̃ itself to the concentration, where the Echoes
+  form of the Picard iteration amounts to H̃ ∘ C̃ₘ: with cracks it converged to another
+  estimate (24 % off at a density of 0.1). It now reaches the Picard fixed point to
+  1e-10, which a test checks. `homogenize_alv` does not use this solver.
+- CI: the polycrystals run as a sixth test part. Mostly compilation, they were half of the
+  `schemes` part (16 of 32 minutes on Julia 1.14.0-alpha2, measured), which a slow runner
+  took past the 90-minute timeout on the prerelease of Julia.
+- The Echoes benchmark of the schemes handed Echoes a temporary array that Echoes borrows
+  without copying: its self-consistent fixed point could start from freed memory. The array
+  is now kept alive for the life of the RVE.
+
+- `operator_law(R, times)` turns the relaxation operator that `homogenize_alv` returns into a
+  law, a `SampledViscoLaw` known at the instants of the grid, so that a composite becomes a
+  phase of the next scale: aging viscoelastic homogenization now nests, as the elastic one
+  does. The kernel is recovered from the trapezoidal operator row by row, by sums and
+  differences only, so that duals and symbols go through; the operator of the result is the
+  one given, to rounding.
+- `precipitated(law, t_s)` and `dissolved(law, t_d)`: the relaxation kernel of a phase that
+  forms stress-free at `t_s`, or stops carrying stress at `t_d`, for any law, sampled ones
+  included. With them, a hydrating paste is a set of phases of fixed fractions, one per step
+  of its hydration.
+- An Applications page, *Aging basic creep of concrete*, after Lavergne & Barthélémy
+  (2020): the four-scale model of the hydrating paste in aging viscoelasticity, the
+  hydrates creeping logarithmically, one phase per step of the hydration computed by
+  ChemistryLab, against the basic creep tests of Le Roy (1995) on two concretes loaded
+  from 0.83 to 28 days (NU database). The model is shared by the page and
+  `scripts/47_aging_basic_creep_concrete.jl`, which writes the results the page reads; the
+  data are in `data/literature/leroy1995.json` and `lavergne2020.json`.
+
 ## v0.24.0 — the nonlinear models still missing, FEniCSx, faster starts and polycrystals
 
 A minor release. 0.23.0 brought the classical routes of nonlinear

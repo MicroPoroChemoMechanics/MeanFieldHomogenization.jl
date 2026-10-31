@@ -128,6 +128,7 @@ pages = [
         "Beyond elasticity" => [
             "manual/conductivity.md",
             "manual/viscoelasticity.md",
+            "manual/volterra_operators.md",
             "manual/rheological_models.md",
             "manual/laplace_inversion.md",
             "manual/poromechanics.md",
@@ -249,6 +250,7 @@ pages = [
             "applications/ionic_hydrating_paste.md",
             "applications/cement_paste_diffusion.md",
             "applications/aging_creep.md",
+            "applications/aging_basic_creep.md",
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/itz_elastic_limit.md",

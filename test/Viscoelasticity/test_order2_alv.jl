@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
+using ForwardDiff
 
 # =============================================================================
 #  test_order2_alv.jl — order-2 (vector-tensor) ALV homogenization:
@@ -172,4 +173,32 @@ end
         end
     end
     @test second_hill_kernel_order2(Ellipsoid(1.0), heaviside_law(TensISO{3}(k)), times)[1:3, 1:3] ≈ (2k / 3) * I(3) rtol = 1.0e-12
+end
+
+@testset "order2_alv — self-consistent in the classes, under ForwardDiff" begin
+    # Scaling every conductivity by k scales the self-consistent estimate by k:
+    # its derivative in k is the estimate at k = 1, whatever k.
+    times = collect(range(0.0, 2.0; length = 5))
+    function sc(k)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => ViscoLaw((t, tp) -> TensISO{3}(k * (2 + exp(-(t - tp)))))); fraction = :rest)
+        add_phase!(r, :I, Ellipsoid(1.0, 1.0, 3.0), Dict(:K => heaviside_law(TensISO{3}(9k))); fraction = 0.3, symmetrize = :iso)
+        return homogenize_alv(r, SelfConsistent(reltol = 1.0e-14), :K; times)
+    end
+    @test sc(1.0).class isa TensISO
+    @test ForwardDiff.derivative(k -> Matrix(sc(k)), 1.7) ≈ Matrix(sc(1.0)) rtol = 1.0e-9
+end
+
+@testset "order2_alv — differential: stiffness ≡ compliance formulation, aging matrix" begin
+    # The two formulations integrate the conductivity and the resistivity of the same
+    # path: they agree to the tolerance of the integrator, the second through the
+    # resistivity counterpart −R̃ ∘ Ñ ∘ R̃ of each contribution.
+    times = collect(range(0.0, 2.0; length = 5))
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => ViscoLaw((t, tp) -> (1 - 0.5exp(-tp)) * TensISO{3}(2 + exp(-(t - tp))))); fraction = :rest)
+    add_phase!(r, :I, Ellipsoid(1.0, 1.0, 3.0), Dict(:K => heaviside_law(TensISO{3}(9.0))); fraction = 0.3, symmetrize = :iso)
+    tol = (abstol = 1.0e-12, reltol = 1.0e-10)
+    K_s = homogenize_alv(r, DifferentialScheme(; tol...), :K; times)
+    K_c = homogenize_alv(r, DifferentialScheme(; formulation = :compliance, tol...), :K; times)
+    @test isapprox(K_s, K_c; rtol = 1.0e-8)
 end

@@ -2,20 +2,14 @@ using Test
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-import MeanFieldHomogenization.Viscoelasticity: _is_ortho_block, _is_ti_block, _is_iso_block,
-    _cheapest_algebra, _IsoALV, _TIALV, _OrthoALV, _DenseALV, _ortho_pair, _ortho_blocks
 
 # =============================================================================
 #  test_ortho_dispatch_alv.jl — the ORTHO fast paths of
 #  `_homogenize_alv_dispatch` (`src/Viscoelasticity/homogenize_alv.jl`).
 #
-#  `test_ortho_alv.jl` exercises the ortho primitives (`voigt_alv_ortho`, …) by
-#  calling them directly, but every RVE it builds is isotropic: since
-#  iso ⊂ TI ⊂ ortho, the dispatcher then takes the iso shortcut and the ortho
-#  branches of `_homogenize_alv_dispatch` are never executed.
-#
-#  This file builds a genuinely orthotropic RVE (neither iso nor TI), so that
-#  `_cheapest_algebra` picks the orthotropic algebra.
+#  A genuinely orthotropic RVE (neither iso nor TI): its operators are stored,
+#  and its schemes computed, in the orthotropic class, and the results are those
+#  of the dense 6n×6n matrices.
 # =============================================================================
 
 const _ORTHO_FRAME = TensND.CanonicalBasis{3, Float64}()
@@ -42,30 +36,19 @@ end
 
 @testset "ortho dispatch — le RVE est bien hors des raccourcis iso et TI" begin
     times = collect(0.0:0.5:1.0)
-    M_M = trapezoidal_matrix(heaviside_law(_ortho_tensor(1.0)), times)
-    M_I = trapezoidal_matrix(heaviside_law(_ortho_tensor(2.0)), times)
-
-    # Precondition of this test: without it the dispatcher would take the iso
-    # or the TI path and the branches under test would stay dead.
-    @test !_is_iso_block(M_M)
-    @test !_is_ti_block(M_M)
-    @test _is_ortho_block(M_M)
-
-    @test _cheapest_algebra([M_M, M_I]) isa _OrthoALV
-    @test length(_ortho_pair(M_M)) == 12
-
-    # A single matrix out of the ortho form sends the whole call to the dense
-    # algebra.
-    M_bad = copy(M_M)
+    R_M = VolterraOperator(heaviside_law(_ortho_tensor(1.0)), times)
+    R_I = VolterraOperator(heaviside_law(_ortho_tensor(2.0)), times)
+    # Precondition of this test: the operators are orthotropic, not narrower.
+    @test R_M.class isa TensOrtho && R_I.class isa TensOrtho
+    @test (R_M * R_I).class isa TensOrtho
+    # A matrix out of the ortho form cannot be stored in it.
+    M_bad = Matrix(R_M)
     M_bad[1, 4] += 1.0
-    @test !_is_ortho_block(M_bad)
-    @test _cheapest_algebra([M_M, M_bad]) isa _DenseALV
-
-    # No operator at all belongs to every algebra: the cheapest one is taken.
-    @test _cheapest_algebra(Matrix{Float64}[]) isa _IsoALV
-    # Iso ⊂ TI ⊂ ortho: an isotropic matrix stays isotropic.
-    M_iso = trapezoidal_matrix(heaviside_law(TensISO{3}(3.0, 2.0)), times)
-    @test _cheapest_algebra([M_iso]) isa _IsoALV
+    @test_throws "does not belong" VolterraOperator(M_bad, times; like = _ortho_tensor(1.0))
+    # Iso ⊂ TI ⊂ ortho: an isotropic operator stays isotropic, and joins the ortho class.
+    R_iso = VolterraOperator(heaviside_law(TensISO{3}(3.0, 2.0)), times)
+    @test R_iso.class isa TensISO
+    @test (R_iso + R_M).class isa TensOrtho
 end
 
 @testset "ortho dispatch — Voigt et Reuss passent par le chemin ortho" begin
@@ -80,12 +63,11 @@ end
 
     C_voigt = homogenize_alv(rve, Voigt(), :C; times = times)
     @test size(C_voigt) == (6n, 6n)
-    @test _is_ortho_block(C_voigt)
-    @test !_is_ti_block(C_voigt)                 # on est bien resté ortho
+    @test C_voigt.class isa TensOrtho            # on est bien resté ortho
     @test isapprox(C_voigt, voigt_alv([M_M, M_I], fr); atol = 1.0e-10)
 
     C_reuss = homogenize_alv(rve, Reuss(), :C; times = times)
-    @test _is_ortho_block(C_reuss)
+    @test C_reuss.class isa TensOrtho
     @test isapprox(C_reuss, reuss_alv([M_M, M_I], fr); atol = 1.0e-8)
 
     # Encadrement de Voigt-Reuss sur les termes diagonaux.
@@ -105,8 +87,7 @@ end
         @test all(isfinite, C)
         # These schemes preserve the ortho form: coaxial ortho phases give an
         # ortho result in the same material frame.
-        @test _is_ortho_block(C)
-        @test !_is_iso_block(C)
+        @test C.class isa TensOrtho
     end
 end
 
@@ -121,11 +102,11 @@ end
     end
 end
 
-@testset "ortho dispatch — round-trip _ortho_pair / _ortho_blocks" begin
+@testset "ortho dispatch — round-trip through the orthotropic class" begin
     times = collect(0.0:0.5:1.5)
     M = trapezoidal_matrix(heaviside_law(_ortho_tensor(1.3)), times)
-
-    o = _ortho_pair(M)
-    @test length(o) == 12
-    @test isapprox(_ortho_blocks(o), M; atol = 1.0e-12)
+    R = VolterraOperator(M, times; like = _ortho_tensor(1.0))
+    @test R.class isa TensOrtho
+    @test length(R.blocks) == 4
+    @test isapprox(Matrix(R), M; atol = 1.0e-12)
 end

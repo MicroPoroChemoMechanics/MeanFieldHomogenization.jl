@@ -104,9 +104,12 @@ const TEST_PARTS = Dict(
         "Documentation",
     ),
     # Its own part since 0.23.0, whose models took `core` past the 90-minute
-    # timeout of the minimum Julia version; the polycrystals run with `schemes`.
+    # timeout of the minimum Julia version.
     "material-laws" => ("MaterialLaws",),
-    "schemes" => ("Schemes", "Assemblies", "CustomInclusions", "Polycrystals"),
+    "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
+    # Its own part since 0.25.0: mostly compilation, half of `schemes`, which a slow
+    # runner took past the timeout on the prerelease of Julia.
+    "polycrystals" => ("Polycrystals",),
     "patterns" => (
         "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
         "FiniteElementInclusions",
@@ -426,6 +429,7 @@ end
         include("Viscoelasticity/test_laminate_alv.jl")
         include("Viscoelasticity/test_visco_law.jl")
         include("Viscoelasticity/test_trapezoidal.jl")
+        include("Viscoelasticity/test_sampled_law.jl")
         include("Viscoelasticity/test_volterra_inverse.jl")
         include("Viscoelasticity/test_hill_alv_iso.jl")
         include("Viscoelasticity/test_schemes_alv.jl")
@@ -436,7 +440,7 @@ end
         include("Viscoelasticity/test_ti_alv.jl")
         include("Viscoelasticity/test_ortho_alv.jl")
         include("Viscoelasticity/test_ortho_dispatch_alv.jl")
-        include("Viscoelasticity/test_alv_kernel_types.jl")
+        include("Viscoelasticity/test_volterra_operator.jl")
         include("Viscoelasticity/test_sensitivities_alv.jl")
         include("Viscoelasticity/test_order2_alv.jl")
         include("Viscoelasticity/test_extra_schemes_alv.jl")

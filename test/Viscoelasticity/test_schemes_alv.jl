@@ -114,19 +114,22 @@ end
     @test_throws DimensionMismatch dilute_concentration_alv(M, zeros(12, 12), M)
 end
 
-@testset "schemes_alv — dilute differentiated by a fraction, in every algebra" begin
+@testset "schemes_alv — dilute differentiated by a fraction, in every class" begin
     # The scheme is linear in the fractions, so the derivative is the
-    # contribution itself; the TI and orthotropic forms accumulated into a copy
-    # of the reference, which a dual fraction could not enter.
-    n = 3
-    rnd(k) = [i ≥ j ? 0.1 * (i + k * j) : 0.0 for i in 1:n, j in 1:n]
-    for (C₀, N, dilute) in (
-            ((rnd(1), rnd(2)), (rnd(3), rnd(4)), dilute_alv_iso),
-            (ntuple(k -> rnd(k), 6), ntuple(k -> rnd(k + 6), 6), dilute_alv_ti),
-            (ntuple(k -> rnd(k), 12), ntuple(k -> rnd(k + 12), 12), dilute_alv_ortho),
-        )
-        flat(X) = reduce(vcat, map(vec, X))
-        @test ForwardDiff.derivative(f -> flat(dilute(C₀, [N], [f])), 0.3) == flat(N)
+    # contribution itself, in each class the operators are stored in.
+    V = MeanFieldHomogenization.Viscoelasticity
+    times = [0.0, 0.5, 1.5]
+    axis = (0.0, 0.6, 0.8)
+    frame = TensND.CanonicalBasis{3, Float64}()
+    laws = (
+        s -> ViscoLaw((t, tp) -> (s + exp(tp - t)) * TensISO{3}(3.0, 2.0)),
+        s -> ViscoLaw((t, tp) -> (s + exp(tp - t)) * TensTI{4}(5.0, 4.0, 1.0, 0.5, 2.0, 1.5, axis)),
+        s -> ViscoLaw((t, tp) -> (s + exp(tp - t)) * TensOrtho{4, Float64}(ntuple(k -> 1.0 + 0.3k, 12), frame)),
+    )
+    for law in laws
+        C₀, N = VolterraOperator(law(1.0), times), VolterraOperator(law(2.0), times)
+        d = ForwardDiff.derivative(f -> Matrix(V._alg_dilute(V._OpALV{4}(C₀.grid), C₀, [N], [f])), 0.3)
+        @test d ≈ Matrix(N) rtol = 1.0e-14
     end
 end
 

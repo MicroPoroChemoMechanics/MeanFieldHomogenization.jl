@@ -165,17 +165,24 @@ def make_rve_alv(phases):
             visco_prop={"C": (_alv_kernel(law), echoes.RELAXATION)}, **kw)
     ver.set_param_eshelby(**HILL)
     # The starting point of the fixed point: the relaxation matrix of the matrix.
-    ver.set_visco_mat("C", echoes.visco_law(_alv_kernel(phases[0]["law"]), echoes.RELAXATION)
-                      .relaxation_mat(ALV_TIMES))
-    return ver
+    # Echoes BORROWS the buffer of a numpy array handed as a discretized operator
+    # (interface/python/array_wrapper.h:159-167) and keeps it by reference
+    # (inclusion.h:277-279): the array is returned so that the caller keeps it
+    # alive as long as the RVE, or the fixed point would start from freed memory.
+    start = np.asarray(echoes.visco_law(_alv_kernel(phases[0]["law"]), echoes.RELAXATION)
+                       .relaxation_mat(ALV_TIMES), dtype=float)
+    ver.set_visco_mat("C", start)
+    return ver, start
 
 
 def homogenize_alv(phases, scheme):
     """The effective relaxation matrix on `ALV_TIMES`, 6n x 6n Kelvin-Mandel blocks."""
-    ver = make_rve_alv(phases)
-    return np.asarray(echoes.homogenize_visco(prop="C", rve=ver, time_series=ALV_TIMES,
-                                              scheme=SCHEMES[scheme], verbose=False,
-                                              epsrel=FIXED_POINT_RTOL, maxnb=maxnb(scheme)))
+    ver, start = make_rve_alv(phases)
+    out = np.array(echoes.homogenize_visco(prop="C", rve=ver, time_series=ALV_TIMES,
+                                           scheme=SCHEMES[scheme], verbose=False,
+                                           epsrel=FIXED_POINT_RTOL, maxnb=maxnb(scheme)))
+    del ver, start
+    return out
 
 
 def homogenize_alv_case(i, j):

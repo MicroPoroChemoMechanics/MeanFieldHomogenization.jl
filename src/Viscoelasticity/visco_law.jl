@@ -17,21 +17,41 @@ Root supertype for viscoelastic kernels.  Concrete subtypes provide an
 abstract type AbstractViscoLaw end
 
 """
-    VALID_VISCO_MODES :: Tuple{Symbol, Symbol}
+    VALID_VISCO_MODES :: NTuple{6, Symbol}
 
-Allowed values for `ViscoLaw.mode` :
+Allowed values for the mode of a law, whatever the physics:
 
-  * `:relaxation` — ``R(t, t')`` maps strain history to stress.
-  * `:creep`      — ``J(t, t')`` maps stress history to strain.
+  * `:property` — the kernel maps the history of the gradient (a strain, a temperature
+    gradient, an electric field) to that of the response (a stress, a heat flux, an
+    electric displacement): a relaxation kernel ``R(t, t')`` in elasticity, an aging
+    conductivity or permittivity at order 2;
+  * `:inverse_property` — the other way round: a creep compliance ``J(t, t')``, an aging
+    resistivity.
+
+The names of each physics are the same two modes: `:relaxation` and `:creep` in mechanics,
+which a law reports ([`visco_mode`](@ref)), `:conductivity` and `:resistivity` in
+conduction.
 """
-const VALID_VISCO_MODES = (:relaxation, :creep)
+const VALID_VISCO_MODES = (:relaxation, :creep, :property, :inverse_property, :conductivity, :resistivity)
+
+# A mode in the two names the code reads, `:relaxation` and `:creep`; a name off the list is
+# refused with the list.
+function _canonical_mode(mode::Symbol)
+    mode in (:property, :conductivity) && return :relaxation
+    mode in (:inverse_property, :resistivity) && return :creep
+    mode in VALID_VISCO_MODES ||
+        throw(ArgumentError("a law mode must be one of $(VALID_VISCO_MODES); got :$(mode)"))
+    return mode
+end
 
 """
     ViscoLaw(eval_fun, mode::Symbol = :relaxation)
 
 Concrete viscoelastic law.  Wraps an `eval_fun::F` callable
-`(t, t_p) -> X` together with its `mode` Symbol (`:relaxation` or
-`:creep`).  The output type `X` may be:
+`(t, t_p) -> X` together with its `mode` Symbol: `:relaxation` (or `:property`) for a kernel
+that maps the gradient history to the response, `:creep` (or `:inverse_property`) for the
+inverse kernel, `:conductivity` and `:resistivity` in conduction; see
+[`VALID_VISCO_MODES`](@ref).  The output type `X` may be:
 
   * a `Real` or `Complex` scalar (scalar Volterra kernel) ;
   * a `TensND.AbstractTens{4,3}` (4-tensor relaxation / creep tensor) ;
@@ -46,13 +66,7 @@ struct ViscoLaw{F} <: AbstractViscoLaw
     mode::Symbol
 
     function ViscoLaw(eval_fun::F, mode::Symbol = :relaxation) where {F}
-        mode in VALID_VISCO_MODES ||
-            throw(
-            ArgumentError(
-                "ViscoLaw mode must be one of $(VALID_VISCO_MODES); got :$(mode)"
-            )
-        )
-        return new{F}(eval_fun, mode)
+        return new{F}(eval_fun, _canonical_mode(mode))
     end
 end
 
@@ -62,9 +76,11 @@ end
 """
     visco_mode(law) -> Symbol
 
-Return the mode (`:relaxation` or `:creep`) of `law`.
+Return the mode of `law`, `:relaxation` or `:creep` (the names `:property`,
+`:conductivity`, `:inverse_property` and `:resistivity` it may have been given are the same
+two modes).
 """
-visco_mode(law::ViscoLaw) = law.mode
+visco_mode(law::AbstractViscoLaw) = law.mode
 
 """
     visco_eval(law, t, t_p)
@@ -88,7 +104,7 @@ function heaviside_law(C; mode::Symbol = :relaxation)
 end
 
 # A law as it is, an elastic modulus as the Heaviside law it stands for.
-_as_visco_law(law::ViscoLaw) = law
+_as_visco_law(law::AbstractViscoLaw) = law
 _as_visco_law(C) = heaviside_law(C)
 
 """

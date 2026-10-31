@@ -126,6 +126,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `43_secant_elastoplasticity.jl` | Suquet (1997) / Ponte Castañeda (1991); Gurson (1977) | **published tutorial** — modified secant method on a porous plastic solid: n-shell composite sphere + SC + `ForwardDiff` second moments; ported from echoes `echoes_tests/elastoplasticity_porous.py` |
 | `44_stoichiometric_hydration_micromechanics.jl` | Lavergne et al. (CCR 2018) | **chemistry-driven** four-scale SC/SC/MT/MT paste: volume fractions computed by ChemistryLab (Parrot-Killoh + Waller + molar volumes) instead of a Powers correlation. Activates `docs/`, not the repo root. Backs `applications/hydrating_blended_paste.md` |
 | `46_lamellar_porous_swelling.jl` | lamellar swelling model, C. R. Mécanique **334** (2006) 304-310, [doi:10.1016/j.crme.2006.03.008](https://doi.org/10.1016/j.crme.2006.03.008) | **SymPy, not in the gallery.** Two-scale clay/CSH model derived symbolically: the particle is a `Laminate` whose interfoliar layer has a normal stiffness alone (singular ⇒ regularized then `tlimit`), the platelets are incompressible (`kₛ → ∞`), the assembly of randomly oriented particles + macropores is closed by the self-consistent scheme with `isotropify` as the exact orientation average. Recovers (5)-(18) of the article, including `μᵃᶜ`, `νᵃᶜ`, `g(φ)` and the `φ = 1/4` percolation threshold. Numeric cross-check against `SelfConsistent()`, figure in `figures/`. Backs `applications/lamellar_clay.md`, which derives the same model without the checking layer |
+| `47_aging_basic_creep_concrete.jl` | Lavergne & Barthélémy (CCR 2020) | **aging basic creep** of two concretes of Le Roy (1995) from their composition: ChemistryLab hydration, one aging phase per step (`precipitated`, `dissolved`), four ALV scales nested by `operator_law`, against the NU database tests. Activates `docs/`. Writes the results that `applications/aging_basic_creep.md` reads |
 
 ### 50–59 Viscoelasticity & ALV
 | Script | reference / topic | Notes |
@@ -138,7 +139,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `55_aging_creep_dirichlet_chains.jl` | Granger creep | aging creep (Granger–Bažant 1995 law) |
 | `56_aging_creep_order2.jl` | order-2 creep | order-2 ALV |
 | `57_aging_creep_cracks.jl` | crack creep | ALV crack creep |
-| `58_alv_kernel_types.jl` | — | structured ALV kernel types |
+| `58_volterra_operators.jl` | [operators and histories](../docs/src/manual/volterra_operators.md) | aging viscoelastic operators and histories on a shared grid, stored by symmetry blocks |
 | `59_alv_sensitivities.jl` | — | **published tutorial** — `ForwardDiff` through the ALV pipeline: `set_param` lens vs closure capture, joint gradient, relaxation-time sensitivity, all validated against central finite differences |
 
 ### 60+ ALV cracks, cross-validations, the Laplace-Carson route / symmetrization

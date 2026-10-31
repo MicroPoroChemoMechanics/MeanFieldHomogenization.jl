@@ -53,7 +53,11 @@ Returns the converged effective relaxation matrix.
 - `select_best`— return the best iterate seen (rather than the last)
   when convergence stalls.
 """
-function self_consistent_alv(
+self_consistent_alv(rve::RVE, prop::Symbol; kw...) = Matrix(_self_consistent_alv(rve, prop; kw...))
+
+# The same, returning a `VolterraOperator` when it iterates in the classes of the
+# operators (what `homogenize_alv` keeps), a full matrix otherwise.
+function _self_consistent_alv(
         rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
         matrix::Union{Nothing, Symbol} = nothing,
@@ -67,16 +71,17 @@ function self_consistent_alv(
     # 1. Discretize every phase's kernel once.
     m = host_phase_name(rve, matrix, "self_consistent_alv")
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa ViscoLaw ||
-        throw(ArgumentError("self_consistent_alv: matrix property is not a ViscoLaw"))
-    C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    grid = TimeGrid(times)
+    C_0 = _relaxation_operator(C_M_law, grid)
     f_M = volume_fraction(rve, m)
     incl_names = inclusion_phase_names(rve, m)
     # Containers are eltype-generic : volume fractions, crack densities and
     # geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number)
     # coefficients — no `Float64` hard-coding on any AD-reachable path.
-    C_phases = Matrix[C_0]
-    geometries = Any[rve.phases[m].geometry]
+    C_phases = AbstractMatrix[C_0]
+    geometries = MFH_Core.AbstractInclusion[rve.phases[m].geometry]
     fractions = [f_M]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
     # crack_data tuple: (geom, density, sym, Rn_mat::Union{Nothing, Matrix},
@@ -95,6 +100,7 @@ function self_consistent_alv(
     for name in incl_names
         ph = rve.phases[name]
         a = rve.amounts[name]
+        # The phases of a cell are of many types, known at run time: a branch.
         if ph.geometry isa LayeredSphere
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
             continue
@@ -104,9 +110,9 @@ function self_consistent_alv(
             continue
         end
         C_r_law = phase_property(rve, name, prop)
-        C_r_law isa ViscoLaw ||
-            throw(ArgumentError("self_consistent_alv: phase $name property is not a ViscoLaw"))
-        C_r = _trapezoidal_relaxation(C_r_law, times, 6)
+        C_r_law isa ALVProperty ||
+            throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+        C_r = _relaxation_operator(C_r_law, grid)
         sym = phase_symmetrize(rve, name)
         # Like the differential scheme, the self-consistent one uses its
         # RUNNING estimate as the reference of the ALV Hill kernel, and the
@@ -122,6 +128,19 @@ function self_consistent_alv(
         push!(fractions, _amount_value(rve, name))
         push!(symmetrizes, sym)
     end
+
+    # Without layered spheres, the iteration runs in the classes of the operators;
+    # otherwise on full matrices.
+    if isempty(layered_data)
+        Tp = _alv_promoted_eltype(C_phases, fractions, Matrix{Float64}[], crack_data)
+        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
+        return _sc_alv_in_classes(
+            C_0, C_phases, geometries, fractions, symmetrizes, crack_data, Tp;
+            abstol, reltol, maxiters, damping, verbose, select_best
+        )
+    end
+    C_0 = Matrix(C_0)
+    C_phases = Matrix[Matrix(C) for C in C_phases]
 
     # 2. Pre-compute the Mandel forms of U^A, V^A for each phase
     #    (eltype follows the geometry parameters — Dual-safe).
@@ -182,6 +201,86 @@ function self_consistent_alv(
     @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
 end
+
+# ── The iteration in the classes of the operators ──────────────────────────
+#
+# The running estimate is isotropic (the guards above refuse a phase that would
+# drag it out of the class): two n×n blocks. Each phase's Hill kernel is built in
+# the class of its shape from the two scalar inverses of the estimate, computed
+# once per iteration; the concentrations are averaged and divided in the block
+# algebra, so that no 6n×6n matrix is written out.
+function _sc_alv_in_classes(
+        C_0, C_phases, geometries, fractions, symmetrizes, crack_data, ::Type{Tp};
+        abstol, reltol, maxiters, damping, verbose, select_best
+    ) where {Tp}
+    step(C_m) = _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes, crack_data)
+    return _fixed_point_in_classes(step, C_0, Tp, "SC-ALV"; abstol, reltol, maxiters, damping, verbose, select_best)
+end
+
+# The Picard iteration of the self-consistent schemes on an isotropic estimate stored by
+# its blocks: `step` maps an estimate to the next; convergence on the Frobenius norm of
+# the full matrices (read on the blocks), relaxation by `damping`.
+function _fixed_point_in_classes(
+        step::F, C_0, ::Type{Tp}, name;
+        abstol, reltol, maxiters, damping, verbose, select_best
+    ) where {F, Tp}
+    C_m = _as_iso_estimate(_with_eltype(Tp, C_0))
+    best_resid = Inf
+    C_best = C_m
+    for iter in 1:maxiters
+        C_new = step(C_m)
+        Δ = norm(C_new - C_m)
+        tol_eff = abstol + reltol * norm(C_m)
+        verbose && @info "$name iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
+        if select_best && Δ < best_resid
+            best_resid = Δ
+            C_best = C_new
+        end
+        Δ ≤ tol_eff && return C_new
+        C_m = (1 - damping) * C_new + damping * C_m
+    end
+    @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
+    return select_best ? C_best : C_m
+end
+
+# The dilute concentration of a phase of stiffness `C` and shape `g` against the
+# isotropic estimate `C_m`, whose two scalar inverses are given: its Hill kernel in the
+# class of the shape.
+_dilute_in_classes(C, g, C_m, J_long, J_shear) = inv(I + _hill_kernel_op(g, J_long, J_shear, C_m.grid) * (C - C_m))
+
+function _sc_alv_step_in_classes(C_m, C_phases, geometries, fractions, symmetrizes, crack_data)
+    J_long, J_shear = _alv_iso_inverses(C_m)
+    terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
+        A = _dilute_in_classes(C, g, C_m, J_long, J_shear)
+        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(C * A, sym)
+    end
+    A_avg = reduce(+, first.(terms))
+    CA_avg = reduce(+, last.(terms))
+    isempty(crack_data) && return _as_iso_estimate(CA_avg * inv(A_avg))
+    # The Echoes form B ∘ A⁻¹ with the J_m of the estimate explicit: the crack
+    # compliances enter the denominator without it (see `_sc_alv_step_echoes_form`).
+    J_m = inv(C_m)
+    return _as_iso_estimate((CA_avg * J_m) * inv(A_avg * J_m + _crack_compliance_in_classes(C_m, crack_data)))
+end
+
+# Σ_c sym(ε_c H̃_c(C_m)), the crack compliances against the isotropic estimate, each
+# transversely isotropic about its normal before its orientation average.
+function _crack_compliance_in_classes(C_m, crack_data)
+    α, β = C_m.blocks
+    terms = map(crack_data) do (geom, ε, sym, Rn_mat, Rt_mat)
+        H̃ = _crack_compliance_alv(geom, α, β, Rn_mat, Rt_mat, C_m.grid)
+        _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H̃, ε), sym)
+    end
+    return reduce(+, terms)
+end
+
+# The running estimate in the isotropic class: kept as is when it is there,
+# converted when its class is wider, refused when its values are off it.
+_as_iso_estimate(R::VolterraOperator{<:TensISO{4, 3}}) = R
+_as_iso_estimate(R::VolterraOperator{<:TensISO{2, 3}}) = R
+_as_iso_estimate(R::VolterraOperator) = convert_class(R, _iso_class(R.class); check = true)
+# The isotropic class of the order of `c`.
+_iso_class(c) = _order(c) == 4 ? _ISO4 : _ISO2
 
 # The concentration `A` and the average stress `B = Ñ + C ∘ A` of a layered
 # sphere against the running estimate `C`, from its recurrences: what a phase
@@ -287,41 +386,21 @@ end
 
 # ── Crack compliance contribution against the running estimate ─────────────
 #
-# Computes `Σ_c ε·sym(H̃_c(C_m))` where `H̃_c(C_m)` is the (Sevostianov-
-# corrected) crack compliance contribution against the running estimate
-# `C_m`.  Used in two ways:
-#   (a) `_build_sc_crack_extra_J(C_m, crack_data)`  — appended to the
-#       compliance `J̃ = inv(C_m_solid_SC)` in the Budiansky-O'Connell
-#       branch of the SC iteration (the default, robust path).
-#   (b) `_build_sc_crack_extra_A(C_m, crack_data)`  — alias used by the
-#       experimental ECHOES-form `B · A^{-vol}` MT body (kept available
-#       for the Newton-Raphson SC solver, which uses the same algebra
-#       but solves `F(C) = 0` instead of iterating Picard).
+# `Σ_c ε·sym(H̃_c(C_m))`, the (Sevostianov-corrected) crack compliances against
+# the running estimate `C_m`, as a full matrix: the H̃ of the Echoes form of the
+# step on full matrices, and, composed with `C_m`, the crack term of the
+# concentration in the Newton solver (`schemes_alv_sc_newton.jl`).
 function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
-    T = eltype(C_m)
     extra = zero(C_m)
     isempty(crack_data) && return extra
-    _is_iso_block(C_m) ||
-        error("self_consistent_alv with cracks: only iso running estimate is supported")
-    α_c, β_c = _iso_pair(C_m)
-    B_n_base, B_t_base = _penny_cod_alv(α_c, β_c)
-    @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
-        B_n = _interface_corrected(B_n_base, Rn_mat, semi_minor(geom))
-        B_t = _interface_corrected(B_t_base, Rt_mat, semi_minor(geom))
-        Z = zeros(T, size(α_c))
-        ℓ₁ = (3 / 4) .* B_n
-        ℓ₆ = (3 / 8) .* B_t
-        H_TI = ti_blocks_from_params((ℓ₁, copy(Z), copy(Z), copy(Z), copy(Z), ℓ₆))
-        H_full = _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H_TI, ε), sym)
-        @. extra += H_full
+    α_c, β_c = _iso_blocks_alv(C_m, "self_consistent_alv with cracks")
+    grid = _operator_grid((C_m,))
+    for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
+        H̃ = _crack_compliance_alv(geom, α_c, β_c, Rn_mat, Rt_mat, grid)
+        extra += Matrix(_maybe_symmetrize_alv(delta_inverse_property_alv(geom, H̃, ε), sym))
     end
     return extra
 end
-
-# Alias used by the ECHOES-form MT body (numerically identical : both
-# represent the iso-symmetrized crack compliance contribution scaled
-# by the Budiansky concentration factor `(4π/3)·ε`).
-@inline _build_sc_crack_extra_A(C_m, crack_data) = _build_sc_crack_extra_J(C_m, crack_data)
 
 # Single SC step (legacy MFH form, retained for external callers /
 # internal sub-steps that still rely on the standard

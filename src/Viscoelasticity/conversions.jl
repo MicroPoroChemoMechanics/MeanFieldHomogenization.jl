@@ -74,19 +74,25 @@ function iso_blocks_from_params(α::AbstractMatrix, β::AbstractMatrix)
     # The type of a ratio: integer parameters give a float block (the entries
     # are divided), a dual or symbolic one is kept (`float(Sym)` is Float64).
     T = typeof(one(promote_type(eltype(α), eltype(β))) / 2)
-    M = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n, j in 1:n
+    return _add_iso_blocks!(zeros(T, 6 * n, 6 * n), one(T), α, β)
+end
+
+# M += w · (the 6n×6n matrix of the isotropic blocks α, β), in place: each entry
+# is written once, and the weight multiplies the entry as it is, so w = 1 into
+# zeros gives the entries exactly.
+function _add_iso_blocks!(M::AbstractMatrix, w, α::AbstractMatrix, β::AbstractMatrix)
+    T = eltype(M)
+    @inbounds for j in axes(α, 2), i in axes(α, 1)
         a = T(α[i, j])
         b = T(β[i, j])
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
+        r, c = 6 * (i - 1), 6 * (j - 1)
         diag_top = (a + 2b) / 3
         offdiag_top = (a - b) / 3
-        for k in 1:3, l in 1:3
-            M[rows[k], cols[l]] = (k == l) ? diag_top : offdiag_top
+        for l in 1:3, k in 1:3
+            M[r + k, c + l] += w * ((k == l) ? diag_top : offdiag_top)
         end
         for k in 4:6
-            M[rows[k], cols[k]] = b
+            M[r + k, c + k] += w * b
         end
     end
     return M
@@ -130,201 +136,56 @@ end
 # normal 3×3 block row-major, then the shear diagonal.
 const _ORTHO_SLOTS = ((1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3), (3, 1), (3, 2), (3, 3), (4, 4), (5, 5), (6, 6))
 
-"""
-    ti_params_from_blocks(M; axis = (0, 0, 1))
-        -> NTuple{6, Matrix{T}}
+# ── Isotropy of a block matrix ──────────────────────────────────────────────
 
-Decompose a ``6n\\times 6n`` block matrix whose every ``6\\times 6`` block is a TI
-4-tensor with axis ``\\underline{n}`` (only ``\\underline{n} = \\underline{e}_3`` is currently supported) into
-the six scalar Walpole parameter matrices ``(\\ell_1, \\ell_2, \\ell_3, \\ell_4, \\ell_5, \\ell_6)``,
-each of size ``n\\times n``.
 """
-function ti_params_from_blocks(
-        M::AbstractMatrix;
-        axis::NTuple{3} = (0.0, 0.0, 1.0)
-    )
-    axis == (0.0, 0.0, 1.0) ||
-        throw(ArgumentError("ti_params_from_blocks: only axis = e₃ is supported"))
+    _is_iso_block(M::AbstractMatrix; tol = 0) -> Bool
+
+Heuristic: return `true` if the ``6n\\times 6n`` block matrix `M` is in iso
+form (each ``6\\times 6`` block is an iso 4-tensor in Mandel form).  The check
+verifies the canonical iso pattern ``(\\mathbf{M}_{ij})_{kk} = (\\alpha + 2\\beta)/3``
+(diag), ``(\\alpha - \\beta)/3`` (off-diag in the 1..3 block), ``\\beta`` on the 4..6
+diagonal, and zero elsewhere — to within absolute tolerance `tol`
+times the maximum modulus of `M`.
+
+Used by `homogenize_alv` to dispatch to the iso fast path automatically.
+
+Allocation-free: extracts ``(\\alpha, \\beta)`` from the canonical block entries
+on the fly without building the parameter matrices.
+"""
+function _is_iso_block(M::AbstractMatrix; tol::Real = 1.0e-12)
     sz = size(M, 1)
-    sz == size(M, 2) ||
-        throw(ArgumentError("ti_params_from_blocks: M must be square"))
-    sz % 6 == 0 ||
-        throw(ArgumentError("ti_params_from_blocks: size $(sz) not divisible by 6"))
-    s2 = sqrt(2 * one(eltype(M)))
-    m11, m12 = _slots(M, 1, 1), _slots(M, 1, 2)
-    return (
-        copy(_slots(M, 3, 3)), m11 .+ m12, s2 .* _slots(M, 3, 1),
-        s2 .* _slots(M, 1, 3), m11 .- m12, copy(_slots(M, 4, 4)),
-    )
-end
-
-"""
-    ti_blocks_from_params(ℓ::NTuple{6, AbstractMatrix}; axis = (0, 0, 1))
-        -> Matrix{T}
-
-Inverse of [`ti_params_from_blocks`](@ref): rebuild a ``6n\\times 6n`` block
-matrix whose every ``6\\times 6`` block has the TI Mandel structure with axis
-``\\underline{n} = \\underline{e}_3`` and Walpole coefficients ``((\\ell_1)_{ij}, \\dots, (\\ell_6)_{ij})``.
-"""
-function ti_blocks_from_params(
-        ℓ::NTuple{6, <:AbstractMatrix};
-        axis::NTuple{3} = (0.0, 0.0, 1.0)
-    )
-    axis == (0.0, 0.0, 1.0) ||
-        throw(ArgumentError("ti_blocks_from_params: only axis = e₃ is supported"))
-    n = size(ℓ[1], 1)
-    @inbounds for k in 1:6
-        size(ℓ[k]) == (n, n) ||
-            throw(ArgumentError("ti_blocks_from_params: all ℓᵢ must be n×n"))
-    end
-    T = typeof(one(promote_type(map(eltype, ℓ)...)) / 2)   # a ratio's type, as for iso
-    # Entry by entry, measured faster than strided broadcasts (1.25 times).
-    M = zeros(T, 6 * n, 6 * n)
-    s2 = sqrt(2 * one(T))
+    sz == size(M, 2) || return false
+    sz % 6 == 0 || return false
+    n = sz ÷ 6
+    iszero(n) && return true
+    scale = max(maximum(abs, M), one(real(eltype(M))))
+    abstol = tol * scale
     @inbounds for i in 1:n, j in 1:n
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
-        ℓ₁_ij = T(ℓ[1][i, j]); ℓ₂_ij = T(ℓ[2][i, j])
-        ℓ₃_ij = T(ℓ[3][i, j]); ℓ₄_ij = T(ℓ[4][i, j])
-        ℓ₅_ij = T(ℓ[5][i, j]); ℓ₆_ij = T(ℓ[6][i, j])
-        block_diag_in = (ℓ₂_ij + ℓ₅_ij) / 2
-        block_off_in = (ℓ₂_ij - ℓ₅_ij) / 2
-        # In-plane block (1:2, 1:2)
-        M[rows[1], cols[1]] = block_diag_in
-        M[rows[1], cols[2]] = block_off_in
-        M[rows[2], cols[1]] = block_off_in
-        M[rows[2], cols[2]] = block_diag_in
-        # Axial-axial diagonal
-        M[rows[3], cols[3]] = ℓ₁_ij
-        # Axial-transverse coupling (W₃: row 3, W₄: col 3)
-        M[rows[3], cols[1]] = ℓ₃_ij / s2
-        M[rows[3], cols[2]] = ℓ₃_ij / s2
-        M[rows[1], cols[3]] = ℓ₄_ij / s2
-        M[rows[2], cols[3]] = ℓ₄_ij / s2
-        # Out-of-plane shears (Mandel 4 = 23, 5 = 13)
-        M[rows[4], cols[4]] = ℓ₆_ij
-        M[rows[5], cols[5]] = ℓ₆_ij
-        # In-plane shear (Mandel 6 = 12)
-        M[rows[6], cols[6]] = ℓ₅_ij
+        r = 6 * (i - 1)
+        c = 6 * (j - 1)
+        # Extract (α, β) from the canonical entries of block (i, j).
+        a = M[r + 1, c + 1] + 2 * M[r + 1, c + 2]
+        b = M[r + 4, c + 4]
+        diag_top = (a + 2b) / 3
+        offdiag_top = (a - b) / 3
+        # Upper-left 3×3 block: diag = (α+2β)/3, off-diag = (α-β)/3.
+        for k in 1:3, l in 1:3
+            expected = (k == l) ? diag_top : offdiag_top
+            abs(M[r + k, c + l] - expected) ≤ abstol || return false
+        end
+        # Cross blocks (1..3 × 4..6 and 4..6 × 1..3) must be zero.
+        for k in 1:3, l in 4:6
+            abs(M[r + k, c + l]) ≤ abstol || return false
+        end
+        for k in 4:6, l in 1:3
+            abs(M[r + k, c + l]) ≤ abstol || return false
+        end
+        # Lower-right 3×3 block: diagonal = β, off-diag = 0.
+        for k in 4:6, l in 4:6
+            expected = (k == l) ? b : zero(b)
+            abs(M[r + k, c + l] - expected) ≤ abstol || return false
+        end
     end
-    return M
-end
-
-# =============================================================================
-#  ORTHO (orthotropic) — material-frame Mandel block, axes (e₁, e₂, e₃)
-# =============================================================================
-#
-#  An orthotropic 4-tensor in its material frame `(e₁, e₂, e₃)` has the
-#  block-diagonal Mandel structure (see `TensND.TensOrtho`):
-#
-#      M_block = [[A_norm,  0       ];
-#                 [0      ,  D_shear ]]
-#
-#  where `A_norm` is the (3 × 3) "normal" block carrying the elastic
-#  constants `(C₁₁, C₁₂, C₁₃, C₂₂, C₂₃, C₃₃)` (major-symmetric for an
-#  elastic stiffness, but **not** preserved by a Volterra product of two
-#  ortho ALV operators — the closure subspace is the full 3×3) and
-#  `D_shear = diag(2C₄₄, 2C₅₅, 2C₆₆)` is the (3 × 3) shear-diagonal block
-#  in Mandel form (factors of 2 absorb the engineering-strain
-#  convention).
-#
-#  In ALV the Volterra closure is therefore parametrized by 12 scalar
-#  Volterra `n × n` matrices :
-#    * 9 entries of the full unsymmetric normal block `(o[1..9])` —
-#      laid out row-major in a `(3 × 3)` array `(o₁₁, o₁₂, o₁₃,
-#                                                o₂₁, o₂₂, o₂₃,
-#                                                o₃₁, o₃₂, o₃₃)`,
-#    * 3 entries of the shear diagonal `(o[10..12]) = (o₄, o₅, o₆)`
-#      corresponding to the Mandel-position-4 / -5 / -6 diagonal.
-#
-#  Every ortho 4-tensor with the same canonical material frame
-#  `(e₁, e₂, e₃)` is closed under Volterra product, inverse, and
-#  left-divide.  Iso ⊂ TI ⊂ ortho ⊂ generic aniso.
-# =============================================================================
-
-"""
-    ortho_params_from_blocks(M; axes = ((1,0,0),(0,1,0),(0,0,1)))
-        -> NTuple{12, Matrix{T}}
-
-Decompose a ``6n\\times 6n`` block matrix whose every ``6\\times 6`` block is an ortho
-4-tensor with material frame ``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)`` (only the canonical frame is
-currently supported) into the 12 scalar parameter matrices
-
-```math
-(o_{11}, o_{12}, o_{13}, o_{21}, o_{22}, o_{23}, o_{31}, o_{32}, o_{33}, o_4, o_5, o_6),
-```
-
-each of size ``n\\times n``, where the ``3\\times 3`` normal block of the Mandel form is
-stored row-major in entries 1..9 and the 3 shear-diagonal Mandel
-entries ``(M_{44}, M_{55}, M_{66})`` map to ``(o_4, o_5, o_6)``.
-
-Note that closure under Volterra product does **not** preserve major
-symmetry (``o_{12} \\ne o_{21}`` in general), so the full 9-entry normal block is
-needed even for major-symmetric inputs.
-"""
-function ortho_params_from_blocks(
-        M::AbstractMatrix;
-        axes::NTuple{3, NTuple{3}} = (
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
-            (0.0, 0.0, 1.0),
-        )
-    )
-    axes == ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)) ||
-        throw(ArgumentError("ortho_params_from_blocks: only canonical axes are supported"))
-    sz = size(M, 1)
-    sz == size(M, 2) ||
-        throw(ArgumentError("ortho_params_from_blocks: M must be square"))
-    sz % 6 == 0 ||
-        throw(ArgumentError("ortho_params_from_blocks: size $(sz) not divisible by 6"))
-    return ntuple(k -> copy(_slots(M, _ORTHO_SLOTS[k]...)), Val(12))
-end
-
-"""
-    ortho_blocks_from_params(o::NTuple{12, AbstractMatrix};
-                              axes = ((1,0,0),(0,1,0),(0,0,1)))
-        -> Matrix{T}
-
-Inverse of [`ortho_params_from_blocks`](@ref): rebuild a ``6n\\times 6n`` block
-matrix whose every ``6\\times 6`` block has the ortho Mandel structure with axes
-``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``.  All off-block-diagonal entries are zero (block 1..3 ↔
-block 4..6 coupling is forbidden by orthotropic symmetry).
-"""
-function ortho_blocks_from_params(
-        o::NTuple{12, <:AbstractMatrix};
-        axes::NTuple{3, NTuple{3}} = (
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
-            (0.0, 0.0, 1.0),
-        )
-    )
-    axes == ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)) ||
-        throw(ArgumentError("ortho_blocks_from_params: only canonical axes are supported"))
-    n = size(o[1], 1)
-    @inbounds for k in 1:12
-        size(o[k]) == (n, n) ||
-            throw(ArgumentError("ortho_blocks_from_params: all components must be n×n"))
-    end
-    T = promote_type(map(eltype, o)...)
-    # Entry by entry, measured faster than strided broadcasts (1.25 times).
-    M = zeros(T, 6 * n, 6 * n)
-    @inbounds for i in 1:n, j in 1:n
-        rows = (6 * (i - 1) + 1):(6 * i)
-        cols = (6 * (j - 1) + 1):(6 * j)
-        # Normal 3×3 block (full, no symmetry assumed)
-        M[rows[1], cols[1]] = T(o[1][i, j])
-        M[rows[1], cols[2]] = T(o[2][i, j])
-        M[rows[1], cols[3]] = T(o[3][i, j])
-        M[rows[2], cols[1]] = T(o[4][i, j])
-        M[rows[2], cols[2]] = T(o[5][i, j])
-        M[rows[2], cols[3]] = T(o[6][i, j])
-        M[rows[3], cols[1]] = T(o[7][i, j])
-        M[rows[3], cols[2]] = T(o[8][i, j])
-        M[rows[3], cols[3]] = T(o[9][i, j])
-        # Shear diagonal (Mandel 4, 5, 6)
-        M[rows[4], cols[4]] = T(o[10][i, j])
-        M[rows[5], cols[5]] = T(o[11][i, j])
-        M[rows[6], cols[6]] = T(o[12][i, j])
-    end
-    return M
+    return true
 end

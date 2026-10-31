@@ -1,0 +1,32 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "lavergne2020",
+  "doi": "10.1016/j.cemconres.2020.106163",
+  "citation": "Lavergne, F., Barthélémy, J.-F. (2020). Confronting a refined multiscale estimate for the aging basic creep of concrete with a comprehensive experimental database. Cement and Concrete Research 136, 106163.",
+  "location": "Tables 3 and 4, p. 11; caption of Fig. 11, p. 12"
+ },
+ "transcription": {
+  "from": "the published article (PDF), Tables 3 and 4 and the caption of Fig. 11, read on the page",
+  "checked_against_source": true,
+  "note": "The composition of the Saint-Vigor cement used by Le Roy (1995) and the effective water-to-cement ratios that the paper derives for his concretes, assuming water absorptions of 1 % for the sand and 0.5 % for the gravel (Table 3)."
+ },
+ "quantities": {
+  "saint_vigor_C3S": {"value": 57.0, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "C3S content of the Saint-Vigor cement"},
+  "saint_vigor_C2S": {"value": 17.0, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "C2S content"},
+  "saint_vigor_C3A": {"value": 2.8, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "C3A content"},
+  "saint_vigor_C4AF": {"value": 12.0, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "C4AF content"},
+  "saint_vigor_CaSO4": {"value": 4.3, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "Calcium sulfate, as CaSO4 (CS̄)"},
+  "saint_vigor_CaCO3": {"value": 3.4, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "Calcium carbonate (CC̄)"},
+  "saint_vigor_blaine": {"value": 365.0, "unit": "m^2/kg", "kind": "published", "uncertainty": null, "location": "Table 4, entry c_123_01..44", "description": "Blaine fineness of the cement"},
+  "leroy_ordinary_w_c": {"value": 0.463, "unit": "1", "kind": "published", "uncertainty": null, "location": "Fig. 11(g) caption", "description": "Effective water-to-cement ratio of the ordinary concrete (c_123_01..05)"},
+  "leroy_ordinary_a_c": {"value": 5.46, "unit": "1", "kind": "published", "uncertainty": null, "location": "Fig. 11(g) caption", "description": "Aggregate-to-cement mass ratio of the ordinary concrete"},
+  "leroy_ordinary_cement": {"value": 342.0, "unit": "kg/m^3", "kind": "published", "uncertainty": null, "location": "Fig. 11(g) caption", "description": "Cement content of the ordinary concrete"},
+  "leroy_hpc_w_c": {"value": 0.298, "unit": "1", "kind": "published", "uncertainty": null, "location": "Fig. 11(h) caption", "description": "Effective water-to-cement ratio of the high-performance concrete (c_123_06..10)"},
+  "leroy_hpc_a_c": {"value": 4.73, "unit": "1", "kind": "published", "uncertainty": null, "location": "Fig. 11(h) caption", "description": "Aggregate-to-cement mass ratio of the high-performance concrete"},
+  "leroy_hpc_cement": {"value": 398.0, "unit": "kg/m^3", "kind": "published", "uncertainty": null, "location": "Fig. 11(h) caption", "description": "Cement content of the high-performance concrete"},
+  "leroy_hpc_silica_fume": {"value": 10.0, "unit": "% of cement", "kind": "published", "uncertainty": null, "location": "Fig. 11(h) caption", "description": "Silica fume added to the high-performance concrete"}
+ },
+ "tables": {},
+ "notes": ["The DOI given in the paper's reference [40] for Hubler, Wendner and Bažant (2015), 10.14359/51687452, resolves to another article; the correct DOI is 10.14359/51687453 (checked on Crossref and on the ACI page, 2026-10-31)."]
+}

@@ -146,20 +146,13 @@ function run_all_benches()
             iso_blocks_from_params(α, β)
         end
 
-        ℓ = ti_params_from_blocks(M)
-        bench("ti_params_from_blocks(M)") do
-            ti_params_from_blocks(M)
+        # The other classes: an operator stored by its blocks and back.
+        R = VolterraOperator(M, collect(1.0:(size(M, 1) ÷ 6)))
+        bench("VolterraOperator(M, times)") do
+            VolterraOperator(M, collect(1.0:(size(M, 1) ÷ 6)))
         end
-        bench("ti_blocks_from_params(ℓ)") do
-            ti_blocks_from_params(ℓ)
-        end
-
-        o = ortho_params_from_blocks(M)
-        bench("ortho_params_from_blocks(M)") do
-            ortho_params_from_blocks(M)
-        end
-        bench("ortho_blocks_from_params(o)") do
-            ortho_blocks_from_params(o)
+        bench("Matrix(R)") do
+            Matrix(R)
         end
     end
 

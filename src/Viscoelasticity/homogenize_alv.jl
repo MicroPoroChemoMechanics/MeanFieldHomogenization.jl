@@ -32,7 +32,8 @@ function has_visco_property(cell::MFH_Core.AbstractHomogenizationCell, prop::Sym
     return false
 end
 
-_is_visco_value(::ViscoLaw, ::Symbol) = true
+_is_visco_value(::AbstractViscoLaw, ::Symbol) = true
+_is_visco_value(::VolterraOperator, ::Symbol) = true
 _is_visco_value(v, ::Symbol) = false
 _is_visco_value(h::MFH_Core.Homogenized, key::Symbol) =
     has_visco_property(h.cell, h.property === nothing ? key : h.property)
@@ -118,6 +119,11 @@ Apply the orientation-averaging projection corresponding to `sym` to a
 axis).
 """
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::NoSymmetrize) = M
+# An operator stored by blocks: the isotropic average read on its blocks; the
+# transversely isotropic one on its full matrix, and kept full.
+_maybe_symmetrize_alv(R::VolterraOperator{<:TensISO{4, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv(R::VolterraOperator, ::IsoSymmetrize) = _iso_part(R)
+_maybe_symmetrize_alv(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks(M)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, sym::TISymmetrize) =
@@ -217,13 +223,18 @@ Order-2 counterpart of [`_maybe_symmetrize_alv`](@ref), for ``3n\\times 3n``
 ALV matrices whose blocks are 2-tensors.
 """
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::NoSymmetrize) = M
+# An operator stored by blocks: the isotropic average read on its blocks (λ = tr/3);
+# the transversely isotropic one on its full matrix, and kept full.
+_maybe_symmetrize_alv2(R::VolterraOperator{<:TensISO{2, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv2(R::VolterraOperator, ::IsoSymmetrize) = _iso_part2(R)
+_maybe_symmetrize_alv2(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv2(Matrix(R), s), R.grid)
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks3(M)
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, sym::TISymmetrize) =
     _ti_project_blocks3(M, sym.axis)
 
 """
-    _trapezoidal_relaxation(law::ViscoLaw, times, B) -> Matrix
+    _trapezoidal_relaxation(law::AbstractViscoLaw, times, B) -> Matrix
 
 Build the discrete relaxation block matrix from a `ViscoLaw`, regardless
 of whether the law is in `:relaxation` or `:creep` mode.  When the law
@@ -235,7 +246,7 @@ matrix — the convention every ALV scheme assumes internally.
 order-2 vector-tensor).
 """
 function _trapezoidal_relaxation(
-        law::ViscoLaw,
+        law::AbstractViscoLaw,
         times::AbstractVector{<:Real}, B::Int
     )
     M = trapezoidal_matrix(law, times)
@@ -245,8 +256,37 @@ function _trapezoidal_relaxation(
     return M
 end
 
+# An operator given directly — the result of the scale below — is already the relaxation
+# operator on the grid: a plain matrix has its size checked, a `VolterraOperator` its grid,
+# and it is materialized for the dense scheme formulas.
+_trapezoidal_relaxation(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int) = _check_operator(R, times, B)
+# An elastic tensor, written out on the grid: the tensor on the block diagonal.
+_trapezoidal_relaxation(C::TensND.AbstractTens, times::AbstractVector{<:Real}, B::Int) =
+    _check_operator(Matrix(VolterraOperator(C, times)), times, B)
+_trapezoidal_relaxation(C::TensND.AbstractTens{2}, times::AbstractVector{<:Real}, B::Int) =
+    _check_operator(Matrix(VolterraOperator(C, times)), times, B)
+function _trapezoidal_relaxation(R::VolterraOperator, times::AbstractVector{<:Real}, B::Int)
+    _same_grid(R.grid, TimeGrid(times), "homogenize_alv")
+    return _check_operator(Matrix(R), times, B)
+end
+
+function _check_operator(R::AbstractMatrix, times::AbstractVector{<:Real}, B::Int)
+    n = length(times)
+    size(R) == (B * n, B * n) || throw(
+        DimensionMismatch(
+            "an ALV operator for $n instants and blocks of size $B is $(B * n)×$(B * n); " *
+                "this one is $(size(R, 1))×$(size(R, 2)): was it computed on another time grid?"
+        )
+    )
+    return R
+end
+
+# The order of a property, 4 or 2, from a law's sample or an operator's size.
+_alv_order_int(x, times) = _val_int(_alv_order(x, times))
+_val_int(::Val{N}) where {N} = N
+
 """
-    _alv_property_order(law::ViscoLaw, t) -> Int
+    _alv_property_order(law::AbstractViscoLaw, t) -> Int
 
 Inspect the sample returned by `visco_eval(law, t, t)` and report the
 tensor order (`2` for vector-tensor / ``3\\times 3``, `4` for 4-tensor / ``6\\times 6``
@@ -254,7 +294,7 @@ Mandel).  Used by [`homogenize_alv`](@ref) to dispatch between the
 order-4 (stiffness / relaxation) and order-2 (conductivity / creep
 admittance) pipelines.
 """
-_alv_property_order(law::ViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
+_alv_property_order(law::AbstractViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
 
 _alv_sample_order(::TensND.AbstractTens{2, 3}) = 2
 _alv_sample_order(::TensND.AbstractTens{4, 3}) = 4
@@ -270,11 +310,35 @@ _alv_order_error(sample) = throw(
 )
 
 """
-    homogenize_alv(rve, scheme, prop::Symbol; times) -> Matrix
+    homogenize_alv(rve, scheme, prop::Symbol; times = nothing) -> VolterraOperator
 
-ALV pipeline: build the discrete block matrices of every phase, compute
-the ALV Hill kernel and dilute concentration tensors, and dispatch on
-`scheme` to the corresponding `_alv` scheme function.
+The effective relaxation operator of `rve` in aging linear viscoelasticity, on the time grid
+`times` (a vector of instants or a [`TimeGrid`](@ref)): the operator that maps a strain
+history on the grid to the stress history, or a temperature gradient to a flux in
+conduction. `times` may be left out when a phase property is a [`VolterraOperator`](@ref):
+its grid is then the grid of the computation.
+
+**Phase properties.** The property `prop` of a phase may be
+
+  * a law — a [`ViscoLaw`](@ref) or any [`AbstractViscoLaw`](@ref), in relaxation or creep form,
+    or an elastic tensor, which is a law constant in time;
+  * an operator on the same grid, as one scale hands it to the next (the result of another
+    `homogenize_alv`): a [`VolterraOperator`](@ref), or the plain ``6n\\times 6n``
+    (``3n\\times 3n`` in conduction) matrix of one;
+  * a [`Homogenized`](@ref) cell, homogenized here on the same grid and memoized for the whole
+    call, as in elasticity.
+
+**Result.** A [`VolterraOperator`](@ref) on the grid, stored in the cheapest symmetry class
+that holds it — isotropic, the class of a phase property (transversely isotropic about its
+axis, orthotropic in its frame, …), transversely isotropic about ``\\underline{e}_3``,
+orthotropic in the canonical frame — and dense otherwise. It is an `AbstractMatrix` that
+multiplies and inverts like the full matrix, which `Matrix(R)` writes out, and computes as
+the elastic tensors do (`⊡`, `inv`, `+`); see
+[Aging viscoelastic operators and histories](@ref man-volterra-operators).
+
+The ALV pipeline builds the discrete block matrices of every phase, computes the ALV Hill
+kernel and dilute concentration tensors, and dispatches on `scheme` to the corresponding
+`_alv` scheme function.
 
 The function dispatches on the **order of the matrix property** (read
 once from the matrix `ViscoLaw` sample type):
@@ -325,17 +389,89 @@ Volterra inverses (Reuss) directly, each over its orientation distribution
 """
 function homogenize_alv(
         rve::RVE, scheme::HomogenizationScheme,
+        prop::Symbol; times = nothing, kw...
+    )
+    grid = _alv_grid(rve, prop, times)
+    t = grid.times
+    R = MFH_Core._with_nested_cache() do
+        MFH_Core._with_alv_grid(() -> _homogenize_alv_rve(rve, scheme, prop; times = t, kw...), t)
+    end
+    return _compact(_result_operator(R, grid), _candidate_classes(rve, prop, t))
+end
+
+_result_operator(R::VolterraOperator, grid) = R
+_result_operator(R::AbstractMatrix, grid) = VolterraOperator(R, grid)
+
+# The reference of the closed-form schemes: stored by blocks when the pipeline has it so.
+_reference(C_0, kw) = get(kw, :C_0_op, C_0)
+
+# A phase property as the relaxation operator on the grid, in the class of its values.
+_relaxation_operator(law::AbstractViscoLaw, grid::TimeGrid) = _as_relaxation(VolterraOperator(law, grid), visco_mode(law))
+_relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, grid, "homogenize_alv"); R)
+# An elastic tensor (a conductivity at order 2): the constant kernel C H(t - t′), block
+# diagonal, in the class of C. More specific than a matrix: a second-order tensor is one.
+_relaxation_operator(C::TensND.AbstractTens, grid::TimeGrid) = VolterraOperator(C, grid)
+_relaxation_operator(C::TensND.AbstractTens{2}, grid::TimeGrid) = VolterraOperator(C, grid)
+_relaxation_operator(M::AbstractMatrix, grid::TimeGrid) =
+    _compact(VolterraOperator(_check_operator(M, grid.times, 6), grid), (_ISO4, _TI4_E3, _ORTHO4_CANON))
+# A creep law is turned into the relaxation operator the schemes assume (a run-time mode).
+_as_relaxation(R, mode::Symbol) = mode === :creep ? inv(R) : R
+
+# A nested cell met inside an aging viscoelastic homogenization, on its grid.
+MFH_Core._resolve_alv(cell, scheme, prop::Symbol, times; kw...) = homogenize_alv(cell, scheme, prop; times, kw...)
+
+# The grid of a computation: given, or that of the operators among the phase properties.
+_alv_grid(rve, prop, times) = TimeGrid(times)
+function _alv_grid(rve, prop, ::Nothing)
+    grids = [g for g in map(_grid_of, _raw_properties(rve, prop)) if g !== nothing]
+    isempty(grids) && throw(
+        ArgumentError("homogenize_alv: no time grid; give `times`, or a phase property that is a VolterraOperator")
+    )
+    for g in grids
+        _same_grid(first(grids), g, "homogenize_alv")
+    end
+    return first(grids)
+end
+
+_grid_of(R::VolterraOperator) = R.grid
+_grid_of(v) = nothing
+
+# The property values of the members, as stored (a nested cell is not resolved here).
+_raw_properties(cell, prop) = [
+    MFH_Core.cell_container_property(cell, name, prop)
+        for name in MFH_Core.cell_member_names(cell) if MFH_Core.cell_has_property(cell, name, prop)
+]
+
+# The classes a result is tried in, cheapest first: isotropic, those of the phase
+# properties (a law's value, an operator's class), transversely isotropic about e₃,
+# orthotropic in the canonical frame.
+function _candidate_classes(rve, prop, times)
+    ℬ = TensND.CanonicalBasis{3, Float64}()
+    phase = Any[c for c in (_property_class(v, times) for v in _raw_properties(rve, prop)) if c isa _StructuredClass]
+    return Any[
+        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase...,
+        TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
+        TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
+    ]
+end
+_property_class(law::AbstractViscoLaw, times) = _class_of(visco_eval(law, first(times), first(times)))
+_property_class(R::VolterraOperator, times) = R.class
+_property_class(C::TensND.AbstractTens, times) = _class_of(C)
+_property_class(v, times) = nothing
+
+function _homogenize_alv_rve(
+        rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
     #    it resolves the scheme's reference medium itself.
     m = matrix_name(scheme, rve)
     C_M_law = phase_property(rve, m, prop)
-    C_M_law isa ViscoLaw ||
-        throw(ArgumentError("homogenize_alv: matrix property $prop is not a ViscoLaw"))
+    C_M_law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: matrix property $prop is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
 
     # Dispatch on the property order (2 vs 4) inferred from the sample.
-    order = _alv_property_order(C_M_law, first(times))
+    order = _alv_order_int(C_M_law, times)
     if order == 2
         return _homogenize_alv_order2(
             rve, scheme, prop;
@@ -343,7 +479,10 @@ function homogenize_alv(
         )
     end
 
-    C_0 = _trapezoidal_relaxation(C_M_law, times, 6)
+    # The reference as an operator stored by the blocks of its class, and written
+    # out for the formulas that compute on full matrices (cracks).
+    C_0_op = _relaxation_operator(C_M_law, TimeGrid(times))
+    C_0 = Matrix(C_0_op)
     f_M = volume_fraction(rve, m)
 
     # 2. Loop on inclusions, separating SOLIDS (`VolumeFraction`) from
@@ -359,12 +498,13 @@ function homogenize_alv(
     # Eltype-generic containers : per-phase matrices may carry a wider
     # element type than the matrix kernel (e.g. `ForwardDiff.Dual` geometry
     # parameters flowing through `tens_UA`/`tens_VA`).
-    contribs = Matrix[]
-    A_duts = Matrix[]
-    C_phases = Matrix[C_0]
+    # Operators stored by blocks (`VolterraOperator`) or full matrices.
+    contribs = AbstractMatrix[]
+    A_duts = AbstractMatrix[]
+    C_phases = AbstractMatrix[C_0_op]
     # The orientation average of each entry of `C_phases`, for the bounds.
     phase_syms = AbstractSymmetrize[phase_symmetrize(rve, m)]
-    H_phases = Matrix[]   # per-phase Hill kernels (for Maxwell distribution)
+    H_phases = AbstractMatrix[]   # per-phase Hill kernels (for Maxwell distribution)
     # crack_data tuple: (geom, density, sym, H_iso_full).  `H_iso_full` is
     # the iso-projected size-independent compliance contribution H̃ scaled
     # by the Budiansky concentration factor (`4π/3` for 3D penny / elliptic,
@@ -374,8 +514,8 @@ function homogenize_alv(
     # Cracks-against-C_M sums (stiffness, and compliance for Reuss/DiluteDual),
     # added rather than accumulated in place so that a dual crack density
     # promotes them.
-    ΔC_cracks_M = zero(C_0)
-    ΔJ_cracks_M = zero(C_0)
+    ΔC_cracks_M = zero(C_0_op)
+    ΔJ_cracks_M = zero(C_0_op)
 
     for name in incl_names
         ph = rve.phases[name]
@@ -392,9 +532,12 @@ function homogenize_alv(
             # Compliance + stiffness contributions, with optional
             # interface-stiffness Sevostianov correction
             # `B̃_eff = B̃ ∘ (𝟙 + b·K ∘ B̃)^{-vol}`.
-            H̃ = inverse_property_contribution_alv(
-                geom, C_M_law, times;
-                Rn = Rn_law, Rt = Rt_law
+            # Stored in the cheapest class that holds it (transversely isotropic
+            # about the normal of a penny crack along e₃), as every crack
+            # quantity below.
+            H̃ = _as_class_operator(
+                inverse_property_contribution_alv(geom, C_M_law, times; Rn = Rn_law, Rt = Rt_law),
+                C_0_op.grid, _algebra_candidates((C_0_op,))
             )
             # Iso-projected, Budiansky-scaled H̃ for the ECHOES-form MT
             # denominator (cf. ECHOES `compute_visco_strain_Stress`).  The
@@ -405,7 +548,7 @@ function homogenize_alv(
                 sym
             )
             push!(crack_data, (geom, ε, sym, H̃_full))
-            Ñ = -(C_0 * H̃ * C_0)
+            Ñ = -(C_0_op * H̃ * C_0_op)
             ΔC = delta_property_alv(geom, Ñ, ε)
             ΔC = _maybe_symmetrize_alv(ΔC, sym)
             ΔC_cracks_M = ΔC_cracks_M + ΔC
@@ -415,7 +558,7 @@ function homogenize_alv(
         else
             C_r_law = phase_property(rve, name, prop)
             C_r, A_dut, N_dut, P_r = _inclusion_alv_quantities(
-                ph.geometry, scheme, C_r_law, C_M_law, C_0, times
+                ph.geometry, scheme, C_r_law, C_M_law, C_0_op, times
             )
             A_dut = _maybe_symmetrize_alv(A_dut, sym)
             N_dut = _maybe_symmetrize_alv(N_dut, sym)
@@ -436,6 +579,7 @@ function homogenize_alv(
         crack_data = crack_data,
         ΔC_cracks_M = ΔC_cracks_M,
         ΔJ_cracks_M = ΔJ_cracks_M,
+        C_0_op = C_0_op,
         kw...
     )
 end
@@ -454,60 +598,26 @@ the `scheme` only for the stiffness a bound assigns to the sphere.
 """
 function _inclusion_alv_quantities(
         geom, scheme, C_r_law,
-        C_M_law::ViscoLaw,
-        C_0::AbstractMatrix,
+        C_M_law::ALVProperty,
+        C_0::VolterraOperator,
         times::AbstractVector{<:Real}
     )
-    C_r_law isa ViscoLaw ||
-        throw(ArgumentError("homogenize_alv: phase property is not a ViscoLaw"))
-    C_r = _trapezoidal_relaxation(C_r_law, times, 6)
-    P_r = hill_kernel(geom, C_M_law, times)
-    # Iso fast path : if every input matrix is iso (typical for
-    # spherical inclusions in iso ALV matrix), compute the dilute
-    # concentration and contribution as TWO scalar n×n Volterra
-    # problems and lift back to (6n × 6n) at the end.  Avoids the
-    # generic block-LU on the 6n×6n `(𝟙 + P̃ ∘ ΔC̃)` system.
-    if _is_iso_block(C_r) && _is_iso_block(C_0) && _is_iso_block(P_r)
-        αβ_E = _iso_pair(C_r)
-        αβ_0 = _iso_pair(C_0)
-        αβ_P = _iso_pair(P_r)
-        αβ_A_dut = dilute_concentration_alv_iso(αβ_E, αβ_0, αβ_P)
-        αβ_N_dut = dilute_contribution_alv_iso(αβ_E, αβ_0, αβ_P)
-        A_dut = _iso_blocks(αβ_A_dut)
-        N_dut = _iso_blocks(αβ_N_dut)
-    elseif _is_ti_block(C_r) && _is_ti_block(C_0) && _is_ti_block(P_r)
-        # TI fast path: shared canonical axis e_3 across phase, matrix
-        # and Hill kernel.  Reduces the dilute concentration to a
-        # (2n)×(2n) block-Volterra inverse + 2 scalar Volterra inverses.
-        ℓ_E = _ti_pair(C_r)
-        ℓ_0 = _ti_pair(C_0)
-        ℓ_P = _ti_pair(P_r)
-        ℓ_A_dut = dilute_concentration_alv_ti(ℓ_E, ℓ_0, ℓ_P)
-        ℓ_N_dut = dilute_contribution_alv_ti(ℓ_E, ℓ_0, ℓ_P)
-        A_dut = _ti_blocks(ℓ_A_dut)
-        N_dut = _ti_blocks(ℓ_N_dut)
-    elseif _is_ortho_block(C_r) && _is_ortho_block(C_0) && _is_ortho_block(P_r)
-        # Ortho fast path: shared canonical material frame across phase,
-        # matrix and Hill kernel.  Reduces the dilute concentration to a
-        # (3n)×(3n) block-Volterra inverse + 3 scalar Volterra inverses.
-        o_E = _ortho_pair(C_r)
-        o_0 = _ortho_pair(C_0)
-        o_P = _ortho_pair(P_r)
-        o_A_dut = dilute_concentration_alv_ortho(o_E, o_0, o_P)
-        o_N_dut = dilute_contribution_alv_ortho(o_E, o_0, o_P)
-        A_dut = _ortho_blocks(o_A_dut)
-        N_dut = _ortho_blocks(o_N_dut)
-    else
-        A_dut = dilute_concentration_alv(C_r, C_0, P_r)
-        N_dut = dilute_contribution_alv(C_r, C_0, P_r)
-    end
+    C_r_law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    # In the class of each: the phase's law, the reference's, the geometry's (a
+    # spheroid: transversely isotropic about its axis); each operation in the
+    # cheapest class that holds its operands. One inverse for both quantities.
+    C_r = _relaxation_operator(C_r_law, C_0.grid)
+    P_r = _hill_kernel_op(geom, C_0)
+    A_dut = _in_class_algebra(_alg_dilute_concentration, (C_r, C_0, P_r), ())
+    N_dut = (C_r - C_0) * A_dut
     return (C_r, A_dut, N_dut, P_r)
 end
 
 function _inclusion_alv_quantities(
         sphere::LayeredSphere, scheme, _C_r_law,
-        C_M_law::ViscoLaw,
-        C_0::AbstractMatrix,
+        C_M_law::ALVProperty,
+        C_0::VolterraOperator,
         times::AbstractVector{<:Real}
     )
     # Per-layer moduli are stored inside the LayeredSphere geometry; the
@@ -613,10 +723,12 @@ function _homogenize_alv_dispatch(
         C_0, C_phases, A_duts, contribs,
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
-    # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
-    _has_cracks(kw) && return _alg_dilute(_DenseALV{6}(), C_0, contribs, fractions) .+ kw[:ΔC_cracks_M]
-    return _in_cheapest_algebra((C_0,), (contribs,)) do a, C₀, Ns
+    _has_cracks(kw) || return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
         _alg_dilute(a, C₀, Ns, fractions)
+    end
+    # Cracks: additive — `C̃_dilute + ΔC̃_cracks_M`.
+    return _in_class_algebra((_reference(C_0, kw), kw[:ΔC_cracks_M]), (contribs,)) do a, C₀, ΔC, Ns
+        _alg_add(a, _alg_dilute(a, C₀, Ns, fractions), ΔC)
     end
 end
 
@@ -635,14 +747,15 @@ function _homogenize_alv_dispatch(
     # heterogeneous one it is the definition the elastic pipeline uses.
     # Feeding the raw Ñ to the compliance sum would add a stiffness to a
     # compliance — see the `glassy limit` / `elastic limit` tests.
-    J_M = volterra_inverse(C_0; block_size = 6)
-    contribs_J = [-(J_M * N̄ * J_M) for N̄ in contribs]
-
+    _has_cracks(kw) || return _in_class_algebra((_reference(C_0, kw),), (contribs,)) do a, C₀, Ns
+        J_M = _alg_inv(a, C₀)
+        _alg_dilute_dual(a, C₀, [-_alg_prod(a, J_M, _alg_prod(a, N, J_M)) for N in Ns], fractions)
+    end
     # Cracks: solid compliance contributions and the crack ΔJ̃, inverted back.
-    _has_cracks(kw) &&
-        return volterra_inverse(_alg_dilute(_DenseALV{6}(), J_M, contribs_J, fractions) .+ kw[:ΔJ_cracks_M]; block_size = 6)
-    return _in_cheapest_algebra((C_0,), (contribs_J,)) do a, C₀, Hs
-        _alg_dilute_dual(a, C₀, Hs, fractions)
+    return _in_class_algebra((_reference(C_0, kw), kw[:ΔJ_cracks_M]), (contribs,)) do a, C₀, ΔJ, Ns
+        J_M = _alg_inv(a, C₀)
+        Hs = [-_alg_prod(a, J_M, _alg_prod(a, N, J_M)) for N in Ns]
+        _alg_inv(a, _alg_add(a, _alg_dilute(a, J_M, Hs, fractions), ΔJ))
     end
 end
 
@@ -652,7 +765,7 @@ function _homogenize_alv_dispatch(
         H_phases, fractions, f_M, matrix::Symbol; kw...
     )
     if !_has_cracks(kw)
-        return _in_cheapest_algebra((C_0,), (A_duts, contribs)) do a, C₀, As, Ns
+        return _in_class_algebra((_reference(C_0, kw),), (A_duts, contribs)) do a, C₀, As, Ns
             _alg_mori_tanaka(a, C₀, As, Ns, fractions, f_M)
         end
     end
@@ -676,11 +789,12 @@ function _homogenize_alv_dispatch(
     # `ε·sym(H_c)·C_M` — the ECHOES `strain_Strain` term; summed, not
     # accumulated into a buffer of `C_0`'s type, so that a dual crack density
     # carries.
-    A_crack_total = sum(H_full * C_0 for (_, _, _, H_full) in kw[:crack_data])
-    contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
-    A_duts_aug = vcat(A_duts, [A_crack_total])
+    C₀ = _reference(C_0, kw)
+    A_crack_total = sum(H_full * C₀ for (_, _, _, H_full) in kw[:crack_data])
     fractions_aug = vcat(fractions, [one(eltype(C_0))])
-    return mori_tanaka_alv(C_0, A_duts_aug, contribs_aug, fractions_aug, f_M)
+    return _in_class_algebra((C₀,), (vcat(A_duts, [A_crack_total]), vcat(contribs, [kw[:ΔC_cracks_M]]))) do a, C₀, As, Ns
+        _alg_mori_tanaka(a, C₀, As, Ns, fractions_aug, f_M)
+    end
 end
 
 function _homogenize_alv_dispatch(
@@ -704,13 +818,10 @@ end
 # The Maxwell form `C̃₀ + Ñ ∘ (𝟙 - H̃ ∘ Ñ)⁻¹`, shared by Maxwell and PCW; cracks
 # enter the sum of the contributions.
 function _alv_maxwell_form(C_0, contribs, fractions, H, kw)
-    if _has_cracks(kw)
-        contribs_aug = vcat(contribs, [kw[:ΔC_cracks_M]])
-        fractions_aug = vcat(fractions, [one(eltype(C_0))])
-        return maxwell_alv(C_0, contribs_aug, fractions_aug; H_0 = H)
-    end
-    return _in_cheapest_algebra((C_0, H), (contribs,)) do a, C₀, H₀, Ns
-        _alg_maxwell(a, C₀, Ns, fractions, H₀)
+    # Cracks enter as one more contribution, of weight one (the density is in it).
+    Ns, fs = _has_cracks(kw) ? (vcat(contribs, [kw[:ΔC_cracks_M]]), vcat(fractions, [one(eltype(C_0))])) : (contribs, fractions)
+    return _in_class_algebra((_reference(C_0, kw), H), (Ns,)) do a, C₀, H₀, Ns
+        _alg_maxwell(a, C₀, Ns, fs, H₀)
     end
 end
 
@@ -729,11 +840,11 @@ function _homogenize_alv_dispatch(
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms, :C_0_op)
         ),
         kw
     )
-    return self_consistent_alv(
+    return _self_consistent_alv(
         rve, prop; times = times, matrix = matrix,
         sc.options..., kw_filt...
     )
@@ -751,11 +862,11 @@ function _homogenize_alv_dispatch(
     kw_filt = Iterators.filter(
         p -> !(
             p[1] in
-                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms)
+                (:crack_data, :ΔC_cracks_M, :ΔJ_cracks_M, :phase_syms, :C_0_op)
         ),
         kw
     )
-    return asymmetric_self_consistent_alv(
+    return _asymmetric_self_consistent_alv(
         rve, prop; times = times, matrix = matrix,
         asc.options..., kw_filt...
     )

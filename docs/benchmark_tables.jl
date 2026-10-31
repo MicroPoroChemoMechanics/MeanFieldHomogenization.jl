@@ -75,3 +75,23 @@ function scheme_table(; strength::Bool = false)
     end
     return Markdown.parse(String(take!(io)))
 end
+
+"""
+    alv_table(name) -> Markdown.MD
+
+The aging viscoelastic harness against Echoes (`scripts/bench_echoes/alv_harness`): each
+case, the class `homogenize_alv` stores its result in, both times, their ratio and the gap
+between the two operators.
+"""
+function alv_table(name)
+    io = IOBuffer()
+    println(io, "| Case | Result stored as | ``t(J)`` | ``t(E)`` | ``t(E)/t(J)`` | gap |")
+    println(io, "| :--- | :--- | ---: | ---: | ---: | ---: |")
+    for r in sort(bench_data(name)["rows"]; by = r -> r["case"])
+        @printf(
+            io, "| %s | %s | %s | %s | %s | %.1e |\n", _cell(replace(r["case"], "_" => " ")), _cell(r["class"]),
+            _fmt_time(r["t_mfh"]), _fmt_time(r["t_echoes"]), _fmt_ratio(r["t_echoes"] / r["t_mfh"]), r["gap"]
+        )
+    end
+    return Markdown.parse(String(take!(io)))
+end
