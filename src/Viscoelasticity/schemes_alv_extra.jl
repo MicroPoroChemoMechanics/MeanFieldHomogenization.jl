@@ -505,9 +505,9 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
         return nothing
     end
 
-    # Crack contributions : dε_α/dτ · ΔC̃^crack_α(C_curr) where the
+    # Crack contributions : dε_α/dτ · ΔC̃^crack_α(C̃) where the
     # crack ΔC̃^crack is the dilute stiffness contribution evaluated
-    # against the running matrix `C_curr` (with optional Sevostianov
+    # against the running medium (with optional Sevostianov
     # interface stiffness correction).
     # As in the elastic scheme, a crack family carries no volume but is
     # still diluted by the solid increments:
@@ -516,7 +516,9 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
         εᶜ = r.path.f(τ) * r.target
         dφᶜ = r.path.df(τ) * r.target + (εᶜ / f0) * sum_df
         iszero(dφᶜ) && return nothing
-        Ñ = property_contribution_alv_at(r.geom, C_curr; Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat)
+        # In the classes of its operators, against the isotropic operator of the
+        # running medium.
+        Ñ = property_contribution_alv_at(r.geom, C_op; Rn_mat = r.Rn_mat, Rt_mat = r.Rt_mat)
         _diff_alv_add!(Δ, _maybe_symmetrize_alv(delta_property_alv(r.geom, Ñ, 1.0), r.sym), dφᶜ, p.dual, P_curr, p.grid)
         return nothing
     end
