@@ -60,6 +60,9 @@ needs; an Applications page puts the two together for the basic creep of concret
 
 ### Fixed
 
+- CI: the polycrystals run as a sixth test part. Mostly compilation, they were half of the
+  `schemes` part (16 of 32 minutes on Julia 1.14.0-alpha2, measured), which a slow runner
+  took past the 90-minute timeout on the prerelease of Julia.
 - The Echoes benchmark of the schemes handed Echoes a temporary array that Echoes borrows
   without copying: its self-consistent fixed point could start from freed memory. The array
   is now kept alive for the life of the RVE.

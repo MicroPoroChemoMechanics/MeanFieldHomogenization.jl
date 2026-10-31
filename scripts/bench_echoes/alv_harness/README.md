@@ -23,6 +23,16 @@ python -I run_echoes.py b3_prolate_rot_MT        # one case (its sources first, 
 
 The whole set runs in a few seconds and stays below 200 MB.
 
+The MeanFieldHomogenization side, from the package root, in an environment where the
+package and `JSON` load:
+
+```bash
+julia --project=<env> scripts/bench_echoes/alv_harness/run_mfh.jl   # compares and times every case
+```
+
+`ALV_HARNESS_N=<N>` (on both sides) runs every case on a geometric grid of `N` instants over
+the same span, into `results_n<N>/`: the timing at a realistic size.
+
 ## Contents of a result file
 
 | Key | Content |

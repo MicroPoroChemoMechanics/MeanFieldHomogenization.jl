@@ -31,7 +31,8 @@ using Printf
 using JSON
 
 const HERE = @__DIR__
-const RESULTS = joinpath(HERE, "results")
+# ALV_HARNESS_N=<N>: the cases run by run_echoes.py on N instants, in results_n<N>/.
+const RESULTS = joinpath(HERE, haskey(ENV, "ALV_HARNESS_N") ? "results_n$(ENV["ALV_HARNESS_N"])" : "results")
 
 # ── The kernels of cases.py, as MFH laws ─────────────────────────────────────
 

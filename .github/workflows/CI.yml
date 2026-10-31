@@ -33,15 +33,20 @@ jobs:
           - 'min'
           - '1'
           - 'pre'
-        # The suite runs in five parts (`TEST_PARTS` in test/runtests.jl). Whole,
+        # The suite runs in six parts (`TEST_PARTS` in test/runtests.jl). Whole,
         # it took 52 to 85 minutes depending on the runner, and the coverage job
         # crossed the 90-minute timeout; each part is a fraction of that. The
         # constitutive laws of `MaterialLaws` left `core` in 0.23.0, when their
         # models took it past the timeout on the minimum Julia version (about
-        # 50 minutes of them alone); the polycrystals run with `schemes`.
+        # 50 minutes of them alone). The polycrystals left `schemes` in 0.25.0:
+        # mostly compilation, about half of that part (16 of 32 minutes on Julia
+        # 1.14.0-alpha2, measured), they took it past the timeout on the
+        # prerelease on a slow runner, the same part taking 38 to 48 minutes on
+        # others.
         part:
           - 'core'
           - 'schemes'
+          - 'polycrystals'
           - 'patterns'
           - 'visco-neural'
           - 'material-laws'
@@ -65,7 +70,7 @@ jobs:
           lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket)'
           grep -o -w -E 'avx2|avx512[a-z_0-9]*|amx[a-z_0-9]*' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
           julia --startup-file=no -e 'using InteractiveUtils; versioninfo()'
-      # One depot cache per Julia version, shared by the five parts, which install
+      # One depot cache per Julia version, shared by the six parts, which install
       # and precompile the same test environment. A cache per part made twelve,
       # which with those of the documentation overflowed the 10 GB a repository
       # may hold: the caches evicted each other and jobs started from a cold
@@ -107,7 +112,7 @@ jobs:
           # precompilation caching and would slow down every other matrix entry
           # for nothing.
           coverage: ${{ matrix.version == '1' }}
-      # The coverage of the five parts is merged before it is processed, into one
+      # The coverage of the six parts is merged before it is processed, into one
       # report. Processed part by part, a file that a part never runs counts every
       # executable line as missed, and the union Codecov takes of the reports then
       # flags the lines Julia never instruments (a one-line method with a constant
@@ -132,7 +137,7 @@ jobs:
     name: Coverage
     needs: test
     # Runs once the matrix is done, whatever its outcome, and uploads only when
-    # all five parts produced coverage, which a part does only when its tests
+    # all six parts produced coverage, which a part does only when its tests
     # pass: a report lacking a part would show the lines only that part runs as
     # missed.
     if: ${{ !cancelled() }}
@@ -153,9 +158,9 @@ jobs:
       - name: Merge the parts
         id: merge
         run: |
-          # The five values of `matrix.part` above.
+          # The six values of `matrix.part` above.
           n=$(find coverage-parts -mindepth 1 -maxdepth 1 -type d | wc -l)
-          if [ "$n" -eq 5 ]; then
+          if [ "$n" -eq 6 ]; then
             for d in coverage-parts/*/; do cp -r "$d". .; done
             echo "complete=true" >> "$GITHUB_OUTPUT"
           elif [ "$n" -eq 0 ]; then
@@ -164,7 +169,7 @@ jobs:
             echo "::error::no test part produced coverage"
             exit 1
           else
-            echo "::warning::coverage from $n of the 5 test parts: nothing uploaded"
+            echo "::warning::coverage from $n of the 6 test parts: nothing uploaded"
             echo "complete=false" >> "$GITHUB_OUTPUT"
           fi
       # Not julia-actions/julia-processcoverage: see the header of the script

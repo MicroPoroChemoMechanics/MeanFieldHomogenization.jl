@@ -28,7 +28,18 @@ import numpy as np  # noqa: E402
 
 from cases import CASES, CASES_BY_NAME  # noqa: E402
 
-RESULTS = os.path.join(HERE, "results")
+# ALV_HARNESS_N=<N> runs every case on a geometric grid of N instants over the same span
+# (the timing at a realistic size), into results_n<N>/.
+GRID_N = int(os.environ.get("ALV_HARNESS_N", "0"))
+RESULTS = os.path.join(HERE, f"results_n{GRID_N}" if GRID_N else "results")
+
+
+def with_grid(c):
+    """The case `c`, on the grid of ALV_HARNESS_N instants when it is set."""
+    if not GRID_N:
+        return c
+    t = c["times"]
+    return dict(c, times=[float(x) for x in np.geomspace(t[0], t[-1], GRID_N)])
 SCHEMES = {"dilute": echoes.DIL, "mori_tanaka": echoes.MT, "self_consistent": echoes.SC}
 HILL = dict(algo=echoes.NUMINT3D, epsabs=1e-10, epsrel=1e-8, maxnb=1000000, epsroots=1e-8)
 NREPEAT = 3
@@ -232,7 +243,7 @@ def main(argv):
     names = order_with_sources(argv if argv else [c["name"] for c in CASES])
     computed = {}
     for name in names:
-        c = CASES_BY_NAME[name]
+        c = with_grid(CASES_BY_NAME[name])
         eff, res = run_case(c, computed)
         computed[name] = eff
         with open(os.path.join(RESULTS, f"{name}.json"), "w") as fh:

@@ -104,9 +104,12 @@ const TEST_PARTS = Dict(
         "Documentation",
     ),
     # Its own part since 0.23.0, whose models took `core` past the 90-minute
-    # timeout of the minimum Julia version; the polycrystals run with `schemes`.
+    # timeout of the minimum Julia version.
     "material-laws" => ("MaterialLaws",),
-    "schemes" => ("Schemes", "Assemblies", "CustomInclusions", "Polycrystals"),
+    "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
+    # Its own part since 0.25.0: mostly compilation, half of `schemes`, which a slow
+    # runner took past the timeout on the prerelease of Julia.
+    "polycrystals" => ("Polycrystals",),
     "patterns" => (
         "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
         "FiniteElementInclusions",
