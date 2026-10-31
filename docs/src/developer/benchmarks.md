@@ -91,7 +91,7 @@ isotropic laws about tilted axes, orientation averages, conduction, and two-scal
 50 instants. Both codes start from the same closed-form kernels; Echoes calls them through
 Python at each pair of instants. `MeanFieldHomogenization` computes each scheme in the
 symmetry class of its operators ([Aging viscoelastic operators and histories](@ref man-volterra-operators)),
-the class its result is stored in; conduction (order 2) stays on full matrices.
+the class its result is stored in, in elasticity and in conduction alike.
 
 ```@eval
 using MeanFieldHomogenization

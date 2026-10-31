@@ -59,11 +59,17 @@ needs; an Applications page puts the two together for the basic creep of concret
   however tilted, orthotropic in the frame of an ellipsoid), the dilute concentration and
   contribution share one inverse, the self-consistent estimate stays in two isotropic
   `n×n` blocks across its iterations, and the Volterra inverse of blocks halves the
-  instants into large matrix products. At `n = 80` instants: Mori–Tanaka with spheres
-  9.8 → 1.1 ms, with spheroids along `e₃` 25 → 8 ms, with tilted spheroids 64 → 8 ms,
-  isotropic self-consistent 172 → 16 ms. On the harness at 50 instants (the *Performance vs
-  Echoes* page), 7 to 40 times faster than Echoes in elasticity, 1.3 to 2.7 times in
-  conduction, which stays on full matrices. The aging basic creep model of the
+  instants into large matrix products. The same holds at order 2 (the Hill kernel of
+  conduction is transversely isotropic about an axis of the inclusion's frame, or
+  orthotropic in it), in the asymmetric self-consistent scheme, in the right-hand side of
+  the differential scheme, and in the self-consistent scheme with cracks, whose compliance
+  is a transversely isotropic operator; only layered spheres keep full matrices. At
+  `n = 80` instants: Mori–Tanaka with spheres 9.8 → 1.1 ms, with spheroids along `e₃`
+  25 → 8 ms, with tilted spheroids 64 → 8 ms, isotropic self-consistent 172 → 16 ms. At
+  40 instants: asymmetric self-consistent 48 → 6 ms, differential 67 → 31 ms,
+  self-consistent with cracks 43 → 10 ms. On the harness at 50 instants (the *Performance
+  vs Echoes* page), 3.4 to 39 times faster than Echoes in elasticity, 1.8 to 14 times in
+  conduction. The aging basic creep model of the
   Applications chapter: the high-performance concrete in 103 s against 499 s.
 
 ### Fixed
