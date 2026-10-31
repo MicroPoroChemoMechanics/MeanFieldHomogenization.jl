@@ -146,3 +146,21 @@ end
     )
     @test_throws ArgumentError _sc_newton(rve_c, :C; times = [0.0, 1.0])
 end
+
+@testset "sc_alv_newton — cracks: the fixed point of the Picard iteration" begin
+    # Newton solves the same self-consistent equation as the Picard iteration of
+    # `homogenize_alv`, an independent code path: with cracks, in which the crack
+    # compliance enters the concentration composed with the running estimate,
+    # both reach the same estimate (they differed by 24 % at ε = 0.1 when the
+    # Newton step added the compliance itself).
+    times = collect(range(0.0, 3.0; length = 6))
+    m = maxwell_iso(10.0, 6.0, 0.8, 2.5)
+    for (ε, f) in ((0.1, 0.0), (0.3, 0.3))
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => m); fraction = :rest)
+        f > 0 && add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => heaviside_law(TensISO{3}(0.03, 0.02))); fraction = f)
+        add_phase!(r, :F, PennyCrack(1.0), Dict(:C => m); density = ε, symmetrize = :iso)
+        picard = Matrix(homogenize_alv(r, SelfConsistent(reltol = 1.0e-12, maxiters = 2000), :C; times))
+        @test _sc_newton(r, :C; times) ≈ picard rtol = 1.0e-8
+    end
+end

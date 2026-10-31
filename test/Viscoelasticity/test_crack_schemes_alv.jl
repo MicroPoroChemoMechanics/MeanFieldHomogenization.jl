@@ -316,3 +316,15 @@ end
         @test norm(d_el) > 0
     end
 end
+
+@testset "SC with cracks of one orientation — the anisotropic estimate is refused" begin
+    # The self-consistent estimate must stay isotropic for the ALV Hill kernel against
+    # it: a family of parallel cracks makes it transversely isotropic, which is refused
+    # with the class it does not belong to, instead of being projected silently.
+    times = [0.0, 0.5, 1.0]
+    matrix = maxwell_iso(10.0, 6.0, 0.8, 2.5)
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(r, :F, PennyCrack(1.0), Dict(:C => matrix); density = 0.1)
+    @test_throws ArgumentError homogenize_alv(r, SelfConsistent(), :C; times)
+end

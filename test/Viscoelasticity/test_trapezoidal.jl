@@ -107,3 +107,13 @@ end
     M = trapezoidal_matrix(law, [0.0])
     @test M == fill(1.0, 1, 1)
 end
+
+@testset "trapezoidal_matrix and homogenize_alv — a law of neither order is refused" begin
+    # A kernel valued in 2×2 matrices is neither a conductivity (3×3) nor a stiffness
+    # (6×6 Kelvin–Mandel): both entry points say so instead of guessing.
+    law = ViscoLaw((t, tp) -> zeros(2, 2))
+    @test_throws "only 3×3 (order-2) or 6×6" trapezoidal_matrix(law, [0.0, 1.0])
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => law); fraction = :rest)
+    @test_throws "cannot infer ALV order" homogenize_alv(r, Voigt(), :C; times = [0.0, 1.0])
+end

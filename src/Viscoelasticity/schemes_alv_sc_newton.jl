@@ -149,8 +149,10 @@ function self_consistent_alv_newton(
             α_local[i, :] .= view(p, 1:i)
             β_local[i, :] .= view(p, (i + 1):(2i))
             C_m_i = iso_blocks_from_params(α_local, β_local)
+            # The crack compliances enter the concentration as H̃ ∘ C̃ₘ: the Echoes form
+            # (C̃Ã ∘ J̃) ∘ (Ã ∘ J̃ + H̃)⁻¹ of the Picard iteration is C̃Ã ∘ (Ã + H̃ ∘ C̃ₘ)⁻¹.
             extra_A_i = isempty(crack_data_i) ? nothing :
-                _build_sc_crack_extra_J(C_m_i, crack_data_i)
+                _alv_prod(_build_sc_crack_extra_J(C_m_i, crack_data_i), C_m_i)
             C_m_new_i = _sc_alv_step(
                 C_m_i, C_phases_i, U_M_phases, V_M_phases,
                 fractions, symmetrizes;

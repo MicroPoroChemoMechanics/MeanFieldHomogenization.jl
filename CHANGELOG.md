@@ -96,6 +96,11 @@ needs; an Applications page puts the two together for the basic creep of concret
 
 ### Fixed
 
+- The Newton solver of the aging self-consistent scheme (`self_consistent_alv_newton`,
+  internal) added the crack compliance H̃ itself to the concentration, where the Echoes
+  form of the Picard iteration amounts to H̃ ∘ C̃ₘ: with cracks it converged to another
+  estimate (24 % off at a density of 0.1). It now reaches the Picard fixed point to
+  1e-10, which a test checks. `homogenize_alv` does not use this solver.
 - CI: the polycrystals run as a sixth test part. Mostly compilation, they were half of the
   `schemes` part (16 of 32 minutes on Julia 1.14.0-alpha2, measured), which a slow runner
   took past the 90-minute timeout on the prerelease of Julia.

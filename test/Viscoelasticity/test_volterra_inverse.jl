@@ -122,3 +122,26 @@ end
     M = lower(1, 10, 0.0)
     @test MeanFieldHomogenization.Viscoelasticity.volterra_inverse!(similar(M), M; block_size = 1) ≈ inv(M) rtol = 1.0e-13
 end
+
+@testset "volterra_inverse! and volterra_left_divide — every path against dense algebra" begin
+    # The Volterra inverse and left division of block lower-triangular matrices are
+    # their matrix inverse and left division: dense LU is an independent reference.
+    # From 64 scalar steps the in-place inverse goes to LAPACK's triangular inverse.
+    n = 70
+    M = Matrix(LowerTriangular(rand(n, n) + n * I))
+    out = similar(M)
+    @test MeanFieldHomogenization.Viscoelasticity.volterra_inverse!(out, M; block_size = 1) === out
+    @test out ≈ inv(M) rtol = 1.0e-12
+    @test istril(out)
+    # Blocks of 6: the block forward substitution of the left division.
+    B, m = 6, 4
+    S = zeros(B * m, B * m)
+    R = zeros(B * m, B * m)
+    for j in 1:m, i in j:m
+        rows, cols = ((i - 1) * B + 1):(i * B), ((j - 1) * B + 1):(j * B)
+        S[rows, cols] .= i == j ? rand(B, B) + B * I : rand(B, B)
+        R[rows, cols] .= rand(B, B)
+    end
+    X = volterra_left_divide(S, R; block_size = B)
+    @test X ≈ S \ R rtol = 1.0e-12
+end

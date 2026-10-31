@@ -386,16 +386,10 @@ end
 
 # ── Crack compliance contribution against the running estimate ─────────────
 #
-# Computes `Σ_c ε·sym(H̃_c(C_m))` where `H̃_c(C_m)` is the (Sevostianov-
-# corrected) crack compliance contribution against the running estimate
-# `C_m`.  Used in two ways:
-#   (a) `_build_sc_crack_extra_J(C_m, crack_data)`  — appended to the
-#       compliance `J̃ = inv(C_m_solid_SC)` in the Budiansky-O'Connell
-#       branch of the SC iteration (the default, robust path).
-#   (b) `_build_sc_crack_extra_A(C_m, crack_data)`  — alias used by the
-#       experimental ECHOES-form `B · A^{-vol}` MT body (kept available
-#       for the Newton-Raphson SC solver, which uses the same algebra
-#       but solves `F(C) = 0` instead of iterating Picard).
+# `Σ_c ε·sym(H̃_c(C_m))`, the (Sevostianov-corrected) crack compliances against
+# the running estimate `C_m`, as a full matrix: the H̃ of the Echoes form of the
+# step on full matrices, and, composed with `C_m`, the crack term of the
+# concentration in the Newton solver (`schemes_alv_sc_newton.jl`).
 function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
     extra = zero(C_m)
     isempty(crack_data) && return extra
@@ -407,11 +401,6 @@ function _build_sc_crack_extra_J(C_m::AbstractMatrix, crack_data)
     end
     return extra
 end
-
-# Alias used by the ECHOES-form MT body (numerically identical : both
-# represent the iso-symmetrized crack compliance contribution scaled
-# by the Budiansky concentration factor `(4π/3)·ε`).
-@inline _build_sc_crack_extra_A(C_m, crack_data) = _build_sc_crack_extra_J(C_m, crack_data)
 
 # Single SC step (legacy MFH form, retained for external callers /
 # internal sub-steps that still rely on the standard

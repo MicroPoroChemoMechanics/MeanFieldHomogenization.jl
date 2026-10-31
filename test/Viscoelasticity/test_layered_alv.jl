@@ -524,3 +524,26 @@ end
         @test β ≈ ref[2] rtol = 1.0e-8
     end
 end
+
+@testset "SC and ASC with a layered sphere and ellipsoids — the full-matrix route against the classes" begin
+    # A one-layer sphere is the spherical inclusion, but it sends the self-consistent
+    # schemes down the full-matrix route, the ellipsoid keeping them in the classes:
+    # with an ellipsoidal phase beside it, both routes give the same estimate, at
+    # convergence and after two iterations, with or without keeping the best one.
+    times = [0.0, 0.4, 1.0, 1.8]
+    matrix = maxwell_iso(10.0, 6.0, 0.8, 2.5)
+    stiff, soft = heaviside_law(TensISO{3}(90.0, 40.0)), heaviside_law(TensISO{3}(30.0, 20.0))
+    function cell(shape)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+        add_phase!(r, :A, Ellipsoid(1.0, 1.0, 3.0), Dict(:C => stiff); fraction = 0.15, symmetrize = :iso)
+        add_phase!(r, :B, shape, Dict(:C => soft); fraction = 0.2)
+        return r
+    end
+    for scheme in (SelfConsistent, AsymmetricSelfConsistent), opts in ((;), (; maxiters = 2), (; maxiters = 2, select_best = true))
+        s = scheme(; reltol = 1.0e-13, opts...)
+        classes = homogenize_alv(cell(Ellipsoid(1.0)), s, :C; times)
+        full = homogenize_alv(cell(LayeredSphere((1.0,), (soft,))), s, :C; times)
+        @test Matrix(classes) ≈ Matrix(full) rtol = 1.0e-11
+    end
+end
