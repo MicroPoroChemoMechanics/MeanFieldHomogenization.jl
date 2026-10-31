@@ -95,9 +95,9 @@ function _asymmetric_self_consistent_alv(
     C_M = _relaxation_operator(C_M_law, grid)
     incl_names = inclusion_phase_names(rve, m)
     # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl); the geometries
-    # of the phases are of different shape types.
+    # of the phases are of different shape types, as a `Phase` holds them.
     C_phases = AbstractMatrix[]
-    geometries = Any[]
+    geometries = MFH_Core.AbstractInclusion[]
     fractions = typeof(volume_fraction(rve, m))[]   # eltype of the RVE amounts
     symmetrizes = AbstractSymmetrize[]
     crack_data = Tuple{

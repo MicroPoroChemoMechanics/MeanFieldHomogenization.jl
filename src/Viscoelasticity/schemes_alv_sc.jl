@@ -81,7 +81,7 @@ function _self_consistent_alv(
     # geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number)
     # coefficients — no `Float64` hard-coding on any AD-reachable path.
     C_phases = AbstractMatrix[C_0]
-    geometries = Any[rve.phases[m].geometry]
+    geometries = MFH_Core.AbstractInclusion[rve.phases[m].geometry]
     fractions = [f_M]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
     # crack_data tuple: (geom, density, sym, Rn_mat::Union{Nothing, Matrix},
