@@ -87,7 +87,8 @@ first-order steps.
 
 The cases of the aging viscoelastic harness (`scripts/bench_echoes/alv_harness`, its
 `README.md` describes them): spheres and spheroids, aligned and tilted, transversely
-isotropic laws about tilted axes, orientation averages, conduction, and two-scale chains, on
+isotropic laws about tilted axes, orientation averages, conduction, two-scale chains, and
+tilted elliptic cracks, on
 50 instants. Both codes start from the same closed-form kernels; Echoes calls them through
 Python at each pair of instants. `MeanFieldHomogenization` computes each scheme in the
 symmetry class of its operators ([Aging viscoelastic operators and histories](@ref man-volterra-operators)),

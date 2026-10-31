@@ -90,8 +90,8 @@ needs; an Applications page puts the two together for the basic creep of concret
   state (it saved `nsteps + 1` copies of its dense state, never read) and adds its
   isotropic terms into the derivative in place: at 80 instants 242 → 140 ms, the result
   unchanged to the bit. On the harness at 50 instants (the *Performance
-  vs Echoes* page), 3.2 to 39 times faster than Echoes in elasticity, 3.0 to 15 times in
-  conduction. The aging basic creep model of the
+  vs Echoes* page), 3.5 to 41 times faster than Echoes in elasticity, 3.2 to 15 times in
+  conduction, 2.4 to 22 times with elliptic cracks. The aging basic creep model of the
   Applications chapter: the high-performance concrete in 103 s against 499 s.
 
 ### Fixed
