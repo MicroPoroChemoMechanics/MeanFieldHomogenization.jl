@@ -55,7 +55,7 @@ with ``\\alpha = 3k``, ``\\beta = 2\\mu`` the isotropic blocks of the matrix, an
 ``\\eta = b/a`` of the elastic closed form: the elastic COD tensor with every
 quotient a Volterra inverse, in the order of the flat limit of a void ellipsoid.
 
-# Interface stiffness (Sevostianov-style spring-like interface)
+# Interface stiffness (spring-like interface, approximate)
 
 When the crack carries finite **interface stiffness** kernels ``k_n(t,t')``
 (normal) and ``k_t(t,t')`` (tangential), pass them as scalar `ViscoLaw`s
@@ -68,9 +68,11 @@ matrices are then post-corrected via the algebraic identity
 = \\widetilde{B}_{\\alpha}\\circ\\bigl(H + b\\,\\widetilde{k}_{\\alpha}\\circ\\widetilde{B}_{\\alpha}\\bigr)^{-1^{\\circ}},
 ```
 
-[sevostianovIJSS2007, barthelemyIJES2019](@cite), with ``k_n`` on the normal
-component and ``k_t`` on the two tangential ones, ``b`` the semi-minor axis
-(`semi_minor`) of the crack.  Limits :
+with ``k_n`` on the normal component and ``k_t`` on the two tangential ones,
+``b`` the semi-minor axis (`semi_minor`) of the crack: the compliance of the springs
+added to that of the faces, as if they saw the average opening. An approximation,
+exact in its limits but not derived from the integral equation of a crack with
+spring-like faces. Limits:
 
 * `Rn / Rt = nothing` (default) → traction-free crack.
 * ``k_n, k_t \\to \\infty`` (rigid bonding) → no opening.

@@ -387,10 +387,11 @@ homogenize_alv(bonded, MoriTanaka(), :C; times)
 ```
 
 The scalar COD kernels ``\widetilde{B}_n`` (normal) and ``\widetilde{B}_\ell``, ``\widetilde{B}_m`` (tangential) are
-post-corrected, `Rn` on the first and `Rt` on the other two, by the
-spring-interface construction of [sevostianovIJSS2007](@citet), transposed to
-the Volterra algebra: crack-face and interface compliances add up, at the cost
-of one extra scalar Volterra inverse per direction.
+post-corrected, `Rn` on the first and `Rt` on the other two: crack-face and
+interface compliances add up, as if the springs saw the average opening, at the
+cost of one extra scalar Volterra inverse per direction. This is an approximation,
+exact in its limits below but not derived from the integral equation of a crack
+with springs ([Interfaces](@ref th-visco-cracks)).
 
 Limits, all exercised in the test suite:
 

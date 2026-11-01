@@ -612,9 +612,9 @@ compliance of a ribbon is orthotropic in its frame.
 ### Interfaces
 
 A crack whose faces are held by springs of normal and tangential stiffness
-kernels ``\widetilde{k}_n``, ``\widetilde{k}_t`` opens less. The correction of
-[sevostianovIJSS2007](@citet) adds the compliance of the springs to that of the
-faces in each direction; in the Volterra algebra it reads
+kernels ``\widetilde{k}_n``, ``\widetilde{k}_t`` opens less. The package adds, in each
+direction, the compliance of the springs to that of the traction-free crack, as if
+the springs saw the average opening; in the Volterra algebra
 
 ```math
 \widetilde{B}^{\mathrm{int}} = \bigl(\widetilde{B}^{-1^{\circ}} + b\,\widetilde{k}\bigr)^{-1^{\circ}}
@@ -625,6 +625,14 @@ faces in each direction; in the Volterra algebra it reads
 ``\widetilde{B}_{\ell}`` and ``\widetilde{B}_{m}``, with ``b`` the half-width
 [barthelemyIJES2019](@cite). Rigid springs close the crack, soft ones leave it
 traction-free.
+
+!!! warning "An approximation, not a solution of the spring problem"
+    This correction is exact in its two limits, traction-free springs and rigid
+    ones, and it is the elastic correction of the package under constant kernels.
+    It is not derived from the integral equation of a crack with spring-like
+    faces, whose opening is not uniform: it is an approximation, and no published
+    source is known to the package for it. The same holds for the Kapitza-like
+    interface of insulating cracks below.
 
 ### Insulating cracks in conduction
 
