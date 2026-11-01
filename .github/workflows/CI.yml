@@ -180,7 +180,7 @@ jobs:
         if: steps.merge.outputs.complete == 'true'
         run: |
           julia --color=yes -e 'using Pkg; Pkg.activate(; temp = true); Pkg.add("Coverage"); include(".github/scripts/coverage.jl")' \
-            lcov.info src ext --exclude src/studio
+            lcov.info src ext --exclude src/Studio
       - uses: codecov/codecov-action@v7
         if: steps.merge.outputs.complete == 'true'
         with:

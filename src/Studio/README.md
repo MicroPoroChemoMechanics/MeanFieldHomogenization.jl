@@ -58,7 +58,7 @@ just started by `tools/screenshots.mjs` (Node and playwright-core), in the
 light and the dark theme, then reduced to 256 colors:
 
 ```bash
-node src/studio/tools/screenshots.mjs --url 'http://127.0.0.1:8765/?token=…'
+node src/Studio/tools/screenshots.mjs --url 'http://127.0.0.1:8765/?token=…'
 ```
 
 ## Tests

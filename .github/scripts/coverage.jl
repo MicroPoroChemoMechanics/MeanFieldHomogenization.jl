@@ -16,11 +16,11 @@
 #     visible at 0 % instead of silently vanishing from the report.
 #
 # Usage: `julia coverage.jl [output [folder...] [--exclude folder...]]`, by
-# default `lcov.info` from `src` and `ext`. MFH Studio (`src/studio`) is
+# default `lcov.info` from `src` and `ext`. MFH Studio (`src/Studio`) is
 # reported by its own workflow, which runs its compute process: CI.yml excludes
 # it, since its worker files, never loaded in-process, would land here amended
 # and Codecov's union would then count the lines Julia never instruments as
-# missed. Studio.yml excludes `src/studio/library`, the worked examples, which
+# missed. Studio.yml excludes `src/Studio/library`, the worked examples, which
 # are scripts the studio opens, not code the package loads.
 
 # CoverageTools is a dependency of Coverage

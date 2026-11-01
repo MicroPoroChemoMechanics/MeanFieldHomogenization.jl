@@ -471,9 +471,9 @@ const HillAlgorithm = AbstractAlgorithm
 const CrackAlgorithm = AbstractAlgorithm
 export HillAlgorithm, CrackAlgorithm
 
-# ── MFH Studio (`src/studio`) ────────────────────────────────────────────────
+# ── MFH Studio (`src/Studio`) ────────────────────────────────────────────────
 # Last, since its code generation and its views read the whole package.
-include("studio/Studio.jl")
+include("Studio/Studio.jl")
 using .Studio: mfhstudio
 
 end # module

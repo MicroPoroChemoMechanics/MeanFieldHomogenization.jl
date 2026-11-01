@@ -68,6 +68,8 @@ family is complete: ribbons, and insulating cracks in conduction, in every schem
 
 ### Changed
 
+- The sources of MFH Studio moved from `src/studio` to `src/Studio`, named as every other
+  submodule directory is; nothing changes for a user of `MeanFieldHomogenization.Studio`.
 - The differential ALV scheme forms the crack contributions in the classes of the operators,
   as it did those of the solid phases: the same estimate to 4e-16, and 6.7 ms instead of
   10.4 ms for a cell with an elliptic crack family on 15 instants.
