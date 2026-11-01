@@ -68,8 +68,8 @@ const NSERIES = 6
 const K0 = TensISO{3}(KM)
 const KC = TensISO{3}(KCORE)
 
-# Build a one-layer spheroid of aspect ratio \omega at fixed **transverse** radius
-# \rho_t = 1, carrying an HC interface of surface conductance k^{\mathrm s}
+# Build a one-layer spheroid of aspect ratio ``\omega`` at fixed **transverse** radius
+# ``\rho_t = 1``, carrying an HC interface of surface conductance ``k^{\mathrm s}``
 # (the code names them `ϖ` and `β`).
 
 function _particle(ϖ, β; ρ_t = 1.0)

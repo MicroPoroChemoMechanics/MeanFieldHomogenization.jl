@@ -298,8 +298,8 @@ isotropic case, as [pouya2000, pouya2006](@citet) had observed.
 
 The spheroid has the axis ``\underline{e}_3`` and the aspect ratio
 ``\omega = c/a``; since the Hill tensor ignores a homothety of the shape,
-``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2
-+ \omega\,\underline{e}_3\otimes\underline{e}_3`` (eq. 16). The matrix is
+``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2 +
+\omega\,\underline{e}_3\otimes\underline{e}_3`` (eq. 16). The matrix is
 transversely isotropic about the same axis, with the five constants
 ``C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323}``, and its Walpole
 decomposition (eq. 17) is the one TensND stores

@@ -64,6 +64,10 @@ function _plain(s::AbstractString)
     return replace(s, r"</?[bu]>" => "")
 end
 
+# A formula in a cell of a Markdown table: a `|` would end the cell (`p_{j|i}` was
+# cut in two), so it is written `\vert`, which LaTeX typesets the same.
+_table_tex(t::AbstractString) = replace(t, "|" => "\\vert ")
+
 # A page of the documentation as a link from `nomenclature.md`.
 _nomenclature_page_link(p) = endswith(p, "/") ? "`$p`" : "[`$(first(splitext(p)))`]($p)"
 
@@ -84,7 +88,7 @@ function nomenclature_markdown()
         println(io, "|:--|:--|:--|:--|")
         for e in rows
             where = isempty(e.pages) ? "" : join(_nomenclature_page_link.(e.pages), ", ")
-            println(io, "| ", "``", e.tex, "``", " | ", _plain(e.name), " | ", _plain(e.unit), " | ", where, " |")
+            println(io, "| ", "``", _table_tex(e.tex), "``", " | ", _plain(e.name), " | ", _plain(e.unit), " | ", where, " |")
         end
         println(io)
     end

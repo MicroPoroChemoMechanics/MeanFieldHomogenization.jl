@@ -217,8 +217,7 @@ The **Eshelby kernel** follows by the same definition as in elasticity,
 If the reference kernel is isotropic,
 ``\mathbb{C}(t,t') = 3k(t,t')\,\mathbb{J} + 2\mu(t,t')\,\mathbb{K}``, the
 acoustic tensor is diagonal in the
-``(\underline{\xi}\otimes\underline{\xi},\
-\boldsymbol{1}-\underline{\xi}\otimes\underline{\xi})`` decomposition and can be
+``(\underline{\xi}\otimes\underline{\xi},\ \boldsymbol{1}-\underline{\xi}\otimes\underline{\xi})`` decomposition and can be
 inverted in the Volterra sense analytically. The Hill kernel then **factorizes**
 [barthelemyIJSS2016, barthelemyIJES2019](@cite):
 
@@ -258,8 +257,8 @@ in the Volterra sense, and assembles against [`tens_UA`](@ref) and
 **Why the longitudinal modulus, and not the bulk one.** The Hill tensor inverts
 the acoustic tensor of the reference. For an isotropic one,
 ``\underline{\xi}\cdot\mathbb{C}_0\cdot\underline{\xi}
-= \bigl(k + \tfrac{4}{3}\mu\bigr)\,\underline{\xi}\otimes\underline{\xi}
-+ \mu\,\bigl(\boldsymbol{1} - \underline{\xi}\otimes\underline{\xi}\bigr)``
+= \bigl(k + \tfrac{4}{3}\mu\bigr)\,\underline{\xi}\otimes\underline{\xi} +
+\mu\,\bigl(\boldsymbol{1} - \underline{\xi}\otimes\underline{\xi}\bigr)``
 for a unit ``\underline{\xi}``: its two eigenvalues are the *longitudinal*
 (P-wave) modulus ``k + \tfrac{4}{3}\mu`` and the shear modulus ``\mu``. These two,
 not the bulk modulus alone, are the scalars the formula above inverts, which is
@@ -275,8 +274,8 @@ with ``(\alpha, \beta) = (3k, 2\mu)`` the coefficients of ``\mathbb{J}`` and
 ``\mathbb{K}``, and with their Volterra inverses
 ``J_{\mathrm{long}} = M_{\mathrm{long}}^{-\circ}`` and
 ``J_{\mathrm{shear}} = M_{\mathrm{shear}}^{-\circ}``, so that
-``\widetilde{\mathbb{P}} = J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
-+ J_{\mathrm{shear}}\,\bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr)``,
+``\widetilde{\mathbb{P}} = J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}} +
+J_{\mathrm{shear}}\,\bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr)``,
 block by block in time.
 
 Going back to bulk and shear is linear on the relaxation kernels:
@@ -329,8 +328,8 @@ J_bulk = volterra_inverse(k; block_size = 1)
 (J_long[1, 1], J_bulk[1, 1], 1 / (10.0 + 4 / 3 * 4.0), 1 / 10.0)
 ```
 
-Assembling ``J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
-+ J_{\mathrm{shear}}\,(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}})``
+Assembling ``J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}} +
+J_{\mathrm{shear}}\,(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}})``
 by hand, in Kelvin–Mandel components, gives the Hill kernel that
 [`hill_kernel`](@ref) returns:
 

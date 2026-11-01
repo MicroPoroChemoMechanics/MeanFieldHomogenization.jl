@@ -309,8 +309,8 @@ end
 # ## §5 The crack-plane integral — where the elliptic integrals appear
 #
 # On the crack contour
-# ``\underline{\xi}^{\star}(\varphi) = \eta\cos\varphi\,\underline{\ell}
-# + \sin\varphi\,\underline{m}``, so that
+# ``\underline{\xi}^{\star}(\varphi) = \eta\cos\varphi\,\underline{\ell} +
+# \sin\varphi\,\underline{m}``, so that
 # ``\rho = \sqrt{\eta^2\cos^2\varphi + \sin^2\varphi}``,
 # ``\underline{u} = \underline{\xi}^{\star}/\rho`` and
 # ``\underline{w} = (\eta\cos\varphi\,\underline{m} - \sin\varphi\,\underline{\ell})/\rho``.

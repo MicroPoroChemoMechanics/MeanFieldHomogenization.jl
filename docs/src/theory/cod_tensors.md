@@ -1017,8 +1017,8 @@ gives the form of the next section.
 ``B_{\ell\ell} = B_{mm} = B_{nn}/(1-\nu/2)``. For the ribbon,
 ``b\boldsymbol{\Lambda}^{\mathcal{R}} = \hat{\boldsymbol{Q}}^{\star}_{nn}(\underline{m})``,
 where ``\underline{u} = \underline{m}`` and ``\underline{w} = -\underline{\ell}``:
-``b\boldsymbol{\Lambda}^{\mathcal{R}} = a_2\,\underline{\ell}\otimes\underline{\ell}
-+ a_1\,\underline{m}\otimes\underline{m} + a_3\,\underline{n}\otimes\underline{n}``,
+``b\boldsymbol{\Lambda}^{\mathcal{R}} = a_2\,\underline{\ell}\otimes\underline{\ell} +
+a_1\,\underline{m}\otimes\underline{m} + a_3\,\underline{n}\otimes\underline{n}``,
 and with ``\chi^{\mathcal{R}} = \pi/4``
 
 ```math

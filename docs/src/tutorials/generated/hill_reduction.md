@@ -116,8 +116,8 @@ against_numerics(P_reduced, spheroid, C_ti)
 ## 2. An elliptically orthotropic matrix, from the isotropic closed form
 
 The elliptically orthotropic matrix
-``\mathbb{C} = \lambda\,\boldsymbol{D}\otimes\boldsymbol{D}
-+ 2\mu\,\boldsymbol{D}\stackrel{s}{\boxtimes}\boldsymbol{D}``, with
+``\mathbb{C} = \lambda\,\boldsymbol{D}\otimes\boldsymbol{D} +
+2\mu\,\boldsymbol{D}\stackrel{s}{\boxtimes}\boldsymbol{D}``, with
 ``\boldsymbol{D}`` symmetric positive definite, is mapped by the stretch
 ``\boldsymbol{D}^{-1/2}`` onto the isotropic
 ``\lambda\,\boldsymbol{1}\otimes\boldsymbol{1} + 2\mu\,\boldsymbol{1}\stackrel{s}{\boxtimes}\boldsymbol{1}``,
