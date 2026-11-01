@@ -211,7 +211,7 @@ instead of one ``6n\\times 6n``. It computes as its elastic counterpart does:
 
 | elastic | aging viscoelastic |
 |:--|:--|
-| `C₁ ⊡ C₂` | composition ``R_1\\circ R_2`` (in this order: it does not commute) |
+| `C₁ ⊡ C₂` | composition ``\\mathbb{R}_1\\stackrel{\\circ}{:}\\mathbb{R}_2`` (in this order: it does not commute) |
 | `inv(C)` | Volterra inverse: the creep operator of a relaxation one |
 | `C₁ + C₂`, `C₁ - C₂`, `c * C` | sum, difference, product by a number |
 | `I`, `one(R)` | the identity operator |
@@ -581,7 +581,7 @@ TensND.:⊡(x::TensND.AbstractTens{4}, A::VolterraOperator) = _as_operator(x, A)
 """
     inv(R::VolterraOperator) -> VolterraOperator
 
-The Volterra inverse of `R`: the operator ``R^{-1}`` such that ``R\\circ R^{-1}``
+The Volterra inverse of `R`: the operator ``\\mathbb{R}^{-1^{\\circ}}`` such that ``\\mathbb{R}\\stackrel{\\circ}{:}\\mathbb{R}^{-1^{\\circ}}``
 is the identity on the grid. The inverse of a relaxation operator is the creep
 operator of the same material. Computed block by block (forward substitution,
 [`volterra_inverse`](@ref)).

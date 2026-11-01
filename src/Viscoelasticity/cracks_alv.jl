@@ -43,11 +43,11 @@ along the semi-axis ``a``, ``m`` along ``b``, ``n`` the normal (``n`` =
 `length(times)` instants). For a penny ``\\widetilde{B}_\\ell = \\widetilde{B}_m``.
 
 ```math
-\\widetilde{B}_{\\ell} = \\tfrac83\\,\\bigl((\\alpha + 2\\beta)\\,\\mathcal{C} + \\eta^2\\mathcal{S}\\,(2\\alpha + \\beta)\\bigr)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ},
+\\widetilde{B}_{\\ell} = \\tfrac83\\,\\bigl((\\alpha + 2\\beta)\\,\\mathcal{C} + \\eta^2\\mathcal{S}\\,(2\\alpha + \\beta)\\bigr)^{-1^{\\circ}}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-1^{\\circ}},
 \\qquad
-\\widetilde{B}_{m} = \\tfrac83\\,\\bigl((\\alpha + 2\\beta)\\,\\eta^2\\mathcal{S} + \\mathcal{C}\\,(2\\alpha + \\beta)\\bigr)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ},
+\\widetilde{B}_{m} = \\tfrac83\\,\\bigl((\\alpha + 2\\beta)\\,\\eta^2\\mathcal{S} + \\mathcal{C}\\,(2\\alpha + \\beta)\\bigr)^{-1^{\\circ}}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-1^{\\circ}},
 \\qquad
-\\widetilde{B}_{n} = \\tfrac{8}{3\\,\\mathcal{E}}\\,(2\\alpha + \\beta)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ},
+\\widetilde{B}_{n} = \\tfrac{8}{3\\,\\mathcal{E}}\\,(2\\alpha + \\beta)^{-1^{\\circ}}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-1^{\\circ}},
 ```
 
 with ``\\alpha = 3k``, ``\\beta = 2\\mu`` the isotropic blocks of the matrix, and
@@ -64,8 +64,8 @@ matrices are then post-corrected via the algebraic identity
 
 ```math
 \\widetilde{B}^{\\mathrm{int}}_{\\alpha}
-= \\bigl(b\\,\\widetilde{k}_{\\alpha} + \\widetilde{B}_{\\alpha}^{-\\circ}\\bigr)^{-\\circ}
-= \\widetilde{B}_{\\alpha}\\circ\\bigl(H + b\\,\\widetilde{k}_{\\alpha}\\circ\\widetilde{B}_{\\alpha}\\bigr)^{-\\circ},
+= \\bigl(b\\,\\widetilde{k}_{\\alpha} + \\widetilde{B}_{\\alpha}^{-1^{\\circ}}\\bigr)^{-1^{\\circ}}
+= \\widetilde{B}_{\\alpha}\\circ\\bigl(H + b\\,\\widetilde{k}_{\\alpha}\\circ\\widetilde{B}_{\\alpha}\\bigr)^{-1^{\\circ}},
 ```
 
 [sevostianovIJSS2007, barthelemyIJES2019](@cite), with ``k_n`` on the normal
@@ -81,9 +81,9 @@ For a [`RibbonCrack`](@ref) (``\\ell`` the unbounded direction, ``m`` across the
 half-width ``b``), the ribbon limit of the same closed form:
 
 ```math
-\\widetilde{B}_{\\ell} = \\pi\\,\\beta^{-\\circ},
+\\widetilde{B}_{\\ell} = \\pi\\,\\beta^{-1^{\\circ}},
 \\qquad
-\\widetilde{B}_{m} = \\widetilde{B}_{n} = \\pi\\,(2\\alpha + \\beta)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ}.
+\\widetilde{B}_{m} = \\widetilde{B}_{n} = \\pi\\,(2\\alpha + \\beta)^{-1^{\\circ}}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-1^{\\circ}}.
 ```
 
 Throws if the matrix law is not isotropic.
@@ -142,9 +142,9 @@ the elastic closed form ``B_{\\ell\\ell} = \\pi/(2\\mu)``,
 ``B_{mm} = B_{nn} = \\pi(1-\\nu)/(2\\mu)``, that is, with ``1-\\nu = (\\alpha+2\\beta)/(2\\alpha+\\beta)``,
 
 ```math
-\\widetilde{B}_{\\ell} = \\pi\\,\\beta^{-\\circ},
+\\widetilde{B}_{\\ell} = \\pi\\,\\beta^{-1^{\\circ}},
 \\qquad
-\\widetilde{B}_{m} = \\widetilde{B}_{n} = \\pi\\,(2\\alpha + \\beta)^{-\\circ}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-\\circ},
+\\widetilde{B}_{m} = \\widetilde{B}_{n} = \\pi\\,(2\\alpha + \\beta)^{-1^{\\circ}}\\circ(\\alpha + 2\\beta)\\circ\\beta^{-1^{\\circ}},
 ```
 
 the limit ``\\eta \\to 0`` of the elliptic expressions times ``3\\pi/8`` (the ratio of
@@ -223,15 +223,15 @@ matrix law of order 2), the crack is insulating and the contribution is the
 ```math
 \\widetilde{\\boldsymbol{R}} = k\\,\\widetilde{b}\\;\\underline{n}\\otimes\\underline{n},
 \\qquad
-\\widetilde{b} = \\frac{4}{3\\,\\mathcal{E}}\\,\\widetilde{k}_0^{-\\circ}\\ \\ (\\text{ellipse}),
+\\widetilde{b} = \\frac{4}{3\\,\\mathcal{E}}\\,\\widetilde{k}_0^{-1^{\\circ}}\\ \\ (\\text{ellipse}),
 \\qquad
-\\widetilde{b} = \\frac{\\pi}{2}\\,\\widetilde{k}_0^{-\\circ}\\ \\ (\\text{ribbon}),
+\\widetilde{b} = \\frac{\\pi}{2}\\,\\widetilde{k}_0^{-1^{\\circ}}\\ \\ (\\text{ribbon}),
 ```
 
 the elastic thermal COD ``b`` of [`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor) with ``1/k_0`` the Volterra
 inverse of the conductivity kernel. A Kapitza-like interface of discretized
 conductance `α_interface` (a scalar `ViscoLaw`) corrects it as in elasticity,
-``\\widetilde{b}\\circ(\\mathbb{1} + b\\,\\widetilde{\\alpha}\\circ\\widetilde{b})^{-\\circ}``.
+``\\widetilde{b}\\circ(\\mathbb{1} + b\\,\\widetilde{\\alpha}\\circ\\widetilde{b})^{-1^{\\circ}}``.
 `Rn` and `Rt` are elastic interfaces and `α_interface` a conduction one: each is
 refused at the other order.
 """
@@ -352,12 +352,12 @@ end
     property_contribution_alv(crack, C_ref, times) -> VolterraOperator
 
 Crack **stiffness** contribution
-``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{H}}\\circ\\widetilde{\\mathbb{C}}_0``,
+``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\stackrel{\\circ}{:}\\widetilde{\\mathbb{H}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{C}}_0``,
 mirror of the elastic `property_contribution(crack, C₀)` formula, with
 ``\\widetilde{\\mathbb{C}}_0`` the discretized `C_ref` (a law, a relaxation
 operator or an elastic tensor) and ``\\widetilde{\\mathbb{H}}`` from
 [`inverse_property_contribution_alv`](@ref); in conduction, the conductivity
-contribution ``-\\widetilde{\\boldsymbol{K}}_0\\circ\\widetilde{\\boldsymbol{R}}\\circ\\widetilde{\\boldsymbol{K}}_0``
+contribution ``-\\widetilde{\\boldsymbol{K}}_0\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{R}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{K}}_0``
 of an insulating crack.
 """
 function property_contribution_alv(
@@ -374,7 +374,7 @@ end
     property_contribution_alv_at(crack, C_ref::AbstractMatrix; Rn_mat, Rt_mat) -> AbstractMatrix
 
 The crack **stiffness** contribution
-``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{H}}\\circ\\widetilde{\\mathbb{C}}_0``
+``\\widetilde{\\mathbb{N}} = -\\widetilde{\\mathbb{C}}_0\\stackrel{\\circ}{:}\\widetilde{\\mathbb{H}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{C}}_0``
 against an isotropic reference given as its operator or its ``6n\\times 6n``
 matrix (a running estimate), the interfaces given by their discretized
 stiffnesses `Rn_mat`, `Rt_mat` (``n\\times n``, `nothing` for a traction-free

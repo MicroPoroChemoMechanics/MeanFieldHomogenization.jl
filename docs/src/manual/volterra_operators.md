@@ -84,7 +84,7 @@ An operator computes as its elastic counterpart does, with the same symbols:
 
 | elastic | aging viscoelastic |
 |:--|:--|
-| `C₁ ⊡ C₂` | composition ``\mathbb{R}_1 \circ \mathbb{R}_2`` (it does not commute: keep the order) |
+| `C₁ ⊡ C₂` | composition ``\mathbb{R}_1 \stackrel{\circ}{:} \mathbb{R}_2`` (it does not commute: keep the order) |
 | `inv(C)` | Volterra inverse |
 | `C₁ + C₂`, `C₁ - C₂`, `c * C`, `C / c` | sum, difference, product by a number |
 | `I` | the identity operator |
@@ -112,7 +112,7 @@ inv(R) ⊡ σ ≈ ε
 
 `σ[i]` is the stress at ``t_i``, as its six Kelvin-Mandel components. A
 dilute estimate written as on paper, ``\mathbb{R} + f\,(\mathbb{E} -
-\mathbb{R}) \circ (\mathbb{I} + \mathbb{P} \circ (\mathbb{E} - \mathbb{R}))^{-1}``,
+\mathbb{R}) \stackrel{\circ}{:} (H\,\mathbb{I} + \mathbb{P} \stackrel{\circ}{:} (\mathbb{E} - \mathbb{R}))^{-1^{\circ}}``,
 is one line of Julia; [`homogenize_alv`](@ref) does this, and the rest, for you.
 
 !!! note "An operator is its matrix"

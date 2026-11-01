@@ -355,7 +355,7 @@ that ``\\langle\\varepsilon_{\\mathrm{v}}\\rangle_k = \\alpha_k\\circ\\varepsilo
 For the bulk ``Y_0`` harmonic, the volume-averaged volumetric strain in
 layer ``k`` is exactly ``3A_k`` (the mode-2 amplitude ``B_k`` has
 ``u_r = B_k/r^2`` ⇒ traceless contribution).  Therefore
-``\\alpha_k = A_k\\circ A_{\\infty}^{-\\circ}`` with ``A_{\\infty}`` the matrix-side mode-1 amplitude.
+``\\alpha_k = A_k\\circ A_{\\infty}^{-1^{\\circ}}`` with ``A_{\\infty}`` the matrix-side mode-1 amplitude.
 
 Implementation : amplitude-space recurrence with closed-form
 interface transitions ([`bulk_amplitude_seq_alv`](@ref)).  Stable
@@ -446,11 +446,11 @@ interface, which is why a perfect interface is the identity
 (`_across_interface_alv`) and needs no modulus conversion.
 
 Block for block this is the elastic matrix with the scalar ``x = k/\\mu``
-replaced by the Volterra ratio ``\\widetilde{\\mu}^{-\\circ}\\circ\\widetilde{k}`` applied **on the
+replaced by the Volterra ratio ``\\widetilde{\\mu}^{-1^{\\circ}}\\circ\\widetilde{k}`` applied **on the
 left**.  That inverse appears in three entries of the ``U``/``W`` rows
 (``\\mathbf{M}_{12}``, ``\\mathbf{M}_{22}``, ``\\mathbf{M}_{14}``), each formed by
 [`volterra_left_divide`](@ref)`(M_μ, …)` rather than by materializing
-``\\widetilde{\\mu}^{-\\circ}``.  A layer with a vanishing shear modulus is therefore
+``\\widetilde{\\mu}^{-1^{\\circ}}``.  A layer with a vanishing shear modulus is therefore
 **not** admissible here: `volterra_left_divide` requires
 ``[\\widetilde{\\mu}]_{tt} \\ne 0`` at every time step.
 
@@ -637,10 +637,10 @@ end
 """
     _shear_M_inverse_alv(r, M_κ, M_μ, n) -> Matrix{T}    (4n × 4n)
 
-Closed-form ``\\mathbf{M}(r; k, \\mu)^{-\\circ}`` for the σ-form deviatoric (``Y_2``)
+Closed-form ``\\mathbf{M}(r; k, \\mu)^{-1^{\\circ}}`` for the σ-form deviatoric (``Y_2``)
 fundamental matrix.  Mirrors the reference C++ `set_visco_inv_matrix_dev`
 formula.  The only ``n\\times n`` Volterra
-inverses required are ``U = (3k + 4\\mu)^{-\\circ}`` and ``\\mu^{-\\circ}`` — both
+inverses required are ``U = (3k + 4\\mu)^{-1^{\\circ}}`` and ``\\mu^{-1^{\\circ}}`` — both
 guaranteed regular for any non-vacuum modulus.  This avoids inverting
 the full ``4\\times 4`` diagonal block of ``\\mathbf{M}(r)``, whose `det` collapses with
 ``\\mu \\to 0`` (soft phases, step-activated layers).
@@ -715,7 +715,7 @@ end
 ``\\mathbf{S}(r_{\\mathrm{out}}) = \\mathbf{T}\\,\\mathbf{S}(r_{\\mathrm{in}})`` for the deviatoric (``Y_2``) problem in an ALV
 layer with Volterra moduli `(M_κ, M_μ)`.  Uses the closed-form
 [`_shear_M_inverse_alv`](@ref) so the only Volterra inverses are the
-``n\\times n`` ``(3k + 4\\mu)^{-\\circ}`` and ``\\mu^{-\\circ}`` — the dense ``\\mathbf{M}(r; k, \\mu)^{-\\circ}``
+``n\\times n`` ``(3k + 4\\mu)^{-1^{\\circ}}`` and ``\\mu^{-1^{\\circ}}`` — the dense ``\\mathbf{M}(r; k, \\mu)^{-1^{\\circ}}``
 is never formed (its ``4\\times 4`` diagonal blocks collapse for soft phases).
 """
 function _shear_layer_transfer_alv(
@@ -955,7 +955,7 @@ ALV counterpart of the elastic `LayeredSpheres._strain_jump_terms`: the
 ``\\mathbb J`` and ``\\mathbb K``,
 
 ```math
-\\Delta\\alpha = \\sum_k \\frac{r_k^2}{R^3}\\,[\\![u_r]\\!]_k\\circ A_\\infty^{-\\circ},
+\\Delta\\alpha = \\sum_k \\frac{r_k^2}{R^3}\\,[\\![u_r]\\!]_k\\circ A_\\infty^{-1^{\\circ}},
 \\qquad
 \\Delta\\beta = \\sum_k \\frac{r_k^2}{5R^3}\\,\\big([\\![U]\\!]_k + 3[\\![W]\\!]_k\\big),
 ```

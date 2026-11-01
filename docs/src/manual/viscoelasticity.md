@@ -290,7 +290,7 @@ A crack family has no volume, which decides how each scheme takes it
 | `Voigt`, `Reuss`               | ignored (no volume)                                 |
 | `Dilute`, `DiluteDual`         | its contribution added to the stiffness or the compliance |
 | `Maxwell`, `PCW`               | one more contribution, of weight one                |
-| `MoriTanaka`                   | the Echoes form ``\mathbb{B}\circ\mathbb{A}^{-\circ}``: the crack also enters the average strain, against the matrix |
+| `MoriTanaka`                   | the Echoes form ``\mathbb{B}\stackrel{\circ}{:}\mathbb{A}^{-1^{\circ}}``: the crack also enters the average strain, against the matrix |
 | `SelfConsistent`, `AsymmetricSelfConsistent` | the same form, against the running estimate |
 | `DifferentialScheme`           | its contribution against the running medium, at the rate of its density |
 

@@ -44,7 +44,7 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
      kernels follow linearly, ``k = M_{\\mathrm{long}} - \\tfrac{4}{3} M_{\\mathrm{shear}}``
      and ``\\mu = M_{\\mathrm{shear}}``; their inverses do not (see the theory page).
   4. Take the scalar Volterra inverses
-     ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-\\circ}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-\\circ}``.
+     ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-1^{\\circ}}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-1^{\\circ}}``.
   5. Compute the Mandel forms ``\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}})`` and
      ``\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}})`` of the elastic
      auxiliary tensors `tens_UA(ell)` and `tens_VA(ell)`.
@@ -76,7 +76,7 @@ Volterra products:
 
 ```math
 \\widetilde{\\mathbb{Q}} = \\widetilde{\\mathbb{C}}_0
-- \\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{P}}\\circ\\widetilde{\\mathbb{C}}_0 ,
+- \\widetilde{\\mathbb{C}}_0\\stackrel{\\circ}{:}\\widetilde{\\mathbb{P}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{C}}_0 ,
 ```
 
 ``\\widetilde{\\mathbb{C}}_0`` being the relaxation kernel of the matrix (a creep

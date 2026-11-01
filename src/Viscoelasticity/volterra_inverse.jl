@@ -219,7 +219,7 @@ volterra_product(A::AbstractMatrix, B::AbstractMatrix) = A * B
 """
     volterra_divide(M, S; block_size = 1) -> Matrix
 
-Compute ``T = M\\circ S^{-\\circ}`` (Volterra-divide) by direct block forward
+Compute ``T = M\\circ S^{-1^{\\circ}}`` (Volterra-divide) by direct block forward
 substitution on the linear system ``T\\circ S = M``.  Numerically stable
 where `M * volterra_inverse(S)` would lose precision through a huge
 intermediate inverse, e.g. for soft-phase moduli (``k, \\mu \\to 0``) or
@@ -328,7 +328,7 @@ end
 """
     volterra_left_divide(S, M; block_size = 1) -> Matrix
 
-Compute ``T = S^{-\\circ}\\circ M`` (Volterra LEFT-divide) by direct forward
+Compute ``T = S^{-1^{\\circ}}\\circ M`` (Volterra LEFT-divide) by direct forward
 substitution on the linear system ``S\\circ T = M``.
 
 Use this rather than [`volterra_divide`](@ref) when the closed-form

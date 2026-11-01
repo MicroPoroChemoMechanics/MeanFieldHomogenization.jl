@@ -666,10 +666,10 @@ This is the entry point that lets one 2S2P1D object drive **both** routes.  The
 relaxation modulus in the time domain is
 
 ```math
-R = E_{00}\\,H + (E_0 - E_{00})\\,\\varphi^{-\\circ},
+R = E_{00}\\,H + (E_0 - E_{00})\\,\\varphi^{-1^{\\circ}},
 ```
 
-where ``\\varphi^{-\\circ}`` is the **Volterra** inverse, not the pointwise one:
+where ``\\varphi^{-1^{\\circ}}`` is the **Volterra** inverse, not the pointwise one:
 
 ```julia
 m   = Model2S2P1D(1e-7, 1000.0, 2.2, 1.945e-3, 0.22, 0.63, 50.0)

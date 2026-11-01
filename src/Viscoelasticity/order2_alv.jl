@@ -102,7 +102,7 @@ end
 
 Build the discrete Hill kernel ``\\widetilde{\\boldsymbol{P}}`` (size ``3n\\times 3n``) for an
 ellipsoidal inclusion in an isotropic ALV matrix.  Uses the time-space
-decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}_0^{-\\circ}\\bigr)_{ij}\\,\\boldsymbol{I}^{\\boldsymbol{A}}``,
+decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}_0^{-1^{\\circ}}\\bigr)_{ij}\\,\\boldsymbol{I}^{\\boldsymbol{A}}``,
 with ``\\widetilde{\\boldsymbol{K}}_0 = \\widetilde{k}_0\\,\\boldsymbol{1}`` the discretized isotropic reference.
 """
 function hill_kernel_order2(
@@ -117,7 +117,7 @@ end
 
 Discrete ALV second Hill tensor kernel (size ``3n\\times 3n``) of an ellipsoidal
 inclusion in an isotropic ALV matrix of conductivity law `K_0_law`:
-``\\widetilde{\\boldsymbol{Q}} = \\widetilde{\\boldsymbol{K}}_0 - \\widetilde{\\boldsymbol{K}}_0\\circ\\widetilde{\\boldsymbol{P}}\\circ\\widetilde{\\boldsymbol{K}}_0``,
+``\\widetilde{\\boldsymbol{Q}} = \\widetilde{\\boldsymbol{K}}_0 - \\widetilde{\\boldsymbol{K}}_0\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{P}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{K}}_0``,
 with ``\\widetilde{\\boldsymbol{P}}`` the [`hill_kernel_order2`](@ref); the order-2
 counterpart of [`second_hill_kernel`](@ref).
 """
@@ -201,7 +201,7 @@ hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
     dilute_concentration_alv_order2(K_E, K_0, P) -> Matrix
 
 Order-2 dilute concentration
-``\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}} = (H\\,\\boldsymbol{1} + \\widetilde{\\boldsymbol{P}}\\circ\\Delta\\widetilde{\\boldsymbol{K}})^{-\\circ}``,
+``\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}} = (H\\,\\boldsymbol{1} + \\widetilde{\\boldsymbol{P}}\\stackrel{\\circ}{\\cdot}\\Delta\\widetilde{\\boldsymbol{K}})^{-1^{\\circ}}``,
 ``\\Delta\\widetilde{\\boldsymbol{K}} = \\widetilde{\\boldsymbol{K}}^{\\mathcal{E}} - \\widetilde{\\boldsymbol{K}}_0``,
 all matrices ``3n\\times 3n``.
 """
@@ -216,7 +216,7 @@ end
 """
     dilute_contribution_alv_order2(K_E, K_0, P) -> Matrix
 
-Order-2 dilute contribution ``\\widetilde{\\boldsymbol{N}} = \\Delta\\widetilde{\\boldsymbol{K}}\\circ\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}}``.
+Order-2 dilute contribution ``\\widetilde{\\boldsymbol{N}} = \\Delta\\widetilde{\\boldsymbol{K}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}}``.
 """
 function dilute_contribution_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
@@ -291,8 +291,8 @@ Order-2 Mori-Tanaka:
 
 ```math
 \\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}} = \\widetilde{\\boldsymbol{K}}_0
-  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i\\Bigr)\\circ
-    \\Bigl(f_0\\,H\\,\\boldsymbol{1} + \\sum_j f_j\\,\\widetilde{\\boldsymbol{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ} .
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i\\Bigr)\\stackrel{\\circ}{\\cdot}
+    \\Bigl(f_0\\,H\\,\\boldsymbol{1} + \\sum_j f_j\\,\\widetilde{\\boldsymbol{A}}_j^{\\mathrm{dil}}\\Bigr)^{-1^{\\circ}} .
 ```
 """
 function mori_tanaka_alv_order2(
@@ -615,8 +615,8 @@ Order-2 (conductivity / diffusion) counterpart of
 ``\\tau \\in [0, 1]``, integrated on the ``3n\\times 3n`` ALV conductivity block
 matrix.
 
-`formulation = :compliance` integrates the resistivity ``\\widetilde{\\boldsymbol{R}} = \\widetilde{\\boldsymbol{K}}^{-\\circ}``
-instead, through ``\\widetilde{\\boldsymbol{H}}_i = -\\widetilde{\\boldsymbol{R}}\\circ\\widetilde{\\boldsymbol{N}}_i\\circ\\widetilde{\\boldsymbol{R}}``, and inverts the result.
+`formulation = :compliance` integrates the resistivity ``\\widetilde{\\boldsymbol{R}} = \\widetilde{\\boldsymbol{K}}^{-1^{\\circ}}``
+instead, through ``\\widetilde{\\boldsymbol{H}}_i = -\\widetilde{\\boldsymbol{R}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{N}}_i\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{R}}``, and inverts the result.
 
 As in the order-4 case the reference of the ODE is the running
 effective medium, and the order-2 ALV Hill kernel exists for an
@@ -944,7 +944,7 @@ end
 
 Order-2 (conduction, diffusion) self-consistent estimate in the aging linear
 Volterra setting: the fixed point of
-``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\circ\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\circ\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-\\circ}``,
+``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\stackrel{\\circ}{\\cdot}\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-1^{\\circ}}``,
 every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
 ``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
 the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters

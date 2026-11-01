@@ -62,7 +62,7 @@ iteration update reads
 ```math
 \\widetilde{\\mathbb{C}}^{(m+1)} = \\widetilde{\\mathbb{C}}_{\\mathrm{M}}
   + \\sum_i f_i\\,(\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_{\\mathrm{M}})
-    \\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}\\bigl(\\widetilde{\\mathbb{C}}^{(m)}\\bigr),
+    \\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}\\bigl(\\widetilde{\\mathbb{C}}^{(m)}\\bigr),
 ```
 
 with ``\\widetilde{\\mathbb{C}}_{\\mathrm{M}}`` the matrix kernel and ``m`` the iteration
@@ -300,7 +300,7 @@ as a SciML ODE on the fictitious incorporation time ``\\tau \\in [0, 1]``
 \\frac{\\mathrm{d}\\widetilde{\\mathbb{C}}^{\\mathrm{hom}}}{\\mathrm{d}\\tau}
   = \\sum_i \\frac{\\mathrm{d}\\varphi_i}{\\mathrm{d}\\tau}
                   (\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
-                  \\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}(\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
+                  \\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}(\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
    + \\sum_c \\frac{\\mathrm{d}\\varepsilon_c}{\\mathrm{d}\\tau}
               \\Delta\\widetilde{\\mathbb{C}}^{\\mathrm{crack}}_c(\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})
 ```
@@ -312,8 +312,8 @@ of the elastic [`DifferentialScheme`](@ref), has no effect here; the
 integration step is controlled by `abstol` / `reltol`.
 
 `formulation = :compliance` integrates the dual ODE on the creep
-function ``\\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = (\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})^{-\\circ}`` instead, through
-``\\widetilde{\\mathbb{H}}_i = -\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\circ\\widetilde{\\mathbb{N}}_i\\circ\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}``, and
+function ``\\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = (\\widetilde{\\mathbb{C}}^{\\mathrm{hom}})^{-1^{\\circ}}`` instead, through
+``\\widetilde{\\mathbb{H}}_i = -\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{N}}_i\\stackrel{\\circ}{:}\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}``, and
 inverts the result — the same choice as the elastic
 [`DifferentialScheme`](@ref).
 
