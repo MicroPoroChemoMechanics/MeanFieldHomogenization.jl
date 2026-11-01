@@ -153,7 +153,13 @@ function P₁_by_forwarddiff(a, b, R, C; ρ₀ = 1.0e-5)
     P′(ρ) = ForwardDiff.derivative(P, ρ)
     return 2 * P′(ρ₀ / 2) - P′(ρ₀)
 end
+````
 
+A random stiffness and a random rotation, drawn by TensND: positive definite
+(shifted by the identity to stay well away from singular), and uniform over
+the rotations.
+
+````@example crack_routes
 random_stiffness(rng) = 100 * (rand(rng, Tens{4, 3}; definite = true) + tens_Id4(Val(3), Val(Float64)))
 ````
 
