@@ -1,5 +1,80 @@
 # Changelog
 
+## v0.26.0 — self-consistent solvers that keep the physical root; ALV ribbons and cracks in conduction
+
+A minor release: new exported API, and refusals where options were ignored. The Newton
+solvers of the self-consistent equation now reach the physical root beyond percolation, in
+elasticity, in conduction and in aging viscoelasticity at both orders, and the ALV crack
+family is complete: ribbons, and insulating cracks in conduction, in every scheme.
+
+### Breaking changes
+
+- Before 1.0 a minor release is breaking for the resolver: a compat entry
+  `MeanFieldHomogenization = "0.25"` does not accept 0.26.0.
+- `homogenize_alv` honors `SelfConsistent(algorithm = …)` instead of ignoring it:
+  `AndersonDefault()` (the default) is the Picard iteration, `NewtonDefault()` the Newton
+  march, and any other algorithm is refused with an `ArgumentError`, as is a seed `init`,
+  for `SelfConsistent` and `AsymmetricSelfConsistent` alike (the ALV iteration starts from
+  the matrix kernel). A cell that passed such an option got the Picard estimate silently.
+- The ALV self-consistent schemes refuse, by name, a crack family without an isotropic
+  orientation average: the Newton solver used to project the transversely isotropic
+  estimate on the isotropic class without a word, and the Picard iteration failed with an
+  error about classes that did not name the phase.
+- `compliance_contribution_alv` accepts an elastic (order-4) reference only, as its
+  counterparts in elasticity and conduction do; `resistivity_contribution_alv` is its
+  name in conduction.
+- `NewtonDefault` (elasticity, conduction) starts with Picard steps, counted in
+  `maxiters` (see Fixed): an iteration cap set for Newton iterations alone may now stop
+  earlier.
+
+### Added
+
+- **Ribbon cracks in aging viscoelasticity.** `B̃_ℓ = π β^{-∘}` and
+  `B̃_m = B̃_n = π (2α + β)^{-∘} ∘ (α + 2β) ∘ β^{-∘}`, the ribbon limit of the elliptic
+  closed form in the same order of the Volterra factors, orthotropic in the frame of the
+  crack, in every ALV scheme. Checked against the elastic ribbon, against `3π/8` times the
+  elliptic crack as `η → 0` in an aging matrix, and against void elliptic cylinders
+  flattened through their own Hill kernel. A `ConductiveCrack` opens as the penny it wraps.
+- **Insulating cracks in ALV conduction (order 2).** The resistivity
+  `R̃ = κ b̃ n ⊗ n`, `b̃ = (4/3ℰ) k̃₀^{-∘}` (ellipse) or `(π/2) k̃₀^{-∘}` (ribbon), with a
+  Kapitza-like interface `:α_interface`, for elliptic cracks of any aspect ratio, ribbons
+  and any orientation, in Dilute, DiluteDual, Mori–Tanaka, Maxwell, PCW (Voigt and Reuss
+  pass them over), self-consistent and differential schemes. `inverse_property_contribution_alv`
+  serves both orders (`Rn`/`Rt` in elasticity, `α_interface` in conduction, each refused at
+  the other order); `resistivity_contribution_alv` is new. Checked against the elastic
+  thermal crack, and against insulating ellipsoids and cylinders flattened in an aging
+  conductor.
+- **The Newton solver of the ALV self-consistent equation**, reached through
+  `SelfConsistent(algorithm = NewtonDefault())` at both orders: a march through the
+  instants, each solving a small system (the row of the bulk and shear kernels in
+  elasticity, of the conductivity in conduction) by Newton's method with the line search
+  and the fallbacks of the elastic solver. It reads the phases and takes the step of the
+  Picard iteration, so that layered spheres and cracks enter it too; its `maxiters` is a
+  cap per instant, and the derivatives a dual carries are converged by one more full step.
+- Theory: *Cracks* and *Solving the self-consistent equation* in the aging viscoelasticity
+  chapter; manual sections on ribbons, cracks in conduction, and the choice of solver.
+
+### Fixed
+
+- Beyond the percolation of a stiff phase, `NewtonDefault` (elasticity, conduction) threw a
+  `SingularException`: started from the matrix property, Newton headed for a root of
+  negative stiffness, which the positivity guard flattened into a zero Jacobian. Picard
+  steps now choose the physical basin first, and a vanishing Jacobian gives the Picard
+  direction. At 60 % of spheres a thousand times as stiff, the estimate is the Picard one,
+  and in conduction the root of Bruggeman's equation.
+- The ALV Newton march, started from the matrix kernel, could converge to such a root: the
+  stiffness of 60 % of stiff spheres came out at −79 instead of 3882. It starts from the
+  Picard estimate, and a root with a negative instantaneous modulus is refused.
+
+### Changed
+
+- The differential ALV scheme forms the crack contributions in the classes of the operators,
+  as it did those of the solid phases: the same estimate to 4e-16, and 6.7 ms instead of
+  10.4 ms for a cell with an elliptic crack family on 15 instants.
+- The table of crack treatments of the viscoelasticity manual described an additive
+  Mori–Tanaka form the code no longer uses: it now describes the Echoes form, shared with
+  the elastic scheme.
+
 ## v0.25.0 — aging basic creep of concrete, across scales
 
 A minor release: new exported API. Aging viscoelastic homogenization nests across scales,
