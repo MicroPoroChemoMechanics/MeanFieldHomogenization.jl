@@ -40,8 +40,10 @@ def with_grid(c):
         return c
     t = c["times"]
     return dict(c, times=[float(x) for x in np.geomspace(t[0], t[-1], GRID_N)])
-SCHEMES = {"dilute": echoes.DIL, "mori_tanaka": echoes.MT, "self_consistent": echoes.SC,
-           "asymmetric_self_consistent": echoes.ASC}
+SCHEMES = {"voigt": echoes.VOIGT, "reuss": echoes.REUSS, "dilute": echoes.DIL,
+           "dilute_dual": echoes.DILD, "mori_tanaka": echoes.MT, "maxwell": echoes.MAX,
+           "pcw": echoes.PCW, "self_consistent": echoes.SC,
+           "asymmetric_self_consistent": echoes.ASC, "differential": echoes.DIFF}
 HILL = dict(algo=echoes.NUMINT3D, epsabs=1e-10, epsrel=1e-8, maxnb=1000000, epsroots=1e-8)
 NREPEAT = 3
 
@@ -169,8 +171,17 @@ def make_rve(c, computed):
         else:
             ver[p["name"]] = echoes.ellipsoid(shape=shape, fraction=p["fraction"],
                                               visco_prop={prop: given}, **kw)
+    if c.get("distribution") is not None:
+        d = c["distribution"]
+        ver.shape = echoes.ellipsoidal(np.array(list(d["axes"]) + list(d["euler"]), dtype=float))
     ver.set_param_eshelby(**HILL)
     return ver, prop, u, times, expected, keepalive
+
+
+def homogenize(c, ver, prop, times, u, maxnb):
+    return np.array(echoes.homogenize_visco(rve=ver, scheme=SCHEMES[c["scheme"]], prop=prop,
+                                            time_series=times, unitsize=u, maxnb=maxnb,
+                                            epsrel=c["epsrel"], verbose=False), dtype=float)
 
 
 def run_case(c, computed):
@@ -178,11 +189,15 @@ def run_case(c, computed):
     for _ in range(NREPEAT):
         ver, prop, u, times, expected, keepalive = make_rve(c, computed)
         t0 = time.perf_counter()
-        out = echoes.homogenize_visco(rve=ver, scheme=SCHEMES[c["scheme"]], prop=prop,
-                                      time_series=times, unitsize=u, maxnb=c["maxnb"],
-                                      epsrel=c["epsrel"], verbose=False)
+        out = homogenize(c, ver, prop, times, u, c["maxnb"])
         timings.append(time.perf_counter() - t0)
-        out = np.array(out, dtype=float)
+        if c["scheme"] == "differential":
+            # Explicit Euler steps: first order in 1/maxnb. Richardson extrapolation from
+            # maxnb and 2 maxnb steps is second order, what the adaptive integration of
+            # MeanFieldHomogenization is compared with.
+            ver2, *_ = make_rve(c, computed)
+            out = 2 * homogenize(c, ver2, prop, times, u, 2 * c["maxnb"]) - out
+            del ver2
         if eff is None:
             eff = out
             phase_mats = {p["name"]: np.array(ver[p["name"]].visco_mat(prop), dtype=float)

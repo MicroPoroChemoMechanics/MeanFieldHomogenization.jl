@@ -21,6 +21,8 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 | `benchmark_porous.jl` | porous moduli, 10 schemes × 2 shapes × 7 porosities | 1e-6 |
 | `benchmark_strength.jl` | mortar ``k, \mu, E`` + strength ``f_c`` [pichler2011](@cite) | 1 % / 2 % |
 | `benchmark_hill_derivative.jl` | ``\partial\mathbb P/\partial\mathbb C`` (ISO, ORTHO) | 1e-5 / 1e-4 |
+| `make_schemes_complex_cells.py` | every elastic and conduction scheme on complex cells, written for `test_schemes_complex_cells.jl` | 1e-10 (differential 1e-6) |
+| `alv_harness/` | every ALV scheme, orders 4 and 2, 54 cells; 25 of them written for `test_alv_echoes_cells.jl` | 1e-9 |
 
 ## Agreement measured
 
@@ -38,6 +40,8 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 | ALV per-layer ``\alpha(t,t')``, ``\beta(t,t')`` | 1e-16 diag, 1e-6 off-diag |
 | Dual-interface concentrations / effective diffusivity | 1e-8 / 1e-5 |
 | Cracked ALV creep, PCW / SC + interface | 1e-4 / 1.4e-4 |
+| Elastic and conduction schemes on complex cells (38 cells) | 6e-13; differential 8e-8 |
+| ALV schemes on complex cells (harness, 54 cells) | 4e-11; differential 8e-8 |
 | Three-scale mortar ``k, \mu, E`` | 1e-3 |
 
 ## Deliberate divergences
@@ -51,6 +55,7 @@ Conventions and formulation choices, not numerical error — do not "fix" them.
 | ASC, porous oblate | Echoes' compliance-form ASC converges to another branch | `benchmark_porous.jl` |
 | DifferentialScheme, porous ``\varphi \ge 0.5`` | pre-existing gap, 2.6e-3 → 6.2e-2, reproducible | `benchmark_porous.jl` |
 | Strength ``f_c`` (2 %) | water/air regularized to a small positive stiffness | [Strength](@ref app-strength) |
+| Reuss with cracks | MFH passes a crack over (no volume); Echoes forms zero times an infinite compliance | `make_schemes_complex_cells.py` |
 
 `MeanFieldHomogenization` normalizes the crack compliance by the **minor** semi-axis
 ``b``, Echoes by the **major** semi-axis ``a``, so for an in-plane aspect
@@ -79,6 +84,22 @@ include("scripts/bench_echoes/benchmark.jl")
 ```
 
 The other scripts of the first table are run by the same `include`.
+
+A complex cell mixes two inclusion families and two crack families, each oriented off the
+axes along its own frame, on an isotropic or a tilted transversely isotropic matrix; the
+self-consistent and differential schemes of the ALV cells take the families averaged in
+orientation, since the ALV Hill kernel needs an isotropic reference. The two generators
+are Python scripts, run with the interpreter of the environment where `echoes` imports;
+they rewrite the reference files of the test suite:
+
+```bash
+python -I scripts/bench_echoes/make_schemes_complex_cells.py
+python -I scripts/bench_echoes/alv_harness/make_test_references.py
+```
+
+Echoes integrates the differential scheme by explicit Euler steps: its reference is the
+Richardson extrapolation from 400 and 800 steps, hence the looser agreement. The harness
+itself is described in `scripts/bench_echoes/alv_harness/README.md`.
 
 ## Where to go next
 

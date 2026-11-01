@@ -239,6 +239,7 @@ end
         include("Schemes/test_concentrations.jl")
         include("Schemes/test_structured_phases.jl")
         include("Schemes/test_schemes_random_bases.jl")
+        include("Schemes/test_schemes_complex_cells.jl")
         include("Schemes/test_crack_families.jl")
     end
 
@@ -446,6 +447,7 @@ end
         include("Viscoelasticity/test_extra_schemes_alv.jl")
         include("Viscoelasticity/test_crack_schemes_alv.jl")
         include("Viscoelasticity/test_crack_order2_alv.jl")
+        include("Viscoelasticity/test_alv_echoes_cells.jl")
         include("Viscoelasticity/test_alv_symmetry_paths.jl")
         include("Viscoelasticity/test_glassy_limit_alv.jl")
     end

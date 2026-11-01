@@ -97,6 +97,12 @@ DiluteDual(; matrix::Union{Nothing, Symbol} = nothing) = DiluteDual(matrix)
     MoriTanaka() <: HomogenizationScheme
 
 Mori-Tanaka scheme [mori1973, christensen1990](@cite).
+
+With inclusion families of different shapes or orientations the Mori–Tanaka
+stiffness (conductivity) is not major-symmetric [benveniste1991](@cite), although
+an effective property deriving from an energy is: a known defect of the scheme. Its
+major-symmetric part is returned, as in Echoes, with a warning that gives the
+relative size of the part dropped.
 """
 struct MoriTanaka{M} <: HomogenizationScheme
     matrix::M

@@ -86,11 +86,11 @@ end
     # The step on the views is the step read phase by phase from the RVE, to the bit.
     A, CA = S._phase_dilute_and_stress_average(rve, :I, :C, Cn)
     ref = C0 + (zero(Cn) + 0.3 * (CA - C0 ⊡ A))
-    step = @inferred S._asc_step_stiffness(views, C0, Cn, (;))
+    step = @inferred S._asc_step(Val(:stiffness), views, C0, Cn, (;))
     @test get_array(step) == get_array(ref)
     # What used to be looked up at every step (phase names, fractions, properties,
     # then a dynamic call per phase) is gone from it.
-    @test _allocs(S._asc_step_stiffness, views, C0, Cn, (;)) == 0
+    @test _allocs(S._asc_step, Val(:stiffness), views, C0, Cn, (;)) == 0
 
     # The asymmetric scheme starts from the matrix unless `init` names another
     # start: starting from the matrix explicitly is the default, to the bit.

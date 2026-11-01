@@ -26,6 +26,21 @@ family is complete: ribbons, and insulating cracks in conduction, in every schem
 - `NewtonDefault` (elasticity, conduction) starts with Picard steps, counted in
   `maxiters` (see Fixed): an iteration cap set for Newton iterations alone may now stop
   earlier.
+- The ALV Hill kernel is known against an isotropic reference only. `hill_kernel` on an
+  anisotropic law, the concentration schemes (Dilute, DiluteDual, Mori–Tanaka, Maxwell,
+  PCW) on an anisotropic matrix, and the asymmetric self-consistent scheme on aligned
+  spheroids (0.6 % off) now throw an `ArgumentError` that names the phase, as the
+  self-consistent scheme did: they used to project the reference on the isotropic class
+  without a word. Voigt and
+  Reuss, which need no concentration, keep accepting an anisotropic matrix.
+- `MoriTanaka` with inclusion families of different shapes or frames returns the
+  major-symmetric part of its estimate, a change of the order of 1e-3, and warns (see
+  Fixed); aligned families are unchanged. `concentration_tensors` gives the matrix its own
+  law, so that the contributions of such a cell sum to the unprojected estimate, whose
+  major-symmetric part is the estimate.
+- `AsymmetricSelfConsistent` (elasticity, conduction) on families of different frames, or on
+  cracks beside a phase stiffer than the matrix, reaches the projected fixed point of
+  Echoes: a change of a few 1e-4 (see Fixed).
 
 ### Added
 
@@ -51,6 +66,20 @@ family is complete: ribbons, and insulating cracks in conduction, in every schem
   and the fallbacks of the elastic solver. It reads the phases and takes the step of the
   Picard iteration, so that layered spheres and cracks enter it too; its `maxiters` is a
   cap per instant, and the derivatives a dual carries are converged by one more full step.
+- **The ALV asymmetric self-consistent scheme at order 2** (conduction), with insulating
+  cracks and layered spheres, and with the solver choice of `SelfConsistent` at both
+  orders: `AsymmetricSelfConsistent(algorithm = NewtonDefault())` marches through the
+  instants with the shared Newton solver.
+- **Echoes parity tests on complex cells.** `test_alv_echoes_cells.jl` checks every ALV
+  scheme against Echoes on 25 cells, at orders 4 and 2: two oriented inclusion families of
+  an aging transversely isotropic law and two crack families of their own orientations,
+  a tilted distribution ellipsoid for Maxwell and PCW, orientation averages for the
+  self-consistent and differential schemes; agreement to 1e-9 (1e-6 for the differential
+  scheme, whose Echoes reference is a Richardson extrapolation of explicit Euler steps).
+  `test_schemes_complex_cells.jl` does the same for every elastic and conduction scheme on
+  an isotropic and a tilted transversely isotropic matrix, 38 cells, to 1e-10 (1e-6 for
+  the differential scheme). The cells, the generators and the harness that replays them
+  are in `scripts/bench_echoes/`.
 - Theory: *Cracks* and *Solving the self-consistent equation* in the aging viscoelasticity
   chapter; manual sections on ribbons, cracks in conduction, and the choice of solver.
 
@@ -65,6 +94,27 @@ family is complete: ribbons, and insulating cracks in conduction, in every schem
 - The ALV Newton march, started from the matrix kernel, could converge to such a root: the
   stiffness of 60 % of stiff spheres came out at −79 instead of 3882. It starts from the
   Picard estimate, and a root with a negative instantaneous modulus is refused.
+- With crack families, the ALV asymmetric self-consistent scheme inverted the sum of the
+  solid phases before adding the crack compliance: 1.1 % off the elastic scheme and Echoes
+  for spheres and cracks together. It now takes the compliance form of the elastic scheme,
+  `S̃ = S̃_M + (⟨Ã⟩ − S̃_M ∘ ⟨C̃ ∘ Ã⟩) ∘ S̃ + Σ ΔH̃`, and agrees with Echoes to 4e-11; without
+  cracks the stiffness form is kept (the same fixed point).
+- With inclusion families of different shapes or frames, the Mori–Tanaka estimate is not
+  major-symmetric (Benveniste, Dvorak and Chen, 1991): a known defect of the scheme, which
+  `N : ⟨A⟩⁻¹` exhibits as soon as the families do not share a frame (0.12 % of
+  antisymmetric part on a cell of two oriented families). An effective stiffness or
+  conductivity derives from an energy, so `MoriTanaka` now returns its major-symmetric
+  part, as Echoes does and as the self-consistent iterate already was, with a warning that
+  gives the relative size of the part dropped. Aligned families are unchanged and silent.
+  `concentration_tensors` keeps every phase on its own law, the matrix included: the
+  contributions then sum to the unprojected estimate.
+- The elastic and conduction asymmetric self-consistent scheme projects every iterate on
+  the major-symmetric tensors too, and takes its stiffness or compliance form by the
+  Voigt criterion of Echoes whether or not the cell has cracks, which now enter the
+  stiffness form through `−C_M : ΔH : C`. It forced the compliance form on any cracked
+  cell. Without the projection both forms have the same fixed point; with families of
+  different frames the projected ones differ by a few 1e-4, and the estimate was up to
+  1.6e-3 off Echoes on oriented cells. It now agrees to 6e-13.
 
 ### Changed
 

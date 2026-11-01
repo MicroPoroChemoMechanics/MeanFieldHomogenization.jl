@@ -323,8 +323,9 @@ end
         @test _vals(Hb) == _vals(H)
         @test _vals(Nb) == _vals(N)
 
-        # Out of the domain of the average, which `homogenize` reports.
-        C_mt = @test_logs (:warn, r"Phase :CR is averaged over every rotation") homogenize(rve, MoriTanaka(), :C)
+        # Out of the domain of the average, which `homogenize` reports, and the
+        # Mori–Tanaka estimate is then not major-symmetric.
+        C_mt = @test_logs (:warn, r"no major symmetry") (:warn, r"Phase :CR is averaged over every rotation") homogenize(rve, MoriTanaka(), :C)
         @test all(isfinite, _vals(C_mt))
     end
 

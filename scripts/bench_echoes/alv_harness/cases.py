@@ -7,7 +7,8 @@ Keys of a case
 --------------
 name        unique identifier, also the file name `results/<name>.json`
 order       4 (elasticity, 6x6 Kelvin-Mandel blocks) or 2 (conduction, 3x3 blocks)
-scheme      "dilute" | "mori_tanaka" | "self_consistent" | "asymmetric_self_consistent"
+scheme      "voigt" | "reuss" | "dilute" | "dilute_dual" | "mori_tanaka" | "maxwell" | "pcw" |
+            "self_consistent" | "asymmetric_self_consistent" | "differential"
 times       the time grid t_0 < ... < t_{n-1} (n <= 30)
 epsrel      relative tolerance of the self-consistent fixed point (Frobenius norm)
 maxnb       maximum number of fixed-point iterations
@@ -123,9 +124,14 @@ def crack_family(name, density, axes, euler=(0.0, 0.0, 0.0), symmetrize=None, fl
                 symmetrize=symmetrize)
 
 
-def case(name, order, scheme, phases, times=TIMES, epsrel=1e-10, maxnb=200):
+def case(name, order, scheme, phases, times=TIMES, epsrel=1e-10, maxnb=200, distribution=None):
+    """`distribution`: (axes, euler) of the distribution ellipsoid of Maxwell and PCW, the
+    shape of the RVE in Echoes. The differential scheme of Echoes takes `maxnb` explicit
+    Euler steps: its result is extrapolated (Richardson) from `maxnb` and `2 maxnb`."""
     return dict(name=name, order=order, scheme=scheme, times=list(times),
-                epsrel=epsrel, maxnb=maxnb, phases=phases)
+                epsrel=epsrel, maxnb=maxnb, phases=phases,
+                distribution=None if distribution is None else
+                dict(axes=list(distribution[0]), euler=list(distribution[1])))
 
 
 ISO = {"sym": "ISO"}
@@ -248,6 +254,35 @@ CASES = [
     # the reference through its isotropic projection (visco_array_to_param(..., ISO)),
     # where MeanFieldHomogenization refuses it.
 ]
+
+# h. every scheme of Echoes on two complex cells per order: several families of
+# inclusions of different shapes, orientations and laws (an aging TI law about a tilted
+# axis), with two crack families of different orientations at order 4. The schemes on
+# the matrix take them as they are; those on the running estimate need every family
+# averaged in orientation (see the note above the g cases).
+ROT2 = (1.2, 0.3, 0.8)
+TI_LAW = maxwell_ti(CA=(30.0, 8.0, 6.0, 25.0, 9.0), CB=(6.0, 2.0, 1.5, 5.0, 2.0), tau=2.0, euler=ROT2)
+DIST = ((1.0, 1.0, 0.6), (0.7, 0.4, 0.0))
+H4_ON_MATRIX = [phase("M", M_MAX, 0.75), phase("P", I_EL, 0.15, axes=PROLATE, euler=ROT),
+                phase("T", TI_LAW, 0.10, axes=TRIAXIAL, euler=ROT2),
+                crack_family("C1", 0.05, (1.0, 0.4), euler=ROT),
+                crack_family("C2", 0.04, (1.0, 1.0), euler=ROT2)]
+H4_ON_ESTIMATE = [phase("M", M_MAX_FLOOR, 0.75), phase("P", I_EL, 0.15, axes=PROLATE, symmetrize=ISO),
+                  phase("T", TI_LAW, 0.10, axes=TRIAXIAL, euler=ROT2, symmetrize=ISO),
+                  crack_family("C1", 0.05, (1.0, 0.4), symmetrize=ISO)]
+TI_COND = maxwell_cond_ti(kt=8.0, ka=20.0, tau=1.5, w_inf=0.3, euler=ROT2)
+H2_ON_MATRIX = [phase("M", maxwell_cond(5.0, 2.0, k_inf=0.5), 0.7),
+                phase("P", elastic_cond(50.0), 0.18, axes=PROLATE, euler=ROT),
+                phase("T", TI_COND, 0.12, axes=TRIAXIAL, euler=ROT2)]
+H2_ON_ESTIMATE = [phase("M", maxwell_cond(5.0, 2.0, k_inf=0.5), 0.7),
+                  phase("P", elastic_cond(50.0), 0.18, axes=PROLATE, symmetrize=ISO),
+                  phase("T", TI_COND, 0.12, axes=TRIAXIAL, euler=ROT2, symmetrize=ISO)]
+for order, on_matrix, on_estimate in ((4, H4_ON_MATRIX, H4_ON_ESTIMATE), (2, H2_ON_MATRIX, H2_ON_ESTIMATE)):
+    for scheme in ("voigt", "reuss", "dilute", "dilute_dual", "mori_tanaka", "maxwell", "pcw"):
+        CASES.append(case(f"h_o{order}_{scheme}", order, scheme, on_matrix, distribution=DIST))
+    for scheme in ("self_consistent", "asymmetric_self_consistent"):
+        CASES.append(case(f"h_o{order}_{scheme}", order, scheme, on_estimate))
+    CASES.append(case(f"h_o{order}_differential", order, "differential", on_estimate, maxnb=400))
 
 CASES_BY_NAME = {c["name"]: c for c in CASES}
 assert len(CASES_BY_NAME) == len(CASES)
