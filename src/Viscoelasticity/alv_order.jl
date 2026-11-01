@@ -78,8 +78,9 @@ running estimate, which is how the self-consistent and differential schemes
 call it; `external` has the meaning it has in
 [`gradient_gradient_concentration_alv`](@ref).
 
-The crack method, documented next, is the elastic ALV stiffness contribution
-of a crack family. Explicit names: [`stiffness_contribution_alv`](@ref) and
+The crack method, documented next, is the ALV contribution of a crack family,
+its stiffness contribution in elasticity and its conductivity contribution in
+conduction. Explicit names: [`stiffness_contribution_alv`](@ref) and
 [`conductivity_contribution_alv`](@ref).
 """
 property_contribution_alv(
@@ -122,7 +123,7 @@ function stiffness_contribution_alv(incl, ref, times; kw...)
 end
 
 """
-    conductivity_contribution_alv(sphere, K0_law, times; external = true) -> Matrix
+    conductivity_contribution_alv(sphere_or_crack, K0_law, times; kw...) -> Matrix
 
 Name in conduction of [`property_contribution_alv`](@ref), for a second-order
 reference only.
@@ -143,21 +144,37 @@ stiffness_contribution_alv_at(args...; kw...) = property_contribution_alv_at(arg
 """
     compliance_contribution_alv(crack, C_M_law, times; Rn, Rt) -> Matrix
 
-Name in elasticity of [`inverse_property_contribution_alv`](@ref), whose methods
-are all elastic.
+Name in elasticity of [`inverse_property_contribution_alv`](@ref), for a
+fourth-order reference only.
 """
-compliance_contribution_alv(args...; kw...) = inverse_property_contribution_alv(args...; kw...)
+function compliance_contribution_alv(crack, ref, times; kw...)
+    _alv_checked_order(Val(4), :compliance_contribution_alv, :inverse_property_contribution_alv, ref, times)
+    return inverse_property_contribution_alv(crack, ref, times; kw...)
+end
+
+"""
+    resistivity_contribution_alv(crack, K_M_law, times; α_interface) -> Matrix
+
+Name in conduction of [`inverse_property_contribution_alv`](@ref), for a
+second-order reference only.
+"""
+function resistivity_contribution_alv(crack, ref, times; kw...)
+    _alv_checked_order(Val(2), :resistivity_contribution_alv, :inverse_property_contribution_alv, ref, times)
+    return inverse_property_contribution_alv(crack, ref, times; kw...)
+end
 
 """
     delta_stiffness_alv(crack, Ñ, ε) -> Matrix
 
-Name in elasticity of [`delta_property_alv`](@ref).
+Name in elasticity of [`delta_property_alv`](@ref), which applies the density
+factor at either order.
 """
 delta_stiffness_alv(args...) = delta_property_alv(args...)
 
 """
     delta_compliance_alv(crack, H̃, ε) -> Matrix
 
-Name in elasticity of [`delta_inverse_property_alv`](@ref).
+Name in elasticity of [`delta_inverse_property_alv`](@ref), which applies the
+density factor at either order.
 """
 delta_compliance_alv(args...) = delta_inverse_property_alv(args...)

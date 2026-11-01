@@ -80,35 +80,6 @@ function _srb_rve(c, prop, medium)
     return rve
 end
 
-"""
-The relative residual of the asymmetric self-consistent fixed point at `X`, rebuilt
-from `hill_tensor` and the exact orientation averages of `Core` in Kelvin-Mandel
-(or 3×3) matrices: the stiffness form `X = C_M + Σ fᵣ ⟨(Cᵣ - C_M) 𝔸ᵣ(X̄)⟩`, or the
-compliance form `X⁻¹ = S_M + Σ fᵣ ⟨(Sᵣ - S_M) 𝔹ᵣ(X̄)⟩` with `𝔹ᵣ = Cᵣ 𝔸ᵣ X̄⁻¹`,
-whichever the scheme took; `X̄ = ⟨X⟩` is the reference the average is taken in.
-"""
-function _srb_asc_residual(c, X, elastic)
-    tens(M) = TensND.Tens(elastic ? TensND.get_array(TensND.from_mandel(M)) : M)
-    sym = _srb_average(c)
-    avg(M) = haskey(sym, :symmetrize) ?
-        _srb_canon(_srb_project(tens(M), sym.symmetrize), elastic) : M
-    C_M = _srb_mat(elastic ? c["C_m_km"] : c["K_m"])
-    Xr = avg(X)
-    Id = Matrix(1.0I, size(X)...)
-    stiff, compl = copy(C_M), inv(C_M)
-    for i in c["inclusions"]
-        ell = Ellipsoid(Float64.(i["semi_axes"])...; euler_angles = Tuple(Float64.(i["euler"])))
-        Cᵣ = _srb_mat(elastic ? i["C_km"] : i["K"])
-        P = _srb_canon(hill_tensor(ell, tens(Xr)), elastic)
-        A = inv(Id + P * (Cᵣ - Xr))
-        f = Float64(i["fraction"])
-        stiff += f * avg((Cᵣ - C_M) * A)
-        compl += f * avg((inv(Cᵣ) - inv(C_M)) * Cᵣ * A * inv(Xr))
-    end
-    return min(norm(X - stiff) / norm(X), norm(inv(X) - compl) / norm(inv(X)))
-end
-_srb_project(T, sym) = sym === :iso ? _SRB_CORE.isotropify(T) : _SRB_CORE.transverse_isotropify(T, sym.axis)
-
 "The `symmetrize` keyword of the inclusions of a case."
 function _srb_average(c)
     c["average"] == "none" && return (;)
@@ -136,14 +107,6 @@ _srb_major_sym(X) = (X + transpose(X)) / 2
             )
             # The bases the media are written in do not show in the result.
             @test norm(rotated - canonical) ≤ 1.0e-10 * norm(canonical)
-            if c["scheme"] == "asymmetric_self_consistent" && c["average"] != "iso"
-                # echoes symmetrizes every iterate (`sym_array` in `evaluate_dilute`),
-                # hence a fixed point of another map; MFH iterates the scheme as it
-                # stands. Its result is checked as a fixed point of that map instead.
-                # (An isotropic estimate has no part for the two to differ on.)
-                @test _srb_asc_residual(c, canonical, elastic) ≤ 1.0e-6
-                continue
-            end
             @test norm(_srb_major_sym(canonical) - ref) ≤ tol * norm(ref)
         end
     end

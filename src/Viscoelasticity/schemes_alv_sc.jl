@@ -68,21 +68,44 @@ function _self_consistent_alv(
         verbose::Bool = false,
         select_best::Bool = false
     )
-    # 1. Discretize every phase's kernel once.
-    m = host_phase_name(rve, matrix, "self_consistent_alv")
+    d = _sc_alv_phases(rve, prop, times, matrix, "self_consistent_alv")
+    # Without layered spheres, the iteration runs in the classes of the operators;
+    # otherwise on full matrices.
+    if isempty(d.layered_data)
+        Tp = _alv_promoted_eltype(d.C_phases, d.fractions, Matrix{Float64}[], d.crack_data)
+        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, d.geometries; init = Tp)
+        return _sc_alv_in_classes(
+            d.C_0, d.C_phases, d.geometries, d.fractions, d.symmetrizes, d.crack_data, Tp;
+            abstol, reltol, maxiters, damping, verbose, select_best
+        )
+    end
+    dense = _sc_alv_dense_data(d)
+    # The running estimate carries the promoted eltype of every input (kernels,
+    # fractions, geometry tensors, crack data, layers) so Dual parameters propagate
+    # through the fixed point.
+    return _fixed_point_dense(
+        C_m -> _sc_alv_dense_step(C_m, dense, times), _sc_alv_dense_eltype(dense, times).(dense.C_0), "SC-ALV";
+        abstol, reltol, maxiters, damping, verbose, select_best
+    )
+end
+
+# The phases of an ALV self-consistent cell, read once for the Picard and the Newton
+# solvers (`who` names the caller in the messages): the matrix kernel, then the phases
+# with a Hill kernel, the crack families and the layered spheres, each in a list of
+# its own. Containers are eltype-generic: volume fractions, crack densities and
+# geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number) coefficients.
+function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractString)
+    m = host_phase_name(rve, matrix, who)
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
-        throw(ArgumentError("self_consistent_alv: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+        throw(ArgumentError("$who: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     grid = TimeGrid(times)
     C_0 = _relaxation_operator(C_M_law, grid)
-    f_M = volume_fraction(rve, m)
-    incl_names = inclusion_phase_names(rve, m)
-    # Containers are eltype-generic : volume fractions, crack densities and
-    # geometry-derived tensors may carry `ForwardDiff.Dual` (or any Number)
-    # coefficients — no `Float64` hard-coding on any AD-reachable path.
+    # The matrix kernel enters the estimate as it is: it must be isotropic.
+    C_0.class isa TensISO || _alv_iso_error(who, m, "the anisotropy of the kernel")
     C_phases = AbstractMatrix[C_0]
     geometries = MFH_Core.AbstractInclusion[rve.phases[m].geometry]
-    fractions = [f_M]
+    fractions = [volume_fraction(rve, m)]
     symmetrizes = AbstractSymmetrize[NoSymmetrize()]
     # crack_data tuple: (geom, density, sym, Rn_mat::Union{Nothing, Matrix},
     #                    Rt_mat::Union{Nothing, Matrix}).  The interface
@@ -97,109 +120,75 @@ function _self_consistent_alv(
     # Layered spheres have no Hill kernel: their concentration and stress come
     # from the recurrences, against the running estimate, at every iteration.
     layered_data = NamedTuple[]
-    for name in incl_names
+    for name in inclusion_phase_names(rve, m)
         ph = rve.phases[name]
         a = rve.amounts[name]
+        sym = phase_symmetrize(rve, name)
         # The phases of a cell are of many types, known at run time: a branch.
         if ph.geometry isa LayeredSphere
-            push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
+            push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = sym))
             continue
         end
+        # Like the differential scheme, the self-consistent one uses its RUNNING
+        # estimate as the reference of the ALV Hill kernel, built from that
+        # estimate's iso parameters (`iso_params_from_blocks(C_m)`). A phase that
+        # drags the estimate out of the isotropic class would be answered with the
+        # iso projection of a non-iso medium, so it is refused, for exactly the same
+        # reason and with the same two ways out: a crack family is transversely
+        # isotropic about its normal before an isotropic orientation average.
         if _is_crack_family(a)
-            push!(crack_data, _alv_crack_record(rve, name, a, times, "self_consistent_alv"))
+            sym isa IsoSymmetrize ||
+                _alv_iso_error(who, name, "the transversely isotropic crack contribution")
+            push!(crack_data, _alv_crack_record(rve, name, a, times, who))
             continue
         end
         C_r_law = phase_property(rve, name, prop)
         C_r_law isa ALVProperty ||
-            throw(ArgumentError("self_consistent_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+            throw(ArgumentError("$who: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
         C_r = _relaxation_operator(C_r_law, grid)
-        sym = phase_symmetrize(rve, name)
-        # Like the differential scheme, the self-consistent one uses its
-        # RUNNING estimate as the reference of the ALV Hill kernel, and the
-        # Picard loop reads that estimate's iso parameters directly
-        # (`iso_params_from_blocks(C_m)`).  A phase that drags the estimate
-        # out of the isotropic class would therefore be silently answered
-        # with the iso projection of a non-iso matrix, so it is refused for
-        # exactly the same reason and with the same two ways out.
         _alv_diff_keeps_iso(ph.geometry, sym, C_r) ||
-            _alv_diff_iso_error(name, "the shape or the anisotropy")
+            _alv_iso_error(who, name, "the shape or the anisotropy")
         push!(C_phases, C_r)
         push!(geometries, ph.geometry)
         push!(fractions, _amount_value(rve, name))
         push!(symmetrizes, sym)
     end
+    return (; C_0, C_phases, geometries, fractions, symmetrizes, crack_data, layered_data)
+end
 
-    # Without layered spheres, the iteration runs in the classes of the operators;
-    # otherwise on full matrices.
-    if isempty(layered_data)
-        Tp = _alv_promoted_eltype(C_phases, fractions, Matrix{Float64}[], crack_data)
-        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
-        return _sc_alv_in_classes(
-            C_0, C_phases, geometries, fractions, symmetrizes, crack_data, Tp;
-            abstol, reltol, maxiters, damping, verbose, select_best
-        )
-    end
-    C_0 = Matrix(C_0)
-    C_phases = Matrix[Matrix(C) for C in C_phases]
+# The phases on full matrices, for the step on full matrices: the kernels written
+# out, and the Mandel forms of the geometry tensors U^A, V^A of each shape (eltype
+# following the geometry parameters, Dual-safe).
+function _sc_alv_dense_data(d)
+    return (;
+        C_0 = Matrix(d.C_0),
+        C_phases = Matrix[Matrix(C) for C in d.C_phases],
+        U_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_UA(g)); symmetrize = true) for g in d.geometries],
+        V_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_VA(g)); symmetrize = true) for g in d.geometries],
+        d.fractions, d.symmetrizes, d.crack_data, d.layered_data,
+    )
+end
 
-    # 2. Pre-compute the Mandel forms of U^A, V^A for each phase
-    #    (eltype follows the geometry parameters — Dual-safe).
-    U_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_UA(g)); symmetrize = true) for g in geometries]
-    V_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_VA(g)); symmetrize = true) for g in geometries]
+# The promoted element type of every input of the step on full matrices.
+_sc_alv_dense_eltype(dense, times) = _alv_layered_eltype(
+    _alv_promoted_eltype(dense.C_phases, dense.fractions, dense.U_M_phases, dense.crack_data),
+    dense.layered_data, dense.C_0, times
+)
 
-    # 3. Iterate — the running estimate carries the promoted eltype of every
-    #    input (kernels, fractions, geometry tensors, crack data) so Dual
-    #    parameters propagate through the fixed point.
-    Tp = _alv_promoted_eltype(C_phases, fractions, U_M_phases, crack_data)
-    Tp = _alv_layered_eltype(Tp, layered_data, C_0, times)
-    C_m = Tp.(C_0)
-    best_resid = Inf
-    C_best = C_m
-
-    for iter in 1:maxiters
-        # Self-consistent SC body:
-        #   strain_Stress_α  = A_α(C_m) · J_m   (solid, J_m = inv(C_m))
-        #   strain_Stress_c  = sym(H_c(C_m))    (void crack — no J_m)
-        #   stress_Stress_α  = C_α · strain_Stress_α
-        #   stress_Stress_c  = 0                (traction-free)
-        # Accumulators :  A_E = Σ f_α·sym(strain_Stress_α)
-        #                 B_E = Σ f_α·sym(stress_Stress_α)
-        # Result : C_eff = B_E · A_E^{-vol}.
-        # The trailing `J_m` cancels for solid-only RVEs but NOT when
-        # cracks are present (the crack term has no `J_m` factor),
-        # giving the ECHOES SC fixed point that doesn't match the
-        # textbook `(Σ f·C·A)·(Σ f·A)^{-1}` form.
-        extra_A, extra_CA = _sc_alv_layered_terms(layered_data, C_m, times)
-        if isempty(crack_data)
-            C_m_new = _sc_alv_step(
-                C_m, C_phases, U_M_phases, V_M_phases,
-                fractions, symmetrizes; extra_A, extra_CA
-            )
-        else
-            C_m_new = _sc_alv_step_echoes_form(
-                C_m, C_phases,
-                U_M_phases, V_M_phases,
-                fractions, symmetrizes,
-                crack_data; extra_A, extra_CA
-            )
-        end
-        Δ = norm(C_m_new - C_m)
-        norm_C = norm(C_m)
-        tol_eff = abstol + reltol * norm_C
-        verbose && @info "SC-ALV iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
-        if select_best && Δ < best_resid
-            best_resid = Δ
-            C_best = C_m_new
-        end
-        if Δ ≤ tol_eff
-            return C_m_new
-        end
-        # Picard with relaxation.
-        C_m = (1 - damping) .* C_m_new .+ damping .* C_m
-    end
-
-    @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
-    return select_best ? C_best : C_m
+# One self-consistent step on full matrices, the running estimate `C_m` to the next:
+# (Σ f·C·A) ∘ (Σ f·A)^{-1} without cracks, the Echoes form with the explicit J_m of
+# the estimate with them (see `_sc_alv_step_echoes_form`), the layered spheres
+# entering both sums through their recurrences.
+function _sc_alv_dense_step(C_m, dense, times)
+    extra_A, extra_CA = _sc_alv_layered_terms(dense.layered_data, C_m, times)
+    isempty(dense.crack_data) && return _sc_alv_step(
+        C_m, dense.C_phases, dense.U_M_phases, dense.V_M_phases,
+        dense.fractions, dense.symmetrizes; extra_A, extra_CA
+    )
+    return _sc_alv_step_echoes_form(
+        C_m, dense.C_phases, dense.U_M_phases, dense.V_M_phases,
+        dense.fractions, dense.symmetrizes, dense.crack_data; extra_A, extra_CA
+    )
 end
 
 # ── The iteration in the classes of the operators ──────────────────────────
@@ -241,6 +230,28 @@ function _fixed_point_in_classes(
     end
     @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
+end
+
+# The same on full matrices (with layered spheres, whose recurrences are written on
+# them): `step` maps an estimate to the next, from `X_0`.
+function _fixed_point_dense(step::F, X_0, name; abstol, reltol, maxiters, damping, verbose, select_best) where {F}
+    X = X_0
+    best_resid = Inf
+    X_best = X
+    for iter in 1:maxiters
+        X_new = step(X)
+        Δ = norm(X_new - X)
+        tol_eff = abstol + reltol * norm(X)
+        verbose && @info "$name iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
+        if select_best && Δ < best_resid
+            best_resid = Δ
+            X_best = X_new
+        end
+        Δ ≤ tol_eff && return X_new
+        X = (1 - damping) .* X_new .+ damping .* X
+    end
+    @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
+    return select_best ? X_best : X
 end
 
 # The dilute concentration of a phase of stiffness `C` and shape `g` against the
@@ -311,17 +322,6 @@ function _alv_layered_eltype(Tp, layered_data, C_0, times)
     end
     return Tp
 end
-
-# The Newton self-consistent body builds the Hill kernel of each phase from
-# the shape of an ellipsoid and has no layered-sphere branch. Refused by name
-# rather than through a `MethodError` of `tens_UA`.
-_alv_sc_refuse_layered(::Any, ::Symbol, ::AbstractString) = nothing
-_alv_sc_refuse_layered(::LayeredSphere, name::Symbol, scheme::AbstractString) = throw(
-    ArgumentError(
-        "$scheme: phase $name is a LayeredSphere, which this solver does not " *
-            "support; `homogenize_alv(rve, SelfConsistent(), prop; times)` does."
-    )
-)
 
 # ── Shared per-phase dilute concentration for the SC-ALV bodies ─────────────
 #

@@ -119,7 +119,7 @@ end
     end
     for scheme in (
             Voigt(), Reuss(), Dilute(), DiluteDual(), MoriTanaka(), Maxwell(),
-            PonteCastanedaWillis(), SelfConsistent(), DifferentialScheme(),
+            PonteCastanedaWillis(), SelfConsistent(), AsymmetricSelfConsistent(), DifferentialScheme(),
         )
         @test homogenize_alv(cell(LayeredSphere((1.0,), (K1_law,))), scheme, :K; times = times2) ≈
             homogenize_alv(cell(Ellipsoid(1.0, 1.0, 1.0)), scheme, :K; times = times2) rtol = 1.0e-10
@@ -146,14 +146,16 @@ end
 
 @testset "Layered sphere, order 2 — self-consistent stopped before convergence, both routes" begin
     # Stopped after one iteration, the full-matrix route (a one-layer sphere) and the
-    # route in classes (the same sphere as an ellipsoid) return the same iterate.
+    # route in classes (the same sphere as an ellipsoid) return the same iterate, for
+    # the self-consistent and the asymmetric self-consistent schemes.
     function cell(geometry)
         r = RVE()
         add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => K0_law); fraction = :rest)
         add_phase!(r, :I, geometry, Dict(:K => K1_law); fraction = 0.3)
         return r
     end
-    s = SelfConsistent(maxiters = 1)
-    @test Matrix(homogenize_alv(cell(LayeredSphere((1.0,), (K1_law,))), s, :K; times = times2)) ≈
-        Matrix(homogenize_alv(cell(Ellipsoid(1.0)), s, :K; times = times2)) rtol = 1.0e-12
+    for s in (SelfConsistent(maxiters = 1), AsymmetricSelfConsistent(maxiters = 1))
+        @test Matrix(homogenize_alv(cell(LayeredSphere((1.0,), (K1_law,))), s, :K; times = times2)) ≈
+            Matrix(homogenize_alv(cell(Ellipsoid(1.0)), s, :K; times = times2)) rtol = 1.0e-12
+    end
 end

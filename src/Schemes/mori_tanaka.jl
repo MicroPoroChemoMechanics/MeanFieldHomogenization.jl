@@ -46,7 +46,47 @@ function _mt_kernel(rve, P₀::_PropertyTens, m::Symbol, ::Val{p}; kw...) where 
     return _mt_close(P₀, Nsum, A_avg)
 end
 
-_mt_close(P₀, Nsum, A_avg) = P₀ + _compose(Nsum, inv(A_avg))
+# `N : ⟨A⟩⁻¹` is a product of tensors that do not commute: with families of
+# different shapes or frames, the Mori–Tanaka estimate has no major symmetry, a
+# known defect of the scheme, since an effective stiffness (conductivity) derives
+# from an energy. The estimate is projected on the major-symmetric tensors, as the
+# self-consistent iterate is (`_major_symmetrize`) and as ECHOES stores every
+# property, and a warning says how much the scheme lost.
+function _mt_close(P₀, Nsum, A_avg)
+    P = P₀ + _compose(Nsum, inv(A_avg))
+    P_sym = _major_symmetrize(P)
+    _warn_mt_asymmetry(Val(TensND.is_hard_numeric(eltype(P))), P, P_sym)
+    return P_sym
+end
+
+# Above the tolerance of a numerical Hill tensor (1e-6), so that aligned families
+# computed by quadrature stay silent.
+const _MT_ASYMMETRY_TOL = 1.0e-5
+
+# A projection that returns the tensor itself (an isotropic, five-parameter
+# transversely isotropic, … estimate) has nothing to report; otherwise the relative
+# antisymmetric part ‖P − sym P‖ / ‖sym P‖ is measured.
+_warn_mt_asymmetry(::Val{true}, P, P_sym) = P === P_sym ? nothing : _warn_mt_gap(_relative_asymmetry(P, P_sym))
+
+# On the canonical matrix (an isometry, see `_canonical_matrix`), ‖M − Mᵀ‖ / ‖M + Mᵀ‖;
+# on the stored data of a generic tensor, without the allocations of the matrix.
+function _relative_asymmetry(P, P_sym)
+    M = _canonical_matrix(P)
+    return norm(M - transpose(M)) / norm(M + transpose(M))
+end
+_relative_asymmetry(P::T, P_sym::T) where {T <: TensND.TensCanonical{4, 3, <:Any, <:Tensors.SymmetricTensor{4, 3}}} =
+    norm(TensND.get_array(P) - TensND.get_array(P_sym)) / norm(TensND.get_array(P_sym))
+
+function _warn_mt_gap(gap)
+    gap > _MT_ASYMMETRY_TOL && @warn "The Mori–Tanaka estimate has no major symmetry (relative " *
+        "antisymmetric part $(_primal_value(gap))): the scheme is not consistent " *
+        "for inclusion families of different shapes or orientations. Its major-symmetric " *
+        "part is returned; a self-consistent, Maxwell or Ponte Castañeda–Willis estimate " *
+        "has no such defect."
+    return nothing
+end
+# A symbolic estimate cannot be compared: its projection is returned without a word.
+_warn_mt_asymmetry(::Val{false}, P, P_sym) = nothing
 
 # The terms a phase adds to ⟨A⟩ and to the contribution sum, in one loop over
 # the phases so that the sums keep their order.

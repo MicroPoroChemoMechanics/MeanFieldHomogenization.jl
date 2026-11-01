@@ -7,8 +7,8 @@
 
 COD tensor of an elliptic crack in an arbitrarily anisotropic matrix,
 ``\\boldsymbol{B} = \\tfrac{8}{3}\\bigl(\\int_0^{2\\pi}
-\\hat{\\boldsymbol{Q}}^{\\star}_{nn}(\\eta\\cos\\varphi\\,\\underline{\\ell}
-+ \\sin\\varphi\\,\\underline{m})\\,\\mathrm{d}\\varphi\\bigr)^{-1}``
+\\hat{\\boldsymbol{Q}}^{\\star}_{nn}(\\eta\\cos\\varphi\\,\\underline{\\ell} +
+\\sin\\varphi\\,\\underline{m})\\,\\mathrm{d}\\varphi\\bigr)^{-1}``
 [barthelemyIJSS2026](@cite): the outer integral by adaptive quadrature, the
 reduced kernel by `backend` (residues, or adaptive quadrature along the
 normal).

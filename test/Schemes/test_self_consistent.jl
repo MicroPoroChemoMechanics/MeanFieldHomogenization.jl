@@ -561,18 +561,50 @@ end
     @test TensND.get_data(x)[1] ≈ 7.0 rtol = 1.0e-9
     @test TensND.get_data(x)[2] == 2.0
 
-    # No fixed point in α, and a residual 1 + 1e-12 sin(1e12 α) that no step
-    # of the line search reduces by the Armijo fraction: every iteration falls
-    # back on a Picard step, so two iterations return step(step(x₀)).
-    step_flat(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + 1 + 1.0e-12 * sin(1.0e12 * α), β + (2.0 - β) / 2))
-    x₀ = TensISO{3}(5.0, 2.0)
+    # No fixed point in α, and a residual 1 + 1e-12 sin(1e12 α), under 1 % of the
+    # iterate so that Newton starts at once, that no step of the line search reduces
+    # by the Armijo fraction: every iteration falls back on a Picard step, so two
+    # iterations return step(step(x₀)).
+    step_flat(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + 1 + 1.0e-12 * sin(1.0e12 * α), β + (200.0 - β) / 2))
+    x₀ = TensISO{3}(500.0, 200.0)
     x = @test_logs (:info, r"line search failed") match_mode = :any S._solve_sc(
         NewtonDefault(), step_flat, x₀; maxiters = 2, verbose = true
     )
     @test collect(TensND.get_data(x)) ≈ collect(TensND.get_data(step_flat(step_flat(x₀)))) rtol = 1.0e-14
+    # A residual of the size of the iterate: the Picard steps that choose the basin
+    # take the whole budget, so that two iterations are still two Picard steps.
+    step_far(x) = ((α, β) = TensND.get_data(x); TensISO{3}(α + 1, β))
+    x = S._solve_sc(NewtonDefault(), step_far, TensISO{3}(5.0, 2.0); maxiters = 2)
+    @test collect(TensND.get_data(x)) ≈ [7.0, 2.0] rtol = 1.0e-14
 
     # A step that fails at the seed fails in the main loop too, with its own error.
     @test_throws ErrorException("boom") S._solve_sc(NewtonDefault(), x -> error("boom"), x₀)
+end
+
+@testset "NewtonDefault beyond percolation — the physical root" begin
+    # At 60 % of spheres 1000 times as stiff, Newton from the matrix property heads
+    # for a root of negative stiffness, which the positivity guard flattened into a
+    # zero Jacobian (a `SingularException`): the Picard steps that start the solver
+    # choose the physical basin. Conduction: Bruggeman's closed form, the positive
+    # root of Σ f (kᵢ − k)/(kᵢ + 2k) = 0. Elasticity, with and without an isotropic
+    # family of cracks: the converged Picard iteration.
+    k₁, k₂, f = 1.0, 1000.0, 0.6
+    b = (3f - 1) * k₂ + (2 - 3f) * k₁
+    rK = RVE()
+    add_phase!(rK, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(k₁)); fraction = :rest)
+    add_phase!(rK, :I, Ellipsoid(1.0), Dict(:K => TensISO{3}(k₂)); fraction = f)
+    K = homogenize(rK, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-13), :K)
+    @test TensND.get_data(K)[1] ≈ (b + sqrt(b^2 + 8k₁ * k₂)) / 4 rtol = 1.0e-12
+    Cm, Ci = TensISO{3}(30.0, 12.0), TensISO{3}(3.0e4, 1.4e4)
+    for ε in (0.0, 0.3)
+        r = RVE()
+        add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => Cm); fraction = :rest)
+        add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => Ci); fraction = f)
+        ε > 0 && add_phase!(r, :F, PennyCrack(1.0), Dict(:C => Cm); density = ε, symmetrize = :iso)
+        picard = homogenize(r, SelfConsistent(reltol = 1.0e-14, abstol = 0.0, maxiters = 2000), :C)
+        newton = homogenize(r, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-13), :C)
+        @test collect(TensND.get_data(newton)) ≈ collect(TensND.get_data(picard)) rtol = 1.0e-11
+    end
 end
 
 @testset "major-symmetric part of a transversely isotropic 2nd-order tensor" begin

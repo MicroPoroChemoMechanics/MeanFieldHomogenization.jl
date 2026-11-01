@@ -868,8 +868,8 @@ Implementation: `src/Elasticity/hill_3d_iso.jl` and
 
 Let the spheroid have its axis along ``\underline{e}_3`` and the aspect ratio
 ``\omega`` (axial over transverse semi-axis), so that
-``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2
-+ \omega\,\underline{e}_3\otimes\underline{e}_3`` up to a scale, and let the
+``\boldsymbol{A} = \underline{e}_1\otimes\underline{e}_1 + \underline{e}_2\otimes\underline{e}_2 +
+\omega\,\underline{e}_3\otimes\underline{e}_3`` up to a scale, and let the
 matrix be transversely isotropic about the same axis, with the five constants
 ``C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323}``. The stretch of the
 [reduction to a sphere](@ref th-hill-reduction-sphere) divides each component of

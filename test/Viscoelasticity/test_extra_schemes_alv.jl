@@ -73,6 +73,53 @@ end
     _check_alv_elastic(C_alv, M_ref, n; atol = 1.0e-9, rtol = 1.0e-9)
 end
 
+@testset "asymmetric_self_consistent_alv — cracks: the compliance form, Echoes" begin
+    # With crack families the asymmetric scheme is the compliance form of the elastic
+    # one; the solid sum used to be inverted before the crack compliance was added,
+    # 1.1 % off the elastic estimate with spheres and cracks together.
+    times = [0.1, 0.5, 2.0]
+    for (C_I, f) in ((TensISO{3}(180.0, 60.0), 0.3), (TensISO{3}(3.0, 1.0), 0.3))
+        el, al = RVE(), RVE()
+        for (r, w) in ((el, identity), (al, heaviside_law))
+            add_phase!(r, :M, Ellipsoid(1.0), Dict(:C => w(TensISO{3}(60.0, 18.0))); fraction = :rest)
+            add_phase!(r, :I, Ellipsoid(1.0), Dict(:C => w(C_I)); fraction = f)
+            add_phase!(r, :F, EllipticCrack(1.0, 0.4), Dict(:C => w(TensISO{3}(60.0, 18.0))); density = 0.008, symmetrize = :iso)
+        end
+        E = _to_mandel(homogenize(el, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :C))
+        A = Matrix(homogenize_alv(al, AsymmetricSelfConsistent(:M; reltol = 1.0e-14, maxiters = 3000), :C; times))
+        @test A[13:18, 13:18] ≈ E rtol = 1.0e-9
+    end
+    # Echoes `homogenize_visco(…, scheme = ASC)` on an aging Maxwell matrix, elastic
+    # spheres and iso-averaged elliptic cracks of Echoes density 0.05 (N a b² = 0.008),
+    # scripts/bench_echoes/alv_harness case g2 on three instants: α = 3k and β = 2μ.
+    g(tp) = 1 - 0.5 * exp(-tp)
+    matrix = ViscoLaw((t, tp) -> g(tp) * TensISO{3}(3 * (2.0 + 20.0 * exp(-(t - tp) / 3.0)), 2 * (1.0 + 9.0 * exp(-(t - tp)))))
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(180.0, 60.0)); fraction = 0.3)
+    add_phase!(rve, :F, EllipticCrack(1.0, 0.4), Dict(:C => matrix); density = 0.008, symmetrize = :iso)
+    α, β = iso_params_from_blocks(homogenize_alv(rve, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :C; times))
+    @test α ≈ [52.17368077482027 0.0 0.0; -8.418295155548362 55.036631621932216 0.0; -5.584879223222005 -23.57440172494561 61.76567633186197] rtol = 1.0e-9
+    @test β ≈ [17.603459781586537 0.0 0.0; -3.7088159887297736 17.47759559730729 0.0; -1.4101100295591935 -9.498495968359283 18.233028702762354] rtol = 1.0e-9
+    # Newton solves the same equation.
+    @test Matrix(homogenize_alv(rve, AsymmetricSelfConsistent(:M; algorithm = NewtonDefault(), reltol = 1.0e-12), :C; times)) ≈
+        Matrix(homogenize_alv(rve, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :C; times)) rtol = 1.0e-10
+    # Aligned spheroids or cracks not averaged in orientation: refused by name, they used
+    # to be projected on the isotropic class (0.6 % off the elastic estimate).
+    aligned = RVE()
+    add_phase!(aligned, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(aligned, :I, Spheroid(0.3), Dict(:C => TensISO{3}(180.0, 60.0)); fraction = 0.3)
+    @test_throws "the shape or the anisotropy of phase :I" homogenize_alv(aligned, AsymmetricSelfConsistent(:M), :C; times)
+    tilted = RVE()
+    add_phase!(tilted, :M, Ellipsoid(1.0), Dict(:C => matrix); fraction = :rest)
+    add_phase!(tilted, :F, EllipticCrack(1.0, 0.4; euler_angles = (0.4, 0.9, 0.2)), Dict(:C => matrix); density = 0.008)
+    @test_throws "the transversely isotropic crack contribution of phase :F" homogenize_alv(tilted, AsymmetricSelfConsistent(:M), :C; times)
+    ti_matrix = RVE()
+    add_phase!(ti_matrix, :M, Ellipsoid(1.0), Dict(:C => heaviside_law(TensTI{4}(4.0, 6.0, 1.0, 1.5, 2.0, (0.0, 0.0, 1.0)))); fraction = :rest)
+    add_phase!(ti_matrix, :I, Ellipsoid(1.0), Dict(:C => TensISO{3}(180.0, 60.0)); fraction = 0.3)
+    @test_throws "known against an isotropic reference only" homogenize_alv(ti_matrix, AsymmetricSelfConsistent(:M), :C; times)
+end
+
 @testset "pcw_alv — elastic limit (sphere distribution)" begin
     ctx = _setup_2phase_elastic()
     n = length(ctx.times)

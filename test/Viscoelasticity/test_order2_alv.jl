@@ -113,7 +113,43 @@ end
     add_phase!(rve, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:K => K1); fraction = 0.3)
     @test homogenize_alv(rve, MoriTanaka(), :K; times) ≈ homogenize_alv(rve, Maxwell(), :K; times) rtol = 1.0e-12
     # A scheme without an order-2 implementation says so.
-    @test_throws "has no order-2" homogenize_alv(rve, AsymmetricSelfConsistent(), :K; times)
+    @test_throws "has no order-2" homogenize_alv(rve, EquivalentInclusion(), :K; times)
+end
+
+@testset "order-2 ALV — asymmetric self-consistent: Echoes, elastic limit, Newton" begin
+    # Echoes `homogenize_visco(…, scheme = ASC, unitsize = 3)` on an aging Maxwell
+    # matrix and aging Kelvin spheres (scripts/bench_echoes/alv_harness, case g4, on
+    # three instants): the conductivity kernel of the result.
+    g(tp) = 1 - 0.5 * exp(-tp)
+    times = [0.1, 0.5, 2.0]
+    K_M = ViscoLaw((t, tp) -> TensISO{3}(g(tp) * (0.5 + 5.0 * exp(-(t - tp) / 2.0))))
+    K_I = ViscoLaw((t, tp) -> TensISO{3}(1 / 10.0 + (1 - exp(-(t - tp) / 1.5)) / (4.0 * g(tp))), :creep)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => K_M); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => K_I); fraction = 0.4)
+    k = iso_order2_params_from_blocks(homogenize_alv(rve, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :K; times))
+    ref = [5.136399124402743 0.0 0.0; -1.4761384881311708 4.31697804559142 0.0; -0.18075626805017733 -2.9436794441176257 3.985995740647445]
+    @test k ≈ ref rtol = 1.0e-9
+    @test Matrix(homogenize_alv(rve, AsymmetricSelfConsistent(:M; algorithm = NewtonDefault(), reltol = 1.0e-12), :K; times)) ≈
+        Matrix(homogenize_alv(rve, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :K; times)) rtol = 1.0e-10
+    # Under constant kernels, the elastic asymmetric estimate at every instant, with
+    # insulating cracks (the compliance form) and softer or stiffer spheres.
+    for (k_I, f) in ((10.0, 0.3), (0.1, 0.4))
+        el, al = RVE(), RVE()
+        for (r, w) in ((el, identity), (al, heaviside_law))
+            add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => w(TensISO{3}(2.0))); fraction = :rest)
+            add_phase!(r, :I, Ellipsoid(1.0), Dict(:K => w(TensISO{3}(k_I))); fraction = f)
+            add_phase!(r, :F, PennyCrack(1.0), Dict(:K => w(TensISO{3}(2.0))); density = 0.1, symmetrize = :iso)
+        end
+        E = Array(canonical_components(homogenize(el, AsymmetricSelfConsistent(:M; reltol = 1.0e-14), :K)))
+        A = Matrix(homogenize_alv(al, AsymmetricSelfConsistent(:M; reltol = 1.0e-14, maxiters = 3000), :K; times))
+        @test A[4:6, 4:6] ≈ E rtol = 1.0e-9
+    end
+    # Aligned spheroids would take the estimate out of the isotropic class.
+    r = RVE()
+    add_phase!(r, :M, Ellipsoid(1.0), Dict(:K => K_M); fraction = :rest)
+    add_phase!(r, :I, Spheroid(0.3), Dict(:K => TensISO{3}(10.0)); fraction = 0.2)
+    @test_throws "asymmetric_self_consistent_alv: the shape or the anisotropy of phase :I" homogenize_alv(r, AsymmetricSelfConsistent(:M), :K; times)
 end
 
 @testset "order-2 ALV — self-consistent, Echoes reference" begin

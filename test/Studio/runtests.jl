@@ -1,4 +1,4 @@
-# The tests of MFH Studio (src/studio/), in a module of their own so that their
+# The tests of MFH Studio (src/Studio/), in a module of their own so that their
 # helpers stay apart from those of the package's other tests. Part of the
 # `Studio` group of the suite; the Studio workflow runs them alone too, with a
 # compute process.

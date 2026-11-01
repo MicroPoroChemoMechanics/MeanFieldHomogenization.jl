@@ -218,9 +218,13 @@ function _dilute_pair(::CrackDensity, rve::RVE, name::Symbol, ::Symbol, P_ref; k
     return (_compose(H, P_ref), zero(P_ref))
 end
 
-# One-site assembly around a matrix `m`: every other phase is loaded by
-# `𝔼 : E`, and the matrix takes the rest of the two averages.
-function _with_matrix(rve::RVE, m::Symbol, names, pairs, 𝔼, P_hom)
+# One-site assembly around a matrix `m` of property `P_m`: every other phase is
+# loaded by `𝔼 : E`, the matrix takes the rest of the mean strain and obeys its own
+# law. Its stress then closes the mean stress on the unprojected estimate: on the
+# major-symmetric projection that the Mori–Tanaka and asymmetric self-consistent
+# estimates take (`_major_symmetrize`) only up to the antisymmetric part those
+# schemes produce with families of different frames.
+function _with_matrix(rve::RVE, m::Symbol, names, pairs, 𝔼, P_hom, P_m)
     strain = Dict{Symbol, TensND.AbstractTens}(
         n => _compose(A, 𝔼) for (n, (A, _)) in zip(names, pairs)
     )
@@ -229,7 +233,7 @@ function _with_matrix(rve::RVE, m::Symbol, names, pairs, 𝔼, P_hom)
     )
     f_m = volume_fraction(rve, m)
     strain[m] = (one(P_hom) - _weighted_sum(rve, names, strain, P_hom)) / f_m
-    stress[m] = (P_hom - _weighted_sum(rve, names, stress, P_hom)) / f_m
+    stress[m] = _compose(P_m, strain[m])
     return vcat(m, names), strain, stress
 end
 
@@ -270,7 +274,7 @@ function _scheme_concentrations(rve::RVE, scheme::_MatrixReferenceScheme, prop::
     names = inclusion_phase_names(rve, m)
     pairs = [_dilute_pair(rve, n, p, P₀; kw...) for n in names]
     𝔼 = _remote_field(scheme, rve, prop, m, names, pairs, P₀, P_hom; kw...)
-    return _with_matrix(rve, m, names, pairs, 𝔼, P_hom)
+    return _with_matrix(rve, m, names, pairs, 𝔼, P_hom, P₀)
 end
 
 # Dilute: the macroscopic strain itself.
@@ -306,7 +310,7 @@ function _scheme_concentrations(
     m = matrix_name(scheme, rve)
     names = inclusion_phase_names(rve, m)
     pairs = [_dilute_pair(rve, n, p, P_hom; kw...) for n in names]
-    return _with_matrix(rve, m, names, pairs, one(P_hom), P_hom)
+    return _with_matrix(rve, m, names, pairs, one(P_hom), P_hom, phase_property(rve, m, p))
 end
 
 # Self-consistent: every phase solves its dilute problem in the effective
@@ -547,6 +551,10 @@ The stiffness contribution in elasticity, the conductivity contribution in
 conduction. `reference` is a phase name (a homogeneous phase) or a property
 tensor; it defaults to the matrix of the schemes that have one. Per unit
 density for a crack family.
+
+Mori–Tanaka and the asymmetric self-consistent scheme with inclusion families of
+different shapes or frames sum to a mean stress that is not major-symmetric: the
+estimate is its major-symmetric part (see [`MoriTanaka`](@ref)).
 """
 function MFH_Core.property_contribution(ct::ConcentrationTensors, name::Symbol; reference = ct.reference)
     return _stress(ct, name) - _compose(_reference(ct, reference), _strain(ct, name))
@@ -567,6 +575,11 @@ of `ct`, relative to the inverse ``\\mathbb{S}_{\\mathrm{ref}}`` of the referenc
 The compliance contribution in elasticity, the resistivity contribution in
 conduction. `reference` is a phase name or a property tensor (whose inverse is
 taken), as for [`property_contribution`](@ref).
+
+The identity is exact for every scheme but Mori–Tanaka and the asymmetric
+self-consistent scheme with inclusion families of different shapes or frames, whose
+estimate drops the antisymmetric part of the mean stress: it then holds up to that
+part.
 """
 function MFH_Core.inverse_property_contribution(ct::ConcentrationTensors, name::Symbol; reference = ct.reference)
     S_ref = inv(_reference(ct, reference))

@@ -1,4 +1,4 @@
-# The worked examples of the library (src/studio/library): ten models to open
+# The worked examples of the library (src/Studio/library): ten models to open
 # and take apart, each a running script and a studio model. An example is
 # written by the code generation from the model it embeds, with a note under its
 # banner saying what it shows and after which demo script: regenerating it from

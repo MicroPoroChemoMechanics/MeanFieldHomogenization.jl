@@ -70,7 +70,7 @@ tolerance": `Symbolics.Num <: Real`, yet `<` on a `Num` yields a symbolic
 inequality rather than a `Bool`, and using it in a boolean context throws. (The
 same wrong predicate once made `Cracks._elliptic_CS` return `NaN` on a symbolic
 penny and `Cracks._ti_aligned` throw on a symbolic TI reference.)
-[`is_hard_numeric`](@ref) is the predicate: a `ForwardDiff.Dual` compares, a
+`TensND.is_hard_numeric` (documented in TensND) is the predicate: a `ForwardDiff.Dual` compares, a
 `Num`, a `SymPyPythonCall.Sym` or a complex number does not, and never signals
 convergence: it runs the fixed 60 iterations.
 """

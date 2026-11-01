@@ -295,9 +295,9 @@ end
 
 ### Before and after
 
-At k^{\mathrm s} = 0 the particle is a pure obstacle: the flux parts around it and
+At ``k^{\mathrm s} = 0`` the particle is a pure obstacle: the flux parts around it and
 **piles up at the equator**, the bright spots where ``\|\underline{q}\|`` is
-largest. At k^{\mathrm s} = 3 that concentration is gone and the streamlines run almost
+largest. At ``k^{\mathrm s} = 3`` that concentration is gone and the streamlines run almost
 undisturbed — the skin accepts the flux tangentially, carries it around, and
 returns it downstream, so the far field barely registers the particle.
 

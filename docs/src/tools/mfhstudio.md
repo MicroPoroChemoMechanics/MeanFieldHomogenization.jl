@@ -568,7 +568,7 @@ models in the shape the studio can hand back.
 The studio is the submodule `MeanFieldHomogenization.Studio`, written in Julia
 like the rest of the package, apart from its page (HTML and JavaScript). The
 notes for those who work on it, how it is built and how it is tested, are in
-`src/studio/README.md`.
+`src/Studio/README.md`.
 
 ```@docs
 MeanFieldHomogenization.Studio

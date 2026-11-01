@@ -121,8 +121,19 @@ aging-viscoelastic (ALV) layered-sphere recurrences; the committed
 Python install.
 
 [`alv_harness/`](alv_harness/README.md) holds the Echoes side of a wider ALV comparison
-(spheres and rotated spheroids, DIL/MT/SC, transversely isotropic laws, conduction,
-multiscale), with the discretization and storage conventions read in the Echoes sources.
+(spheres and rotated spheroids, every scheme of Echoes, transversely isotropic laws,
+cracks, conduction, multiscale), with the discretization and storage conventions read in
+the Echoes sources.
+
+`make_schemes_complex_cells.py` writes `test/Schemes/echoes_schemes_complex_cells.json`,
+read by `test/Schemes/test_schemes_complex_cells.jl`: every scheme of echoes in elasticity
+and in conduction, on cells with two families of inclusions and two crack families
+oriented off the axes, in an isotropic and in a tilted transversely isotropic matrix.
+A full run takes about 50 minutes (numerical Hill tensors at relative tolerance 1e-10); each
+case is saved to `echoes_schemes_complex_cells.partial.json` as soon as it is done, and a
+rerun resumes from it. The Reuss reference is computed without the crack families, which
+the bound passes over in MeanFieldHomogenization while echoes forms zero times an infinite
+compliance.
 
 ## Debug / development scripts (kept, documented, re-runnable)
 

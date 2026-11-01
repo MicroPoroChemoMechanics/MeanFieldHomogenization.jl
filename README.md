@@ -266,7 +266,7 @@ anything it does not recognize.
 - **Nothing to install beyond the package.** Julia and the browser you already
   have; Python (3.10 or later) only to translate an Echoes script.
 
-Ten [worked examples](src/studio/library/) open with every form filled
+Ten [worked examples](src/Studio/library/) open with every form filled
 in — start with `01_porous_schemes.jl`. The full guide, with screenshots, is in
 [the manual](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tools/mfhstudio/).
 Its sibling for the chemistry of cement pastes is

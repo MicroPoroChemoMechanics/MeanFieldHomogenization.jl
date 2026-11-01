@@ -102,7 +102,7 @@ end
 
 Build the discrete Hill kernel ``\\widetilde{\\boldsymbol{P}}`` (size ``3n\\times 3n``) for an
 ellipsoidal inclusion in an isotropic ALV matrix.  Uses the time-space
-decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}_0^{-\\circ}\\bigr)_{ij}\\,\\boldsymbol{I}^{\\boldsymbol{A}}``,
+decoupling formula ``[\\widetilde{\\boldsymbol{P}}]_{ij} = \\bigl(\\widetilde{k}_0^{-1^{\\circ}}\\bigr)_{ij}\\,\\boldsymbol{I}^{\\boldsymbol{A}}``,
 with ``\\widetilde{\\boldsymbol{K}}_0 = \\widetilde{k}_0\\,\\boldsymbol{1}`` the discretized isotropic reference.
 """
 function hill_kernel_order2(
@@ -117,7 +117,7 @@ end
 
 Discrete ALV second Hill tensor kernel (size ``3n\\times 3n``) of an ellipsoidal
 inclusion in an isotropic ALV matrix of conductivity law `K_0_law`:
-``\\widetilde{\\boldsymbol{Q}} = \\widetilde{\\boldsymbol{K}}_0 - \\widetilde{\\boldsymbol{K}}_0\\circ\\widetilde{\\boldsymbol{P}}\\circ\\widetilde{\\boldsymbol{K}}_0``,
+``\\widetilde{\\boldsymbol{Q}} = \\widetilde{\\boldsymbol{K}}_0 - \\widetilde{\\boldsymbol{K}}_0\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{P}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{K}}_0``,
 with ``\\widetilde{\\boldsymbol{P}}`` the [`hill_kernel_order2`](@ref); the order-2
 counterpart of [`second_hill_kernel`](@ref).
 """
@@ -201,7 +201,7 @@ hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
     dilute_concentration_alv_order2(K_E, K_0, P) -> Matrix
 
 Order-2 dilute concentration
-``\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}} = (H\\,\\boldsymbol{1} + \\widetilde{\\boldsymbol{P}}\\circ\\Delta\\widetilde{\\boldsymbol{K}})^{-\\circ}``,
+``\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}} = (H\\,\\boldsymbol{1} + \\widetilde{\\boldsymbol{P}}\\stackrel{\\circ}{\\cdot}\\Delta\\widetilde{\\boldsymbol{K}})^{-1^{\\circ}}``,
 ``\\Delta\\widetilde{\\boldsymbol{K}} = \\widetilde{\\boldsymbol{K}}^{\\mathcal{E}} - \\widetilde{\\boldsymbol{K}}_0``,
 all matrices ``3n\\times 3n``.
 """
@@ -216,7 +216,7 @@ end
 """
     dilute_contribution_alv_order2(K_E, K_0, P) -> Matrix
 
-Order-2 dilute contribution ``\\widetilde{\\boldsymbol{N}} = \\Delta\\widetilde{\\boldsymbol{K}}\\circ\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}}``.
+Order-2 dilute contribution ``\\widetilde{\\boldsymbol{N}} = \\Delta\\widetilde{\\boldsymbol{K}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{A}}^{\\mathrm{dil}}``.
 """
 function dilute_contribution_alv_order2(
         K_E::AbstractMatrix, K_0::AbstractMatrix,
@@ -291,8 +291,8 @@ Order-2 Mori-Tanaka:
 
 ```math
 \\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}} = \\widetilde{\\boldsymbol{K}}_0
-  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i\\Bigr)\\circ
-    \\Bigl(f_0\\,H\\,\\boldsymbol{1} + \\sum_j f_j\\,\\widetilde{\\boldsymbol{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ} .
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\boldsymbol{N}}_i\\Bigr)\\stackrel{\\circ}{\\cdot}
+    \\Bigl(f_0\\,H\\,\\boldsymbol{1} + \\sum_j f_j\\,\\widetilde{\\boldsymbol{A}}_j^{\\mathrm{dil}}\\Bigr)^{-1^{\\circ}} .
 ```
 """
 function mori_tanaka_alv_order2(
@@ -328,7 +328,7 @@ end
 # inclusion, as `_inclusion_alv_quantities` at order 4.
 function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times)
     # In the class of each, as at order 4; one inverse for both quantities.
-    K_r = _relaxation_operator(K_r_law, K_0.grid)
+    K_r = _alv_phase_operator(K_r_law, K_0.grid)
     A = _dilute2_in_classes(K_r, geom, K_0)
     return K_r, A, (K_r - K_0) * A
 end
@@ -336,6 +336,12 @@ end
 # The dilute concentration of a phase of conductivity `K_r` and shape `geom` against
 # the isotropic reference `K_0`: its Hill kernel in the class of the shape.
 _dilute2_in_classes(K_r, geom, K_0) = _in_class_algebra(_alg_dilute_concentration, (K_r, K_0, _hill_kernel_order2_op(geom, K_0)), ())
+
+# The bounds read the phase kernels alone, as at order 4.
+_inclusion_alv2_quantities(geom, ::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+    (_alv_phase_operator(K_r_law, K_0.grid), zero(K_0), zero(K_0))
+_inclusion_alv2_quantities(s::LayeredSphere, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+    (_layer_bound_alv2(scheme, s, times), zero(K_0), zero(K_0))
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
@@ -374,7 +380,11 @@ function _homogenize_alv_order2(
     K_0 = _relaxation_operator(K_M_law, TimeGrid(times))
     f_M = volume_fraction(rve, m)
 
-    incl_names = inclusion_phase_names(rve, m)
+    # Crack families enter the schemes on the matrix through their resistivity, as
+    # more phases of weight one; the other phases through their dilute quantities.
+    crack_names = filter(name -> _is_crack_family(rve.amounts[name]), inclusion_phase_names(rve, m))
+    cracks = [_alv2_crack_terms(rve, name, K_M_law, K_0, times) for name in crack_names]
+    incl_names = setdiff(inclusion_phase_names(rve, m), crack_names)
     # `fractions` must carry whatever element type the RVE amounts store —
     # typically `Float64` but also `ForwardDiff.Dual` for autodiff
     # sensitivities via `set_param(rve, AmountParameter(...), Dual(...))`.
@@ -435,9 +445,31 @@ function _homogenize_alv_order2(
     return _homogenize_alv2_dispatch(
         rve, scheme, prop, times,
         K_0, K_phases, A_duts, contribs,
-        fractions, f_M, K_M_law, m; phase_syms, kw...
+        fractions, f_M, K_M_law, m; phase_syms, cracks, kw...
     )
 end
+
+# The terms of a crack family in the schemes on the matrix, as at order 4: its
+# resistivity ΔR̃ = (4π/3) ε sym(R̃) (π ε for a ribbon) as the concentration
+# ΔR̃ ∘ K̃₀ and the conductivity contribution −K̃₀ ∘ ΔR̃ ∘ K̃₀ of a phase of weight
+# one (the density is in it). Voigt and Reuss pass them over, a crack having no
+# volume.
+function _alv2_crack_terms(rve, name, K_M_law, K_0, times)
+    ph = rve.phases[name]
+    ph.geometry isa MFH_Core.AbstractCrack ||
+        throw(ArgumentError("homogenize_alv_order2: phase $name has CrackDensity but geometry $(typeof(ph.geometry)) is not a crack"))
+    R̃ = inverse_property_contribution_alv(ph.geometry, K_M_law, times; α_interface = get(ph.properties, :α_interface, nothing))
+    ΔR = _maybe_symmetrize_alv2(delta_inverse_property_alv(ph.geometry, R̃, rve.amounts[name].value), phase_symmetrize(rve, name))
+    return (A = ΔR * K_0, N = -(K_0 * ΔR * K_0))
+end
+
+# The concentrations, the contributions and the weights of the phases with the
+# crack families after them.
+_alv2_with_cracks(A_duts, contribs, fractions, kw) = (
+    vcat(A_duts, [c.A for c in kw[:cracks]]),
+    vcat(contribs, [c.N for c in kw[:cracks]]),
+    vcat(fractions, fill(one(eltype(fractions)), length(kw[:cracks]))),
+)
 
 # Dispatch table for order-2 schemes.
 
@@ -452,7 +484,7 @@ function _homogenize_alv2_dispatch(
         ArgumentError(
             "$(nameof(typeof(scheme))) has no order-2 (conduction, diffusion) ALV " *
                 "implementation; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell, " *
-                "PonteCastanedaWillis, SelfConsistent and DifferentialScheme have one."
+                "PonteCastanedaWillis, SelfConsistent, AsymmetricSelfConsistent and DifferentialScheme have one."
         )
     )
 end
@@ -484,7 +516,8 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return _in_class_algebra((a, K₀, Ns) -> _alg_dilute(a, K₀, Ns, fractions), (K_0,), (contribs,))
+    _, Ns, fs = _alv2_with_cracks(A_duts, contribs, fractions, kw)
+    return _in_class_algebra((a, K₀, Ns) -> _alg_dilute(a, K₀, Ns, fs), (K_0,), (Ns,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -500,9 +533,11 @@ function _homogenize_alv2_dispatch(
     # which is `(R_r − R_0) ∘ B̃^dil` written out.  Returning the
     # relaxation-side `dilute_alv_order2` here instead — as this dispatch
     # used to — made `DiluteDual` a silent alias of `Dilute`.
+    # A crack's contribution maps back to its resistivity ΔR̃ exactly.
+    _, Ns, fs = _alv2_with_cracks(A_duts, contribs, fractions, kw)
     R_0 = inv(K_0)
-    contribs_R = [-(R_0 * N̄ * R_0) for N̄ in contribs]
-    return _in_class_algebra((a, K₀, Hs) -> _alg_dilute_dual(a, K₀, Hs, fractions), (K_0,), (contribs_R,))
+    contribs_R = [-(R_0 * N̄ * R_0) for N̄ in Ns]
+    return _in_class_algebra((a, K₀, Hs) -> _alg_dilute_dual(a, K₀, Hs, fs), (K_0,), (contribs_R,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -510,7 +545,8 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return _in_class_algebra((a, K₀, As, Ns) -> _alg_mori_tanaka(a, K₀, As, Ns, fractions, f_M), (K_0,), (A_duts, contribs))
+    As, Ns, fs = _alv2_with_cracks(A_duts, contribs, fractions, kw)
+    return _in_class_algebra((a, K₀, As, Ns) -> _alg_mori_tanaka(a, K₀, As, Ns, fs, f_M), (K_0,), (As, Ns))
 end
 
 function _homogenize_alv2_dispatch(
@@ -522,7 +558,8 @@ function _homogenize_alv2_dispatch(
     # The Hill kernel of the distribution shape the RVE declares, as at order
     # 4 and in the elastic scheme; it used to be a sphere whatever the RVE said.
     H_0 = _hill_kernel_order2_op(Schemes.distribution_shape(rve, scheme).shape, K_0)
-    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fractions, H), (K_0, H_0), (contribs,))
+    _, Ns, fs = _alv2_with_cracks(A_duts, contribs, fractions, kw)
+    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fs, H), (K_0, H_0), (Ns,))
 end
 
 # Ponte Castañeda–Willis: the Maxwell formula on the shape of a uniform
@@ -537,7 +574,8 @@ function _homogenize_alv2_dispatch(
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
     H_d = _hill_kernel_order2_op(dist.shape, K_0)
-    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fractions, H), (K_0, H_d), (contribs,))
+    _, Ns, fs = _alv2_with_cracks(A_duts, contribs, fractions, kw)
+    return _in_class_algebra((a, K₀, H, Ns) -> _alg_maxwell(a, K₀, Ns, fs, H), (K_0, H_d), (Ns,))
 end
 
 function _homogenize_alv2_dispatch(
@@ -546,7 +584,16 @@ function _homogenize_alv2_dispatch(
         K_0, K_phases, A_duts, contribs,
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
-    return _self_consistent_alv_order2(rve, prop; times, matrix, sc.options...)
+    return _alv_sc_solve(sc, Val(2), rve, prop; times, matrix, sc.options...)
+end
+
+function _homogenize_alv2_dispatch(
+        rve::RVE, asc::AsymmetricSelfConsistent, prop::Symbol,
+        times::AbstractVector,
+        K_0, K_phases, A_duts, contribs,
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
+    )
+    return _alv_sc_solve(asc, Val(2), rve, prop; times, matrix, asc.options...)
 end
 
 function _homogenize_alv2_dispatch(
@@ -583,8 +630,8 @@ Order-2 (conductivity / diffusion) counterpart of
 ``\\tau \\in [0, 1]``, integrated on the ``3n\\times 3n`` ALV conductivity block
 matrix.
 
-`formulation = :compliance` integrates the resistivity ``\\widetilde{\\boldsymbol{R}} = \\widetilde{\\boldsymbol{K}}^{-\\circ}``
-instead, through ``\\widetilde{\\boldsymbol{H}}_i = -\\widetilde{\\boldsymbol{R}}\\circ\\widetilde{\\boldsymbol{N}}_i\\circ\\widetilde{\\boldsymbol{R}}``, and inverts the result.
+`formulation = :compliance` integrates the resistivity ``\\widetilde{\\boldsymbol{R}} = \\widetilde{\\boldsymbol{K}}^{-1^{\\circ}}``
+instead, through ``\\widetilde{\\boldsymbol{H}}_i = -\\widetilde{\\boldsymbol{R}}\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{N}}_i\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol{R}}``, and inverts the result.
 
 As in the order-4 case the reference of the ODE is the running
 effective medium, and the order-2 ALV Hill kernel exists for an
@@ -627,16 +674,22 @@ function differential_alv_order2(
     grid = TimeGrid(times)
 
     solid_data = NamedTuple[]
+    crack_data = NamedTuple[]
     for name in inclusion_phase_names(rve, m)
         amt = rve.amounts[name]
-        _is_crack_family(amt) &&
-            throw(
-            ArgumentError(
-                "differential_alv_order2: phase :$(name) carries a crack " *
-                    "density; order-2 ALV cracks are not supported by the " *
-                    "differential scheme."
-            )
-        )
+        ph = rve.phases[name]
+        sym = phase_symmetrize(rve, name)
+        # A crack family: its resistivity against the running medium, which only
+        # an isotropic orientation average keeps isotropic.
+        if _is_crack_family(amt)
+            ph.geometry isa MFH_Core.AbstractCrack ||
+                throw(ArgumentError("differential_alv_order2: phase $name has CrackDensity but geometry $(typeof(ph.geometry)) is not a crack"))
+            sym isa IsoSymmetrize ||
+                _alv_iso_error("differential_alv_order2", name, "the transversely isotropic crack contribution")
+            A_int = _trapezoidal_relaxation_scalar(get(ph.properties, :α_interface, nothing), times)
+            push!(crack_data, (name = name, geom = ph.geometry, target = amt.value, sym = sym, A_int = A_int))
+            continue
+        end
         amt isa Schemes.Remainder &&
             throw(
             ArgumentError(
@@ -645,8 +698,6 @@ function differential_alv_order2(
                     "as the matrix, or give it an explicit fraction."
             )
         )
-        ph = rve.phases[name]
-        sym = phase_symmetrize(rve, name)
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ALVProperty ||
             throw(ArgumentError("differential_alv_order2: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
@@ -654,7 +705,7 @@ function differential_alv_order2(
         # contribution in the classes of its operators.
         K_r = _as_class_operator(_alv2_phase_kernel(ph.geometry, K_r_law, K_0, times), grid, _algebra_candidates(()))
         _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
-            _alv_diff_iso_error(name, "the shape")
+            _alv_iso_error("differential_alv_order2", name, "the shape")
         push!(
             solid_data, (
                 name = name, geom = ph.geometry, K_r = K_r,
@@ -681,6 +732,9 @@ function differential_alv_order2(
             eltype(_diff_alv2_contribution(sd.geom, sd.K_r, K_0_op, times))
         )
     end
+    for cd in crack_data
+        Tp = promote_type(Tp, typeof(cd.target), _maybe_eltype(cd.A_int))
+    end
     sz = 3 * length(grid)
     dual = formulation === :compliance
     x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
@@ -689,6 +743,7 @@ function differential_alv_order2(
     ode_p = (
         sz = sz, dual = dual, times = times, grid = grid,
         solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
+        crack_data = Tuple(merge(r, (path = paths[r.name],)) for r in crack_data),
     )
     rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
     prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
@@ -747,6 +802,19 @@ function _diff_alv2_ode_rhs!(du, u, p, τ)
         _diff_alv2_add!(Δ, contrib, dφᵢ, p.dual, P_curr, p.grid)
         return nothing
     end
+
+    # The crack families: dφ_c · (the conductivity contribution of a unit density
+    # against the running medium), a family carrying no volume but diluted by the
+    # solid increments, dφ_c = dε_c + (ε_c / f_0) Σ df, as at order 4.
+    map(p.crack_data) do r
+        εᶜ = r.path.f(τ) * r.target
+        dφᶜ = r.path.df(τ) * r.target + (εᶜ / f0) * sum_df
+        iszero(dφᶜ) && return nothing
+        R̃ = _crack_resistivity_alv(r.geom, only(K_op.blocks), r.A_int, p.grid)
+        Ñ = -(K_op * delta_inverse_property_alv(r.geom, R̃, one(T)) * K_op)
+        _diff_alv2_add!(Δ, _maybe_symmetrize_alv2(Ñ, r.sym), dφᶜ, p.dual, P_curr, p.grid)
+        return nothing
+    end
     return nothing
 end
 
@@ -794,41 +862,120 @@ end
 
 # The order-2 fixed point in the classes of the operators: each concentration
 # against the isotropic estimate, its Hill kernel in the class of the shape.
-function _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, verbose)
-    grid = TimeGrid(times)
-    candidates = _algebra_candidates(())
-    phases = map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
-    Tp = mapreduce(d -> promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(d.geom))), promote_type, phases)
-    step(K) = _sc2_step_in_classes(K, phases)
+function _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose, select_best)
+    phases = _sc2_class_phases(data, times)
+    Tp = _sc2_eltype(K_M, data, cracks, times)
+    step(K) = _sc2_step_in_classes(K, phases, cracks)
     return _fixed_point_in_classes(
-        step, _as_class_operator(K_M, grid, candidates), Tp, "SC-ALV order 2";
-        abstol, reltol, maxiters, damping, verbose, select_best = false
+        step, first(phases).K_r, Tp, "SC-ALV order 2";
+        abstol, reltol, maxiters, damping, verbose, select_best
     )
 end
 
-function _sc2_step_in_classes(K, phases)
+# The phases with their kernels stored by the blocks of their classes, the matrix first.
+function _sc2_class_phases(data, times)
+    grid = TimeGrid(times)
+    candidates = _algebra_candidates(())
+    return map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
+end
+
+function _sc2_step_in_classes(K, phases, cracks)
     terms = map(phases) do d
         A = _dilute2_in_classes(d.K_r, d.geom, K)
         d.f * _maybe_symmetrize_alv2(A, d.sym), d.f * _maybe_symmetrize_alv2(d.K_r * A, d.sym)
     end
-    return _as_iso_estimate(reduce(+, last.(terms)) * inv(reduce(+, first.(terms))))
+    return _as_iso_estimate(reduce(+, last.(terms)) * inv(_sc2_with_cracks(reduce(+, first.(terms)), K, cracks)))
+end
+
+# The sum of the concentrations with the crack families against the running estimate
+# `K`, Σ_c sym((4π/3) ε R̃_c(K)) ∘ K: the Echoes form (Σ f B̃ ∘ K̃⁻¹)(Σ f Ã ∘ K̃⁻¹ + ΔR̃)⁻¹
+# of the step, written (Σ f B̃)(Σ f Ã + ΔR̃ ∘ K̃)⁻¹, as at order 4.
+_sc2_with_cracks(A, K, cracks) = isempty(cracks) ? A : A + _sc2_crack_resistivity(K, cracks) * K
+_sc2_crack_resistivity(K, cracks) =
+    _sc2_crack_resistivity(_iso_order2_block_alv(K, "self_consistent_alv_order2"), _operator_grid((K,), 3), cracks)
+_sc2_crack_resistivity(λ::AbstractMatrix, grid::TimeGrid, cracks) = reduce(
+    +, (_maybe_symmetrize_alv2(delta_inverse_property_alv(c.geom, _crack_resistivity_alv(c.geom, λ, c.A_int, grid), c.ε), c.sym) for c in cracks)
+)
+
+# The matrix kernel and the phases of an order-2 ALV self-consistent cell, read once
+# for the Picard and the Newton solvers (`who` names the caller in the messages).
+# Every phase must keep the estimate isotropic, as the order-2 Hill kernel against
+# it requires.
+function _sc2_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractString)
+    m = host_phase_name(rve, matrix, who)
+    K_M_law = phase_property(rve, m, prop)
+    K_M_law isa ALVProperty ||
+        throw(ArgumentError("$who: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    K_M = _trapezoidal_relaxation(K_M_law, times, 3)
+    crack_names = filter(name -> _is_crack_family(rve.amounts[name]), inclusion_phase_names(rve, m))
+    # A crack family is transversely isotropic about its normal before an isotropic
+    # orientation average, which the estimate needs.
+    cracks = map(crack_names) do name
+        ph = rve.phases[name]
+        ph.geometry isa MFH_Core.AbstractCrack ||
+            throw(ArgumentError("$who: phase $name has CrackDensity but geometry $(typeof(ph.geometry)) is not a crack"))
+        sym = phase_symmetrize(rve, name)
+        sym isa IsoSymmetrize ||
+            _alv_iso_error(who, name, "the transversely isotropic crack contribution")
+        A_int = _trapezoidal_relaxation_scalar(get(ph.properties, :α_interface, nothing), times)
+        return (geom = ph.geometry, ε = rve.amounts[name].value, sym = sym, A_int = A_int)
+    end
+    data = map([m; setdiff(inclusion_phase_names(rve, m), crack_names)]) do name
+        ph = rve.phases[name]
+        sym = phase_symmetrize(rve, name)
+        law = phase_property(rve, name, prop)
+        law isa ALVProperty ||
+            throw(ArgumentError("$who: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+        K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
+        _alv2_keeps_iso(ph.geometry, sym, K_r) ||
+            _alv_iso_error(who, name, "the shape or the anisotropy")
+        f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
+        return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
+    end
+    return K_M, data, cracks
+end
+
+# The promoted element type of every input of the order-2 step: kernels, fractions,
+# geometry tensors, and what a layered sphere brings (a dual number in one of its
+# layers, for instance), probed once against the matrix kernel.
+_sc2_eltype(K_M, data, cracks, times) = mapreduce(
+    c -> promote_type(typeof(c.ε), _maybe_eltype(c.A_int)), promote_type, cracks;
+    init = mapreduce(d -> _sc2_phase_eltype(d.geom, d, K_M, times), promote_type, data; init = eltype(K_M))
+)
+_maybe_eltype(::Nothing) = Union{}
+_maybe_eltype(A::AbstractMatrix) = eltype(A)
+_sc2_phase_eltype(geom, d, K_M, times) = promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(geom)))
+_sc2_phase_eltype(s::LayeredSphere, d, K_M, times) =
+    promote_type(typeof(d.f), eltype(gradient_gradient_concentration_alv(s, K_M, times)))
+
+# One order-2 self-consistent step on full matrices, the running estimate `K` to the
+# next: (Σ f·B) ∘ (Σ f·A + ΔR̃(K) ∘ K)^{-1}, the crack families in the second sum.
+function _sc2_dense_step(K, data, cracks, times)
+    AB = [_sc2_phase_AB(d.geom, d.K_r, K, d.sym, times) for d in data]
+    A = sum(d.f * first(ab) for (d, ab) in zip(data, AB))
+    B = sum(d.f * last(ab) for (d, ab) in zip(data, AB))
+    return B * volterra_inverse(Matrix(_sc2_with_cracks(A, K, cracks)); block_size = 3)
 end
 
 """
     self_consistent_alv_order2(rve, prop; times, matrix = nothing, abstol = 1e-10,
                                reltol = 1e-8, maxiters = 200, damping = 0.0,
-                               verbose = false) -> Matrix
+                               verbose = false, select_best = false) -> Matrix
 
 Order-2 (conduction, diffusion) self-consistent estimate in the aging linear
 Volterra setting: the fixed point of
-``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\circ\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\circ\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-\\circ}``,
+``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\stackrel{\\circ}{\\cdot}\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-1^{\\circ}}``,
 every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
 ``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
 the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters
-through its recurrence. Every phase must keep the estimate isotropic, as the
-order-2 Hill kernel against it requires: a sphere of isotropic conductivity, a
-layered sphere, or `symmetrize = :iso`. Reached through
-`homogenize_alv(rve, SelfConsistent(), :K; times)`.
+through its recurrence, and an insulating crack family through its resistivity
+against the estimate, in the denominator (the form of Echoes, as at order 4).
+Every phase must keep the estimate isotropic, as the order-2 Hill kernel against
+it requires: a sphere of isotropic conductivity, a layered sphere, or
+`symmetrize = :iso`, which a crack family always needs. Reached through
+`homogenize_alv(rve, SelfConsistent(), :K; times)`;
+`SelfConsistent(algorithm = NewtonDefault())` solves the same equation by a
+Newton march through the instants.
 """
 self_consistent_alv_order2(rve::RVE, prop::Symbol; kw...) = Matrix(_self_consistent_alv_order2(rve, prop; kw...))
 
@@ -842,46 +989,16 @@ function _self_consistent_alv_order2(
         reltol::Real = 1.0e-8,
         maxiters::Int = 200,
         damping::Real = 0.0,
-        verbose::Bool = false
+        verbose::Bool = false,
+        select_best::Bool = false
     )
-    m = host_phase_name(rve, matrix, "self_consistent_alv_order2")
-    K_M_law = phase_property(rve, m, prop)
-    K_M_law isa ALVProperty ||
-        throw(ArgumentError("self_consistent_alv_order2: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    K_M = _trapezoidal_relaxation(K_M_law, times, 3)
-    data = map([m; inclusion_phase_names(rve, m)]) do name
-        _is_crack_family(rve.amounts[name]) && throw(
-            ArgumentError("self_consistent_alv_order2: phase :$(name) is a crack family, which the order-2 ALV schemes do not support.")
-        )
-        ph = rve.phases[name]
-        sym = phase_symmetrize(rve, name)
-        law = phase_property(rve, name, prop)
-        law isa ALVProperty ||
-            throw(ArgumentError("self_consistent_alv_order2: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-        K_r = _alv2_phase_kernel(ph.geometry, law, K_M, times)
-        _alv2_keeps_iso(ph.geometry, sym, K_r) ||
-            _alv_diff_iso_error(name, "the shape or the anisotropy")
-        f = name === m ? volume_fraction(rve, m) : _amount_value(rve, name)
-        return (geom = ph.geometry, K_r = K_r, f = f, sym = sym)
-    end
+    K_M, data, cracks = _sc2_phases(rve, prop, times, matrix, "self_consistent_alv_order2")
     # Without layered spheres, whose recurrences are written on full matrices, the
     # iteration runs in the classes of the operators.
     any(d -> d.geom isa LayeredSphere, data) ||
-        return _sc2_in_classes(K_M, data, times; abstol, reltol, maxiters, damping, verbose)
-    K = K_M
-    for iter in 1:maxiters
-        # The comprehension captures this iteration's estimate, not `K`
-        # itself, which is reassigned below and would be boxed.
-        Kᵢ = K
-        AB = [_sc2_phase_AB(d.geom, d.K_r, Kᵢ, d.sym, times) for d in data]
-        A = sum(d.f .* ab[1] for (d, ab) in zip(data, AB))
-        B = sum(d.f .* ab[2] for (d, ab) in zip(data, AB))
-        K_new = B * volterra_inverse(A; block_size = 3)
-        Δ = norm(K_new - K)
-        verbose && @info "SC-ALV order 2, iteration $iter: ‖Δ‖ = $Δ"
-        Δ ≤ abstol + reltol * norm(K) && return K_new
-        K = (1 - damping) .* K_new .+ damping .* K
-    end
-    @debug "self_consistent_alv_order2: maxiters = $(maxiters) reached without convergence" abstol reltol
-    return K
+        return _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose, select_best)
+    return _fixed_point_dense(
+        K -> _sc2_dense_step(K, data, cracks, times), K_M, "SC-ALV order 2";
+        abstol, reltol, maxiters, damping, verbose, select_best
+    )
 end

@@ -76,18 +76,14 @@ end
     end
 end
 
-@testset "ortho dispatch — Dilute, Mori-Tanaka et Maxwell restent ortho" begin
+@testset "ortho dispatch — the schemes with concentrations refuse an orthotropic matrix" begin
+    # Their ALV Hill kernel against the matrix is known for an isotropic one only;
+    # they used to read the isotropic projection of the orthotropic matrix and return
+    # an orthotropic result built on it.
     times = collect(0.0:0.5:1.5)
-    n = length(times)
     rve = _ortho_rve(fraction = 0.2)
-
     for scheme in (Dilute(), MoriTanaka(), Maxwell())
-        C = homogenize_alv(rve, scheme, :C; times = times)
-        @test size(C) == (6n, 6n)
-        @test all(isfinite, C)
-        # These schemes preserve the ortho form: coaxial ortho phases give an
-        # ortho result in the same material frame.
-        @test C.class isa TensOrtho
+        @test_throws "known against an isotropic reference only" homogenize_alv(rve, scheme, :C; times = times)
     end
 end
 
@@ -96,7 +92,7 @@ end
     rve = _ortho_rve(fraction = 0.0)
     M_M = trapezoidal_matrix(heaviside_law(_ortho_tensor(1.0)), times)
 
-    for scheme in (Voigt(), Reuss(), Dilute(), MoriTanaka())
+    for scheme in (Voigt(), Reuss())
         C = homogenize_alv(rve, scheme, :C; times = times)
         @test isapprox(C, M_M; atol = 1.0e-8)
     end

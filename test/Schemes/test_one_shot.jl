@@ -208,9 +208,9 @@ end
 
 @testset "MoriTanaka — aligned triaxial ellipsoids stay orthotropic" begin
     # The Hill tensor of a triaxial ellipsoid in an isotropic matrix is
-    # orthotropic, and so is every product of the chain: the estimate is the
-    # twelve-constant orthotropic tensor, equal to the one computed on generic
-    # tensors with a numerical Hill tensor.
+    # orthotropic, and so is every product of the chain: the estimate, projected on
+    # the major-symmetric tensors, is the nine-constant orthotropic tensor, equal to
+    # the one computed on generic tensors with a numerical Hill tensor.
     C₀ = TensISO{3}(3 * 20.0, 2 * 12.0)
     C₁ = TensISO{3}(3 * 80.0, 2 * 50.0)
     mt(C; kw...) = let rve = RVE()
@@ -219,7 +219,44 @@ end
         homogenize(rve, MoriTanaka(), :C; kw...)
     end
     x = mt(C₀)
-    @test x isa TensND.TensOrtho{4, Float64, 12}
+    @test x isa TensND.TensOrtho{4, Float64, 9}
     y = mt(TensND.generic_tens(C₀); method = :nestedquadgk, reltol = 1.0e-12, abstol = 1.0e-14)
     @test norm(mandel(x) - mandel(y)) / norm(mandel(y)) < 1.0e-12
+end
+
+@testset "MoriTanaka — families of different frames: the major-symmetric part, with a warning" begin
+    # Two families that share no frame: 𝔑 : ⟨𝔸⟩⁻¹ is not major-symmetric
+    # [benveniste1991]. The estimate is its major-symmetric part, rebuilt here from
+    # the dilute tensors 𝔸ᵢ and contributions 𝔑ᵢ of each family, and so is its
+    # derivative in the fraction f of the first, in closed form:
+    #     d/df (𝔑 : ⟨𝔸⟩⁻¹) = 𝔑₁ : ⟨𝔸⟩⁻¹ − 𝔑 : ⟨𝔸⟩⁻¹ : (𝔸₁ − 𝕀) : ⟨𝔸⟩⁻¹,
+    # with 𝔑 = Σ fᵢ 𝔑ᵢ and ⟨𝔸⟩ = (1 − Σ fᵢ) 𝕀 + Σ fᵢ 𝔸ᵢ. In Kelvin–Mandel form the
+    # major-symmetric part of a tensor is the symmetric part of its matrix.
+    C₀ = TensISO{3}(3 * 20.0, 2 * 12.0)
+    C₁, C₂ = TensISO{3}(3 * 80.0, 2 * 50.0), TensISO{3}(3 * 5.0, 2 * 2.0)
+    f₂ = 0.1
+    function cell(f)
+        rve = RVE(; T = typeof(f))
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(rve, :I, Ellipsoid(3.0, 2.0, 1.0; euler_angles = (0.4, 0.9, 0.2)), Dict(:C => C₁); fraction = f)
+        add_phase!(rve, :J, Ellipsoid(1.0, 1.0, 4.0; euler_angles = (1.2, 0.3, 0.8)), Dict(:C => C₂); fraction = f₂)
+        return rve
+    end
+    km(X) = TensND.mandel(TensND.canonical_components(X))
+    sympart(X) = (X + transpose(X)) / 2
+    f = 0.2
+    dil = concentration_tensors(cell(f), Dilute(:M), :C)
+    A₁, A₂ = km(gradient_gradient_concentration(dil, :I)), km(gradient_gradient_concentration(dil, :J))
+    N₁, N₂ = km(property_contribution(dil, :I)), km(property_contribution(dil, :J))
+    I₆ = Matrix{Float64}(I, 6, 6)
+    A_avg = (1 - f - f₂) * I₆ + f * A₁ + f₂ * A₂
+    N = f * N₁ + f₂ * N₂
+    raw = km(C₀) + N / A_avg
+    @test norm(raw - transpose(raw)) / norm(raw) > 1.0e-4
+
+    mt(φ) = km(homogenize(cell(φ), MoriTanaka(:M), :C))
+    C = @test_logs (:warn, r"no major symmetry") mt(f)
+    @test C ≈ sympart(raw) rtol = 1.0e-12
+    dC = @test_logs (:warn, r"no major symmetry") ForwardDiff.derivative(mt, f)
+    @test dC ≈ sympart(N₁ / A_avg - N / A_avg * (A₁ - I₆) / A_avg) rtol = 1.0e-10
 end

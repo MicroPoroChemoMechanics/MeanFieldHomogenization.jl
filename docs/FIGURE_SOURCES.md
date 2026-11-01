@@ -51,4 +51,4 @@ The plots of finite-element and neural-network results under `src/assets/fe/`,
 compute them (`scripts/fe/make_*_figures.jl`, `scripts/fe/arma2011_welltest.jl`,
 `scripts/nn/`). The screenshots under `src/assets/mfhstudio/` are taken from
 a running MFH Studio, in the light and the dark theme, by
-`src/studio/tools/screenshots.mjs` (repository root), which says how to run it.
+`src/Studio/tools/screenshots.mjs` (repository root), which says how to run it.

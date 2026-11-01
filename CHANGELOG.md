@@ -1,5 +1,147 @@
 # Changelog
 
+## v0.26.0 — self-consistent solvers that keep the physical root; ALV ribbons and cracks in conduction
+
+A minor release: new exported API, and refusals where options were ignored. The Newton
+solvers of the self-consistent equation now reach the physical root beyond percolation, in
+elasticity, in conduction and in aging viscoelasticity at both orders, and the ALV crack
+family is complete: ribbons, and insulating cracks in conduction, in every scheme.
+
+### Breaking changes
+
+- Before 1.0 a minor release is breaking for the resolver: a compat entry
+  `MeanFieldHomogenization = "0.25"` does not accept 0.26.0.
+- `homogenize_alv` honors `SelfConsistent(algorithm = …)` instead of ignoring it:
+  `AndersonDefault()` (the default) is the Picard iteration, `NewtonDefault()` the Newton
+  march, and any other algorithm is refused with an `ArgumentError`, as is a seed `init`,
+  for `SelfConsistent` and `AsymmetricSelfConsistent` alike (the ALV iteration starts from
+  the matrix kernel). A cell that passed such an option got the Picard estimate silently.
+- The ALV self-consistent schemes refuse, by name, a crack family without an isotropic
+  orientation average: the Newton solver used to project the transversely isotropic
+  estimate on the isotropic class without a word, and the Picard iteration failed with an
+  error about classes that did not name the phase.
+- `compliance_contribution_alv` accepts an elastic (order-4) reference only, as its
+  counterparts in elasticity and conduction do; `resistivity_contribution_alv` is its
+  name in conduction.
+- `NewtonDefault` (elasticity, conduction) starts with Picard steps, counted in
+  `maxiters` (see Fixed): an iteration cap set for Newton iterations alone may now stop
+  earlier.
+- The ALV Hill kernel is known against an isotropic reference only. `hill_kernel` on an
+  anisotropic law, the concentration schemes (Dilute, DiluteDual, Mori–Tanaka, Maxwell,
+  PCW) on an anisotropic matrix, and the asymmetric self-consistent scheme on aligned
+  spheroids (0.6 % off) now throw an `ArgumentError` that names the phase, as the
+  self-consistent scheme did: they used to project the reference on the isotropic class
+  without a word. Voigt and
+  Reuss, which need no concentration, keep accepting an anisotropic matrix.
+- `MoriTanaka` with inclusion families of different shapes or frames returns the
+  major-symmetric part of its estimate, a change of the order of 1e-3, and warns (see
+  Fixed); aligned families are unchanged. `concentration_tensors` gives the matrix its own
+  law, so that the contributions of such a cell sum to the unprojected estimate, whose
+  major-symmetric part is the estimate.
+- `AsymmetricSelfConsistent` (elasticity, conduction) on families of different frames, or on
+  cracks beside a phase stiffer than the matrix, reaches the projected fixed point of
+  Echoes: a change of a few 1e-4 (see Fixed).
+
+### Added
+
+- **Ribbon cracks in aging viscoelasticity.** `B̃_ℓ = π β^{-∘}` and
+  `B̃_m = B̃_n = π (2α + β)^{-∘} ∘ (α + 2β) ∘ β^{-∘}`, the ribbon limit of the elliptic
+  closed form in the same order of the Volterra factors, orthotropic in the frame of the
+  crack, in every ALV scheme. Checked against the elastic ribbon, against `3π/8` times the
+  elliptic crack as `η → 0` in an aging matrix, and against void elliptic cylinders
+  flattened through their own Hill kernel. A `ConductiveCrack` opens as the penny it wraps.
+- **Insulating cracks in ALV conduction (order 2).** The resistivity
+  `R̃ = κ b̃ n ⊗ n`, `b̃ = (4/3ℰ) k̃₀^{-∘}` (ellipse) or `(π/2) k̃₀^{-∘}` (ribbon), with a
+  Kapitza-like interface `:α_interface`, for elliptic cracks of any aspect ratio, ribbons
+  and any orientation, in Dilute, DiluteDual, Mori–Tanaka, Maxwell, PCW (Voigt and Reuss
+  pass them over), self-consistent and differential schemes. `inverse_property_contribution_alv`
+  serves both orders (`Rn`/`Rt` in elasticity, `α_interface` in conduction, each refused at
+  the other order); `resistivity_contribution_alv` is new. Checked against the elastic
+  thermal crack, and against insulating ellipsoids and cylinders flattened in an aging
+  conductor.
+- **The Newton solver of the ALV self-consistent equation**, reached through
+  `SelfConsistent(algorithm = NewtonDefault())` at both orders: a march through the
+  instants, each solving a small system (the row of the bulk and shear kernels in
+  elasticity, of the conductivity in conduction) by Newton's method with the line search
+  and the fallbacks of the elastic solver. It reads the phases and takes the step of the
+  Picard iteration, so that layered spheres and cracks enter it too; its `maxiters` is a
+  cap per instant, and the derivatives a dual carries are converged by one more full step.
+- **The ALV asymmetric self-consistent scheme at order 2** (conduction), with insulating
+  cracks and layered spheres, and with the solver choice of `SelfConsistent` at both
+  orders: `AsymmetricSelfConsistent(algorithm = NewtonDefault())` marches through the
+  instants with the shared Newton solver.
+- **Echoes parity tests on complex cells.** `test_alv_echoes_cells.jl` checks every ALV
+  scheme against Echoes on 25 cells, at orders 4 and 2: two oriented inclusion families of
+  an aging transversely isotropic law and two crack families of their own orientations,
+  a tilted distribution ellipsoid for Maxwell and PCW, orientation averages for the
+  self-consistent and differential schemes; agreement to 1e-9 (1e-6 for the differential
+  scheme, whose Echoes reference is a Richardson extrapolation of explicit Euler steps).
+  `test_schemes_complex_cells.jl` does the same for every elastic and conduction scheme on
+  an isotropic and a tilted transversely isotropic matrix, 38 cells, to 1e-10 (1e-6 for
+  the differential scheme). The cells, the generators and the harness that replays them
+  are in `scripts/bench_echoes/`.
+- Theory: *Cracks* and *Solving the self-consistent equation* in the aging viscoelasticity
+  chapter; manual sections on ribbons, cracks in conduction, and the choice of solver.
+
+### Fixed
+
+- Beyond the percolation of a stiff phase, `NewtonDefault` (elasticity, conduction) threw a
+  `SingularException`: started from the matrix property, Newton headed for a root of
+  negative stiffness, which the positivity guard flattened into a zero Jacobian. Picard
+  steps now choose the physical basin first, and a vanishing Jacobian gives the Picard
+  direction. At 60 % of spheres a thousand times as stiff, the estimate is the Picard one,
+  and in conduction the root of Bruggeman's equation.
+- The ALV Newton march, started from the matrix kernel, could converge to such a root: the
+  stiffness of 60 % of stiff spheres came out at −79 instead of 3882. It starts from the
+  Picard estimate, and a root with a negative instantaneous modulus is refused.
+- With crack families, the ALV asymmetric self-consistent scheme inverted the sum of the
+  solid phases before adding the crack compliance: 1.1 % off the elastic scheme and Echoes
+  for spheres and cracks together. It now takes the compliance form of the elastic scheme,
+  `S̃ = S̃_M + (⟨Ã⟩ − S̃_M ∘ ⟨C̃ ∘ Ã⟩) ∘ S̃ + Σ ΔH̃`, and agrees with Echoes to 4e-11; without
+  cracks the stiffness form is kept (the same fixed point).
+- With inclusion families of different shapes or frames, the Mori–Tanaka estimate is not
+  major-symmetric (Benveniste, Dvorak and Chen, 1991): a known defect of the scheme, which
+  `N : ⟨A⟩⁻¹` exhibits as soon as the families do not share a frame (0.12 % of
+  antisymmetric part on a cell of two oriented families). An effective stiffness or
+  conductivity derives from an energy, so `MoriTanaka` now returns its major-symmetric
+  part, as Echoes does and as the self-consistent iterate already was, with a warning that
+  gives the relative size of the part dropped. Aligned families are unchanged and silent.
+  `concentration_tensors` keeps every phase on its own law, the matrix included: the
+  contributions then sum to the unprojected estimate.
+- The elastic and conduction asymmetric self-consistent scheme projects every iterate on
+  the major-symmetric tensors too, and takes its stiffness or compliance form by the
+  Voigt criterion of Echoes whether or not the cell has cracks, which now enter the
+  stiffness form through `−C_M : ΔH : C`. It forced the compliance form on any cracked
+  cell. Without the projection both forms have the same fixed point; with families of
+  different frames the projected ones differ by a few 1e-4, and the estimate was up to
+  1.6e-3 off Echoes on oriented cells. It now agrees to 6e-13.
+
+### Changed
+
+- The sources of MFH Studio moved from `src/studio` to `src/Studio`, named as every other
+  submodule directory is; nothing changes for a user of `MeanFieldHomogenization.Studio`.
+- The differential ALV scheme forms the crack contributions in the classes of the operators,
+  as it did those of the solid phases: the same estimate to 4e-16, and 6.7 ms instead of
+  10.4 ms for a cell with an elliptic crack family on 15 instants.
+- The table of crack treatments of the viscoelasticity manual described an additive
+  Mori–Tanaka form the code no longer uses: it now describes the Echoes form, shared with
+  the elastic scheme.
+
+### Documentation
+
+- The Volterra products are written as in Barthélémy et al. (IJSS 2016): the circle over
+  the contraction it replaces, ``\stackrel{\circ}{:}`` and ``\stackrel{\circ}{\cdot}``,
+  ``\circ`` between scalar kernels, and the inverse ``X^{-1^{\circ}}``; in the theory, the
+  manual, the nomenclature and the docstrings.
+- The manual has one page on non-aging viscoelasticity (the Laplace-Carson route and its
+  inversion) and one on aging viscoelasticity, which opens on the difference between a law
+  (`ViscoLaw`) and an operator (`VolterraOperator`); the law library keeps its page. Every
+  code block of the two pages is executed by the documentation build (one of them called a
+  function that does not exist).
+- Formulas cut by Markdown were shown as raw LaTeX on several pages (a wrapped inline
+  formula read as a list item or a line break, a `|` ending a table cell): fixed, and
+  found by scanning the rendered site.
+
 ## v0.25.0 — aging basic creep of concrete, across scales
 
 A minor release: new exported API. Aging viscoelastic homogenization nests across scales,

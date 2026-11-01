@@ -186,12 +186,13 @@ function _operands_order(ops, grid)
 end
 
 # The grid of the operators, or, for plain matrices alone, a grid of as many
-# instants (its values are not read: only the equality of grids is).
-function _operator_grid(ops)
+# instants, `d` the size of a value (6 in elasticity, 3 in conduction; its values
+# are not read: only the equality of grids is).
+function _operator_grid(ops, d = 6)
     for M in ops
         M isa VolterraOperator && return M.grid
     end
-    return TimeGrid(collect(1.0:(size(first(ops), 1) ÷ 6)))
+    return TimeGrid(collect(1.0:(size(first(ops), 1) ÷ d)))
 end
 
 const _ISO4 = TensISO{3}(1.0, 1.0)

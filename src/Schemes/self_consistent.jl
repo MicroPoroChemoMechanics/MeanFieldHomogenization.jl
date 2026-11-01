@@ -270,6 +270,16 @@ basis.
 """
 _major_symmetrize(P::TensND.AbstractTens{4}) = Tensors.majorsymmetric(P)
 _major_symmetrize(P::TensND.AbstractTens{2}) = Tensors.symmetric(P)
+# A generic tensor stored as a minor-symmetric `Tensors.SymmetricTensor`: the part is
+# formed on the stored data, which `get_array` returns, seventy times faster than
+# through the components of the generic method (14 ns against 1 µs).
+_major_symmetrize(P::TensND.TensCanonical{4, 3, T, <:Tensors.SymmetricTensor{4, 3}}) where {T} =
+    TensND.TensCanonical(Tensors.majorsymmetric(TensND.get_array(P)))
+
+# The matrix of a property in the canonical basis: Kelvin–Mandel at order 4, an
+# isometry, so that its Frobenius norm is that of the tensor; components at order 2.
+_canonical_matrix(P::TensND.AbstractTens{4}) = TensND.mandel(TensND.canonical_components(P); symmetrize = true)
+_canonical_matrix(P::TensND.AbstractTens{2}) = Matrix(TensND.canonical_components(P))
 
 """
     _sc_crack_total(rve, names, P_n, prop, kw) -> (H_total, has_cracks)
@@ -464,7 +474,14 @@ estimate by its symmetry-class **canonical components**
 2. Compute the Jacobian ``\\mathbf{J} = \\partial\\boldsymbol{F}/\\partial p`` via `ForwardDiff.jacobian`,
 3. Take the Newton step ``\\Delta p = -\\mathbf{J}^{-1}\\boldsymbol{F}(p)`` with backtracking line
    search (Armijo with shrinking factor 1/2, minimum step 1e-6).
-4. Fall back to a single Picard step when the line search fails.
+4. Fall back to a single Picard step when the line search fails, or when the
+   Jacobian vanishes.
+
+The Newton iterations start after Picard steps that bring the iterate within 1 % of
+its own change (they count against `maxiters`): the self-consistent equation may have several roots near percolation,
+and Newton started from the matrix property may head for a non-physical one (a
+negative stiffness beyond the percolation of a stiff phase) where Picard reaches the
+physical one. Newton then refines that root to the requested tolerance.
 
 Compared to the SciML weak-extension path, this is dependency-free and
 specialized to the small parameter spaces of `MeanFieldHomogenization` symmetry
@@ -530,8 +547,13 @@ function _solve_sc(
     Tref = float(promote_type(eltype(p0), eltype(r0)))
     p = collect(Tref, p0)
     r = collect(Tref, r0)
+    # The equation may have several roots (beyond the percolation of a stiff phase,
+    # Newton from the matrix property heads for one of negative stiffness, which the
+    # guard flattens into a zero Jacobian): Picard steps first take the iterate into
+    # the basin of the root the Picard iteration reaches, which Newton then refines.
+    warm = _sc_newton_warm_start!(p, r, residual_vec, maxiters)
     p_best = copy(p); resid_best = Inf
-    for iter in 1:maxiters
+    for iter in (warm + 1):maxiters
         MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
         norm_r = LinearAlgebra.norm(r)
         norm_p = LinearAlgebra.norm(p)
@@ -552,43 +574,8 @@ function _solve_sc(
         end
         # Jacobian via ForwardDiff (strong dependency).
         J = ForwardDiff.jacobian(residual_vec, p)
-        # Solve J·δ = -r with a regularizing fallback if J is singular.
-        δ = try
-            J \ (-r)
-        catch err
-            # Only a singular (or numerically singular) Jacobian is regularized;
-            # any other error is a bug and must surface.
-            err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
-            @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
-            (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
-        end
-        # Backtracking line search (Armijo).  The accepted `r_new` IS the
-        # residual at the new point, so it is carried into the next iteration
-        # instead of being recomputed there — one full RVE pass saved per
-        # Newton step.
-        α_step = one(Tref)
-        accepted = false
-        for _ in 1:30
-            p_new = p .+ α_step .* δ
-            r_new = residual_vec(p_new)
-            if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
-                p .= p_new
-                r .= r_new
-                accepted = true
-                break
-            end
-            α_step /= 2
-            α_step < 1.0e-6 && break
-        end
-        if !accepted
-            # Fall back to a damped Picard step.  `r` is already `F(p)`, and a
-            # Picard step is `p ← F(p) + p`, so no new evaluation is needed
-            # here either; the residual at the updated point is unknown, so it
-            # is refreshed at the top of the next iteration.
-            verbose && @info "SC-Newton: line search failed, taking Picard step"
-            p .= r .+ p
-            r .= residual_vec(p)
-        end
+        δ = _sc_newton_direction(J, r)
+        _sc_newton_update!(p, r, δ, residual_vec, norm_r; verbose)
     end
     @debug "SC-Newton: maxiters reached without convergence" maxiters
     return rebuild(select_best ? p_best : p)
@@ -756,6 +743,59 @@ end
 
 _sc_values(B::SMatrix) = map(v -> _scalar_value(real(v)), B)
 
+# One globalized Newton update of `p` along `δ`, `r` being the residual at `p` and
+# kept so: an Armijo backtracking line search, whose accepted residual is carried
+# over (one full RVE pass saved per step), and a Picard step p ← p + F(p) when it
+# fails. Returns whether the line search succeeded.
+function _sc_newton_update!(p, r, δ, residual_vec, norm_r; verbose::Bool = false)
+    α_step = one(eltype(p))
+    for _ in 1:30
+        p_new = p .+ α_step .* δ
+        r_new = residual_vec(p_new)
+        if LinearAlgebra.norm(r_new) ≤ (1 - 1.0e-4 * α_step) * norm_r
+            p .= p_new
+            r .= r_new
+            return true
+        end
+        α_step /= 2
+        α_step < 1.0e-6 && break
+    end
+    verbose && @info "SC-Newton: line search failed, taking Picard step"
+    p .= r .+ p
+    r .= residual_vec(p)
+    return false
+end
+
+# The Newton direction J δ = -r, with a tiny Tikhonov regularization when J is
+# singular. A Jacobian that vanishes altogether (a residual made flat by the
+# positivity guard) carries no information: the direction is then the Picard step.
+_sc_newton_direction(J, r) = iszero(J) ? copy(r) : _sc_newton_solve(J, r)
+function _sc_newton_solve(J, r)
+    return try
+        J \ (-r)
+    catch err
+        # Only a singular (or numerically singular) Jacobian is regularized;
+        # any other error is a bug and must surface.
+        err isa Union{LinearAlgebra.SingularException, LinearAlgebra.LAPACKException} || rethrow()
+        @debug "SC-Newton: singular Jacobian, applying tiny Tikhonov" err
+        (J + 1.0e-10 * sqrt(sum(abs2, J)) * LinearAlgebra.I) \ (-r)
+    end
+end
+
+# Picard steps p ← p + F(p) on the Newton unknowns, until the iterate moves by less
+# than 1 % of its norm or `maxiters` steps: only the basin is chosen here, Newton
+# converging afterwards to the requested tolerance. Returns the number of steps
+# taken, which count against the iteration cap. A recurrence, written as a loop.
+function _sc_newton_warm_start!(p, r, residual_vec, maxiters)
+    for k in 0:(maxiters - 1)
+        LinearAlgebra.norm(r) ≤ LinearAlgebra.norm(p) / 100 && return k
+        MFH_Core._bump!(MFH_Core.SC_ITERATIONS)
+        p .+= r
+        r .= residual_vec(p)
+    end
+    return maxiters
+end
+
 # ── Tens ↔ canonical parameter vector helpers ──────────────────────────────
 #
 # `TensND.get_data(t)` already returns the canonical tuple of an iso /
@@ -895,6 +935,7 @@ end
 #
 #  Stiffness form  : C^{n+1} = C_m + Σ_i f_i (C_i − C_m) A_{εε,i}^{(C^n)}
 #  Compliance form : S^{n+1} = S_m + (⟨A_{εε}⟩ − S_m ⟨C_i A_{εε}⟩) S^n
+#  (crack families and the major-symmetric projection: see `_asc_iterate`).
 #
 #  The branch is picked by the matrix-vs-Voigt-bound contrast: when the
 #  matrix is much stiffer than the Voigt upper bound (matrix-stiff /
@@ -933,21 +974,23 @@ layer-wise average, so that no bound can be evaluated, the dilute estimate
 plays the same role: the branch heuristic is the only place a bound ever
 entered, and the iteration itself needs nothing beyond the concentration
 tensors that `SelfConsistent` also requires.
+
+Crack families enter both forms, through their compliance contribution
+``\\Delta\\mathbb{H}`` in the current reference. Each iterate (``\\mathbb{C}`` in the
+stiffness form, ``\\mathbb{S}`` in the compliance form) is projected on the
+major-symmetric tensors, as in [`SelfConsistent`](@ref): with families of different
+frames the two projected iterations reach slightly different estimates (a few
+``10^{-4}`` relative), and the form is the one the criterion above selects, as in
+the C++ reference.
 """
 function _evaluate(rve::RVE, asc::AsymmetricSelfConsistent, ::Val{p}; kw...) where {p}
     m = matrix_name(asc, rve)
-    if _asc_use_stiffness(rve, p, m; kw...)
-        return _asc_iterate_stiffness(rve, asc, m, Val(p); kw...)
-    else
-        return _asc_iterate_compliance(rve, asc, m, Val(p); kw...)
-    end
+    form = _asc_use_stiffness(rve, p, m; kw...) ? Val(:stiffness) : Val(:compliance)
+    return _asc_iterate(form, rve, asc, m, Val(p); kw...)
 end
 
-# Squared Frobenius norm — matches the C++ reference selection.
-# Crack phases (`CrackDensity`) carry no volume but still soften the
-# composite ; the Voigt heuristic above ignores them and may wrongly
-# select the stiffness form (which skips cracks → no degradation).
-# Force the compliance form whenever an RVE has at least one crack.
+# Squared Frobenius norm of the Voigt bound against the matrix: the C++ reference's
+# selection, cracks included (Voigt passes them over, and both forms carry them).
 #
 # The heuristic only has to answer "is the composite stiffer than the matrix?".
 # The Voigt bound is the C++ reference's answer and is kept whenever it can be
@@ -957,104 +1000,99 @@ end
 # already requires, so the scheme stays available: nothing in the asymmetric
 # self-consistent algorithm itself depends on a bound.
 function _asc_use_stiffness(rve::RVE, prop::Symbol, m::Symbol; kw...)
-    any(_is_crack_family, values(rve.amounts)) && return false
     P₀ = phase_property(rve, m, prop)
     probe = _bounds_available(rve) ? Voigt() : Dilute()
     P̄ = _evaluate(rve, probe, Val(prop); kw...)
-    # The comparison below is the first of the scheme on values.
+    # The comparison below is the first of the scheme on values. A tie (cracks and
+    # no stiffer phase: the Voigt bound passes cracks over) takes the compliance
+    # form, where the C++ reference takes the stiffness one: the two agree then (to
+    # 1e-13 on two crack families of different frames), and only the compliance
+    # form stays inside the positive tensors at a high crack density.
     _require_comparable(P̄, :AsymmetricSelfConsistent)
-    return TensND.sqnorm(P̄) ≥ TensND.sqnorm(P₀)
+    return TensND.sqnorm(P̄) > TensND.sqnorm(P₀)
 end
 
-
-# ── Stiffness-form iteration ────────────────────────────────────────────────
+# ── The two forms of the iteration ──────────────────────────────────────────
 #
-# C^{n+1} = C_m + Σ_i f_i (C_i − C_m) A_{εε,i}^{(C^n)}
+# Stiffness form  : C^{n+1} = C_m + Σ_i f_i (C_i − C_m) A_{εε,i}^{(C^n)} − Σ_c C_m ΔH_c^{(C^n)} C^n
+# Compliance form : S^{n+1} = S_m + (⟨A_{εε}⟩ − S_m ⟨C_i A_{εε}⟩) S^n + Σ_c ΔH_c^{(C^n)}
 #
-# Sum runs over INCLUSIONS only (matrix excluded, treated implicitly via
-# C_m). This is the C++ reference's `evaluate_dilute(X)` body.
+# Sums over the INCLUSIONS (the matrix is carried by C_m) and the crack families c,
+# whose strain concentration tends to ΔH_c : C^n as their volume vanishes, their
+# stress concentration to zero. Without the projection below the two forms share
+# their fixed point, cracks included (multiply the stiffness form by S_m on the
+# left and S on the right). With families of different frames the products are not
+# major-symmetric, and each form projects its own iterate (C or S) on the
+# major-symmetric tensors, as the self-consistent scheme does (`_major_symmetrize`)
+# and as ECHOES stores every property: the projected fixed points then differ, and
+# the form is the C++ reference's choice. The estimate always iterates on the
+# stiffness C^n, so that one driver serves both.
 
-function _asc_iterate_stiffness(
-        rve::RVE, asc::AsymmetricSelfConsistent, m::Symbol,
-        ::Val{p}; kw...
-    ) where {p}
+function _asc_iterate(form::Val, rve::RVE, asc::AsymmetricSelfConsistent, m::Symbol, ::Val{p}; kw...) where {p}
     C_m = phase_property(rve, m, p)
+    X_m = _asc_matrix_term(form, C_m)
     solver_kw, step_kw = _split_sc_kwargs(kw)
     step_nt = values(step_kw)
-    make_step(views) = C_n -> _asc_step_stiffness(views, C_m, C_n, step_nt)
+    make_step(views) = C_n -> _asc_step(form, views, X_m, C_n, step_nt)
+    make_step(views, cracks) = C_n -> _asc_step(form, views, cracks, rve, p, X_m, C_n, step_nt)
     x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
     _require_comparable(x0, :AsymmetricSelfConsistent)
-    # Cracks are not supported in the stiffness form: `_asc_use_stiffness` sends
-    # any RVE with a crack family to the compliance form.
     views = _phase_views(rve, _volume_phase_names(rve, m), p)
-    return _solve_sc_on(asc.algorithm, asc.options, solver_kw, x0, make_step, views)
+    # A cell without cracks takes the step without the crack loop, whose type then
+    # stays the one of the estimate.
+    cracks = _crack_phase_names(rve, m)
+    parts = isempty(cracks) ? (views,) : (views, cracks)
+    return _solve_sc_on(asc.algorithm, asc.options, solver_kw, x0, make_step, parts...)
 end
+
+# The matrix term of each form: its stiffness, or its compliance.
+_asc_matrix_term(::Val{:stiffness}, C_m) = C_m
+_asc_matrix_term(::Val{:compliance}, C_m) = inv(C_m)
 
 # The seed of both forms: the matrix itself unless `init` says otherwise.
 _asc_seed(::Nothing, C_m, rve::RVE, prop::Symbol; kw...) = C_m
 _asc_seed(init, C_m, rve::RVE, prop::Symbol; kw...) = _sc_initial(init, rve, prop; kw...)
 
+# One step, without and with crack families.
+_asc_step(form::Val, views, X_m, C_n, kw::NamedTuple) = _asc_close(form, _asc_solid(form, views, X_m, C_n, kw))
+
+function _asc_step(
+        form::Val, views, cracks::AbstractVector{Symbol}, rve::RVE, prop::Symbol,
+        X_m, C_n, kw::NamedTuple
+    )
+    X = _asc_solid(form, views, X_m, C_n, kw)
+    for name in cracks
+        X += _asc_crack_term(form, X_m, C_n, _phase_compliance_contribution(rve, name, prop, C_n; kw...))
+    end
+    return _asc_close(form, X)
+end
+
 # The asymmetry that defines the ASC: concentration is computed in the CURRENT
-# reference `P_n`, but the contribution is measured against the MATRIX `P_m`.
+# reference `C_n`, but the contribution is measured against the MATRIX `C_m`.
 # `_phase_stiffness_contribution` cannot be used here, as it uses one and the same
 # reference for both. The B tensor (⟨C:A⟩) handles heterogeneous inclusions and
-# symmetrizes the product; the `P_m` term reuses ⟨A⟩. Stiffness (order 4) and
+# symmetrizes the product; the `C_m` term reuses ⟨A⟩. Stiffness (order 4) and
 # conductivity (order 2) alike.
-_asc_step_stiffness(views, P_m::TensND.AbstractTens, P_n::TensND.AbstractTens, kw::NamedTuple) =
-    P_m + _weighted_gaps(views, P_m, P_n, kw)
+_asc_solid(::Val{:stiffness}, views, C_m, C_n, kw::NamedTuple) = C_m + _weighted_gaps(views, C_m, C_n, kw)
 
-# ── Compliance-form iteration ───────────────────────────────────────────────
-#
-# Iterating estimate is the *stiffness* `C^n` (we invert at the end);
-# the formula reads
-#
-#   S^{n+1} = S_m + ⟨A_{εε}^{(C^n)}⟩ S^n − S_m ⟨C_i A_{εε}^{(C^n)}⟩ S^n
-#
-# where S_n = inv(C^n), S_m = inv(C_m), and the sum is over INCLUSIONS
-# only. We then invert `S^{n+1}` to recover `C^{n+1}` so the iteration
-# stays in stiffness space and the same `_solve_sc` driver is reused.
-
-function _asc_iterate_compliance(
-        rve::RVE, asc::AsymmetricSelfConsistent, m::Symbol,
-        ::Val{p}; kw...
-    ) where {p}
-    C_m = phase_property(rve, m, p)
-    S_m = inv(C_m)
-    solver_kw, step_kw = _split_sc_kwargs(kw)
-    step_nt = values(step_kw)
-    make_step(views, cracks) = C_n -> _asc_step_compliance(views, cracks, rve, p, S_m, C_n, step_nt)
-    x0 = _asc_seed(asc.init, C_m, rve, p; kw...)
-    _require_comparable(x0, :AsymmetricSelfConsistent)
-    views = _phase_views(rve, _volume_phase_names(rve, m), p)
-    return _solve_sc_on(
-        asc.algorithm, asc.options, solver_kw, x0, make_step, views, _crack_phase_names(rve, m)
-    )
-end
-
-function _asc_step_compliance(
-        views, cracks::AbstractVector{Symbol}, rve::RVE, prop::Symbol,
-        S_m::TensND.AbstractTens, C_n::TensND.AbstractTens, kw::NamedTuple
-    )
-    S_n = inv(C_n)
-    # Volume-fraction inclusions: standard A_εε. Crack densities: the strain
-    # concentration is singular; their compliance contribution is the natural
-    # object instead and is added directly to S^{n+1} below.
-    #
-    # `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute
-    # with the tensor product, so the product has to be formed on the RAW
-    # concentration tensor and averaged afterwards, which is what the bundle
-    # does: formed from the averaged `A_dil` and the raw `C_i`, an
-    # iso-symmetrized anisotropic phase would come back transversely
-    # isotropic, and not even major-symmetric. The bundle also routes
-    # heterogeneous inclusions through `concentration_and_flux_average`, whose
-    # stress average the declared (placeholder) property of a
-    # `LayeredSphere` cannot give. In conduction, `⟨K·A⟩`, not `K ⋅ ⟨A⟩`, for
-    # the same reason, and the cracks add to the resistivity.
+# `⟨C:A⟩`, NOT `C ⊡ ⟨A⟩`: the orientation average does not commute with the tensor
+# product, so the product has to be formed on the RAW concentration tensor and
+# averaged afterwards, which is what the bundle does: formed from the averaged
+# `A_dil` and the raw `C_i`, an iso-symmetrized anisotropic phase would come back
+# transversely isotropic, and not even major-symmetric. The bundle also routes
+# heterogeneous inclusions through `concentration_and_flux_average`, whose stress
+# average the declared (placeholder) property of a `LayeredSphere` cannot give. In
+# conduction, `⟨K·A⟩`, not `K ⋅ ⟨A⟩`, for the same reason.
+function _asc_solid(::Val{:compliance}, views, S_m, C_n, kw::NamedTuple)
     A_avg, CA_avg = _weighted_averages(views, C_n, kw)
-    S_new = S_m + _compose(A_avg - _compose(S_m, CA_avg), S_n)
-    # Crack contributions add directly to the compliance.
-    for name in cracks
-        S_new += _phase_compliance_contribution(rve, name, prop, C_n; kw...)
-    end
-    return inv(S_new)
+    return S_m + _compose(A_avg - _compose(S_m, CA_avg), inv(C_n))
 end
+
+# A crack family: −C_m : ΔH : C_n in the stiffness form, ΔH in the compliance form
+# (in conduction, the resistivity).
+_asc_crack_term(::Val{:stiffness}, C_m, C_n, ΔH) = -_compose(C_m, _compose(ΔH, C_n))
+_asc_crack_term(::Val{:compliance}, S_m, C_n, ΔH) = ΔH
+
+# The projected iterate, as a stiffness.
+_asc_close(::Val{:stiffness}, C) = _major_symmetrize(C)
+_asc_close(::Val{:compliance}, S) = inv(_major_symmetrize(S))

@@ -130,3 +130,11 @@ end
         @test second_hill_kernel(ell, heaviside_law(inv(C0); mode = :creep), times) ≈ Q rtol = 1.0e-12
     end
 end
+
+@testset "hill_kernel — a reference off the isotropic class is refused" begin
+    # The kernel is built from the bulk and shear parameters of an isotropic reference;
+    # read off a transversely isotropic one, they projected it on the isotropic class
+    # without a word.
+    ti = heaviside_law(TensTI{4}(4.0, 6.0, 1.0, 1.5, 2.0, (0.0, 0.0, 1.0)))
+    @test_throws "known against an isotropic reference only" hill_kernel(Ellipsoid(1.0), ti, [0.0, 1.0])
+end

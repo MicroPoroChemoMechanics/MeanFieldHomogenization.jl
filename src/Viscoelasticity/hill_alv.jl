@@ -44,7 +44,7 @@ ECHOES manual appendix `viscoelastic_hill_kernel.qmd`:
      kernels follow linearly, ``k = M_{\\mathrm{long}} - \\tfrac{4}{3} M_{\\mathrm{shear}}``
      and ``\\mu = M_{\\mathrm{shear}}``; their inverses do not (see the theory page).
   4. Take the scalar Volterra inverses
-     ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-\\circ}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-\\circ}``.
+     ``J_{\\mathrm{long}} = M_{\\mathrm{long}}^{-1^{\\circ}}`` and ``J_{\\mathrm{shear}} = M_{\\mathrm{shear}}^{-1^{\\circ}}``.
   5. Compute the Mandel forms ``\\mathrm{Mat}(\\mathbb{U}^{\\boldsymbol{A}})`` and
      ``\\mathrm{Mat}(\\mathbb{V}^{\\boldsymbol{A}})`` of the elastic
      auxiliary tensors `tens_UA(ell)` and `tens_VA(ell)`.
@@ -76,7 +76,7 @@ Volterra products:
 
 ```math
 \\widetilde{\\mathbb{Q}} = \\widetilde{\\mathbb{C}}_0
-- \\widetilde{\\mathbb{C}}_0\\circ\\widetilde{\\mathbb{P}}\\circ\\widetilde{\\mathbb{C}}_0 ,
+- \\widetilde{\\mathbb{C}}_0\\stackrel{\\circ}{:}\\widetilde{\\mathbb{P}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{C}}_0 ,
 ```
 
 ``\\widetilde{\\mathbb{C}}_0`` being the relaxation kernel of the matrix (a creep
@@ -91,8 +91,17 @@ function second_hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Re
 end
 
 # The longitudinal ``(\alpha + 2\beta)/3`` and shear ``\beta/2`` Volterra
-# inverses of an isotropic block matrix: what its Hill kernel is made of.
+# inverses of an isotropic block matrix: what its Hill kernel is made of. A reference
+# off the isotropic class is refused: reading (α, β) off it would project it there
+# without a word, and the ALV Hill kernel is known against an isotropic one only.
 function _alv_iso_inverses(C::AbstractMatrix)
+    _is_iso_block(C) || throw(
+        ArgumentError(
+            "the ALV Hill kernel is known against an isotropic reference only, and this one " *
+                "is not; for a scheme on the running estimate, every phase must keep it " *
+                "isotropic (a sphere of isotropic behavior, a layered sphere, or symmetrize = :iso)"
+        )
+    )
     α, β = iso_params_from_blocks(C)
     return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
 end

@@ -10,7 +10,7 @@
 !!! tip "If the material does not age, there is a cheaper route"
     Everything on this page treats a kernel ``\mathbb{C}(t, t')`` in which ``t``
     and ``t'`` enter **independently**, which is what forces the Volterra
-    operators to be discretized directly. When the kernel depends on `t - t'`
+    operators to be discretized directly. When the kernel depends on ``t - t'``
     alone the constitutive law is a convolution, a transform turns it into a
     product, and the whole problem reduces to an elastic one at each Carson
     variable — see [the Laplace-Carson route](@ref th-laplace-carson).
@@ -40,8 +40,10 @@ essentially unchanged, provided two substitutions are made systematically:
 | Elastic | Aging viscoelastic |
 | :------ | :------------------ |
 | tensor ``\mathbb{C}`` | two-time **kernel** ``\mathbb{C}(t,t')`` |
-| double contraction ``\mathbb{A}:\mathbb{B}`` | Volterra product ``\mathbb{A}\circ\mathbb{B}`` |
-| tensor inverse ``\mathbb{A}^{-1}`` | Volterra inverse ``\mathbb{A}^{-\circ}`` |
+| product ``F\,X`` of scalars | Volterra product ``F\circ X`` of scalar kernels |
+| double contraction ``\mathbb{A}:\mathbb{B}`` | Volterra double contraction ``\mathbb{A}\stackrel{\circ}{:}\mathbb{B}`` |
+| contraction ``\boldsymbol{K}\cdot\underline{u}`` | Volterra contraction ``\boldsymbol{K}\stackrel{\circ}{\cdot}\underline{u}`` |
+| tensor inverse ``\mathbb{A}^{-1}`` | Volterra inverse ``\mathbb{A}^{-1^{\circ}}`` |
 | identity ``\mathbb{I}`` | ``H\,\mathbb{I}``, ``H`` the Heaviside function |
 
 This page follows that substitution from the constitutive law to the
@@ -52,9 +54,13 @@ homogenization schemes. The derivations are those of [barthelemyIJSS2016](@citet
 !!! note "Notation used on this page"
     A kernel is a function of two times ``(t, t')`` — observation time and
     loading time — and is written in the same typeface as its elastic
-    counterpart. ``\circ`` denotes the Volterra product defined in the next
-    section, ``\bullet^{-\circ}`` the Volterra inverse — never the ordinary
-    tensor inverse. In `MeanFieldHomogenization` these two operations are
+    counterpart. As in [barthelemyIJSS2016](@citet), the Volterra product
+    defined in the next section carries the contraction it replaces under a
+    circle: ``\circ`` between scalar kernels (and between a scalar kernel and a
+    tensor one, component by component), ``\stackrel{\circ}{:}`` for a double
+    contraction, ``\stackrel{\circ}{\cdot}`` for a simple one;
+    ``\bullet^{-1^{\circ}}`` is the Volterra inverse, never the ordinary inverse.
+    In `MeanFieldHomogenization` these operations are
     [`volterra_product`](@ref) and [`volterra_inverse`](@ref).
 
 ## 1. The aging linear viscoelastic behavior
@@ -86,29 +92,32 @@ transform, and the time domain is the only available route.
 
 ### Volterra algebra
 
-The relation above is written compactly ``\boldsymbol{\varepsilon} =
-\mathbb{L}\circ\boldsymbol{\sigma}``, extending to tensors the scalar Volterra
-operator [barthelemyIJSS2016](@cite). Between two kernels the same
-symbol denotes
+For scalar functions the Volterra operator ``\circ`` reads
+``Y = F\circ X \Leftrightarrow Y(t) = \int_{t'=-\infty}^{t}F(t,t')\,\mathrm{d}X(t')``.
+The relation above extends it to tensors, the circle being set over the
+contraction: ``\boldsymbol{\varepsilon} = \mathbb{L}\stackrel{\circ}{:}\boldsymbol{\sigma}``,
+that is ``\varepsilon_{ij} = L_{ijkl}\circ\sigma_{kl}`` [barthelemyIJSS2016](@cite).
+Between two kernels of order 4 the same symbol denotes
 
 ```math
-(\mathbb{A}\circ\mathbb{B})(t,t')
+(\mathbb{A}\stackrel{\circ}{:}\mathbb{B})(t,t')
 = \int_{\tau=-\infty}^{t}\mathbb{A}(t,\tau):
   \frac{\partial\mathbb{B}}{\partial\tau}(\tau,t')\,\mathrm{d}\tau .
 ```
 
-This product is associative and distributive over addition, but **not
-commutative**: commutativity holds only for non-aging kernels
+and ``\stackrel{\circ}{\cdot}`` likewise replaces a simple contraction, between
+the second-order kernels of conduction for instance. These products are
+associative and distributive over addition, but **not commutative**: commutativity holds only for non-aging kernels
 [barthelemyIJSS2016; after Maghous and Creus](@cite). Every formula below
 therefore keeps its factors in order, including the apparently scalar ones.
 
 The Heaviside function acts as the identity, ``H\circ X = X``, so the identity
 elements are ``H\,\mathbb{I}`` for 4-tensor kernels and ``H\,\boldsymbol{1}``
-for 2-tensor kernels. The **Volterra inverse** ``\mathbb{A}^{-\circ}`` is
-defined by ``\mathbb{A}\circ\mathbb{A}^{-\circ} =
-\mathbb{A}^{-\circ}\circ\mathbb{A} = H\,\mathbb{I}``; relaxation and creep
+for 2-tensor kernels. The **Volterra inverse** ``\mathbb{A}^{-1^{\circ}}`` is
+defined by ``\mathbb{A}\stackrel{\circ}{:}\mathbb{A}^{-1^{\circ}} =
+\mathbb{A}^{-1^{\circ}}\stackrel{\circ}{:}\mathbb{A} = H\,\mathbb{I}``; relaxation and creep
 kernels are Volterra inverses of one another, ``\mathbb{C} =
-\mathbb{L}^{-\circ}``.
+\mathbb{L}^{-1^{\circ}}``.
 
 ### Discretization: kernels become block matrices
 
@@ -150,7 +159,7 @@ uniform polarization history ``\boldsymbol{\tau}(t)``:
 
 ```math
 \boldsymbol{\sigma}(\underline{x})
-= \mathbb{C}\circ\boldsymbol{\varepsilon}(\underline{x})
+= \mathbb{C}\stackrel{\circ}{:}\boldsymbol{\varepsilon}(\underline{x})
 + \boldsymbol{\tau}\,\chi_{\mathcal{E}}(\underline{x}),
 ```
 
@@ -159,7 +168,7 @@ Momentum balance and the decay condition at infinity give
 [barthelemyIJSS2016](@cite)
 
 ```math
-\mathrm{div}\bigl(\mathbb{C}\circ\boldsymbol{\varepsilon}(\underline{u})\bigr)
+\mathrm{div}\bigl(\mathbb{C}\stackrel{\circ}{:}\boldsymbol{\varepsilon}(\underline{u})\bigr)
 - \boldsymbol{\tau}\cdot\underline{n}\,\delta_{\partial\mathcal{E}} = \underline{0},
 \qquad
 \lim_{\|\underline{x}\|\to\infty}\underline{u}(\underline{x}) = \underline{0},
@@ -167,16 +176,16 @@ Momentum balance and the decay condition at infinity give
 
 where ``\delta_{\partial\mathcal{E}}`` is the surface Dirac distribution on the
 boundary of ``\mathcal{E}`` and ``\underline{n}`` its outward normal. **This is
-literally the elastic problem** with ``:`` replaced by ``\circ``.
+literally the elastic problem** with ``:`` replaced by ``\stackrel{\circ}{:}``.
 
 Solving it through the ALV Green kernel yields the central result: the strain is
 **uniform inside the ellipsoid**, exactly as in elasticity, and
 
 ```math
 \forall\,\underline{x}\in\mathcal{E}\quad
-\boldsymbol{\varepsilon}(\underline{x}) = -\,\mathbb{P}\circ\boldsymbol{\tau},
+\boldsymbol{\varepsilon}(\underline{x}) = -\,\mathbb{P}\stackrel{\circ}{:}\boldsymbol{\tau},
 \qquad
-\boldsymbol{\sigma}(\underline{x}) = -\,\mathbb{C}\circ\mathbb{P}\circ\boldsymbol{\tau}.
+\boldsymbol{\sigma}(\underline{x}) = -\,\mathbb{C}\stackrel{\circ}{:}\mathbb{P}\stackrel{\circ}{:}\boldsymbol{\tau}.
 ```
 
 ## 3. The Hill polarization kernel
@@ -189,7 +198,7 @@ Hill polarization tensor [barthelemyIJSS2016](@cite):
 = \frac{\det\boldsymbol{A}}{4\pi}
   \int_{\|\underline{\xi}\|=1}
   \frac{\underline{\xi}\stackrel{s}{\otimes}
-        (\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi})^{-\circ}
+        (\underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi})^{-1^{\circ}}
         \stackrel{s}{\otimes}\underline{\xi}}
        {\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}}\,
   \mathrm{d}S_{\underline{\xi}} .
@@ -202,14 +211,14 @@ Like its elastic counterpart it depends only on the shape and orientation of the
 ellipsoid and on the reference kernel.
 
 The **Eshelby kernel** follows by the same definition as in elasticity,
-``\mathbb{S}^{\mathrm{E}} = \mathbb{P}\circ\mathbb{C}``, and relates the uniform strain inside
+``\mathbb{S}^{\mathrm{E}} = \mathbb{P}\stackrel{\circ}{:}\mathbb{C}``, and relates the uniform strain inside
 ``\mathcal{E}`` to a uniform eigenstrain history ``\boldsymbol{\varepsilon}^{\star}``:
 
 ```math
 \forall\,\underline{x}\in\mathcal{E}\quad
 \boldsymbol{\varepsilon}(\underline{x})
-= \mathbb{S}^{\mathrm{E}}\circ\boldsymbol{\varepsilon}^{\star}
-= \mathbb{P}\circ\mathbb{C}\circ\boldsymbol{\varepsilon}^{\star} .
+= \mathbb{S}^{\mathrm{E}}\stackrel{\circ}{:}\boldsymbol{\varepsilon}^{\star}
+= \mathbb{P}\stackrel{\circ}{:}\mathbb{C}\stackrel{\circ}{:}\boldsymbol{\varepsilon}^{\star} .
 ```
 
 ### Isotropic matrix: time and space decouple
@@ -217,15 +226,14 @@ The **Eshelby kernel** follows by the same definition as in elasticity,
 If the reference kernel is isotropic,
 ``\mathbb{C}(t,t') = 3k(t,t')\,\mathbb{J} + 2\mu(t,t')\,\mathbb{K}``, the
 acoustic tensor is diagonal in the
-``(\underline{\xi}\otimes\underline{\xi},\
-\boldsymbol{1}-\underline{\xi}\otimes\underline{\xi})`` decomposition and can be
+``(\underline{\xi}\otimes\underline{\xi},\ \boldsymbol{1}-\underline{\xi}\otimes\underline{\xi})`` decomposition and can be
 inverted in the Volterra sense analytically. The Hill kernel then **factorizes**
 [barthelemyIJSS2016, barthelemyIJES2019](@cite):
 
 ```math
 \mathbb{P}
-= \bigl(k + \tfrac{4}{3}\mu\bigr)^{-\circ}\,\mathbb{U}^{\boldsymbol{A}}
-+ \mu^{-\circ}\,
+= \bigl(k + \tfrac{4}{3}\mu\bigr)^{-1^{\circ}}\,\mathbb{U}^{\boldsymbol{A}}
++ \mu^{-1^{\circ}}\,
   \bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr),
 ```
 
@@ -258,8 +266,8 @@ in the Volterra sense, and assembles against [`tens_UA`](@ref) and
 **Why the longitudinal modulus, and not the bulk one.** The Hill tensor inverts
 the acoustic tensor of the reference. For an isotropic one,
 ``\underline{\xi}\cdot\mathbb{C}_0\cdot\underline{\xi}
-= \bigl(k + \tfrac{4}{3}\mu\bigr)\,\underline{\xi}\otimes\underline{\xi}
-+ \mu\,\bigl(\boldsymbol{1} - \underline{\xi}\otimes\underline{\xi}\bigr)``
+= \bigl(k + \tfrac{4}{3}\mu\bigr)\,\underline{\xi}\otimes\underline{\xi} +
+\mu\,\bigl(\boldsymbol{1} - \underline{\xi}\otimes\underline{\xi}\bigr)``
 for a unit ``\underline{\xi}``: its two eigenvalues are the *longitudinal*
 (P-wave) modulus ``k + \tfrac{4}{3}\mu`` and the shear modulus ``\mu``. These two,
 not the bulk modulus alone, are the scalars the formula above inverts, which is
@@ -273,10 +281,10 @@ M_{\mathrm{shear}} = \mu = \frac{\beta}{2},
 
 with ``(\alpha, \beta) = (3k, 2\mu)`` the coefficients of ``\mathbb{J}`` and
 ``\mathbb{K}``, and with their Volterra inverses
-``J_{\mathrm{long}} = M_{\mathrm{long}}^{-\circ}`` and
-``J_{\mathrm{shear}} = M_{\mathrm{shear}}^{-\circ}``, so that
-``\widetilde{\mathbb{P}} = J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
-+ J_{\mathrm{shear}}\,\bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr)``,
+``J_{\mathrm{long}} = M_{\mathrm{long}}^{-1^{\circ}}`` and
+``J_{\mathrm{shear}} = M_{\mathrm{shear}}^{-1^{\circ}}``, so that
+``\widetilde{\mathbb{P}} = J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}} +
+J_{\mathrm{shear}}\,\bigl(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}}\bigr)``,
 block by block in time.
 
 Going back to bulk and shear is linear on the relaxation kernels:
@@ -293,7 +301,7 @@ k &= M_{\mathrm{long}} - \tfrac{4}{3}\,M_{\mathrm{shear}},
 
 It is not linear on their inverses: ``J_{\mathrm{long}}`` is the Volterra inverse
 of the longitudinal kernel, not a combination of the bulk and shear creep
-functions. Those are ``k^{-\circ}`` and ``\mu^{-\circ}``, one Volterra inversion
+functions. Those are ``k^{-1^{\circ}}`` and ``\mu^{-1^{\circ}}``, one Volterra inversion
 each of the kernels above; in the elastic limit
 ``J_{\mathrm{long}} = 1/(k + \tfrac{4}{3}\mu) \neq 1/k``.
 
@@ -329,8 +337,8 @@ J_bulk = volterra_inverse(k; block_size = 1)
 (J_long[1, 1], J_bulk[1, 1], 1 / (10.0 + 4 / 3 * 4.0), 1 / 10.0)
 ```
 
-Assembling ``J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}}
-+ J_{\mathrm{shear}}\,(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}})``
+Assembling ``J_{\mathrm{long}}\,\mathbb{U}^{\boldsymbol{A}} +
+J_{\mathrm{shear}}\,(\mathbb{V}^{\boldsymbol{A}} - \mathbb{U}^{\boldsymbol{A}})``
 by hand, in Kelvin–Mandel components, gives the Hill kernel that
 [`hill_kernel`](@ref) returns:
 
@@ -349,12 +357,12 @@ form [barthelemyIJSS2016](@cite)
 ```math
 \begin{aligned}
 \mathbb{P}^{\mathrm{sphere}}
-&= (3k+4\mu)^{-\circ}\circ
+&= (3k+4\mu)^{-1^{\circ}}\circ
   \Bigl(H\,\mathbb{J}
-      + \tfrac{3}{5}\,(k+2\mu)\circ\mu^{-\circ}\,\mathbb{K}\Bigr),
+      + \tfrac{3}{5}\,(k+2\mu)\circ\mu^{-1^{\circ}}\,\mathbb{K}\Bigr),
 \\
 \mathbb{S}^{\mathrm{sphere}}
-&= 3\,(3k+4\mu)^{-\circ}\circ
+&= 3\,(3k+4\mu)^{-1^{\circ}}\circ
   \Bigl(k\,\mathbb{J} + \tfrac{2}{5}(k+2\mu)\,\mathbb{K}\Bigr).
 \end{aligned}
 ```
@@ -369,16 +377,16 @@ Replace the polarization by a genuine inhomogeneity: the ellipsoid now has its
 own relaxation kernel ``\mathbb{C}^{\mathcal{E}}``, and the medium is loaded by
 a remote strain history ``\boldsymbol{E}(t)``. Superposing the remote field and
 the response to the fictitious polarization
-``(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\circ\boldsymbol{\varepsilon}``
+``(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\stackrel{\circ}{:}\boldsymbol{\varepsilon}``
 gives [barthelemyIJSS2016](@cite)
 
 ```math
 \boldsymbol{\varepsilon}
 = \boldsymbol{E}
-- \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)
-  \circ\boldsymbol{\varepsilon}
+- \mathbb{P}\stackrel{\circ}{:}(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)
+  \stackrel{\circ}{:}\boldsymbol{\varepsilon}
 \qquad\Longrightarrow\qquad
-\boldsymbol{\varepsilon} = \mathbb{A}^{\mathrm{dil}}\circ\boldsymbol{E},
+\boldsymbol{\varepsilon} = \mathbb{A}^{\mathrm{dil}}\stackrel{\circ}{:}\boldsymbol{E},
 ```
 
 with the **dilute strain concentration kernel**
@@ -386,7 +394,7 @@ with the **dilute strain concentration kernel**
 ```math
 \mathbb{A}^{\mathrm{dil}}
 = \bigl(H\,\mathbb{I}
-      + \mathbb{P}\circ(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\bigr)^{-\circ} .
+      + \mathbb{P}\stackrel{\circ}{:}(\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\bigr)^{-1^{\circ}} .
 ```
 
 The strain remains uniform inside ``\mathcal{E}``: it depends on time alone. The
@@ -394,14 +402,14 @@ associated **contribution kernel** is
 
 ```math
 \mathbb{N}
-= (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\circ\mathbb{A}^{\mathrm{dil}}
+= (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)\stackrel{\circ}{:}\mathbb{A}^{\mathrm{dil}}
 = \bigl(\mathbb{P}
-      + (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)^{-\circ}\bigr)^{-\circ},
+      + (\mathbb{C}^{\mathcal{E}}-\mathbb{C}_0)^{-1^{\circ}}\bigr)^{-1^{\circ}},
 ```
 
 the second form following from the identity
-``\mathbb{X}\circ(H\mathbb{I}+\mathbb{Y}\circ\mathbb{X})^{-\circ}
-= (H\mathbb{I}+\mathbb{X}\circ\mathbb{Y})^{-\circ}\circ\mathbb{X}``, which holds
+``\mathbb{X}\stackrel{\circ}{:}(H\mathbb{I}+\mathbb{Y}\stackrel{\circ}{:}\mathbb{X})^{-1^{\circ}}
+= (H\mathbb{I}+\mathbb{X}\stackrel{\circ}{:}\mathbb{Y})^{-1^{\circ}}\stackrel{\circ}{:}\mathbb{X}``, which holds
 in any associative algebra and so survives the loss of commutativity.
 
 ## 5. Schemes
@@ -410,12 +418,12 @@ With concentration kernels in hand, every matrix-based scheme transposes
 term by term [barthelemyIJES2019](@cite). Writing ``f_i`` for the volume
 fraction of phase ``i``, ``\mathbb{C}_i`` for its relaxation kernel and
 ``\mathbb{C}_0`` for the reference kernel, the general form is
-``\mathbb{C}^{\mathrm{hom}} = \langle\mathbb{C}\circ\mathbb{A}\rangle``, or equivalently
+``\mathbb{C}^{\mathrm{hom}} = \langle\mathbb{C}\stackrel{\circ}{:}\mathbb{A}\rangle``, or equivalently
 
 ```math
 \mathbb{C}^{\mathrm{hom}}
 = \mathbb{C}_0
-+ \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0)\circ
++ \sum_i f_i\,(\mathbb{C}_i-\mathbb{C}_0)\stackrel{\circ}{:}
   \langle\mathbb{A}\rangle_i ,
 ```
 
@@ -430,19 +438,19 @@ the Volterra algebra:
 
 | Scheme | Effective kernel |
 | :----- | :--------------- |
-| [Voigt, Reuss](@ref th-scheme-bounds) | ``\sum_r f_r\,\mathbb{C}_r`` and ``\bigl(\sum_r f_r\,\mathbb{C}_r^{-\circ}\bigr)^{-\circ}`` |
+| [Voigt, Reuss](@ref th-scheme-bounds) | ``\sum_r f_r\,\mathbb{C}_r`` and ``\bigl(\sum_r f_r\,\mathbb{C}_r^{-1^{\circ}}\bigr)^{-1^{\circ}}`` |
 | [Dilute](@ref th-scheme-dilute) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma`` |
-| [DiluteDual](@ref th-scheme-dilute) | ``\bigl(\mathbb{L}_0 + \sum_i f_i\,\mathbb{H}_i\bigr)^{-\circ}``, with ``\mathbb{H}_i = -\,\mathbb{L}_0\circ\mathbb{N}_i\circ\mathbb{L}_0`` |
-| [Mori–Tanaka](@ref th-scheme-mori-tanaka) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(f_0\,H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-\circ}`` |
-| [Maxwell](@ref th-scheme-maxwell), [PCW](@ref th-scheme-pcw) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\circ\bigl(H\,\mathbb{I} - \mathbb{P}_\Omega\circ\mathbb{N}_\Sigma\bigr)^{-\circ}`` |
-| [Self-consistent](@ref th-scheme-sc) | ``\bigl(\sum_r f_r\,\mathbb{C}_r\circ\mathbb{A}_r^{\mathrm{dil}}\bigr)\circ\bigl(\sum_r f_r\,\mathbb{A}_r^{\mathrm{dil}}\bigr)^{-\circ}``, the kernels computed in the estimate itself |
-| [Asymmetric self-consistent](@ref th-scheme-asc) | ``\mathbb{C}_m + \sum_{i \ne m} f_i\,(\mathbb{C}_i - \mathbb{C}_m)\circ\mathbb{A}_i^{\mathrm{dil}}``, the kernels computed in the estimate itself |
+| [DiluteDual](@ref th-scheme-dilute) | ``\bigl(\mathbb{L}_0 + \sum_i f_i\,\mathbb{H}_i\bigr)^{-1^{\circ}}``, with ``\mathbb{H}_i = -\,\mathbb{L}_0\stackrel{\circ}{:}\mathbb{N}_i\stackrel{\circ}{:}\mathbb{L}_0`` |
+| [Mori–Tanaka](@ref th-scheme-mori-tanaka) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\stackrel{\circ}{:}\bigl(f_0\,H\,\mathbb{I} + \sum_j f_j\,\mathbb{A}_j^{\mathrm{dil}}\bigr)^{-1^{\circ}}`` |
+| [Maxwell](@ref th-scheme-maxwell), [PCW](@ref th-scheme-pcw) | ``\mathbb{C}_0 + \mathbb{N}_\Sigma\stackrel{\circ}{:}\bigl(H\,\mathbb{I} - \mathbb{P}_\Omega\stackrel{\circ}{:}\mathbb{N}_\Sigma\bigr)^{-1^{\circ}}`` |
+| [Self-consistent](@ref th-scheme-sc) | ``\bigl(\sum_r f_r\,\mathbb{C}_r\stackrel{\circ}{:}\mathbb{A}_r^{\mathrm{dil}}\bigr)\stackrel{\circ}{:}\bigl(\sum_r f_r\,\mathbb{A}_r^{\mathrm{dil}}\bigr)^{-1^{\circ}}``, the kernels computed in the estimate itself |
+| [Asymmetric self-consistent](@ref th-scheme-asc) | ``\mathbb{C}_m + \sum_{i \ne m} f_i\,(\mathbb{C}_i - \mathbb{C}_m)\stackrel{\circ}{:}\mathbb{A}_i^{\mathrm{dil}}``, the kernels computed in the estimate itself |
 | [Differential](@ref th-differential-scheme) | the incorporation ODE, integrated on the kernels |
 
 ``\mathbb{P}_{\Omega}`` in the Maxwell row is the Hill kernel of the
 **distribution shape** ``\Omega``, not of an inclusion. When
 ``\mathbb{N}_\Sigma`` is invertible the same estimate reads
-``\mathbb{C}_0 + \bigl(\mathbb{N}_\Sigma^{-\circ} - \mathbb{P}_\Omega\bigr)^{-\circ}``
+``\mathbb{C}_0 + \bigl(\mathbb{N}_\Sigma^{-1^{\circ}} - \mathbb{P}_\Omega\bigr)^{-1^{\circ}}``
 [barthelemyIJES2019](@cite), by the identity of §4: the far-field argument of the
 [elastic derivation](@ref th-scheme-maxwell) carries over unchanged, since
 it uses nothing but the linearity of the integral equation. The two
@@ -450,7 +458,7 @@ self-consistent schemes and the differential one take the running estimate as
 reference, so that their Hill kernels, built for an isotropic reference, require
 every phase to keep that estimate isotropic.
 
-The one new difficulty is bookkeeping: ``\circ`` does not commute, so the
+The one new difficulty is bookkeeping: the Volterra products do not commute, so the
 order of the factors is prescribed — even in the isotropic case, where every
 factor looks scalar. Two kernels commute only on a uniform time grid with
 non-aging laws, or when one of them is elastic; an aging law, or a logarithmic
@@ -497,14 +505,14 @@ the minus sign of the Kapitza law being that of the dictionary, and the
 amplitudes beyond the interface follow in closed form,
 
 ```math
-A_b = (3k_b)^{-\circ}\circ\Bigl(\sigma_r^{+} + \frac{2}{r}\,k_b\circ T^{+}\Bigr),
+A_b = (3k_b)^{-1^{\circ}}\circ\Bigl(\sigma_r^{+} + \frac{2}{r}\,k_b\circ T^{+}\Bigr),
 \qquad
 B_b = r^2\,\bigl(T^{+} - r\,A_b\bigr),
 ```
 
 so that only ``3k_b`` is ever inverted and an impermeable core needs no
 inverse. As in elasticity, the concentration of the whole sphere adds to the
-material averages ``A_k\circ A_\infty^{-\circ}`` the temperature jumps
+material averages ``A_k\circ A_\infty^{-1^{\circ}}`` the temperature jumps
 ``r_k^2\,[\![T]\!]_k/R^3``, and its flux the surface current
 ``2k^{\mathrm s}\,T(r_k)\,r_k/R^3`` of the surface-conductive interfaces, the
 outer interface counting unless it is left to the matrix.
@@ -529,6 +537,188 @@ products and inverses are those of these matrices.
 [`VolterraOperator`](@ref) stores an operator so, for any axis or frame, as an
 `AbstractMatrix` that flows through generic Julia matrix code; its use is shown
 in [Aging viscoelastic operators and histories](@ref man-volterra-operators).
+
+## [8. Cracks](@id th-visco-cracks)
+
+A crack is the flat limit of an ellipsoidal void, and in elasticity it enters the
+schemes through its crack opening displacement (COD) tensor ``\boldsymbol{B}`` and
+its compliance contribution
+``\mathbb{H} = \kappa\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``,
+``\kappa = 3/4`` for an ellipse and ``2/\pi`` for a ribbon
+([From B to the compliance H](@ref th-cod-compliance)); a family of density
+``\varepsilon`` adds ``\tfrac{4\pi}{3}\varepsilon\,\mathbb{H}`` (ellipse,
+``\varepsilon = N\,a\,b^{2}``, [why](@ref th-cod-density)) or
+``\pi\,\varepsilon\,\mathbb{H}`` (ribbon, ``\varepsilon = N\,b^{2}`` per unit area)
+to the compliance of the matrix. This section transposes these objects to an
+isotropic ALV matrix, ``\mathbb{C} = \alpha\,\mathbb{J} + \beta\,\mathbb{K}``
+with ``(\alpha, \beta) = (3k, 2\mu)`` as in §3.
+
+### The opening of an elliptic crack
+
+In an isotropic elastic matrix ``\boldsymbol{B}`` is diagonal in the frame of
+the crack, ``\underline{\ell}`` along the semi-axis ``a``, ``\underline{m}``
+along ``b \le a`` and ``\underline{n}`` the normal, and each component is a
+rational function of ``\alpha`` and ``\beta`` with the complete elliptic
+integrals ``\mathcal{C}``, ``\mathcal{S}``, ``\mathcal{E}`` of ``\eta = b/a``
+as coefficients ([the isotropic matrix](@ref th-cod-iso-derivation)). In ALV
+every quotient becomes a Volterra inverse, and since ``\alpha`` and ``\beta``
+no longer commute for an aging matrix, the order of the factors has to be
+fixed. It is the order of the flat limit of a void ellipsoid, whose Hill kernel
+combines ``J_{\mathrm{long}}`` and ``J_{\mathrm{shear}}`` alone (§3):
+
+```math
+\widetilde{B}_{\ell} = \tfrac{8}{3}\,\widetilde{L}_{\ell}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
+\qquad
+\widetilde{B}_{m} = \tfrac{8}{3}\,\widetilde{L}_{m}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
+\qquad
+\widetilde{B}_{n} = \tfrac{8}{3\,\mathcal{E}}\,(2\alpha + \beta)^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
+```
+
+```math
+\widetilde{L}_{\ell} = \mathcal{C}\,(\alpha + 2\beta) + \eta^{2}\mathcal{S}\,(2\alpha + \beta),
+\qquad
+\widetilde{L}_{m} = \eta^{2}\mathcal{S}\,(\alpha + 2\beta) + \mathcal{C}\,(2\alpha + \beta).
+```
+
+Under a constant (Heaviside) kernel each line is the elastic closed form. The
+compliance ``\widetilde{\mathbb{H}}`` is assembled from the three scalar
+kernels and stored in the class of the crack: transversely isotropic about
+``\underline{n}`` for a penny (``\widetilde{B}_{\ell} = \widetilde{B}_{m}``),
+orthotropic in the frame of the crack otherwise ([§7](@ref th-visco-classes)).
+[`cod_kernel_alv`](@ref) returns the three kernels and
+[`inverse_property_contribution_alv`](@ref) the compliance.
+
+### The ribbon
+
+A ribbon is unbounded along ``\underline{\ell}`` and has the half-width ``b``
+along ``\underline{m}``. Its elastic COD,
+``B_{\ell\ell} = \pi/(2\mu)`` and ``B_{mm} = B_{nn} = \pi(1-\nu)/(2\mu)``, reads,
+with ``1-\nu = (\alpha+2\beta)/(2\alpha+\beta)`` and in the same order of the
+factors,
+
+```math
+\widetilde{B}_{\ell} = \pi\,\beta^{-1^{\circ}},
+\qquad
+\widetilde{B}_{m} = \widetilde{B}_{n} = \pi\,(2\alpha + \beta)^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}}.
+```
+
+It is the limit ``\eta \to 0`` of the elliptic kernels times ``3\pi/8``: as
+``\eta \to 0``, ``\mathcal{C} \to 1``, ``\mathcal{E} \to 1`` and
+``\eta^{2}\mathcal{S} \to 0``, so that ``\widetilde{L}_{\ell} \to \alpha + 2\beta``
+and ``\widetilde{L}_{m} \to 2\alpha + \beta``, and the factor ``3\pi/8`` is the
+ratio of the density factors and of the coefficients ``\kappa``. The
+compliance of a ribbon is orthotropic in its frame.
+
+### Interfaces
+
+A crack whose faces are held by springs of normal and tangential stiffness
+kernels ``\widetilde{k}_n``, ``\widetilde{k}_t`` opens less. The package adds, in each
+direction, the compliance of the springs to that of the traction-free crack, as if
+the springs saw the average opening; in the Volterra algebra
+
+```math
+\widetilde{B}^{\mathrm{int}} = \bigl(\widetilde{B}^{-1^{\circ}} + b\,\widetilde{k}\bigr)^{-1^{\circ}}
+= \widetilde{B}\circ\bigl(H + b\,\widetilde{k}\circ\widetilde{B}\bigr)^{-1^{\circ}},
+```
+
+``\widetilde{k}_n`` on ``\widetilde{B}_{n}``, ``\widetilde{k}_t`` on
+``\widetilde{B}_{\ell}`` and ``\widetilde{B}_{m}``, with ``b`` the half-width
+[barthelemyIJES2019](@cite). Rigid springs close the crack, soft ones leave it
+traction-free.
+
+!!! warning "An approximation, not a solution of the spring problem"
+    This correction is exact in its two limits, traction-free springs and rigid
+    ones, and it is the elastic correction of the package under constant kernels.
+    It is not derived from the integral equation of a crack with spring-like
+    faces, whose opening is not uniform: it is an approximation, and no published
+    source is known to the package for it. The same holds for the Kapitza-like
+    interface of insulating cracks below.
+
+### Insulating cracks in conduction
+
+In an isotropic conductor of conductivity kernel
+``\widetilde{\boldsymbol{K}}_0 = \widetilde{k}_0\,\boldsymbol{1}``, an insulating crack
+opens a temperature jump driven by the normal flux alone, so its COD is a scalar
+``b`` ([Thermal cracks](@ref th-thermal-cracks)): ``b = 4/(3\,\mathcal{E}\,k_0)``
+for an ellipse and ``\pi/(2k_0)`` for a ribbon. There is a single kernel, so no
+order to fix:
+
+```math
+\widetilde{b} = \frac{4}{3\,\mathcal{E}}\,\widetilde{k}_0^{-1^{\circ}}\ \ (\text{ellipse}),
+\qquad
+\widetilde{b} = \frac{\pi}{2}\,\widetilde{k}_0^{-1^{\circ}}\ \ (\text{ribbon}),
+\qquad
+\widetilde{\boldsymbol{R}} = \kappa\,\widetilde{b}\;\underline{n}\otimes\underline{n},
+```
+
+the resistivity contribution ``\widetilde{\boldsymbol{R}}`` being transversely
+isotropic about ``\underline{n}``, whatever the aspect ratio. A Kapitza-like
+interface of conductance kernel ``\widetilde{\alpha}`` corrects ``\widetilde{b}``
+as the springs correct ``\widetilde{B}``.
+
+### Cracks in the schemes
+
+A crack family has no volume. The bounds pass it over; the dilute schemes add
+its contribution, ``\tfrac{4\pi}{3}\varepsilon\,\widetilde{\mathbb{H}}`` to the
+compliance or ``-\tfrac{4\pi}{3}\varepsilon\,\mathbb{C}_0\stackrel{\circ}{:}\widetilde{\mathbb{H}}\stackrel{\circ}{:}\mathbb{C}_0``
+to the stiffness, and so do Maxwell and Ponte Castañeda–Willis, as one more
+contribution in ``\mathbb{N}_\Sigma``. Mori–Tanaka and the self-consistent
+scheme take the form ``\mathbb{B}\stackrel{\circ}{:}\mathbb{A}^{-1^{\circ}}`` of Echoes, in which
+the crack also enters the average strain: with
+``\Delta\widetilde{\mathbb{H}} = \tfrac{4\pi}{3}\varepsilon\,\widetilde{\mathbb{H}}`` evaluated
+in the reference ``\mathbb{C}_r`` (the matrix for Mori–Tanaka, the estimate for
+the self-consistent scheme), the denominator of the table of §5 gains the term
+``\Delta\widetilde{\mathbb{H}}\stackrel{\circ}{:}\mathbb{C}_r``, a phase of weight one whose
+stress vanishes. The differential scheme integrates the contribution of the
+family against the running medium, its density being diluted by the solid
+increments as in elasticity. A crack family is transversely isotropic about its
+normal: in the schemes whose reference is the running estimate, only an
+isotropic orientation average keeps that estimate isotropic, as their Hill
+kernels require.
+
+### What checks these formulas
+
+| Reference | What it checks |
+| :-------- | :------------- |
+| constant kernels | every kernel, compliance, resistivity and scheme against its elastic counterpart, at every instant |
+| void ellipsoids ``(a, b, \omega b)`` and elliptic cylinders ``(b, \omega b)`` | the closed forms, the order of the factors and the rotations, in an aging matrix: the error falls by ten at each decade of ``\omega`` |
+| ``\eta \to 0`` | the ribbon against ``3\pi/8`` times the ellipse, in an aging matrix |
+| Echoes | tilted elliptic cracks with the dilute, Mori–Tanaka and self-consistent schemes in aging matrices (`scripts/bench_echoes/alv_harness`) |
+
+## [9. Solving the self-consistent equation](@id th-visco-sc-solve)
+
+The self-consistent estimate is the fixed point
+``\widetilde{\mathbb{C}} = \mathcal{F}(\widetilde{\mathbb{C}})`` of the map of the
+table of §5, every concentration being computed in the estimate itself. The map
+is **causal**: the estimate at the instant ``t_i`` depends on the estimate at
+the instants ``t_j \le t_i`` only, since every product and inverse of the
+Volterra algebra is lower triangular. Two solvers use this.
+
+**Picard iteration**, the default, iterates
+``\widetilde{\mathbb{C}} \leftarrow \mathcal{F}(\widetilde{\mathbb{C}})`` from the matrix
+kernel until two iterates differ by less than the tolerance, optionally with a
+relaxation (`damping`).
+
+**Newton's method** marches through the instants. With the rows
+``1, \dots, i-1`` of the estimate known, the row ``i`` solves a small system:
+``2i`` unknowns in elasticity, the row ``i`` of the bulk and shear kernels
+``\alpha`` and ``\beta`` of the isotropic estimate, and ``i`` in conduction. Each
+system is solved by Newton's method, its Jacobian by automatic differentiation,
+with a backtracking line search and a Picard step when the search fails.
+
+The self-consistent equation may have several roots. Beyond the percolation of a
+stiff phase, for instance, the equation of spheres has a second root of
+negative stiffness; started from the matrix, Newton's method may reach it,
+where the Picard iteration reaches the physical one. The march therefore starts
+from the Picard estimate, loosely converged, and refines it; a root with a
+negative instantaneous modulus is refused. In the elastic limit both solvers
+give the elastic self-consistent estimate at every instant, which, for spheres
+in conduction, is the root of [bruggeman1935](@citet),
+``\sum_r f_r\,(k_r - k)/(k_r + 2k) = 0``.
+
+`SelfConsistent(algorithm = NewtonDefault())` selects Newton's method in
+[`homogenize_alv`](@ref), at both orders; the elastic solvers are described in
+[Iterative solvers](@ref man-schemes-iterative).
 
 ## Where to go next
 

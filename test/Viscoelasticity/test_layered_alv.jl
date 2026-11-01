@@ -447,13 +447,6 @@ end
     # treat it exactly, the ALV ones say so.
     rigid = LayeredSphere((0.6, 1.0), (iso_stiffness(Inf, 1.0), iso_stiffness(3.0, 1.5)))
     @test_throws "layer 1 of the LayeredSphere has an infinite modulus" gradient_gradient_concentration_alv(rigid, law, times)
-    # The row-by-row Newton solver of the self-consistent scheme, internal,
-    # builds an ellipsoid's Hill kernel; the Picard one takes layered spheres.
-    r = RVE()
-    add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => law); fraction = :rest)
-    grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
-    add_phase!(r, :S, grain, Dict(:C => law); fraction = 0.3)
-    @test_throws "is a LayeredSphere" MeanFieldHomogenization.Viscoelasticity.self_consistent_alv_newton(r, :C; times)
     # A reference medium with an infinite modulus has no Volterra matrix either.
     grain = LayeredSphere((0.6, 1.0), (iso_stiffness(5.0, 1.0), iso_stiffness(3.0, 1.5)))
     @test_throws "reference medium" gradient_gradient_concentration_alv(grain, heaviside_law(iso_stiffness(Inf, 1.0)), times)

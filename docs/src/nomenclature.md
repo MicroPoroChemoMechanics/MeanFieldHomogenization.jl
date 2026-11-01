@@ -76,7 +76,10 @@ every page and in every docstring:
 | ``[\![\,\underline{u}\,]\!]`` | jump across an interface, ``\underline{u}^+-\underline{u}^-`` |
 | ``\langle\,\cdot\,\rangle_\Omega`` | volume average over ``\Omega`` |
 | ``\mathrm{d}S_\xi`` | surface element in the ``\underline{\xi}`` parametrization |
-| ``\mathbb{A}\circ\mathbb{B}``, ``\mathbb{L}^{-\circ}`` | Volterra product and Volterra inverse of two kernels |
+| ``F\circ X`` | Volterra product of scalar kernels, or of a scalar kernel and a tensor one component by component, ``\int_{-\infty}^{t}F(t,t')\,\mathrm{d}X(t')`` |
+| ``\mathbb{A}\stackrel{\circ}{:}\mathbb{B}``, ``\mathbb{L}\stackrel{\circ}{:}\boldsymbol{\sigma}`` | Volterra double contraction (the circle over the contraction it replaces) |
+| ``\boldsymbol{K}\stackrel{\circ}{\cdot}\underline{u}`` | Volterra simple contraction |
+| ``\mathbb{L}^{-1^{\circ}}`` | Volterra inverse of a kernel, ``\mathbb{L}\stackrel{\circ}{:}\mathbb{L}^{-1^{\circ}} = H\,\mathbb{I}`` |
 
 ```@eval
 using MeanFieldHomogenization

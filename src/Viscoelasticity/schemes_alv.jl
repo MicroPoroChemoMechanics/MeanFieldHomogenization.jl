@@ -36,7 +36,7 @@ end
     dilute_concentration_alv(C_E, C_0, P) -> Matrix
 
 Dilute strain concentration kernel
-``\\widetilde{\\mathbb{A}}^{\\mathrm{dil}} = (H\\,\\mathbb{I} + \\widetilde{\\mathbb{P}}\\circ\\Delta\\widetilde{\\mathbb{C}})^{-\\circ}``,
+``\\widetilde{\\mathbb{A}}^{\\mathrm{dil}} = (H\\,\\mathbb{I} + \\widetilde{\\mathbb{P}}\\stackrel{\\circ}{:}\\Delta\\widetilde{\\mathbb{C}})^{-1^{\\circ}}``,
 ``\\Delta\\widetilde{\\mathbb{C}} = \\widetilde{\\mathbb{C}}^{\\mathcal{E}} - \\widetilde{\\mathbb{C}}_0``
 [barthelemyIJES2019; eq. 16](@cite).  All inputs are ``6n\\times 6n`` block
 matrices ; the result is also ``6n\\times 6n`` and lower-block-triangular.
@@ -52,7 +52,7 @@ end
 """
     dilute_contribution_alv(C_E, C_0, P) -> Matrix
 
-Dilute strain contribution kernel ``\\widetilde{\\mathbb{N}} = \\Delta\\widetilde{\\mathbb{C}}\\circ\\widetilde{\\mathbb{A}}^{\\mathrm{dil}}``
+Dilute strain contribution kernel ``\\widetilde{\\mathbb{N}} = \\Delta\\widetilde{\\mathbb{C}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}^{\\mathrm{dil}}``
 [barthelemyIJES2019; eq. 17](@cite).  This is the size-independent stiffness
 contribution of a single inclusion.
 """
@@ -91,7 +91,7 @@ of compliances, then invert the result.
 ```math
 \\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = \\sum_i f_i\\,\\widetilde{\\mathbb{L}}_i,
 \\qquad
-\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-\\circ}
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-1^{\\circ}}
 ```
 """
 function reuss_alv(
@@ -138,12 +138,12 @@ average.
 
 ```math
 \\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
-  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i\\Bigr)\\circ
-    \\Bigl(f_0\\,H\\,\\mathbb{I} + \\sum_j f_j\\,\\widetilde{\\mathbb{A}}_j^{\\mathrm{dil}}\\Bigr)^{-\\circ}
+  + \\Bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i\\Bigr)\\stackrel{\\circ}{:}
+    \\Bigl(f_0\\,H\\,\\mathbb{I} + \\sum_j f_j\\,\\widetilde{\\mathbb{A}}_j^{\\mathrm{dil}}\\Bigr)^{-1^{\\circ}}
 ```
 
 `A_duts[i]` is the dilute concentration kernel ``\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}`` of phase ``i``,
-`contribs[i]` ``= \\widetilde{\\mathbb{N}}_i = (\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_0)\\circ\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}``,
+`contribs[i]` ``= \\widetilde{\\mathbb{N}}_i = (\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_0)\\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}``,
 `fractions[i]` its volume fraction ``f_i`` in the RVE, and `f_matrix` the matrix
 volume fraction ``f_0``.
 """
@@ -169,7 +169,7 @@ The Volterra-discrete formula is
 
 ```math
 \\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{C}}_0
-  + \\widetilde{\\mathbb{N}}\\circ\\bigl(H\\,\\mathbb{I} - \\widetilde{\\mathbb{P}}_{\\Omega}\\circ\\widetilde{\\mathbb{N}}\\bigr)^{-\\circ}
+  + \\widetilde{\\mathbb{N}}\\stackrel{\\circ}{:}\\bigl(H\\,\\mathbb{I} - \\widetilde{\\mathbb{P}}_{\\Omega}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{N}}\\bigr)^{-1^{\\circ}}
 ```
 
 where ``\\widetilde{\\mathbb{N}} = \\sum_i f_i\\,\\widetilde{\\mathbb{N}}_i`` and the dilute contributions are the
@@ -205,11 +205,11 @@ converges better.
 ```math
 \\widetilde{\\mathbb{L}}^{\\mathrm{hom}} = \\widetilde{\\mathbb{L}}_0 + \\sum_i f_i\\,\\widetilde{\\mathbb{H}}_i,
 \\qquad
-\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-\\circ}
+\\widetilde{\\mathbb{C}}^{\\mathrm{hom}} = \\bigl(\\widetilde{\\mathbb{L}}^{\\mathrm{hom}}\\bigr)^{-1^{\\circ}}
 ```
 
 with the compliance contribution kernels
-``\\widetilde{\\mathbb{H}}_i = -\\,\\widetilde{\\mathbb{L}}_0\\circ\\widetilde{\\mathbb{N}}_i\\circ\\widetilde{\\mathbb{L}}_0``,
+``\\widetilde{\\mathbb{H}}_i = -\\,\\widetilde{\\mathbb{L}}_0\\stackrel{\\circ}{:}\\widetilde{\\mathbb{N}}_i\\stackrel{\\circ}{:}\\widetilde{\\mathbb{L}}_0``,
 the Volterra counterpart of the elastic identity
 ``\\mathbb{H}_i = -\\,\\mathbb{S}_0:\\mathbb{N}_i:\\mathbb{S}_0`` [barthelemyIJES2019](@cite);
 `contribs_compliance` holds them.

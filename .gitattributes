@@ -2,7 +2,7 @@
 #
 # Without this, git on Windows checks text files out with CRLF by default, and
 # the tests compare text the repository holds: the worked examples of MFH Studio
-# (src/studio/library) must be, byte for byte, what the code generation writes
+# (src/Studio/library) must be, byte for byte, what the code generation writes
 # from their own models, and that comparison is one stray `\r` away from a
 # failure that says nothing about the code.
 #

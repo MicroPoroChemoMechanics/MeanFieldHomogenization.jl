@@ -47,8 +47,7 @@ _mandel_size(::TensND.AbstractTens{2, 2}) = 2
 # own basis, which mixed frames in one matrix for every oriented particle.
 # A block already canonical is read as it is.
 
-_to_mandel(A, ::TensND.AbstractTens{4}) = TensND.mandel(TensND.canonical_components(A); symmetrize = true)
-_to_mandel(A, ::TensND.AbstractTens{2}) = Matrix(TensND.canonical_components(A))
+_to_mandel(A, ::TensND.AbstractTens) = Schemes._canonical_matrix(A)
 
 _from_mandel(M, ::TensND.AbstractTens{4}) = TensND.from_mandel(M)
 _from_mandel(M, ::TensND.AbstractTens{2}) = TensND.Tens(M)

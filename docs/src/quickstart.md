@@ -40,7 +40,7 @@ is unavailable without it.
 | Load | Unlocks |
 | :--- | :--- |
 | `DECUHR`, `Integrals` | the adaptive-cubature backend `method = :decuhr` for arbitrary anisotropy; the bundled `method = :nestedquadgk` covers the same cases |
-| `NonlinearSolve` | any SciML algorithm for the self-consistent fixed points ([Iterative solvers](@ref man-schemes)) |
+| `NonlinearSolve` | any SciML algorithm for the self-consistent fixed points ([Iterative solvers](@ref man-schemes-iterative)) |
 | `SymPyPythonCall` | symbolic closed forms of the elliptic integrals |
 | `Ferrite`, `FerriteGmsh`, `Gmsh` | the reference finite-element backend for [FE inclusions](@ref man-fe-inclusions) |
 | `Gridap`, `GridapGmsh` | the second FE backend for the same morphologies |

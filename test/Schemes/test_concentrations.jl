@@ -68,7 +68,11 @@ _ct_tol(_) = 1.0e-12
 @testset "Concentration tensors — averages close under every scheme" begin
     for prop in (:C, :K), sch in _CT_SCHEMES
         rve = _ct_cell()
-        ct = concentration_tensors(rve, sch, prop)
+        # Two inclusion families of different frames: the Mori–Tanaka stiffness is not
+        # major-symmetric, and says so.
+        mt_warns = sch isa MoriTanaka && prop === :C
+        ct = mt_warns ? (@test_logs (:warn, r"no major symmetry") concentration_tensors(rve, sch, prop)) :
+            concentration_tensors(rve, sch, prop)
         P_hom = ct.effective
         tol = _ct_tol(sch)
         bound = sch isa Union{Voigt, Reuss}
@@ -80,9 +84,17 @@ _ct_tol(_) = 1.0e-12
         sA = sum(ct.weights[n] * ct.strain[n] for n in keys(ct))
         sS = sum(ct.weights[n] * ct.stress[n] for n in keys(ct))
         @test _ct_rel(sA, _ct_id(prop)) < 1.0e-12
-        @test _ct_rel(sS, P_hom) < tol
+        # Mori–Tanaka and the asymmetric self-consistent scheme form an antisymmetric
+        # part with families of different frames (this cell), which their estimate
+        # drops: the averages close on the unprojected estimate, the mean stress, and
+        # its projection is the estimate.
+        projected = sch isa Union{MoriTanaka, AsymmetricSelfConsistent}
+        P_raw = projected ? sS : P_hom
+        @test _ct_rel(MeanFieldHomogenization.Schemes._major_symmetrize(sS), P_hom) < tol
+        projected || @test _ct_rel(sS, P_hom) < tol
+        mt_warns && @test _ct_rel(sS, P_hom) > 1.0e-4
         # The effective tensor is the one `homogenize` returns.
-        h = homogenize(rve, sch, prop)
+        h = mt_warns ? (@test_logs (:warn, r"no major symmetry") homogenize(rve, sch, prop)) : homogenize(rve, sch, prop)
         @test _ct_rel(P_hom, h) < (sch isa DifferentialScheme ? 1.0e-6 : 1.0e-14)
         @test _ct_rel(ct.compliance, inv(P_hom)) < 1.0e-12
         # Every homogeneous phase obeys its own law, the matrix included —
@@ -104,9 +116,11 @@ _ct_tol(_) = 1.0e-12
         dual_contribution = prop === :C ? inverse_property_contribution : inverse_property_contribution
         for (ref, P_ref) in ((:M, P_M), (P_any, P_any))
             N = sum(ct.weights[n] * contribution(ct, n; reference = ref) for n in keys(ct))
-            @test _ct_rel(P_ref + N, P_hom) < tol
+            @test _ct_rel(P_ref + N, P_raw) < tol
             H = sum(ct.weights[n] * dual_contribution(ct, n; reference = ref) for n in keys(ct))
-            @test _ct_rel(inv(P_ref) + H, ct.compliance) < tol
+            # Exact on a consistent estimate; up to the antisymmetric part dropped on a
+            # projected one, since the contributions map the projected compliance.
+            @test _ct_rel(inv(P_ref) + H, ct.compliance) < (projected ? max(tol, _ct_rel(sS, P_hom)) : tol)
         end
         if _ct_requires_matrix(sch)
             @test _ct_rel(contribution(ct, :I), contribution(ct, :I; reference = :M)) == 0
@@ -134,12 +148,16 @@ end
 
 @testset "Concentration tensors — stress-driven forms" begin
     rve = _ct_cell()
-    ct = concentration_tensors(rve, MoriTanaka(:M), :C)
+    ct = @test_logs (:warn, r"no major symmetry") concentration_tensors(rve, MoriTanaka(:M), :C)
     S_hom = ct.compliance
+    # The estimate is the major-symmetric part of the mean stress: the stress-driven
+    # averages close on it up to the part dropped, to first order in it.
+    dropped = _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), inv(S_hom))
+    @test dropped > 1.0e-4
     sB = sum(ct.weights[n] * flux_flux_concentration(ct, n) for n in keys(ct))
     sA = sum(ct.weights[n] * gradient_flux_concentration(ct, n) for n in keys(ct))
-    @test _ct_rel(sB, _ct_id(:C)) < 1.0e-12
-    @test _ct_rel(sA, S_hom) < 1.0e-12
+    @test _ct_rel(sB, _ct_id(:C)) < 2dropped
+    @test _ct_rel(sA, S_hom) < 2dropped
     @test _ct_rel(gradient_gradient_concentration(ct, :I), ct.strain[:I]) == 0
     @test _ct_rel(flux_gradient_concentration(ct, :I), ct.stress[:I]) == 0
 
@@ -227,9 +245,12 @@ _ct_levin_exact(α₁, α₂, S₁, S₂, S) = α₁ + (α₂ - α₁) ⊡ inv(S
         end
     end
     # A phase left out carries nothing; a uniform free strain is the macroscopic one.
+    # Exact on a consistent estimate; Mori–Tanaka on families of different frames
+    # (this cell) loses it by the order of the antisymmetric part its estimate drops.
     rve = _ct_cell(; cracks = false)
-    ct = concentration_tensors(rve, MoriTanaka(:M), :C)
-    @test _ct_rel(levin_free_gradient(ct, Dict(:M => α₁, :I => α₁, :P => α₁)), α₁) < 1.0e-12
+    ct = @test_logs (:warn, r"no major symmetry") concentration_tensors(rve, MoriTanaka(:M), :C)
+    dropped = _ct_rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective)
+    @test _ct_rel(levin_free_gradient(ct, Dict(:M => α₁, :I => α₁, :P => α₁)), α₁) < 3dropped
     @test iszero(get_array(levin_free_gradient(ct, Dict{Symbol, typeof(α₁)}())))
 end
 
