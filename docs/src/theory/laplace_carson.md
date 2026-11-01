@@ -124,8 +124,8 @@ implementation, and it is what makes the Kelvin ⇄ Maxwell conversion of the
 next section possible at all.
 
 The same asymmetry explains why a viscoelastic Poisson ratio is a
-Laplace-Carson object: `3k* = E*/(1-2ν*)` is a pointwise identity in `p`, but in
-the time domain the corresponding relation is a Volterra quotient — `ν(t)` does
+Laplace-Carson object: ``3k^{*} = E^{*}/(1-2\nu^{*})`` is a pointwise identity in ``p``, but in
+the time domain the corresponding relation is a Volterra quotient — ``\nu(t)`` does
 not divide, it deconvolves. [`YoungPoisson`](@ref) carries that caveat.
 
 ## [4. Interlacing: why Kelvin ⇄ Maxwell is exact](@id th-interlacing)
@@ -157,17 +157,17 @@ There is far more structure available than "the roots of a polynomial". Write
 \Phi'(\sigma) = \sum_j \frac{E_j\tau_j}{(\sigma-\tau_j)^{2}} \;>\; 0
 ```
 
-for a positive spectrum. `Φ` is a Stieltjes function: strictly increasing
-between consecutive poles, running from `-∞` to `+∞` across every gap. Counting
+for a positive spectrum. ``\Phi`` is a Stieltjes function: strictly increasing
+between consecutive poles, running from ``-\infty`` to ``+\infty`` across every gap. Counting
 sign changes gives the zeros exactly, and they **interlace** the poles:
 
-```
-     0  <  τ₁  <  σ₁  <  τ₂  <  σ₂  <  …  <  τ_m  <  [σ_m]
+```math
+0 < \tau_1 < \sigma_1 < \tau_2 < \sigma_2 < \dots < \tau_m < [\sigma_m]
 ```
 
 with the last zero present **iff** ``E_\infty > 0``. There is deliberately *no*
-zero in ``(0, \tau_1)``: `Φ(0⁺)` is the glassy modulus, which is positive, and
-`Φ` only increases from there.
+zero in ``(0, \tau_1)``: ``\Phi(0^{+})`` is the glassy modulus, which is positive, and
+``\Phi`` only increases from there.
 
 The dual direction is **not** symmetric, and this is the one place an
 implementation must not assume it is. With
@@ -178,21 +178,21 @@ implementation must not assume it is. With
 \qquad \Psi' < 0 ,
 ```
 
-`Ψ(0⁺) = J_0 > 0` while `Ψ(τ₁⁻) = -∞`, so there **is** a zero below the first
+``\Psi(0^{+}) = J_0 > 0`` while ``\Psi(\tau_1^{-}) = -\infty``, so there **is** a zero below the first
 pole:
 
-```
-     0  <  σ₁  <  τ₁  <  σ₂  <  τ₂  <  …  <  τ_n  <  [σ_{n+1}]
+```math
+0 < \sigma_1 < \tau_1 < \sigma_2 < \tau_2 < \dots < \tau_n < [\sigma_{n+1}]
 ```
 
 the last one existing **iff** the fluidity ``\varphi > 0``. Hence a *solid*
-Kelvin chain with `n` branches converts to `n` Maxwell branches with
-``E_\infty > 0``, while a *fluid* one converts to `n+1` branches with
+Kelvin chain with ``n`` branches converts to ``n`` Maxwell branches with
+``E_\infty > 0``, while a *fluid* one converts to ``n+1`` branches with
 ``E_\infty = 0`` — which is the degree count of the rational transform, as it
 must be.
 
 Each unknown is thus isolated before any arithmetic happens. Bisection in
-`log σ` then cannot fail, whatever the number of branches or their spread, and
+``\log\sigma`` then cannot fail, whatever the number of branches or their spread, and
 the residues
 
 ```math
@@ -201,8 +201,8 @@ J_j = \frac{1}{\sigma_j\,\Phi'(\sigma_j)},
 E_j = -\frac{1}{\sigma_j\,\Psi'(\sigma_j)}
 ```
 
-are **positive by construction** rather than by luck, because `Φ' > 0` and
-`Ψ' < 0`. [`maxwell_to_kelvin`](@ref) and [`kelvin_to_maxwell`](@ref) implement
+are **positive by construction** rather than by luck, because ``\Phi' > 0`` and
+``\Psi' < 0``. [`maxwell_to_kelvin`](@ref) and [`kelvin_to_maxwell`](@ref) implement
 this; [the tutorial](@ref tut-kelvin-maxwell) draws the interlacing and shows
 the round trip staying at `1e-15` out to twenty branches.
 
@@ -218,7 +218,7 @@ dashpot of the Kelvin form, and it is recovered exactly as
 
 Because of this, [`PronyCreep`](@ref) stores a **fluidity** ``\varphi = 1/\eta``
 rather than a viscosity, and both Prony types keep their degenerate branches in
-named scalar fields rather than inside the `τ` vector. The reason is not
+named scalar fields rather than inside the vector of the ``\tau_j``. The reason is not
 aesthetic: `Inf` inside a vector that is then sorted, exponentiated and
 differentiated produces `NaN` partials under `ForwardDiff`, whereas `0` behaves
 like any other number.

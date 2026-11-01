@@ -1,24 +1,84 @@
-# [Numerical Laplace inversion](@id man-laplace-inversion)
+# [Non-aging viscoelasticity](@id man-viscoelasticity-nonaging)
 
 !!! info "Before this page"
-    [The Laplace-Carson route](@ref th-laplace-carson), which states the
-    transforms inverted here, and
-    [The rheological model library](@ref man-rheological-models), whose models
-    are the usual input of `inverse_carson`.
+    [The Laplace-Carson route](@ref th-laplace-carson), the theory of this page,
+    [The law library](@ref man-rheological-models), where the materials below come
+    from, and [Homogenization schemes](@ref man-schemes), whose schemes are used
+    here unchanged.
+
+A material is **non-aging** when its relaxation kernel depends on the time elapsed
+since loading only, ``\mathbb{R}(t, t') = \mathbb{R}(t - t')``. The constitutive
+law is then a convolution, which the Laplace-Carson transform turns into a product,
+``\boldsymbol{\sigma}^{*}(p) = \mathbb{R}^{*}(p):\boldsymbol{\varepsilon}^{*}(p)``: at each
+value of the transform variable ``p`` the homogenization problem is an elastic one,
+of stiffness ``\mathbb{R}^{*}(p)``, which every scheme of the package solves
+unchanged (the correspondence principle). This page follows the three steps of that
+route: a material, a homogenization at a value of ``p``, and the way back to the
+time domain. A material that ages takes the other route, that of
+[Aging viscoelasticity (ALV)](@ref man-viscoelasticity).
+
+```@example nonaging
+using MeanFieldHomogenization, TensND
+```
+
+## 1. A material from the law library
+
+A non-aging material is a model of the [law library](@ref man-rheological-models):
+springs, dashpots, their chains, fractional and Rabotnov models, paired into an
+isotropic tensor by [`iso_rheology`](@ref) (bulk modulus, then shear modulus).
+[`carson_relaxation`](@ref) gives its transform ``\mathbb{R}^{*}(p)``:
+
+```@example nonaging
+matrix = iso_rheology(zener_maxwell(30.0, 20.0, 1.0), zener_maxwell(10.0, 8.0, 0.7))
+grains = iso_rheology(Spring(60.0), Spring(40.0))      # elastic
+carson_relaxation(matrix, 1.0)                          # ℝ*(p) at p = 1
+```
+
+## 2. Homogenizing at one value of ``p``
+
+A cell whose phases carry ``\mathbb{R}^{*}(p)`` is homogenized by [`homogenize`](@ref)
+as an elastic one. At ``p = i\omega`` the moduli are complex and the result is the
+complex modulus of the composite at the pulsation ``\omega``: every scheme computes
+in `Complex{Float64}`.
+
+```@example nonaging
+function cell(p)
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => carson_relaxation(matrix, p)); fraction = :rest)
+    add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => carson_relaxation(grains, p)); fraction = 0.3)
+    return rve
+end
+ω = 2π * 0.5
+k_mu(homogenize(cell(im * ω), MoriTanaka(), :C))       # complex bulk and shear moduli
+```
+
+## 3. Back to the time domain
+
+[`homogenize_lc`](@ref) takes the cell as a function of ``p`` and returns either the
+transform at one value of ``p`` or, through a numerical inversion, the effective
+relaxation tensor at given times:
+
+```@example nonaging
+R_hom = homogenize_lc(cell, MoriTanaka(), :C; times = [0.1, 1.0, 10.0])
+k_mu.(R_hom)                                            # k(t), μ(t) at the three times
+```
+
+Each time costs one inversion, and each inversion a few tens of homogenizations; the
+method is chosen as section 4 explains.
+
+## [4. Numerical Laplace inversion](@id man-laplace-inversion)
 
 Going *to* the Laplace-Carson domain is a quadrature. Coming back is the
 ill-posed direction, and there is no algorithm that is best everywhere. This
-page says which one to reach for and what it will cost you; the
+section says which one to reach for and what it will cost; the
 [tutorial](@ref tut-laplace-inversion) shows the measurements behind every
 claim here.
 
-```@example inv
-using MeanFieldHomogenization
-
+```@example nonaging
 inverse_laplace(p -> 1 / (p + 2), 1.0)      # ↔ exp(-2t)
 ```
 
-## 1. The two entry points
+### 4.1 The two entry points
 
 ```julia
 inverse_laplace(F, t, method = DEFAULT_INVERSION)          # f̂(p) = ∫ f e^{-pt} dt
@@ -29,7 +89,7 @@ Both accept a vector of times as well, returning a vector. `F` may return a
 scalar, a `TensND` tensor of any symmetry class, or a `6×6` Mandel matrix — the
 symmetry class of the result is the class the transform returns, axis included.
 
-```@example inv
+```@example nonaging
 using TensND
 
 Cstar(p) = TensISO{3}(3 * (2 + 3p / (p + 1)), 2 * (1 + 4p / (p + 2)))
@@ -40,7 +100,7 @@ inverse_carson(Cstar, 0.7)
 [model catalog](@ref man-rheological-models), because that is the convention
 [`carson_relaxation`](@ref) and [`carson_creep`](@ref) return.
 
-## 2. Choosing a method
+### 4.2 Choosing a method
 
 | | nodes | evaluations of `F` | reach for it when |
 |:---|:---|:---|:---|
@@ -49,7 +109,7 @@ inverse_carson(Cstar, 0.7)
 | [`DeHoog`](@ref)`()` | complex | 33, shared across a block of times | a multi-decade grid where each point costs a homogenization |
 | [`TalbotTrefethen`](@ref)`(24)` | complex | 24 per time | cross-checking against the ECHOES reference; poles in the right half-plane (`shift`) |
 
-Three things people expect that turn out to be false, and one that is true:
+Four properties of these methods decide the choice:
 
 **Branch cuts are not a problem.** The Talbot contours are Hankel-shaped: they
 wrap *around* the negative real axis rather than crossing it, which is exactly
@@ -81,7 +141,7 @@ promise. A viscoelastic **solid**, whose relaxation function settles on a
 plateau, is the comfortable case; a fluid's tail must be read as an absolute
 quantity.
 
-### Why [`GaverStehfest`](@ref) exists despite being the least accurate
+#### Why [`GaverStehfest`](@ref) exists despite being the least accurate
 
 Its nodes are real and positive. That is not a curiosity — it means an entire
 [`homogenize_lc`](@ref) sweep runs in **real arithmetic**, which
@@ -96,7 +156,7 @@ Its nodes are real and positive. That is not a curiosity — it means an entire
 Five digits is ample for an engineering answer. Use it when each evaluation of
 the transform is expensive, and [`FixedTalbot`](@ref) when it is not.
 
-### Why [`DeHoog`](@ref) exists
+#### Why [`DeHoog`](@ref) exists
 
 Its nodes depend on the scaling period `T`, not on `t`, so one node set — one
 pass over `F` — can serve several times at once. What limits the sharing is
@@ -117,12 +177,12 @@ accuracy.
 Passing `T` explicitly gives you one node set for everything, `2N+1`
 evaluations total, and a warning for any time below `t/T = 0.15`.
 
-## 3. Autodiff
+### 4.3 Autodiff
 
 All four methods are generic in the number type and take `t::Real` rather than
 `t::AbstractFloat`, so `ForwardDiff` traverses them:
 
-```@example inv
+```@example nonaging
 using ForwardDiff
 
 Rstar(τ, p) = 2.0 + 3.0 * p * τ / (1 + p * τ)
@@ -144,12 +204,12 @@ of transform values and the partials ride along the same sum.
     FFTW, and its Stehfest coefficients are `BigFloat`. The algorithms here are
     written to the same references and are differentiable.
 
-### Time derivatives without autodiff
+#### Time derivatives without autodiff
 
 For a rate specifically there is an identity that needs no `Dual` at all. Since
 ``\mathcal{L}\{\dot f\}(p) = f^{*}(p) - f(0^{+})``,
 
-```@example inv
+```@example nonaging
 d = inverse_carson_rate(p -> Rstar(1.5, p), 0.8; f_glassy = 5.0)
 (d, -3.0 / 1.5 * exp(-0.8 / 1.5))
 ```
@@ -160,23 +220,41 @@ provides — it applies when `F` is not differentiable, and it is the cheaper
 route when the rate is wanted alongside the value.
 [`glassy_modulus`](@ref) supplies `f_glassy` for every model in the catalog.
 
-## 4. Inversion by fitting
+### 4.4 Inversion by fitting
 
 There is a route that is not a quadrature: fit a Prony series to the transform
 once, and read the time function off the fit. See
 [`prony_fit_relaxation`](@ref) and
-[the model manual](@ref man-rheological-models) §3. The result is a *model* —
+[the law library](@ref man-rheological-models), §3. The result is a *model* —
 closed-form in time, exactly convertible to its dual chain, and usable by the
 aging pipeline — rather than a value at one point.
 
+## 5. The same material on the aging route
+
+`ViscoLaw(m)` turns a model of the library into the kernel
+``(t, t') \mapsto R(t - t')`` that the aging route discretizes in time:
+
+```@example nonaging
+law = ViscoLaw(matrix)
+law(1.0, 0.0) ≈ relaxation(matrix, 1.0)
+```
+
+The two routes then compute the same effective behavior by disjoint means, which
+[Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
+uses as a cross-check. The aging route is the only one for a material that ages,
+the transform route the cheaper and more accurate one for a material that does not.
+
 ## Where to go next
 
-[Poromechanics](@ref manual-poromechanics) returns to elasticity, and closes
-the poroelastic law of a saturated medium from a drained stiffness. The tutorial
-[Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-sets the inversion route of this page against the two others.
-
-* [the tutorial](@ref tut-laplace-inversion) — every claim on this page,
-  measured and plotted;
-* [the theory](@ref th-laplace-carson);
-* [`homogenize_lc`](@ref) — where the choice of method actually costs money.
+* Theory: [The Laplace-Carson route](@ref th-laplace-carson), for the
+  correspondence principle, the interlacing of creep and relaxation and the
+  inversion methods.
+* Laws: [The law library](@ref man-rheological-models), every model and its
+  transform.
+* Tutorials: [Viscoelastic composites](@ref tut-viscoelasticity) (complex moduli
+  through the schemes), [Numerical Laplace inversion](@ref tut-laplace-inversion)
+  (every claim of section 4, measured), [Generalized Kelvin ⇄ generalized
+  Maxwell](@ref tut-kelvin-maxwell), and
+  [Frequency or time?](@ref tut-freq-vs-time).
+* Application: [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
+* The aging route: [Aging viscoelasticity (ALV)](@ref man-viscoelasticity).

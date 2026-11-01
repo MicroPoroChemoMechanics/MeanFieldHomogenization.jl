@@ -127,10 +127,9 @@ pages = [
         ],
         "Beyond elasticity" => [
             "manual/conductivity.md",
-            "manual/viscoelasticity.md",
-            "manual/volterra_operators.md",
             "manual/rheological_models.md",
-            "manual/laplace_inversion.md",
+            "manual/nonaging_viscoelasticity.md",
+            "manual/aging_viscoelasticity.md",
             "manual/poromechanics.md",
         ],
         "Differentiation" => [

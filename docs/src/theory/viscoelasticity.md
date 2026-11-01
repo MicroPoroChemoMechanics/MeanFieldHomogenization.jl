@@ -10,7 +10,7 @@
 !!! tip "If the material does not age, there is a cheaper route"
     Everything on this page treats a kernel ``\mathbb{C}(t, t')`` in which ``t``
     and ``t'`` enter **independently**, which is what forces the Volterra
-    operators to be discretized directly. When the kernel depends on `t - t'`
+    operators to be discretized directly. When the kernel depends on ``t - t'``
     alone the constitutive law is a convolution, a transform turns it into a
     product, and the whole problem reduces to an elastic one at each Carson
     variable — see [the Laplace-Carson route](@ref th-laplace-carson).

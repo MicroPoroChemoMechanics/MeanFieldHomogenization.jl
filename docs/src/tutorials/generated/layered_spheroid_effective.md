@@ -77,7 +77,7 @@ A_layered ≈ A_classic
 ````
 
 `Spheroid(ϖ)`'s revolution axis is `ê₁` for a prolate spheroid (aspect ratio
-\omega > 1) and `ê₃` for an oblate one (\omega < 1); `LayeredSpheroid`'s own default axis is `ê₃`, overridable
+``\omega > 1``) and `ê₃` for an oblate one (``\omega < 1``); `LayeredSpheroid`'s own default axis is `ê₃`, overridable
 with the `axis` keyword — pass `axis = (1.0, 0.0, 0.0)` when comparing against
 a prolate `Spheroid`, as above.
 

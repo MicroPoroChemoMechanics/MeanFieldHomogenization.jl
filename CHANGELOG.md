@@ -75,6 +75,21 @@ family is complete: ribbons, and insulating cracks in conduction, in every schem
   Mori–Tanaka form the code no longer uses: it now describes the Echoes form, shared with
   the elastic scheme.
 
+### Documentation
+
+- The Volterra products are written as in Barthélémy et al. (IJSS 2016): the circle over
+  the contraction it replaces, ``\stackrel{\circ}{:}`` and ``\stackrel{\circ}{\cdot}``,
+  ``\circ`` between scalar kernels, and the inverse ``X^{-1^{\circ}}``; in the theory, the
+  manual, the nomenclature and the docstrings.
+- The manual has one page on non-aging viscoelasticity (the Laplace-Carson route and its
+  inversion) and one on aging viscoelasticity, which opens on the difference between a law
+  (`ViscoLaw`) and an operator (`VolterraOperator`); the law library keeps its page. Every
+  code block of the two pages is executed by the documentation build (one of them called a
+  function that does not exist).
+- Formulas cut by Markdown were shown as raw LaTeX on several pages (a wrapped inline
+  formula read as a list item or a line break, a `|` ending a table cell): fixed, and
+  found by scanning the rendered site.
+
 ## v0.25.0 — aging basic creep of concrete, across scales
 
 A minor release: new exported API. Aging viscoelastic homogenization nests across scales,
