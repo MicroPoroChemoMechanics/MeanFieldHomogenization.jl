@@ -103,6 +103,7 @@ end
 const SCHEMES = Dict(
     "dilute" => (c, m) -> Dilute(m), "mori_tanaka" => (c, m) -> MoriTanaka(m),
     "self_consistent" => (c, m) -> SelfConsistent(reltol = c["epsrel"]),
+    "asymmetric_self_consistent" => (c, m) -> AsymmetricSelfConsistent(m; reltol = c["epsrel"]),
 )
 
 # The phase property: a law, or the operator of a source case.

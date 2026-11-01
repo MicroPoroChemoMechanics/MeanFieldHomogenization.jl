@@ -602,16 +602,34 @@ function _inclusion_alv_quantities(
         C_0::VolterraOperator,
         times::AbstractVector{<:Real}
     )
-    C_r_law isa ALVProperty ||
-        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     # In the class of each: the phase's law, the reference's, the geometry's (a
     # spheroid: transversely isotropic about its axis); each operation in the
     # cheapest class that holds its operands. One inverse for both quantities.
-    C_r = _relaxation_operator(C_r_law, C_0.grid)
+    C_r = _alv_phase_operator(C_r_law, C_0.grid)
     P_r = _hill_kernel_op(geom, C_0)
     A_dut = _in_class_algebra(_alg_dilute_concentration, (C_r, C_0, P_r), ())
     N_dut = (C_r - C_0) * A_dut
     return (C_r, A_dut, N_dut, P_r)
+end
+
+# The operator of a phase law, refused when the property is not one.
+function _alv_phase_operator(law, grid)
+    law isa ALVProperty ||
+        throw(ArgumentError("homogenize_alv: phase property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    return _relaxation_operator(law, grid)
+end
+
+# The bounds read the phase kernels alone: no concentration, and so no Hill kernel,
+# which a reference off the isotropic class does not have (the matrix of a bound may
+# be anisotropic). The other quantities are zeros the bounds never read.
+const _ALVBound = Union{Voigt, Reuss}
+function _inclusion_alv_quantities(geom, ::_ALVBound, C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
+    z = zero(C_0)
+    return (_alv_phase_operator(C_r_law, C_0.grid), z, z, z)
+end
+function _inclusion_alv_quantities(sphere::LayeredSphere, scheme::_ALVBound, _C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
+    z = zero(C_0)
+    return (_layer_bound_alv(scheme, sphere, times), z, z, z)
 end
 
 function _inclusion_alv_quantities(
@@ -847,14 +865,14 @@ function _homogenize_alv_dispatch(
     return _alv_sc_solve(sc, Val(4), rve, prop; times, matrix, sc.options..., kw_filt...)
 end
 
-# The solver of the ALV self-consistent equation that `SelfConsistent(algorithm = …)`
-# selects, at order 4 (`Val(4)`) or 2: the Picard iteration (`AndersonDefault`, the
-# default) or the row-by-row Newton solver (`NewtonDefault`, its `maxiters` per row).
-# The iteration starts from the matrix kernel, or from the Picard estimate for Newton:
-# a seed is refused rather than ignored.
-function _alv_sc_solve(sc::SelfConsistent, order::Val, rve, prop; kw...)
-    _alv_refuse_seed("SelfConsistent", sc.init)
-    return _alv_sc_solve(sc.algorithm, order, rve, prop; kw...)
+# The solver of the ALV self-consistent equations that `SelfConsistent(algorithm = …)`
+# and `AsymmetricSelfConsistent(algorithm = …)` select, at order 4 (`Val(4)`) or 2: the
+# Picard iteration (`AndersonDefault`, the default) or the row-by-row Newton solver
+# (`NewtonDefault`, its `maxiters` per row). The iteration starts from the matrix
+# kernel, or from the Picard estimate for Newton: a seed is refused rather than ignored.
+function _alv_sc_solve(scheme::Union{SelfConsistent, AsymmetricSelfConsistent}, order::Val, rve, prop; kw...)
+    _alv_refuse_seed(string(nameof(typeof(scheme))), scheme.init)
+    return _alv_sc_solve(scheme.algorithm, _alv_sc_kind(scheme), order, rve, prop; kw...)
 end
 _alv_refuse_seed(::AbstractString, ::Nothing) = nothing
 _alv_refuse_seed(scheme::AbstractString, init) = throw(
@@ -863,16 +881,26 @@ _alv_refuse_seed(scheme::AbstractString, init) = throw(
             "whose iteration starts from the matrix kernel; leave `init` unset"
     )
 )
-_alv_sc_solve(::AndersonDefault, ::Val{4}, rve, prop; kw...) = _self_consistent_alv(rve, prop; kw...)
-_alv_sc_solve(::AndersonDefault, ::Val{2}, rve, prop; kw...) = _self_consistent_alv_order2(rve, prop; kw...)
-_alv_sc_solve(::NewtonDefault, order::Val, rve, prop; maxiters::Int = 30, kw...) =
-    _self_consistent_alv_newton(order, rve, prop; maxiters_per_row = maxiters, kw...)
-_alv_sc_solve(algorithm, ::Val, rve, prop; kw...) = throw(
+# The equation of each scheme: symmetric (every phase in the estimate) or asymmetric
+# (the contributions measured against the matrix).
+_alv_sc_kind(::SelfConsistent) = Val(:sc)
+_alv_sc_kind(::AsymmetricSelfConsistent) = Val(:asc)
+_alv_sc_solve(::AndersonDefault, kind::Val, order::Val, rve, prop; kw...) = _alv_picard(kind, order, rve, prop; kw...)
+_alv_sc_solve(::NewtonDefault, kind::Val, order::Val, rve, prop; maxiters::Int = 30, kw...) =
+    _alv_newton(kind, order, rve, prop; maxiters_per_row = maxiters, kw...)
+_alv_sc_solve(algorithm, kind::Val, ::Val, rve, prop; kw...) = throw(
     ArgumentError(
-        "homogenize_alv: SelfConsistent(algorithm = $(algorithm)) is not available for a viscoelastic (ALV) cell; " *
+        "homogenize_alv: $(_alv_sc_scheme_name(kind))(algorithm = $(algorithm)) is not available for a viscoelastic (ALV) cell; " *
             "use AndersonDefault() (Picard iteration, the default) or NewtonDefault() (row-by-row Newton)"
     )
 )
+_alv_sc_scheme_name(::Val{:sc}) = "SelfConsistent"
+_alv_sc_scheme_name(::Val{:asc}) = "AsymmetricSelfConsistent"
+
+# The Picard iteration of each equation and order.
+_alv_picard(::Val{:sc}, ::Val{4}, rve, prop; kw...) = _self_consistent_alv(rve, prop; kw...)
+_alv_picard(::Val{:sc}, ::Val{2}, rve, prop; kw...) = _self_consistent_alv_order2(rve, prop; kw...)
+_alv_picard(::Val{:asc}, order::Val, rve, prop; kw...) = _asc_alv(order, rve, prop; kw...)
 
 # Asymmetric Self-Consistent ALV.  Same ingredients as `SelfConsistent`
 # but the iteration update is anchored on the matrix property C_M
@@ -890,18 +918,7 @@ function _homogenize_alv_dispatch(
         ),
         kw
     )
-    # The ALV asymmetric scheme has the Picard iteration only, from the matrix kernel.
-    _alv_refuse_seed("AsymmetricSelfConsistent", asc.init)
-    asc.algorithm isa AndersonDefault || throw(
-        ArgumentError(
-            "homogenize_alv: AsymmetricSelfConsistent(algorithm = $(asc.algorithm)) is not available for a " *
-                "viscoelastic (ALV) cell, whose asymmetric scheme is solved by Picard iteration (AndersonDefault())"
-        )
-    )
-    return _asymmetric_self_consistent_alv(
-        rve, prop; times = times, matrix = matrix,
-        asc.options..., kw_filt...
-    )
+    return _alv_sc_solve(asc, Val(4), rve, prop; times, matrix, asc.options..., kw_filt...)
 end
 
 # Ponte-Castañeda & Willis ALV.  Algebraically identical to Maxwell in

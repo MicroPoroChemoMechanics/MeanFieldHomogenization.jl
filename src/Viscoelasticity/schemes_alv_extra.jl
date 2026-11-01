@@ -47,189 +47,159 @@ function pcw_alv(
     return maxwell_alv(C_0, contribs, fractions; H_0 = H_dist)
 end
 
-# ── Asymmetric Self-Consistent (ASC) — stiffness form ──────────────────────
+# ── Asymmetric self-consistent (ASC) ───────────────────────────────────────
 
 """
-    asymmetric_self_consistent_alv(rve::RVE, prop::Symbol; times,
+    asymmetric_self_consistent_alv(rve::RVE, prop::Symbol; times, matrix = nothing,
                                     abstol = 1e-10, reltol = 1e-8,
                                     maxiters = 200, damping = 0.0,
-                                    verbose = false, select_best = false)
-        -> Matrix{T}
+                                    verbose = false, select_best = false) -> Matrix
 
-Asymmetric self-consistent viscoelastic homogenization.  The
-iteration update reads
+Asymmetric self-consistent estimate in aging viscoelasticity, at order 4 (a stiffness,
+``\\widetilde{\\mathbb{C}}``) or 2 (a conductivity, ``\\widetilde{\\boldsymbol{K}}``, the
+products ``\\stackrel{\\circ}{:}`` becoming ``\\stackrel{\\circ}{\\cdot}``): the fixed point of
 
 ```math
-\\widetilde{\\mathbb{C}}^{(m+1)} = \\widetilde{\\mathbb{C}}_{\\mathrm{M}}
-  + \\sum_i f_i\\,(\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_{\\mathrm{M}})
-    \\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}\\bigl(\\widetilde{\\mathbb{C}}^{(m)}\\bigr),
+\\widetilde{\\mathbb{C}} = \\widetilde{\\mathbb{C}}_{\\mathrm{M}}
+  + \\sum_{i \\neq \\mathrm{M}} f_i\\,(\\widetilde{\\mathbb{C}}_i - \\widetilde{\\mathbb{C}}_{\\mathrm{M}})
+    \\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}_i^{\\mathrm{dil}}(\\widetilde{\\mathbb{C}}),
 ```
 
-with ``\\widetilde{\\mathbb{C}}_{\\mathrm{M}}`` the matrix kernel and ``m`` the iteration
-index, mirroring the reference ASC form.  Returns the
-``6n\\times 6n`` effective relaxation matrix once the residual
-``\\|\\widetilde{\\mathbb{C}}^{(m+1)} - \\widetilde{\\mathbb{C}}^{(m)}\\|_F`` falls below
-`abstol` + `reltol` ``\\times\\,\\|\\widetilde{\\mathbb{C}}^{(m)}\\|_F`` (or after
-`maxiters` Picard steps).
+every dilute concentration computed in the estimate itself and every contribution
+measured against the matrix ``\\mathrm{M}`` (the phase `matrix`, or the one with
+`fraction = :rest`). With crack families it is the compliance form of the elastic
+scheme, the cracks adding their compliance against the estimate,
+
+```math
+\\widetilde{\\mathbb{S}} = \\widetilde{\\mathbb{S}}_{\\mathrm{M}}
+  + \\bigl(\\langle\\widetilde{\\mathbb{A}}\\rangle
+    - \\widetilde{\\mathbb{S}}_{\\mathrm{M}}\\stackrel{\\circ}{:}\\langle\\widetilde{\\mathbb{C}}\\stackrel{\\circ}{:}\\widetilde{\\mathbb{A}}\\rangle\\bigr)
+    \\stackrel{\\circ}{:}\\widetilde{\\mathbb{S}}
+  + \\sum_c \\Delta\\widetilde{\\mathbb{H}}_c(\\widetilde{\\mathbb{C}}),
+\\qquad \\widetilde{\\mathbb{S}} = \\widetilde{\\mathbb{C}}^{-1^{\\circ}},
+```
+
+``\\langle\\cdot\\rangle`` the sums over the inclusion phases weighted by their fractions;
+without cracks the two forms have the same fixed point. Solved by Picard iteration
+from the matrix kernel, in the classes of the operators (on full matrices with layered
+spheres); `homogenize_alv(rve, AsymmetricSelfConsistent(algorithm = NewtonDefault()), prop; times)`
+solves the same equation by a Newton march through the instants. The matrix kernel must
+be isotropic, and every phase must keep the estimate isotropic, as the ALV Hill kernel
+against it requires: a sphere of isotropic behavior, a layered sphere, or
+`symmetrize = :iso`, which a crack family always needs.
 """
 asymmetric_self_consistent_alv(rve::RVE, prop::Symbol; kw...) = Matrix(_asymmetric_self_consistent_alv(rve, prop; kw...))
 
 # The same, returning a `VolterraOperator` when it iterates in the classes of the
-# operators (what `homogenize_alv` keeps), a full matrix otherwise.
+# operators (what `homogenize_alv` keeps), a full matrix otherwise; at the order of the
+# matrix kernel.
 function _asymmetric_self_consistent_alv(
-        rve::RVE, prop::Symbol;
-        times::AbstractVector{<:Real},
-        matrix::Union{Nothing, Symbol} = nothing,
-        abstol::Real = 1.0e-10,
-        reltol::Real = 1.0e-8,
-        maxiters::Int = 200,
-        damping::Real = 0.0,
-        verbose::Bool = false,
-        select_best::Bool = false
+        rve::RVE, prop::Symbol; times::AbstractVector{<:Real}, matrix::Union{Nothing, Symbol} = nothing, kw...
     )
-    m = host_phase_name(rve, matrix, "asymmetric_self_consistent_alv")
-    C_M_law = phase_property(rve, m, prop)
-    C_M_law isa ALVProperty ||
-        throw(ArgumentError("asymmetric_self_consistent_alv: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    grid = TimeGrid(times)
-    C_M = _relaxation_operator(C_M_law, grid)
-    incl_names = inclusion_phase_names(rve, m)
-    # Eltype-generic containers (Dual-safe — see schemes_alv_sc.jl); the geometries
-    # of the phases are of different shape types, as a `Phase` holds them.
-    C_phases = AbstractMatrix[]
-    geometries = MFH_Core.AbstractInclusion[]
-    fractions = typeof(volume_fraction(rve, m))[]   # eltype of the RVE amounts
-    symmetrizes = AbstractSymmetrize[]
-    crack_data = Tuple{
-        Any, Any, AbstractSymmetrize,
-        Union{Nothing, AbstractMatrix},
-        Union{Nothing, AbstractMatrix},
-    }[]
-    layered_data = NamedTuple[]   # see `self_consistent_alv`
-    for name in incl_names
-        ph = rve.phases[name]
-        a = rve.amounts[name]
-        if _is_crack_family(a)
-            push!(crack_data, _alv_crack_record(rve, name, a, times, "asymmetric_self_consistent_alv"))
-            continue
-        end
-        C_r_law = phase_property(rve, name, prop)
-        C_r_law isa ALVProperty ||
-            throw(ArgumentError("asymmetric_self_consistent_alv: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-        if ph.geometry isa LayeredSphere
-            push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = phase_symmetrize(rve, name)))
-            continue
-        end
-        push!(C_phases, _relaxation_operator(C_r_law, grid))
-        push!(geometries, ph.geometry)
-        push!(fractions, _amount_value(rve, name))
-        push!(symmetrizes, phase_symmetrize(rve, name))
-    end
+    m = host_phase_name(rve, matrix, _ASC_WHO)
+    law = phase_property(rve, m, prop)
+    law isa ALVProperty ||
+        throw(ArgumentError("$(_ASC_WHO): matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
+    return _asc_alv(_alv_order(law, times), rve, prop; times, matrix = m, kw...)
+end
 
-    # Without layered spheres, and while the estimate stays isotropic by construction
-    # (an isotropic matrix, phases spherical and isotropic or averaged in orientation),
-    # the iteration runs in the classes of the operators; otherwise on full matrices.
-    if isempty(layered_data) && C_M.class isa TensISO &&
-            all(k -> _alv_diff_keeps_iso(geometries[k], symmetrizes[k], C_phases[k]), eachindex(C_phases))
-        Tp = _alv_promoted_eltype(vcat(AbstractMatrix[C_M], C_phases), fractions, Matrix{Float64}[], crack_data)
-        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, geometries; init = Tp)
-        step(C_n) = _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes, crack_data)
-        return _fixed_point_in_classes(step, C_M, Tp, "ASC-ALV"; abstol, reltol, maxiters, damping, verbose, select_best)
-    end
-    C_M = Matrix(C_M)
-    C_phases = Matrix[Matrix(C) for C in C_phases]
+const _ASC_WHO = "asymmetric_self_consistent_alv"
 
-    U_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_UA(g)); symmetrize = true) for g in geometries]
-    V_M_phases = Matrix[TensND.mandel(TensND.canonical_components(tens_VA(g)); symmetrize = true) for g in geometries]
-
-    Tp = _alv_promoted_eltype(
-        vcat(Matrix[C_M], C_phases), fractions, U_M_phases, crack_data
+function _asc_alv(
+        ::Val{4}, rve::RVE, prop::Symbol;
+        times::AbstractVector{<:Real}, matrix::Symbol,
+        abstol::Real = 1.0e-10, reltol::Real = 1.0e-8, maxiters::Int = 200,
+        damping::Real = 0.0, verbose::Bool = false, select_best::Bool = false
     )
-    Tp = _alv_layered_eltype(Tp, layered_data, C_M, times)
-    C_n = Tp.(C_M)
-    best_resid = Inf
-    C_best = C_n
+    d = _sc_alv_phases(rve, prop, times, matrix, _ASC_WHO)
+    opts = (; abstol, reltol, maxiters, damping, verbose, select_best)
+    if isempty(d.layered_data)
+        Tp = _alv_promoted_eltype(d.C_phases, d.fractions, Matrix{Float64}[], d.crack_data)
+        Tp = mapreduce(g -> eltype(tens_UA(g)), promote_type, d.geometries; init = Tp)
+        return _fixed_point_in_classes(C_n -> _asc_alv_step_in_classes(C_n, d), d.C_0, Tp, "ASC-ALV"; opts...)
+    end
+    dense = _sc_alv_dense_data(d)
+    return _fixed_point_dense(C_n -> _asc_alv_dense_step(C_n, dense, times), _sc_alv_dense_eltype(dense, times).(dense.C_0), "ASC-ALV"; opts...)
+end
 
-    for iter in 1:maxiters
-        C_n_new = _asc_alv_step(
-            C_M, C_n, C_phases, U_M_phases, V_M_phases,
-            fractions, symmetrizes
+function _asc_alv(
+        ::Val{2}, rve::RVE, prop::Symbol;
+        times::AbstractVector{<:Real}, matrix::Symbol,
+        abstol::Real = 1.0e-10, reltol::Real = 1.0e-8, maxiters::Int = 200,
+        damping::Real = 0.0, verbose::Bool = false, select_best::Bool = false
+    )
+    K_M, data, cracks = _sc2_phases(rve, prop, times, matrix, _ASC_WHO)
+    opts = (; abstol, reltol, maxiters, damping, verbose, select_best)
+    if !any(d -> d.geom isa LayeredSphere, data)
+        phases = _sc2_class_phases(data, times)
+        K_M_op = first(phases).K_r
+        return _fixed_point_in_classes(
+            K -> _asc2_step_in_classes(K, K_M_op, phases, cracks), K_M_op, _sc2_eltype(K_M, data, cracks, times), "ASC-ALV order 2"; opts...
         )
-        # A layered sphere adds (C_r − C_M) ∘ A_r through its average stress:
-        # B_r − C_M ∘ A_r, both against the running estimate.
-        for d in layered_data
-            A, B = _alv_layered_AB(d.geom, C_n, times)
-            C_n_new = C_n_new .+ d.f .* _maybe_symmetrize_alv(B .- _alv_prod(C_M, A), d.sym)
-        end
-        # Crack contribution (Budiansky-O'Connell SC):
-        # `ΔJ̃_cracks(C_n)` against the running estimate, added to the
-        # compliance side of the ASC solid update.
-        if !isempty(crack_data)
-            ΔJ = zeros(eltype(C_n), size(C_n)...)
-            J_n = volterra_inverse(C_n; block_size = 6)
-            @inbounds for (geom, ε, sym, Rn_mat, Rt_mat) in crack_data
-                Ñ = property_contribution_alv_at(
-                    geom, C_n;
-                    Rn_mat = Rn_mat,
-                    Rt_mat = Rt_mat
-                )
-                ΔC = delta_property_alv(geom, Ñ, ε)
-                ΔJ_block = -(J_n * ΔC * J_n)
-                ΔJ_block = _maybe_symmetrize_alv(ΔJ_block, sym)
-                ΔJ .+= ΔJ_block
-            end
-            J_solid_new = volterra_inverse(C_n_new; block_size = 6)
-            C_n_new = volterra_inverse(J_solid_new .+ ΔJ; block_size = 6)
-        end
-        Δ = norm(C_n_new - C_n)
-        norm_C = norm(C_n)
-        tol_eff = abstol + reltol * norm_C
-        verbose && @info "ASC-ALV iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
-        if select_best && Δ < best_resid
-            best_resid = Δ
-            C_best = C_n_new
-        end
-        if Δ ≤ tol_eff
-            return C_n_new
-        end
-        C_n = (1 - damping) .* C_n_new .+ damping .* C_n
     end
-
-    @debug "asymmetric_self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
-    return select_best ? C_best : C_n
+    return _fixed_point_dense(K -> _asc2_dense_step(K, K_M, data, cracks, times), _sc2_eltype(K_M, data, cracks, times).(K_M), "ASC-ALV order 2"; opts...)
 end
 
-# One ASC step in the classes of the operators: the increment anchored on C_M, the dilute
-# concentrations against the running estimate. The cracks add their compliances against
-# it, −J̃ₙ ∘ ΔC̃ ∘ J̃ₙ = ε H̃, on the compliance side.
-function _asc_alv_step_in_classes(C_M, C_n, C_phases, geometries, fractions, symmetrizes, crack_data)
-    J_long, J_shear = _alv_iso_inverses(C_n)
-    terms = map(C_phases, geometries, fractions, symmetrizes) do C, g, f, sym
-        f * _maybe_symmetrize_alv((C - C_M) * _dilute_in_classes(C, g, C_n, J_long, J_shear), sym)
-    end
-    C_solid = isempty(terms) ? C_M : C_M + reduce(+, terms)
-    isempty(crack_data) && return _as_iso_estimate(C_solid)
-    return _as_iso_estimate(inv(inv(C_solid) + _crack_compliance_in_classes(C_n, crack_data)))
+# The ASC update from the sums ⟨A⟩ and ⟨X ∘ A⟩ of the inclusion phases against the
+# running estimate X_n and the compliance ΔH of the crack families against it: the
+# stiffness form X_M + ⟨X ∘ A⟩ − X_M ∘ ⟨A⟩ without cracks, the compliance form of the
+# elastic scheme with them (the same fixed point without cracks). `vinv` is the Volterra
+# inverse of the representation: `inv` for an operator, the block inverse of the order
+# for a full matrix.
+_asc_update(X_M, X_n, A_sum, B_sum, ::Nothing, vinv) = X_M + B_sum - X_M * A_sum
+function _asc_update(X_M, X_n, A_sum, B_sum, ΔH, vinv)
+    S_M = vinv(X_M)
+    return vinv(S_M + (A_sum - S_M * B_sum) * vinv(X_n) + ΔH)
 end
 
-# Single ASC step — increment is anchored on C_M.
-function _asc_alv_step(
-        C_M::AbstractMatrix,
-        C_n::AbstractMatrix,
-        C_phases::AbstractVector{<:AbstractMatrix},
-        U_M_phases::AbstractVector{<:AbstractMatrix},
-        V_M_phases::AbstractVector{<:AbstractMatrix},
-        fractions::AbstractVector{<:Real},
-        symmetrizes::AbstractVector{<:AbstractSymmetrize}
-    )
-    Δ = zero(C_n)
+# The sums over the inclusion phases (`terms`, pairs (f A, f X ∘ A)), zero without any.
+_asc_sums(terms, X) = isempty(terms) ? (zero(X), zero(X)) : (reduce(+, first.(terms)), reduce(+, last.(terms)))
+
+# One ASC step in the classes of the operators, order 4: the concentrations of the
+# inclusion phases (the matrix, first in `d`, excluded) against the isotropic estimate.
+function _asc_alv_step_in_classes(C_n, d)
     J_long, J_shear = _alv_iso_inverses(C_n)
-    for r in eachindex(C_phases)
-        A_dil = _sc_alv_dilute_conc(C_phases[r], U_M_phases[r], V_M_phases[r], J_long, J_shear, C_n)
-        contrib = _maybe_symmetrize_alv(_alv_prod(C_phases[r] - C_M, A_dil), symmetrizes[r])
-        @. Δ += fractions[r] * contrib
+    terms = map(Iterators.drop(zip(d.C_phases, d.geometries, d.fractions, d.symmetrizes), 1)) do (C, g, f, sym)
+        A = _dilute_in_classes(C, g, C_n, J_long, J_shear)
+        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(C * A, sym)
     end
-    return C_M .+ Δ
+    ΔH = isempty(d.crack_data) ? nothing : _crack_compliance_in_classes(C_n, d.crack_data)
+    return _as_iso_estimate(_asc_update(d.C_0, C_n, _asc_sums(terms, C_n)..., ΔH, inv))
+end
+
+# The same on full matrices, the layered spheres through their recurrences.
+function _asc_alv_dense_step(C_n, dense, times)
+    J_long, J_shear = _alv_iso_inverses(C_n)
+    terms = map(Iterators.drop(zip(dense.C_phases, dense.U_M_phases, dense.V_M_phases, dense.fractions, dense.symmetrizes), 1)) do (C, U, V, f, sym)
+        A = _sc_alv_dilute_conc(C, U, V, J_long, J_shear, C_n)
+        f * _maybe_symmetrize_alv(A, sym), f * _maybe_symmetrize_alv(_alv_prod(C, A), sym)
+    end
+    A_sum, B_sum = _asc_sums(terms, C_n)
+    A_lay, B_lay = _sc_alv_layered_terms(dense.layered_data, C_n, times)
+    A_lay === nothing || (A_sum = A_sum + A_lay; B_sum = B_sum + B_lay)
+    ΔH = isempty(dense.crack_data) ? nothing : _build_sc_crack_extra_J(C_n, dense.crack_data)
+    return _asc_update(dense.C_0, C_n, A_sum, B_sum, ΔH, X -> volterra_inverse(X; block_size = 6))
+end
+
+# Order 2, in the classes of the operators: `phases` the matrix first, then the
+# inclusions; the insulating crack families add their resistivity.
+function _asc2_step_in_classes(K, K_M, phases, cracks)
+    terms = map(Iterators.drop(phases, 1)) do d
+        A = _dilute2_in_classes(d.K_r, d.geom, K)
+        d.f * _maybe_symmetrize_alv2(A, d.sym), d.f * _maybe_symmetrize_alv2(d.K_r * A, d.sym)
+    end
+    ΔR = isempty(cracks) ? nothing : _sc2_crack_resistivity(K, cracks)
+    return _as_iso_estimate(_asc_update(K_M, K, _asc_sums(terms, K)..., ΔR, inv))
+end
+
+# The same on full matrices, the layered spheres through their recurrences.
+function _asc2_dense_step(K, K_M, data, cracks, times)
+    terms = map(Iterators.drop(data, 1)) do d
+        A, B = _sc2_phase_AB(d.geom, d.K_r, K, d.sym, times)
+        d.f * A, d.f * B
+    end
+    ΔR = isempty(cracks) ? nothing : Matrix(_sc2_crack_resistivity(K, cracks))
+    return _asc_update(K_M, K, _asc_sums(terms, K)..., ΔR, X -> volterra_inverse(X; block_size = 3))
 end
 
 # =============================================================================

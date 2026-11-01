@@ -91,8 +91,17 @@ function second_hill_kernel(ell, C0_law::ALVProperty, times::AbstractVector{<:Re
 end
 
 # The longitudinal ``(\alpha + 2\beta)/3`` and shear ``\beta/2`` Volterra
-# inverses of an isotropic block matrix: what its Hill kernel is made of.
+# inverses of an isotropic block matrix: what its Hill kernel is made of. A reference
+# off the isotropic class is refused: reading (α, β) off it would project it there
+# without a word, and the ALV Hill kernel is known against an isotropic one only.
 function _alv_iso_inverses(C::AbstractMatrix)
+    _is_iso_block(C) || throw(
+        ArgumentError(
+            "the ALV Hill kernel is known against an isotropic reference only, and this one " *
+                "is not; for a scheme on the running estimate, every phase must keep it " *
+                "isotropic (a sphere of isotropic behavior, a layered sphere, or symmetrize = :iso)"
+        )
+    )
     α, β = iso_params_from_blocks(C)
     return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
 end

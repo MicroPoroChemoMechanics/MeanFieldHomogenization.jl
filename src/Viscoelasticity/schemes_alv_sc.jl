@@ -83,27 +83,10 @@ function _self_consistent_alv(
     # The running estimate carries the promoted eltype of every input (kernels,
     # fractions, geometry tensors, crack data, layers) so Dual parameters propagate
     # through the fixed point.
-    C_m = _sc_alv_dense_eltype(dense, times).(dense.C_0)
-    best_resid = Inf
-    C_best = C_m
-    for iter in 1:maxiters
-        C_m_new = _sc_alv_dense_step(C_m, dense, times)
-        Δ = norm(C_m_new - C_m)
-        norm_C = norm(C_m)
-        tol_eff = abstol + reltol * norm_C
-        verbose && @info "SC-ALV iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
-        if select_best && Δ < best_resid
-            best_resid = Δ
-            C_best = C_m_new
-        end
-        if Δ ≤ tol_eff
-            return C_m_new
-        end
-        # Picard with relaxation.
-        C_m = (1 - damping) .* C_m_new .+ damping .* C_m
-    end
-    @debug "self_consistent_alv: maxiters=$(maxiters) reached without convergence" abstol reltol
-    return select_best ? C_best : C_m
+    return _fixed_point_dense(
+        C_m -> _sc_alv_dense_step(C_m, dense, times), _sc_alv_dense_eltype(dense, times).(dense.C_0), "SC-ALV";
+        abstol, reltol, maxiters, damping, verbose, select_best
+    )
 end
 
 # The phases of an ALV self-consistent cell, read once for the Picard and the Newton
@@ -118,6 +101,8 @@ function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractStri
         throw(ArgumentError("$who: matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
     grid = TimeGrid(times)
     C_0 = _relaxation_operator(C_M_law, grid)
+    # The matrix kernel enters the estimate as it is: it must be isotropic.
+    C_0.class isa TensISO || _alv_iso_error(who, m, "the anisotropy of the kernel")
     C_phases = AbstractMatrix[C_0]
     geometries = MFH_Core.AbstractInclusion[rve.phases[m].geometry]
     fractions = [volume_fraction(rve, m)]
@@ -245,6 +230,28 @@ function _fixed_point_in_classes(
     end
     @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
     return select_best ? C_best : C_m
+end
+
+# The same on full matrices (with layered spheres, whose recurrences are written on
+# them): `step` maps an estimate to the next, from `X_0`.
+function _fixed_point_dense(step::F, X_0, name; abstol, reltol, maxiters, damping, verbose, select_best) where {F}
+    X = X_0
+    best_resid = Inf
+    X_best = X
+    for iter in 1:maxiters
+        X_new = step(X)
+        Δ = norm(X_new - X)
+        tol_eff = abstol + reltol * norm(X)
+        verbose && @info "$name iter $iter : ‖Δ‖ = $(Δ)   tol = $tol_eff"
+        if select_best && Δ < best_resid
+            best_resid = Δ
+            X_best = X_new
+        end
+        Δ ≤ tol_eff && return X_new
+        X = (1 - damping) .* X_new .+ damping .* X
+    end
+    @debug "$name: maxiters=$(maxiters) reached without convergence" abstol reltol
+    return select_best ? X_best : X
 end
 
 # The dilute concentration of a phase of stiffness `C` and shape `g` against the

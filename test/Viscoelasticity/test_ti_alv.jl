@@ -43,6 +43,11 @@ end
     @test size(C_eff) == (6n, 6n)
     C_ref = voigt_alv([trapezoidal_matrix(C_M_law, times), trapezoidal_matrix(C_I_law, times)], [0.8, 0.2])
     @test C_eff ≈ C_ref rtol = 1.0e-13
+    @test homogenize_alv(rve, Reuss(), :C; times).class isa TensTI
+    # A scheme with concentrations needs the ALV Hill kernel against the matrix, known
+    # for an isotropic one only: refused, where the matrix used to be projected on the
+    # isotropic class.
+    @test_throws "known against an isotropic reference only" homogenize_alv(rve, MoriTanaka(), :C; times)
 end
 
 @testset "TI blocks keep the precision of their element type" begin

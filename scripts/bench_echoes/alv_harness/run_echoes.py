@@ -40,7 +40,8 @@ def with_grid(c):
         return c
     t = c["times"]
     return dict(c, times=[float(x) for x in np.geomspace(t[0], t[-1], GRID_N)])
-SCHEMES = {"dilute": echoes.DIL, "mori_tanaka": echoes.MT, "self_consistent": echoes.SC}
+SCHEMES = {"dilute": echoes.DIL, "mori_tanaka": echoes.MT, "self_consistent": echoes.SC,
+           "asymmetric_self_consistent": echoes.ASC}
 HILL = dict(algo=echoes.NUMINT3D, epsabs=1e-10, epsrel=1e-8, maxnb=1000000, epsroots=1e-8)
 NREPEAT = 3
 

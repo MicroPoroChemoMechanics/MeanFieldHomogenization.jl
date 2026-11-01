@@ -328,7 +328,7 @@ end
 # inclusion, as `_inclusion_alv_quantities` at order 4.
 function _inclusion_alv2_quantities(geom, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times)
     # In the class of each, as at order 4; one inverse for both quantities.
-    K_r = _relaxation_operator(K_r_law, K_0.grid)
+    K_r = _alv_phase_operator(K_r_law, K_0.grid)
     A = _dilute2_in_classes(K_r, geom, K_0)
     return K_r, A, (K_r - K_0) * A
 end
@@ -336,6 +336,12 @@ end
 # The dilute concentration of a phase of conductivity `K_r` and shape `geom` against
 # the isotropic reference `K_0`: its Hill kernel in the class of the shape.
 _dilute2_in_classes(K_r, geom, K_0) = _in_class_algebra(_alg_dilute_concentration, (K_r, K_0, _hill_kernel_order2_op(geom, K_0)), ())
+
+# The bounds read the phase kernels alone, as at order 4.
+_inclusion_alv2_quantities(geom, ::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+    (_alv_phase_operator(K_r_law, K_0.grid), zero(K_0), zero(K_0))
+_inclusion_alv2_quantities(s::LayeredSphere, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+    (_layer_bound_alv2(scheme, s, times), zero(K_0), zero(K_0))
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
@@ -478,7 +484,7 @@ function _homogenize_alv2_dispatch(
         ArgumentError(
             "$(nameof(typeof(scheme))) has no order-2 (conduction, diffusion) ALV " *
                 "implementation; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell, " *
-                "PonteCastanedaWillis, SelfConsistent and DifferentialScheme have one."
+                "PonteCastanedaWillis, SelfConsistent, AsymmetricSelfConsistent and DifferentialScheme have one."
         )
     )
 end
@@ -579,6 +585,15 @@ function _homogenize_alv2_dispatch(
         fractions, f_M, K_M_law, matrix::Symbol; kw...
     )
     return _alv_sc_solve(sc, Val(2), rve, prop; times, matrix, sc.options...)
+end
+
+function _homogenize_alv2_dispatch(
+        rve::RVE, asc::AsymmetricSelfConsistent, prop::Symbol,
+        times::AbstractVector,
+        K_0, K_phases, A_duts, contribs,
+        fractions, f_M, K_M_law, matrix::Symbol; kw...
+    )
+    return _alv_sc_solve(asc, Val(2), rve, prop; times, matrix, asc.options...)
 end
 
 function _homogenize_alv2_dispatch(
@@ -847,16 +862,21 @@ end
 
 # The order-2 fixed point in the classes of the operators: each concentration
 # against the isotropic estimate, its Hill kernel in the class of the shape.
-function _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose)
-    grid = TimeGrid(times)
-    candidates = _algebra_candidates(())
-    phases = map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
+function _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose, select_best)
+    phases = _sc2_class_phases(data, times)
     Tp = _sc2_eltype(K_M, data, cracks, times)
     step(K) = _sc2_step_in_classes(K, phases, cracks)
     return _fixed_point_in_classes(
-        step, _as_class_operator(K_M, grid, candidates), Tp, "SC-ALV order 2";
-        abstol, reltol, maxiters, damping, verbose, select_best = false
+        step, first(phases).K_r, Tp, "SC-ALV order 2";
+        abstol, reltol, maxiters, damping, verbose, select_best
     )
+end
+
+# The phases with their kernels stored by the blocks of their classes, the matrix first.
+function _sc2_class_phases(data, times)
+    grid = TimeGrid(times)
+    candidates = _algebra_candidates(())
+    return map(d -> merge(d, (K_r = _as_class_operator(d.K_r, grid, candidates),)), data)
 end
 
 function _sc2_step_in_classes(K, phases, cracks)
@@ -940,7 +960,7 @@ end
 """
     self_consistent_alv_order2(rve, prop; times, matrix = nothing, abstol = 1e-10,
                                reltol = 1e-8, maxiters = 200, damping = 0.0,
-                               verbose = false) -> Matrix
+                               verbose = false, select_best = false) -> Matrix
 
 Order-2 (conduction, diffusion) self-consistent estimate in the aging linear
 Volterra setting: the fixed point of
@@ -969,21 +989,16 @@ function _self_consistent_alv_order2(
         reltol::Real = 1.0e-8,
         maxiters::Int = 200,
         damping::Real = 0.0,
-        verbose::Bool = false
+        verbose::Bool = false,
+        select_best::Bool = false
     )
     K_M, data, cracks = _sc2_phases(rve, prop, times, matrix, "self_consistent_alv_order2")
     # Without layered spheres, whose recurrences are written on full matrices, the
     # iteration runs in the classes of the operators.
     any(d -> d.geom isa LayeredSphere, data) ||
-        return _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose)
-    K = K_M
-    for iter in 1:maxiters
-        K_new = _sc2_dense_step(K, data, cracks, times)
-        Δ = norm(K_new - K)
-        verbose && @info "SC-ALV order 2, iteration $iter: ‖Δ‖ = $Δ"
-        Δ ≤ abstol + reltol * norm(K) && return K_new
-        K = (1 - damping) .* K_new .+ damping .* K
-    end
-    @debug "self_consistent_alv_order2: maxiters = $(maxiters) reached without convergence" abstol reltol
-    return K
+        return _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose, select_best)
+    return _fixed_point_dense(
+        K -> _sc2_dense_step(K, data, cracks, times), K_M, "SC-ALV order 2";
+        abstol, reltol, maxiters, damping, verbose, select_best
+    )
 end

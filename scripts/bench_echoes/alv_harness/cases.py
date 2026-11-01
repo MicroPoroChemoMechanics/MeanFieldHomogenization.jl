@@ -7,7 +7,7 @@ Keys of a case
 --------------
 name        unique identifier, also the file name `results/<name>.json`
 order       4 (elasticity, 6x6 Kelvin-Mandel blocks) or 2 (conduction, 3x3 blocks)
-scheme      "dilute" | "mori_tanaka" | "self_consistent"
+scheme      "dilute" | "mori_tanaka" | "self_consistent" | "asymmetric_self_consistent"
 times       the time grid t_0 < ... < t_{n-1} (n <= 30)
 epsrel      relative tolerance of the self-consistent fixed point (Frobenius norm)
 maxnb       maximum number of fixed-point iterations
@@ -229,6 +229,24 @@ CASES = [
     case("f5_ellcrack_two_families_MT", 4, "mori_tanaka",
          [phase("M", M_MAX, 1.0), crack_family("C1", 0.05, (1.0, 0.4), euler=ROT),
           crack_family("C2", 0.05, (1.0, 0.6), euler=(1.2, 0.3, 0.8))]),
+    # g. the asymmetric self-consistent scheme ---------------------------------------------
+    case("g1_sph_ASC", 4, "asymmetric_self_consistent",
+         [phase("M", M_MAX_FLOOR, 0.7), phase("I", I_EL, 0.3)]),
+    case("g2_sph_ellcrack_isoavg_ASC", 4, "asymmetric_self_consistent",
+         [phase("M", M_MAX_FLOOR, 0.7), phase("I", I_EL, 0.3),
+          crack_family("C", 0.05, (1.0, 0.4), symmetrize=ISO)]),
+    case("g3_ellcrack_isoavg_ASC", 4, "asymmetric_self_consistent",
+         [phase("M", M_MAX_FLOOR, 1.0), crack_family("C", 0.1, (1.0, 0.4), symmetrize=ISO)]),
+    case("g4_cond_sph_ASC", 2, "asymmetric_self_consistent",
+         [phase("M", maxwell_cond(5.0, 2.0, k_inf=0.5), 0.6),
+          phase("I", kelvin_cond(10.0, 4.0, 1.5), 0.4)]),
+    case("g6_elastic_sph_ellcrack_isoavg_ASC", 4, "asymmetric_self_consistent",
+         [phase("M", elastic_iso(20.0, 9.0), 0.7), phase("I", I_EL, 0.3),
+          crack_family("C", 0.05, (1.0, 0.4), symmetrize=ISO)]),
+    # No case with a family that is not averaged in orientation: its estimate leaves the
+    # isotropic class, and Echoes' visco Hill builder (eshelby4_builder_dim3_iso) reads
+    # the reference through its isotropic projection (visco_array_to_param(..., ISO)),
+    # where MeanFieldHomogenization refuses it.
 ]
 
 CASES_BY_NAME = {c["name"]: c for c in CASES}

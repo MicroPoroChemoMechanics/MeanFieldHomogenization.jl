@@ -73,13 +73,15 @@ function self_consistent_alv_newton(
     law = phase_property(rve, m, prop)
     law isa ALVProperty ||
         throw(ArgumentError("$(_SC_NEWTON_WHO): matrix property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
-    return _self_consistent_alv_newton(_alv_order(law, times), rve, prop; times, matrix = m, kw...)
+    return _alv_newton(Val(:sc), _alv_order(law, times), rve, prop; times, matrix = m, kw...)
 end
 
-# The march of either order: the phases read as the Picard iteration reads them, the
-# isotropic parameters of the matrix kernel, of the start, and the solved estimate.
-function _self_consistent_alv_newton(
-        order::Val, rve::RVE, prop::Symbol;
+# The march of either equation (`kind`: `Val(:sc)`, the symmetric self-consistent one,
+# `Val(:asc)`, the asymmetric one) and either order: the phases read as the Picard
+# iteration reads them, the isotropic parameters of the matrix kernel, of the start, and
+# the solved estimate.
+function _alv_newton(
+        kind::Val, order::Val, rve::RVE, prop::Symbol;
         times::AbstractVector{<:Real},
         matrix::Symbol,
         abstol::Real = 1.0e-10,
@@ -89,32 +91,37 @@ function _self_consistent_alv_newton(
         verbose::Bool = false
     )
     # A run-time choice of the starting point, read once.
+    who = _alv_newton_who(kind)
     init in (:picard, :matrix) ||
-        throw(ArgumentError("$(_SC_NEWTON_WHO): init must be :picard or :matrix; got :$(init)"))
-    data = _sc_newton_data(order, rve, prop, times, matrix)
+        throw(ArgumentError("$who: init must be :picard or :matrix; got :$(init)"))
+    data = _sc_newton_data(order, rve, prop, times, matrix, who)
     θ_M = _sc_newton_params(order, _sc_newton_matrix_kernel(order, data))
     # The parameters carry the promoted eltype of every input (kernels, fractions,
     # geometry tensors, crack data, layers), so that outer `ForwardDiff.Dual`
     # parameters propagate through the root-find.
     Tp = _sc_newton_eltype(order, data, times)
-    θ = map(Θ -> Tp.(Θ), _sc_newton_start(Val(init), order, rve, prop, times, matrix, θ_M))
+    θ = map(Θ -> Tp.(Θ), _sc_newton_start(Val(init), kind, order, rve, prop, times, matrix, θ_M))
     for i in eachindex(times)
         # A march: row i is solved with the rows before it fixed.
-        F = _sc_newton_row_residual(order, θ, data, times, i)
+        F = _sc_newton_row_residual(kind, order, θ, data, times, i)
         p = reduce(vcat, (Θ[i, 1:i] for Θ in θ))
         _sc_newton_row!(p, F, i; abstol, reltol, maxiters = maxiters_per_row, verbose) ||
-            @warn "$(_SC_NEWTON_WHO): row $i not converged in $maxiters_per_row iterations"
+            @warn "$who: row $i not converged in $maxiters_per_row iterations"
         for (k, Θ) in enumerate(θ)
             Θ[i, 1:i] .= view(p, ((k - 1) * i + 1):(k * i))
         end
-        _sc_newton_check_root(θ, θ_M, i)
+        _sc_newton_check_root(θ, θ_M, i, who)
     end
     return _sc_newton_blocks(order, θ)
 end
 
-# The phases of each order, on full matrices.
-_sc_newton_data(::Val{4}, rve, prop, times, m) = _sc_alv_dense_data(_sc_alv_phases(rve, prop, times, m, _SC_NEWTON_WHO))
-_sc_newton_data(::Val{2}, rve, prop, times, m) = _sc2_phases(rve, prop, times, m, _SC_NEWTON_WHO)
+# The name the messages of each equation carry.
+_alv_newton_who(::Val{:sc}) = _SC_NEWTON_WHO
+_alv_newton_who(::Val{:asc}) = "asymmetric_self_consistent_alv (Newton)"
+
+# The phases of each order, on full matrices, the matrix first.
+_sc_newton_data(::Val{4}, rve, prop, times, m, who) = _sc_alv_dense_data(_sc_alv_phases(rve, prop, times, m, who))
+_sc_newton_data(::Val{2}, rve, prop, times, m, who) = _sc2_phases(rve, prop, times, m, who)
 
 _sc_newton_matrix_kernel(::Val{4}, dense) = dense.C_0
 _sc_newton_matrix_kernel(::Val{2}, (K_M, _, _)) = K_M
@@ -128,31 +135,30 @@ _sc_newton_params(::Val{2}, K) = (iso_order2_params_from_blocks(K),)
 _sc_newton_blocks(::Val{4}, (α, β)) = iso_blocks_from_params(α, β)
 _sc_newton_blocks(::Val{2}, (λ,)) = iso_order2_blocks_from_params(λ)
 
-# The starting point of the Newton march: the Picard estimate, loosely converged, or
-# the matrix kernel.
-_sc_newton_start(::Val{:matrix}, order, rve, prop, times, m, θ_M) = θ_M
-_sc_newton_start(::Val{:picard}, order::Val{4}, rve, prop, times, m, θ_M) =
-    _sc_newton_params(order, Matrix(_self_consistent_alv(rve, prop; times, matrix = m, reltol = 1.0e-6, maxiters = 500)))
-_sc_newton_start(::Val{:picard}, order::Val{2}, rve, prop, times, m, θ_M) =
-    _sc_newton_params(order, Matrix(_self_consistent_alv_order2(rve, prop; times, matrix = m, reltol = 1.0e-6, maxiters = 500)))
+# The starting point of the Newton march: the Picard estimate of the same equation,
+# loosely converged, or the matrix kernel.
+_sc_newton_start(::Val{:matrix}, kind, order, rve, prop, times, m, θ_M) = θ_M
+_sc_newton_start(::Val{:picard}, kind, order, rve, prop, times, m, θ_M) =
+    _sc_newton_params(order, Matrix(_alv_picard(kind, order, rve, prop; times, matrix = m, reltol = 1.0e-6, maxiters = 500)))
 
 # The residual of row i, p ↦ step(estimate with row i = p)[row i] − p, on the leading
 # sub-grid t_1..t_i, which the causal step only reads.
-function _sc_newton_row_residual(order::Val{4}, θ, dense, times, i)
+function _sc_newton_row_residual(kind, order::Val{4}, θ, dense, times, i)
     sub = _sc_alv_leading(dense, i)
     t_i = times[1:i]
     return p -> begin
-        C_new = _sc_alv_dense_step(_sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), sub, t_i)
+        C_new = _alv_dense_step(kind, _sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), sub, t_i)
         α_new, β_new = _sc_newton_params(order, C_new)
         [view(α_new, i, :); view(β_new, i, :)] .- p
     end
 end
-function _sc_newton_row_residual(order::Val{2}, θ, (K_M, data, cracks), times, i)
+function _sc_newton_row_residual(kind, order::Val{2}, θ, (K_M, data, cracks), times, i)
     sub = [merge(d, (K_r = d.K_r[1:3i, 1:3i],)) for d in data]
     sub_cracks = [merge(c, (A_int = _leading_block(c.A_int, i),)) for c in cracks]
+    K_M_i = K_M[1:3i, 1:3i]
     t_i = times[1:i]
     return p -> begin
-        K_new = _sc2_dense_step(_sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), sub, sub_cracks, t_i)
+        K_new = _alv2_dense_step(kind, _sc_newton_blocks(order, _sc_newton_with_row(θ, p, i)), K_M_i, sub, sub_cracks, t_i)
         (λ_new,) = _sc_newton_params(order, K_new)
         λ_new[i, :] .- p
     end
@@ -166,6 +172,12 @@ _sc_alv_leading(dense, i) = merge(
         crack_data = [(g, ε, sym, _leading_block(Rn, i), _leading_block(Rt, i)) for (g, ε, sym, Rn, Rt) in dense.crack_data],
     )
 )
+
+# The step on full matrices of each equation.
+_alv_dense_step(::Val{:sc}, C, dense, times) = _sc_alv_dense_step(C, dense, times)
+_alv_dense_step(::Val{:asc}, C, dense, times) = _asc_alv_dense_step(C, dense, times)
+_alv2_dense_step(::Val{:sc}, K, K_M, data, cracks, times) = _sc2_dense_step(K, data, cracks, times)
+_alv2_dense_step(::Val{:asc}, K, K_M, data, cracks, times) = _asc2_dense_step(K, K_M, data, cracks, times)
 
 # The leading i × i block of an interface stiffness, none for a traction-free direction.
 _leading_block(::Nothing, i) = nothing
@@ -207,11 +219,11 @@ _sc_newton_converge_partials!(p::AbstractVector{<:ForwardDiff.Dual}, F, r) =
 # 2) is negative is not physical: the self-consistent equation has several roots near
 # percolation, and the march reached another one than the estimate (the scale of the
 # test is the matrix's).
-function _sc_newton_check_root(θ, θ_M, i)
+function _sc_newton_check_root(θ, θ_M, i, who)
     tol = sqrt(eps(float(real(eltype(first(θ_M))))))
     all(((Θ, Θ_M),) -> Θ[i, i] ≥ -tol * abs(Θ_M[i, i]), zip(θ, θ_M)) || throw(
         ErrorException(
-            "$(_SC_NEWTON_WHO): the root reached at instant $i has a negative instantaneous modulus " *
+            "$who: the root reached at instant $i has a negative instantaneous modulus " *
                 "$(Tuple(Θ[i, i] for Θ in θ)): another root of the self-consistent equation than the physical one; " *
                 "start from the Picard estimate (init = :picard) or use homogenize_alv"
         )

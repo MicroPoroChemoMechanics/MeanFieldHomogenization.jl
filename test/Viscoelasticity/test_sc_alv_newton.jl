@@ -244,7 +244,7 @@ end
     # Another algorithm, or a seed, is refused rather than ignored.
     @test_throws "SelfConsistent(algorithm = AutoNonlinear()) is not available" homogenize_alv(r, SelfConsistent(algorithm = AutoNonlinear()), :C; times)
     @test_throws "SelfConsistent(init = :voigt) is not supported" homogenize_alv(r, SelfConsistent(init = :voigt), :C; times)
-    @test_throws "AsymmetricSelfConsistent(algorithm = NewtonDefault()) is not available" homogenize_alv(r, AsymmetricSelfConsistent(:M; algorithm = NewtonDefault()), :C; times)
+    @test_throws "AsymmetricSelfConsistent(algorithm = AutoNonlinear()) is not available" homogenize_alv(r, AsymmetricSelfConsistent(:M; algorithm = AutoNonlinear()), :C; times)
     @test_throws "AsymmetricSelfConsistent(init = :voigt) is not supported" homogenize_alv(r, AsymmetricSelfConsistent(:M; init = :voigt), :C; times)
 end
 
