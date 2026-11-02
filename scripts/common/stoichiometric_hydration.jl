@@ -317,10 +317,17 @@ function hydration_reactions(
         [s("Amor-Sl"), s("Portlandite"), s("H2O@")], [s("Jennite")];
         symbol = "pozzolanic reaction"
     )
-    r_sil[:rate] = waller(
+    # Its rate reads the silica only: gated on the portlandite, as the routes of C₃A
+    # and C₄AF are on their co-reactants, so that it stops when the portlandite runs
+    # out instead of consuming portlandite that is not there (a low w/c with silica
+    # fume exhausts it). The portlandite consumed per mole of silica is read on the
+    # balanced reaction.
+    base_sil = waller(
         WALLER_PARAMS_SILICA_FUME, "Amor-Sl";
         α_max = 0.95, blaine = 2000.0u"m^2/kg", humidity
     )
+    ch_per_si = reactants(r_sil)[s("Portlandite")] / reactants(r_sil)[s("Amor-Sl")]
+    r_sil[:rate] = wrap((T, P, t, n, lna, n0) -> base_sil(T, P, t, n, lna, n0) * gate(n, "Portlandite", ch_per_si))
 
     return vcat([r_c3s, r_c2s], r_c3a, r_c4af, [r_sil])
 end

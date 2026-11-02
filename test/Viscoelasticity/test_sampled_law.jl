@@ -33,7 +33,7 @@ sl_rel(a, b) = norm(a - b) / norm(b)
         @test sl_rel(visco_eval(S, t, tp), sl_mandel(visco_eval(law, t, tp))) < 1.0e-13
     end
     @test sl_rel(trapezoidal_matrix(S, SL_TIMES), R) < 1.0e-14
-    @test S(SL_TIMES[4], SL_TIMES[2]) === visco_eval(S, SL_TIMES[4], SL_TIMES[2])
+    @test S(SL_TIMES[4], SL_TIMES[2]) == visco_eval(S, SL_TIMES[4], SL_TIMES[2])
     @test visco_mode(S) === :relaxation
     # Scalar kernel, block size 1.
     f = ViscoLaw((t, tp) -> t < tp ? 0.0 : exp(-(t - tp)) * (1 + tp), :relaxation)
@@ -98,7 +98,10 @@ end
 
 @testset "misuse is refused with a message" begin
     S = operator_law(trapezoidal_matrix(sl_maxwell(), SL_TIMES), SL_TIMES)
-    @test_throws "not an instant of its grid" visco_eval(S, 0.2, 0.0)
+    @test_throws DomainError visco_eval(S, SL_TIMES[end] + 1, 0.0)    # nothing is extrapolated
+    @test_throws DomainError visco_eval(S, SL_TIMES[2], SL_TIMES[1] - 1)
+    Symbolics.@variables τ
+    @test_throws "cannot do" visco_eval(S, τ, 0.0)
     @test_throws DimensionMismatch operator_law(zeros(12, 12), SL_TIMES)
     @test_throws DimensionMismatch SampledViscoLaw(SL_TIMES, zeros(2, 2))
     @test_throws "mode must be one of" SampledViscoLaw(SL_TIMES, zeros(7, 7); mode = :other)

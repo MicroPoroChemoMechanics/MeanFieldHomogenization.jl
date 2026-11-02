@@ -6,8 +6,9 @@
 #    comprehensive experimental database", Cement and Concrete Research 136,
 #    106163. https://doi.org/10.1016/j.cemconres.2020.106163
 #
-#  Included by `scripts/47_aging_basic_creep_concrete.jl` and by the Applications
-#  chapter `docs/src/applications/aging_basic_creep.md`, after
+#  Functions only, nothing to run here: `scripts/47_aging_basic_creep_concrete.jl`
+#  runs them (it activates the `docs` environment first). Included by it and by
+#  the Applications chapter `docs/src/applications/aging_basic_creep.md`, after
 #  `paste_micromechanics.jl` (phase stiffnesses, families, the 2018 scales).
 #
 #  The four scales of the elastic model, in aging linear viscoelasticity. A phase
@@ -148,10 +149,15 @@ function concrete_relaxation(fs, times; f_aggregate, rh = 1.0)
         pores = get(fs[k], "water", 0.0) + get(fs[k], "void", 0.0)
         pores / (pores + sum(values(hydrates(k))))
     end
-    foams = [foam_law(i, porosity, mixes, times) for i in 1:n]
+    reactant(k, name) = get(fs[k], name, 0.0)
+    consumed(i, name) = reactant(i - 1, name) - reactant(i, name) > 0
+    # A foam is born where a grain is consumed, and the first one is the matrix; the second
+    # node of a doubled instant consumes nothing, and its foam is not computed.
+    foams = map(1:n) do i
+        i == 1 || any(name -> consumed(i, name), PASTE_INCLUSIONS) ? foam_law(i, porosity, mixes, times) : nothing
+    end
 
     paste = RVE()
-    reactant(k, name) = get(fs[k], name, 0.0)
     add_phase!(paste, :FOAM1, Ellipsoid(1.0), Dict(:C => foams[1]); fraction = :rest)
     for name in PASTE_INCLUSIONS
         grain = VolterraOperator(_stiff(name), times)
@@ -159,10 +165,9 @@ function concrete_relaxation(fs, times; f_aggregate, rh = 1.0)
             paste, Symbol(name), Ellipsoid(1.0), Dict(:C => grain); fraction = reactant(n, name)
         )
         for i in 2:n
-            dv = reactant(i - 1, name) - reactant(i, name)
-            dv > 0 || continue
+            consumed(i, name) || continue
             R = dissolved(grain, times[i]) + precipitated(foams[i], times[i])
-            add_phase!(paste, Symbol(name, :_, i), Ellipsoid(1.0), Dict(:C => R); fraction = dv)
+            add_phase!(paste, Symbol(name, :_, i), Ellipsoid(1.0), Dict(:C => R); fraction = reactant(i - 1, name) - reactant(i, name))
         end
     end
     # The paste is homogenized where the concrete needs it, on the same grid.
@@ -173,31 +178,31 @@ function concrete_relaxation(fs, times; f_aggregate, rh = 1.0)
 end
 
 """
-    uniaxial_compliance(R, times) -> Matrix
+    uniaxial_compliance(R) -> function (t, t′)
 
-`J[i, k]`, the axial strain at `times[i]` for a unit uniaxial stress held from `times[k]`
-on, from the relaxation operator `R` of an isotropic material: the response of the inverse
-operator to that stress history. On the grid, a load "held from `times[k]`" rises over
-`[times[k-1], times[k]]`; `loading_grid` places an instant just before each loading age so
-that this rise is a step.
+The uniaxial creep compliance ``J(t, t')`` of an isotropic material of relaxation operator
+`R`: the axial strain at ``t`` under a unit uniaxial stress applied at ``t'`` and held, read
+on the creep kernel, the Volterra inverse of `R`. Its samples are recovered once
+(`operator_law`), and each evaluation is a binary search and an interpolation; ``t'`` is a
+loading age given twice in the grid (`loading_grid`), so that the stress jumps there.
 """
-function uniaxial_compliance(R, times)
-    Jop = volterra_inverse(R; block_size = 6)
-    n = length(times)
-    axial(i, j) = Jop[6 * (i - 1) + 1, 6 * (j - 1) + 1]
-    return [k ≤ i ? sum(axial(i, j) for j in k:i) : NaN for i in 1:n, k in 1:n]
+function uniaxial_compliance(R)
+    creep = operator_law(inv(R))
+    σ = TensND.Tens(Symmetric([1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0]))
+    return (t, t′) -> canonical_components(creep(t, t′) ⊡ σ)[1, 1]
 end
 
 """
-    loading_grid(t_start, t_end, ages; per_decade = 6, lead = 1.0e-3, after = (0.02, 0.05, 0.1, 0.2, 0.5)) -> Vector
+    loading_grid(t_start, t_end, ages; per_decade = 6, after = (0.02, 0.05, 0.1, 0.2, 0.5)) -> Vector
 
-A logarithmic time grid from `t_start` to `t_end` that holds every loading age of `ages`,
-just before each the instant `age * (1 - lead)`, and after each the instants
-`age * (1 + a)` for `a` in `after`, where the compliance changes fastest.
+A logarithmic time grid from `t_start` to `t_end` with `per_decade` instants per decade,
+every loading age of `ages` given **twice**, its left and right limits, for the stress jumps
+there, and after each age the instants `age * (1 + a)` for `a` in `after`, where the
+compliance changes fastest.
 """
-function loading_grid(t_start, t_end, ages; per_decade = 6, lead = 1.0e-3, after = (0.02, 0.05, 0.1, 0.2, 0.5))
+function loading_grid(t_start, t_end, ages; per_decade = 6, after = (0.02, 0.05, 0.1, 0.2, 0.5))
     m = round(Int, per_decade * log10(t_end / t_start)) + 1
     base = exp10.(range(log10(t_start), log10(t_end); length = m))
     near = [a * (1 + d) for a in ages for d in after]
-    return sort(unique(vcat(base, ages, ages .* (1 - lead), near)))
+    return sort(vcat(setdiff(unique(vcat(base, near)), ages), ages, ages))
 end

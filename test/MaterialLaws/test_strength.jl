@@ -36,15 +36,18 @@ end
     h = NonlinearHomogenized(_porous_spheres(φ), Dict(:S => _rigid_plastic(σo)))
     # (3/2) φ Σm² + (1 + 2φ/3) Σd² = (1 − φ)² σo²
     ellipse(Σm, Σd) = (1.5φ * Σm^2 + (1 + 2φ / 3) * Σd^2) / ((1 - φ)^2 * σo^2)
+    # A larger strain lowers the secant shear modulus against the bulk one, and the
+    # residual is then accurate to about ε k/μ only: about 5e-10 relative at α = 10,
+    # where the default tolerance, 1e-12, is reached or not on the last bits (it
+    # stopped being reached with the division rule of ForwardDiff 1.4.7). The
+    # local equations are solved to 1e-8, a hundred times finer than the checks.
+    alg = LocalNewton(; reltol = 1.0e-8)
     for α in (0.0, 0.3, 1.0, 3.0, 10.0)
-        σ = point_update(h, _direction(α), initial_state(h), 0.0)[1]
+        σ = point_update(h, _direction(α), initial_state(h), 0.0; algorithm = alg)[1]
         @test ellipse(_mean_dev(σ)...) ≈ 1 rtol = 1.0e-6
     end
-    # A strength: the stress does not depend on the size of the strain. A larger
-    # strain lowers the secant shear modulus against the bulk one, and the
-    # residual, then accurate to about ε k/μ, needs a looser tolerance.
+    # A strength: the stress does not depend on the size of the strain.
     E = _direction(1.0)
-    alg = LocalNewton(; reltol = 1.0e-8)
     @test point_update(h, 7.5 * E, initial_state(h), 0.0; algorithm = alg)[1] ≈ point_update(h, E, initial_state(h), 0.0)[1] rtol = 1.0e-6
     # Normality: the strain is along the normal to the domain at the stress,
     # the gradient of the ellipse, φ Σm 𝟏 + 2 (1 + 2φ/3) Σᵈ (up to a factor).

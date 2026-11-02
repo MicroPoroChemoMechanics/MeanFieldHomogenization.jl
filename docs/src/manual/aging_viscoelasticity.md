@@ -33,7 +33,7 @@ Two objects describe a material:
 | | [`ViscoLaw`](@ref) — the **law** | [`VolterraOperator`](@ref) — the **operator** |
 |:--|:--|:--|
 | what it is | the kernel ``\mathbb{R}(t, t')``, a function of two times | that kernel discretized on a time grid: the matrix of the integral above |
-| time grid | none: it can be evaluated at any ``(t, t')`` | one [`TimeGrid`](@ref), fixed once for all |
+| time grid | none: it can be evaluated at any ``(t, t')`` | one [`TimeGrid`](@ref), fixed once for all; `R(t, t′)` reads its kernel at any instants of the grid's span |
 | you build it | by writing a function of ``(t, t')``, or from the [law library](@ref man-rheological-models) | from a law and a grid, a constant tensor, or a matrix |
 | you use it to | describe a phase | compute: compose, invert, apply to a history; it is what [`homogenize_alv`](@ref) returns |
 
@@ -46,7 +46,7 @@ times = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0]              # the instants of the comput
 grid = TimeGrid(times)
 R = VolterraOperator(law, grid)                     # the operator on that grid
 law_back = operator_law(R)                          # the kernel again, known on the grid
-nothing # hide
+R(3.0, 0.7) ≈ law(3.0, 0.7)                         # an operator is also a function of (t, t′)
 ```
 
 A phase of [`homogenize_alv`](@ref) may be given either: a law, with the instants
@@ -138,8 +138,37 @@ grid = TimeGrid([0.0, 0.5, 1.0, 2.0, 4.0, 8.0])
 ```
 
 [`time_grid`](@ref) returns the grid of an operator, a history, or the result of
-a computation on them. Two objects on different grids are refused; nothing is
-interpolated.
+a computation on them. Two objects on different grids are refused rather than
+interpolated onto one another.
+
+### [Jumps: an instant given twice](@id man-visco-jumps)
+
+A creep test applies a stress at the loading age ``t'`` and holds it: the stress
+**jumps** at ``t'``. Between two instants of the grid a history is linear, so on a
+grid where ``t'`` appears once the stress rises over the interval before ``t'``,
+and the material creeps during that rise. Giving ``t'`` **twice** makes the jump
+exact: the first node is the left limit ``t'^-``, the second the right limit
+``t'^+``. A history or a law given as a function is evaluated just before ``t'`` on
+the first node, so a function that jumps at ``t'`` is written right-continuous,
+`t ≥ t′ ? … : …`.
+
+Here a stress held from ``t' = 1`` on a material that creeps logarithmically. The
+strain is zero up to ``1^-`` and follows the compliance ``J(t, 1)`` from ``1^+`` on:
+
+```@example vo
+jump = TimeGrid([0.0, 0.5, 1.0, 1.0, 2.0, 4.0, 8.0])      # 1.0 twice: a jump at t = 1
+J_log(t, t′) = t < t′ ? 0.0 : 1 / 30 + log1p((t - t′) / 0.5) / 60
+creep = VolterraOperator(J_log, jump)
+σ = TimeHistory(t -> t ≥ 1.0 ? 1.0 : 0.0, jump)            # 0 at 1⁻, 1 at 1⁺
+ε = creep * σ
+held = [i ≤ 3 ? 0.0 : J_log(t, 1.0) for (i, t) in enumerate(jump)]   # nothing up to 1⁻
+[ε[i][1] for i in 1:length(jump)] ≈ held
+```
+
+The same holds for a phase that appears at ``t_s`` ([`precipitated`](@ref)) or
+disappears at ``t_d`` ([`dissolved`](@ref)): with ``t_s`` given twice, a strain applied
+before ``t_s`` leaves the phase unstressed, and a strain jump at ``t_s`` loads it
+whole. The exact weights are derived in [the theory](@ref th-visco-jumps).
 
 ### Building an operator
 
@@ -255,8 +284,42 @@ the value at the pair of instants ``(t_i, t_j)`` as a tensor of the class;
 
 !!! warning "A value of the operator is not a value of the kernel"
     The matrix holds the weights of the trapezoidal rule, which mix the
-    kernel at neighboring instants. The kernel ``\mathbb{R}(t_i, t_j)`` is given
-    back by [`operator_law`](@ref)`(R)`, a law of ``(t, t')`` known on the grid.
+    kernel at neighboring instants. The kernel ``\mathbb{R}(t, t')`` is
+    `R(t, t′)`, below.
+
+### [Operators and histories as functions of time](@id man-visco-functions)
+
+An operator is also the function ``\mathbb{R}(t, t')`` and a history the function
+``\boldsymbol{\varepsilon}(t)``; both are called as such:
+
+| call | built from a function | computed (a sum, an inverse, [`homogenize_alv`](@ref)) or given by values |
+|:--|:--|:--|
+| `R(t, t′)` | the law itself, at any ``(t, t')``; zero for ``t' > t`` | its kernel recovered on the grid, interpolated between the instants |
+| `h(t)` | the function itself, as components | its values, interpolated linearly between the instants |
+
+The interpolation is the one the trapezoidal rule integrates exactly
+([derivation](@ref th-visco-kernel-between)): linear between the instants,
+right-continuous at an instant given twice, and nothing outside
+``[t_1, t_n]``. The value is a tensor of the class of `R` (a number for a scalar
+operator), and `h(t)` the Kelvin-Mandel components, as `h[i]`.
+
+```@example vo
+J = inv(R)                                   # a creep operator, computed: no law
+J(3.0, 0.7)                                  # its kernel, between the instants
+```
+
+Finding the cell of ``(t, t')`` is a binary search; a computed operator then
+recovers the two rows of its kernel that the cell needs, a cost proportional to the
+number of instants. For many evaluations, recover the whole kernel once:
+
+```@example vo
+J_law = operator_law(J)                      # every sample, once
+J_law(3.0, 0.7) ≈ J(3.0, 0.7)                # then a binary search and four samples
+```
+
+Both accept ForwardDiff duals, in the instants and in the parameters of a law.
+A law-backed operator also takes symbolic instants; an interpolated one refuses
+them, since finding the cell compares instants.
 
 [`homogenize_alv`](@ref) computes in these classes whenever the phases allow it, and
 returns its result in the cheapest class that holds it; the costs are tabulated in

@@ -3,7 +3,8 @@
 A homogeneous strain imposed on the whole boundary gives a homogeneous field,
 whose stress is checked against Julia's single-point update (and against
 Hooke's law for a linear law); a heterogeneous plastic problem checks that the
-tangent is the consistent one by the quadratic convergence of Newton's method.
+tangent is the consistent one by the order of convergence of Newton's method,
+against the same problem solved with a tangent off by 1 %.
 """
 
 import numpy as np
@@ -91,7 +92,12 @@ def test_plastic_plane_strain_against_point_update(jl):
     assert abs(expected[2]) > 1.0
 
 
-def test_consistent_tangent_converges_quadratically(jl):
+def _last_orders(scale):
+    """A clamped cube pulled in two plastic steps, its Jacobian multiplied by ``scale``.
+
+    Returns, per step, the number of iterations and the order of convergence
+    log(r₊/r)/log(r/r₋) on the last iteration above the round-off floor.
+    """
     domain = mesh.create_unit_cube(MPI.COMM_WORLD, 3, 3, 3)
     V = fem.functionspace(domain, ("Lagrange", 1, (3,)))
     u = fem.Function(V)
@@ -103,22 +109,33 @@ def test_consistent_tangent_converges_quadratically(jl):
     pull = fem.Constant(domain, 0.0)
     bcs = [fem.dirichletbc(np.zeros(3), bottom, V), fem.dirichletbc(pull, top, V.sub(2))]
     newton = Newton(stress, residual, u, bcs, rtol=1e-12, atol=1e-8)
-    iterations = []
+    if scale != 1.0:
+        F, J, operators = stress.forms(residual, u)
+        newton.F, newton.J, newton.operators = fem.form(F), fem.form(scale * J), operators
+    steps = []
     for value in (2.0e-3, 4.0e-3):
         pull.value = value
-        iterations.append(newton.solve())
+        iterations = newton.solve()
         stress.commit()
-    h = newton.history
-    # Plastic flow everywhere, the field heterogeneous (clamped bottom).
-    assert len(h) >= 4
+        h = newton.history
+        orders = [np.log(h[k + 1] / h[k]) / np.log(h[k] / h[k - 1]) for k in range(2, len(h) - 1) if h[k + 1] > 1e-10 * h[0]]
+        steps.append((iterations, orders[-1]))
+    return steps
+
+
+def test_consistent_tangent_converges_quadratically(jl):
+    # Plastic flow everywhere, the field heterogeneous (clamped bottom). The same
+    # problem with the tangent off by 1 % is the reference: any tangent but the
+    # consistent one converges linearly, its last order 1.00 to 1.01, while the
+    # consistent one reaches 1.6 to 2 on its last iterations above round-off,
+    # depending on the machine (BLAS and MUMPS change the history). The bound sits
+    # between the two. The iteration count does not separate them: 5 and 7.
+    consistent = _last_orders(1.0)
+    perturbed = _last_orders(1.01)
+    assert max(order for _, order in perturbed) < 1.1
+    assert min(order for _, order in consistent) > 1.3
     # A few iterations per step: an elastic tangent does not converge in 25.
-    assert max(iterations) <= 7
-    # The order of convergence log(r₊/r)/log(r/r₋), read on the iterations above
-    # the round-off floor. The first ones are not yet asymptotic (1.4 to 1.7
-    # depending on the machine); the last one is, about 2 with the consistent
-    # tangent and 1 with any other.
-    orders = [np.log(h[k + 1] / h[k]) / np.log(h[k] / h[k - 1]) for k in range(2, len(h) - 1) if h[k + 1] > 1e-10 * h[0]]
-    assert len(orders) >= 1 and max(orders) > 1.6
+    assert max(iterations for iterations, _ in consistent) <= 7
 
 
 def _clamped_pull(n=2):

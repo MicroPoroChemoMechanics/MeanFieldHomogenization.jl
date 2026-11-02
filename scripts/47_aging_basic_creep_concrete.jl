@@ -19,16 +19,20 @@
 #      → J(t, t') of the concrete for every loading age
 #      → against the measured compliances                       [leroy1995.json]
 #
-#  The model lives in `scripts/common/aging_creep_micromechanics.jl`, on top of the
-#  elastic model of `paste_micromechanics.jl` and the chemistry of
-#  `stoichiometric_hydration.jl`. The results are written to
+#  The model lives in `scripts/common/aging_creep_micromechanics.jl` (functions
+#  only), on top of the elastic model of `paste_micromechanics.jl` and the
+#  chemistry of `stoichiometric_hydration.jl`; this script runs it (`main()`, at
+#  the end). The results are written to
 #  `docs/src/assets/applications/aging_basic_creep/results.json`, which the
 #  Applications chapter reads: the documentation build does not rerun this.
 #
 #  ENVIRONMENT: as script 44, the `docs/` project (ChemistryLab, OrdinaryDiffEq).
-#      julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+#      julia --project=docs -e 'using Pkg; Pkg.update()'
+#  (`update` rather than `instantiate`: the docs manifest is not versioned, and
+#  `instantiate` refuses a local one older than `docs/Project.toml`.)
 #      julia scripts/47_aging_basic_creep_concrete.jl
-#  About eight minutes: four aging scales on a grid of some fifty instants, the
+#  From the REPL, `include("scripts/47_aging_basic_creep_concrete.jl")` runs it too.
+#  About five minutes: four aging scales on a grid of some fifty instants, the
 #  self-consistent foams dominating.
 # =============================================================================
 
@@ -47,9 +51,9 @@ include(joinpath(@__DIR__, "common", "aging_creep_micromechanics.jl"))
 const LITERATURE = joinpath(@__DIR__, "..", "data", "literature")
 const OUT = joinpath(@__DIR__, "..", "docs", "src", "assets", "applications", "aging_basic_creep")
 
-paper = JSON.parsefile(joinpath(LITERATURE, "lavergne2020.json"))["quantities"]
-tests = JSON.parsefile(joinpath(LITERATURE, "leroy1995.json"))["tables"]["basic_creep"]
-q(key) = Float64(paper[key]["value"])
+const PAPER = JSON.parsefile(joinpath(LITERATURE, "lavergne2020.json"))["quantities"]
+const TESTS = JSON.parsefile(joinpath(LITERATURE, "leroy1995.json"))["tables"]["basic_creep"]
+q(key) = Float64(PAPER[key]["value"])
 
 # ── §1  The Saint-Vigor cement (Table 4 of the paper) ───────────────────────
 #
@@ -59,11 +63,11 @@ q(key) = Float64(paper[key]["value"])
 # alkalis) are not modeled: the binder is renormalized over what is.
 
 molar_mass(formula) = ustrip(us"g/mol", Species(formula).M)
-clinker_pct = (C3S = q("saint_vigor_C3S"), C2S = q("saint_vigor_C2S"), C3A = q("saint_vigor_C3A"), C4AF = q("saint_vigor_C4AF"))
-gypsum_pct = q("saint_vigor_CaSO4") * molar_mass("CaSO4(H2O)2") / molar_mass("CaSO4")
-calcite_pct = q("saint_vigor_CaCO3")
-cement_pct = sum(clinker_pct) + gypsum_pct + calcite_pct
-const CLINKER = map(x -> x / sum(clinker_pct), clinker_pct)
+const CLINKER_PCT = (C3S = q("saint_vigor_C3S"), C2S = q("saint_vigor_C2S"), C3A = q("saint_vigor_C3A"), C4AF = q("saint_vigor_C4AF"))
+const GYPSUM_PCT = q("saint_vigor_CaSO4") * molar_mass("CaSO4(H2O)2") / molar_mass("CaSO4")
+const CALCITE_PCT = q("saint_vigor_CaCO3")
+const CEMENT_PCT = sum(CLINKER_PCT) + GYPSUM_PCT + CALCITE_PCT
+const CLINKER = map(x -> x / sum(CLINKER_PCT), CLINKER_PCT)
 
 # The two concretes, with the effective w/c of the paper (Fig. 11 g and h). The
 # silica fume is a fraction of the cement; the binder is cement plus silica fume.
@@ -72,7 +76,7 @@ const AGGREGATE_DENSITY = 2600.0     # kg/m³, an assumption of this script
 concrete(name, prefix, files) = (
     name = name, files = files,
     w_c = q(prefix * "_w_c"), a_c = q(prefix * "_a_c"), cement = q(prefix * "_cement"),
-    silica = haskey(paper, prefix * "_silica_fume") ? q(prefix * "_silica_fume") / 100 : 0.0,
+    silica = haskey(PAPER, prefix * "_silica_fume") ? q(prefix * "_silica_fume") / 100 : 0.0,
 )
 const CONCRETES = [
     concrete("ordinary, w/c = 0.463", "leroy_ordinary", ["c_123_0$i" for i in 1:5]),
@@ -83,41 +87,58 @@ function hydrate(c, tend)
     binder = 1 + c.silica                                   # per kg of cement
     return run_hydration(;
         wb = c.w_c / binder, clinker = CLINKER,
-        gypsum = gypsum_pct / cement_pct / binder, filler = calcite_pct / cement_pct / binder,
+        gypsum = GYPSUM_PCT / CEMENT_PCT / binder, filler = CALCITE_PCT / CEMENT_PCT / binder,
         silica = c.silica / binder, blaine = q("saint_vigor_blaine") * u"m^2/kg", tend = tend * 86400.0,
     )
 end
 aggregate_fraction(c) = c.a_c * c.cement / AGGREGATE_DENSITY
 
-# ── §2  The model, one concrete at a time ───────────────────────────────────
+# The volume fractions at each instant of the grid; an instant given twice (a loading age)
+# has one state of hydration, computed once.
+function fractions_on_grid(run, times)
+    instants = unique(times)
+    _, fs = fraction_history(run, instants .* 86400)
+    return [fs[searchsortedfirst(instants, t)] for t in times]
+end
 
-results = Dict{String, Any}[]
-for c in CONCRETES
-    mine = filter(t -> t["nu_file"] in c.files, tests)
+# ── §2  The model, one concrete at a time ───────────────────────────────────
+#
+# The grid holds every loading age twice: the stress jumps there. The compliance of the
+# test loaded at t′ is the creep kernel J(t, t′) of the concrete, its relaxation operator
+# inverted, read at any instant: on the grid for the curves, at the measured instants for
+# the comparison.
+
+function model_concrete(c)
+    mine = filter(t -> t["nu_file"] in c.files, TESTS)
     ages = sort(unique(Float64[t["loading_age_days"] for t in mine]))
     t_end = maximum(t["loading_age_days"] + maximum(first.(t["creep_compliance"]["rows"])) for t in mine)
     times = loading_grid(0.3, 1.2 * t_end, ages; per_decade = 6)
     t0 = time()
     run = hydrate(c, 1.3 * t_end)
-    _, fs = fraction_history(run, times .* 86400)
-    R = concrete_relaxation(fs, times; f_aggregate = aggregate_fraction(c))
-    J = uniaxial_compliance(R, times)
+    R = concrete_relaxation(fractions_on_grid(run, times), times; f_aggregate = aggregate_fraction(c))
+    J = uniaxial_compliance(R)
     @printf "%-48s %3d instants, %.0f s\n" c.name length(times) time() - t0
     curves = map(ages) do a
-        k = findfirst(==(a), times)
-        (; age = a, t = times[k:end], J = 1000 .* J[k:end, k])   # 1e-6/MPa
+        t = times[findlast(==(a), times):end]                 # from the second node of a on
+        (; age = a, t = t, J = [1000 * J(tᵢ, a) for tᵢ in t])  # 1e-6/MPa
     end
-    for t in mine
-        cv = curves[findfirst(cv -> cv.age == t["loading_age_days"], curves)]
-        rows = t["creep_compliance"]["rows"]
-        model(dt) = cv.J[argmin(abs.(cv.t .- (cv.age + dt)))]
-        @printf "  t' = %5.2f d   J(t', t') %5.1f model %5.1f   last point (dt %5.0f d) %5.1f model %5.1f\n" t["loading_age_days"] rows[1][2] cv.J[1] rows[end][1] rows[end][2] model(rows[end][1])
+    for test in mine
+        a = Float64(test["loading_age_days"])
+        rows = test["creep_compliance"]["rows"]
+        dt, measured = rows[end][1], rows[end][2]
+        @printf "  t' = %5.2f d   J(t', t') %5.1f model %5.1f   last point (dt %5.0f d) %5.1f model %5.1f\n" a rows[1][2] 1000 * J(a, a) dt measured 1000 * J(a + dt, a)
     end
-    push!(results, Dict("name" => c.name, "files" => c.files, "curves" => curves))
+    return Dict("name" => c.name, "files" => c.files, "curves" => curves)
 end
 
-mkpath(OUT)
-open(joinpath(OUT, "results.json"), "w") do io
-    JSON.print(io, Dict("source" => "scripts/47_aging_basic_creep_concrete.jl", "unit" => "1e-6/MPa", "concretes" => results), 1)
+function main()
+    results = map(model_concrete, CONCRETES)
+    mkpath(OUT)
+    open(joinpath(OUT, "results.json"), "w") do io
+        JSON.print(io, Dict("source" => "scripts/47_aging_basic_creep_concrete.jl", "unit" => "1e-6/MPa", "concretes" => results), 1)
+    end
+    println("wrote ", relpath(joinpath(OUT, "results.json"), joinpath(@__DIR__, "..")))
+    return results
 end
-println("wrote ", relpath(joinpath(OUT, "results.json"), joinpath(@__DIR__, "..")))
+
+main()
