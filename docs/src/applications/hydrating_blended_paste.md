@@ -111,7 +111,10 @@ Each clinker phase follows Parrot & Killoh in its canonical form
 term, a Jander diffusion term and a power law — scaled by the Blaine fineness and
 capped by the Powers water-availability limit `α_max = min(1, w/b / 0.42)`. The
 silica fume does not follow Parrot & Killoh at all: its pozzolanic reaction
-follows the sigmoid of Waller, far more thermo-activated than the clinker.
+follows the sigmoid of Waller, far more thermo-activated than the clinker. It
+consumes portlandite, so its rate is gated on the portlandite present, as the
+routes of C₃A and C₄AF are on their co-reactants: it waits for the silicates to
+produce portlandite and stops when there is none left.
 
 A signature of the 1984 parameter set, and a useful check that it has been
 transcribed correctly: **C₂S has no nucleation-growth stage and C₃S no

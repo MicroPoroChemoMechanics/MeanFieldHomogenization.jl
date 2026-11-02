@@ -32,6 +32,20 @@ sampled law and history can be evaluated at any instant of its grid's span.
   binary search and four samples. Both accept ForwardDiff duals; a law-backed operator also
   takes symbolic instants.
 
+### Fixed
+
+- **The pozzolanic reaction of the hydration model of the applications consumed
+  portlandite that was not there.** Its rate (Waller's sigmoid) read the silica fume only,
+  so it ran from the first second, before the silicates had produced any portlandite,
+  and ChemistryLab created the shortfall and returned the run as `Unstable`. Its rate is
+  now gated on the portlandite, as the routes of C₃A and C₄AF are on their
+  co-reactants. The paste with 5 % silica fume has 1.3 % more portlandite at one day
+  and the same at 28 days; the high-performance concrete of the aging creep application,
+  5 % more at one day.
+- The test of the consistent tangent of `mfh_fenicsx` read the order of Newton's method
+  against a bound, 1.6, that the CI runner missed (1.59, against 1.89 locally): it now
+  compares it with the same problem solved with a tangent off by 1 %, whose order is 1.
+
 ### Changed
 
 - A `SampledViscoLaw` (what `operator_law` returns) evaluated between the instants of its
