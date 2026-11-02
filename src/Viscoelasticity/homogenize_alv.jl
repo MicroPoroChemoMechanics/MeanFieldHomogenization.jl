@@ -406,8 +406,10 @@ _result_operator(R::AbstractMatrix, grid) = VolterraOperator(R, grid)
 _reference(C_0, kw) = get(kw, :C_0_op, C_0)
 
 # A phase property as the relaxation operator on the grid, in the class of its values.
-_relaxation_operator(law::AbstractViscoLaw, grid::TimeGrid) = _as_relaxation(VolterraOperator(law, grid), visco_mode(law))
-_relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, grid, "homogenize_alv"); R)
+# The law an operator keeps is dropped: the phases then share one operator type.
+_relaxation_operator(law::AbstractViscoLaw, grid::TimeGrid) =
+    _as_relaxation(_without_law(VolterraOperator(law, grid)), visco_mode(law))
+_relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, grid, "homogenize_alv"); _without_law(R))
 # An elastic tensor (a conductivity at order 2): the constant kernel C H(t - t′), block
 # diagonal, in the class of C. More specific than a matrix: a second-order tensor is one.
 _relaxation_operator(C::TensND.AbstractTens, grid::TimeGrid) = VolterraOperator(C, grid)

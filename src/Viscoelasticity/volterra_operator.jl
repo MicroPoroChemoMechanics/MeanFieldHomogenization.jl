@@ -23,11 +23,19 @@
 """
     TimeGrid(times)
 
-The instants ``t_1 < \\dots < t_n`` on which every operator and every history of
+The instants ``t_1 \\le \\dots \\le t_n``, in increasing order, on which every operator and every history of
 one aging viscoelastic computation is discretized. It is shared: an operator and a
 history carry the grid they were built on, [`time_grid`](@ref) returns it after
 any computation, and two operands on different grids are refused rather than
 interpolated.
+
+An instant given **twice**, ``t_{k-1} = t_k``, is a jump: the first node stands for
+the left limit ``t^-`` and the second for ``t^+`` (given more times, every node but the
+last stands for ``t^-``). A stress applied at ``t'``, a phase
+that precipitates at ``t_s``, or a kernel that jumps on the diagonal are then integrated
+exactly rather than spread over the interval before them. A law or a history given as a
+function is evaluated just before ``t`` on the first node, so a function that jumps at
+``t`` is written right-continuous (`t ≥ a ? … : …`).
 """
 struct TimeGrid{T <: Real, V <: AbstractVector{T}}
     times::V
@@ -35,8 +43,8 @@ struct TimeGrid{T <: Real, V <: AbstractVector{T}}
         isempty(times) && throw(ArgumentError("TimeGrid: no instant; give at least one"))
         # Instants must compare, to be ordered: symbols have no place here.
         is_hard_numeric(T) || throw(ArgumentError("TimeGrid: the instants are numbers that compare; got a $T"))
-        all(i -> times[i] < times[i + 1], firstindex(times):(lastindex(times) - 1)) || throw(
-            ArgumentError("TimeGrid: the instants must increase strictly; got $(times)")
+        all(i -> times[i] ≤ times[i + 1], firstindex(times):(lastindex(times) - 1)) || throw(
+            ArgumentError("TimeGrid: the instants must increase; got $(times)")
         )
         return new{T, V}(times)
     end
@@ -226,12 +234,26 @@ that it goes wherever such a matrix goes. `Matrix(R)` materializes it,
 [`operator_value`](@ref)`(R, i, j)` is its value at the pair of instants
 ``(t_i, t_j)`` as a tensor of its class, [`operator_law`](@ref)`(R)` the law of
 ``(t, t')`` back, [`time_grid`](@ref)`(R)` its grid.
+
+It is also a **function** of two times: `R(t, t′)` is the kernel ``R(t,t')`` as a
+tensor of its class, zero for ``t' > t``. An operator built from a law keeps it and
+evaluates it; any other (a sum, an inverse, the result of [`homogenize_alv`](@ref)) reads
+its kernel on the grid and interpolates it between the instants, as the trapezoidal rule
+integrates it: see [`operator_law`](@ref) for the details and the cost.
 """
-struct VolterraOperator{C <: _OperatorClass, T, B <: Tuple{Matrix{T}, Vararg{Matrix{T}}}, G <: TimeGrid} <: AbstractMatrix{T}
+struct VolterraOperator{C <: _OperatorClass, T, B <: Tuple{Matrix{T}, Vararg{Matrix{T}}}, G <: TimeGrid, L} <: AbstractMatrix{T}
     class::C
     blocks::B
     grid::G
+    law::L          # the law it was built from, or nothing
 end
+
+# An operator computed from others has no law: its kernel is read on the grid.
+VolterraOperator(c::_OperatorClass, blocks::Tuple, grid::TimeGrid) = VolterraOperator(c, blocks, grid, nothing)
+
+# The operator without its law, as the homogenization pipeline computes with it: one type
+# per class and element type, whatever law the phases were built from.
+_without_law(R::VolterraOperator) = VolterraOperator(R.class, R.blocks, R.grid)
 
 """
     time_grid(x) -> TimeGrid
@@ -245,26 +267,38 @@ Base.eltype(::Type{<:VolterraOperator{C, T}}) where {C, T} = T
 
 function VolterraOperator(law::AbstractViscoLaw, times)
     grid = TimeGrid(times)
-    t, n = grid.times, length(grid)
-    c = _law_class(law, t)
-    sizes = _block_sizes(c)
-    T = mapreduce(eltype, promote_type, _value_blocks(c, visco_eval(law, t[1], t[1])))
-    Ms = map(s -> zeros(T, _val(s) * n, _val(s) * n), sizes)
-    _fill_trapezoidal_classes!(Ms, law, t, sizes, x -> _value_blocks(c, x))
-    return VolterraOperator(c, Ms, grid)
+    return _operator_from_nodes(_node_values(law, grid.times), grid, law)
+end
+# A law sampled on the same grid is read at its nodes, the left limits of the doubled
+# instants included: `operator_law` and back is exact.
+function VolterraOperator(law::SampledViscoLaw, times)
+    grid = TimeGrid(times)
+    law.times == grid.times || return _operator_from_nodes(_node_values(law, grid.times), grid, law)
+    return _operator_from_nodes((i, k) -> law.samples[i, k], grid, law)
 end
 
 VolterraOperator(f, times) = VolterraOperator(ViscoLaw(f), times)
 
-# The class of a law: that of its first value on the diagonal of the grid that is not
+# The operator whose kernel at the pair of nodes (i, k) is `value(i, k)`.
+function _operator_from_nodes(value::V, grid::TimeGrid, law) where {V}
+    n = length(grid)
+    c = _law_class(value, n)
+    sizes = _block_sizes(c)
+    T = mapreduce(eltype, promote_type, _value_blocks(c, value(1, 1)))
+    Ms = map(s -> zeros(T, _val(s) * n, _val(s) * n), sizes)
+    _fill_trapezoidal_classes!(Ms, value, grid.times, sizes, x -> _value_blocks(c, x))
+    return VolterraOperator(c, Ms, grid, law)
+end
+
+# The class of a kernel: that of its first value on the diagonal of the grid that is not
 # zero. A zero says nothing (TensND makes the zero of any tensor isotropic), and a
 # phase that precipitates later is zero first.
-function _law_class(law, t)
-    for tᵢ in t
-        v = visco_eval(law, tᵢ, tᵢ)
+function _law_class(value, n)
+    for i in 1:n
+        v = value(i, i)
         iszero(v) || return _class_of(v)
     end
-    return _class_of(visco_eval(law, t[1], t[1]))
+    return _class_of(value(1, 1))
 end
 
 # A constant tensor: its trapezoidal matrix is block diagonal, the tensor on
@@ -298,12 +332,8 @@ _in_class(R, like) = convert_class(R, _class_of(like); check = true)
 
 # The blocks at the pair of instants (i, j), as static matrices.
 @inline _entry_blocks(R::VolterraOperator, i, j) = _entry_blocks(R.class, R.blocks, i, j)
-@inline function _entry_blocks(c, blocks, i, j)
-    return map(blocks, _block_sizes(c)) do B, s
-        m = _val(s)
-        SMatrix{m, m}(view(B, (m * (i - 1) + 1):(m * i), (m * (j - 1) + 1):(m * j)))
-    end
-end
+@inline _entry_blocks(c, blocks, i, j) = map((B, s) -> _block_entry(B, s, i, j), blocks, _block_sizes(c))
+@inline _block_entry(B, ::Val{m}, i, j) where {m} = SMatrix{m, m}(view(B, (m * (i - 1) + 1):(m * i), (m * (j - 1) + 1):(m * j)))
 
 """
     operator_value(R::VolterraOperator, i, j)
@@ -634,14 +664,27 @@ instants, or by its values: a vector of them, one per instant, or a matrix whose
 column ``i`` is the value at ``t_i`` (Kelvin-Mandel components for a symmetric
 tensor).
 
+A history that jumps at ``t`` (a load applied at ``t``) does so on an instant given
+twice in the grid ([`TimeGrid`](@ref)): its values there are the left and right limits,
+and a function is evaluated just before ``t`` for the first, so it is written
+right-continuous, `t -> t ≥ a ? σ : zero(σ)`. On a grid without that instant, the jump
+would be spread over the interval before it.
+
 `R ⊡ ε` (order 4), `K ⋅ g` (order 2) or `R * h` is the response of an operator.
 `h[i]` is the value at ``t_i`` as Kelvin-Mandel components (or the vector),
 `Matrix(h)` all of them, [`time_grid`](@ref)`(h)` the grid.
+
+It is also a function of time: `h(t)` is the value at ``t`` as components, the function
+itself when the history was built from one, and otherwise its values interpolated
+linearly between the instants, the history that the trapezoidal rule integrates
+(right-continuous at a doubled instant; ``t`` in ``[t_1, t_n]``). The cell is found by a
+binary search, ``O(\\log n)``.
 """
-struct TimeHistory{T, G <: TimeGrid}
+struct TimeHistory{T, G <: TimeGrid, F}
     values::Matrix{T}
     grid::G
-    function TimeHistory(values::AbstractMatrix{T}, times) where {T}
+    f::F            # the function it was built from, or nothing
+    function TimeHistory(values::AbstractMatrix{T}, times, f::F = nothing) where {T, F}
         grid = TimeGrid(times)
         size(values, 2) == length(grid) && size(values, 1) in (1, 3, 6) || throw(
             DimensionMismatch(
@@ -649,12 +692,22 @@ struct TimeHistory{T, G <: TimeGrid}
                     "instant of 6 (Kelvin-Mandel), 3 (vector) or 1 (scalar) components"
             )
         )
-        return new{T, typeof(grid)}(Matrix(values), grid)
+        return new{T, typeof(grid), F}(Matrix(values), grid, f)
     end
 end
 
 TimeHistory(values::AbstractVector, times) = TimeHistory(reduce(hcat, map(_history_components, values)), times)
-TimeHistory(f, times) = (g = TimeGrid(times); TimeHistory([f(t) for t in g.times], g))
+function TimeHistory(f, times)
+    g = TimeGrid(times)
+    return TimeHistory(reduce(hcat, map(t -> _history_components(f(t)), _evaluation_instants(g.times))), g, f)
+end
+
+(h::TimeHistory)(t) = _history_at(h.f, h, t)
+_history_at(f, h, t) = Vector(_history_components(f(t)))
+function _history_at(::Nothing, h, t)
+    a, a₊, θ = _grid_cell(h.grid.times, t)
+    return @views (1 - θ) .* h.values[:, a] .+ θ .* h.values[:, a₊]
+end
 
 _history_components(x::Number) = SVector(x)
 _history_components(x::AbstractVector) = SVector{length(x)}(x)
@@ -716,9 +769,38 @@ for a matrix.
 """
 function operator_law(R::VolterraOperator; mode::Symbol = :relaxation)
     n, sizes = length(R.grid), _block_sizes(R.class)
-    F = map((B, s) -> _kernel_samples(B, n, s), R.blocks, sizes)
-    samples = [_class_value(R.class, map((Fₖ, s) -> SMatrix{_val(s), _val(s)}(Fₖ[i, j]), F, sizes)) for i in 1:n, j in 1:n]
+    F = map((B, s) -> _kernel_samples((i, j) -> _block_entry(B, s, i, j), R.grid.times), R.blocks, sizes)
+    samples = [_class_value(R.class, map(Fₖ -> Fₖ[i, j], F)) for i in 1:n, j in 1:n]
     return SampledViscoLaw(R.grid.times, samples; mode)
+end
+
+# ── The operator as a function of (t, t′) ───────────────────────────────────
+
+# Built from a law: the law itself, zero for t′ > t (the discretization never reads the law
+# there, and a law written without its Heaviside factor would not vanish). Instants that do
+# not compare (symbols) take the law as written.
+(R::VolterraOperator)(t, t′) = _kernel_at(R.law, R, t, t′)
+_kernel_at(law, R, t, t′) = _law_value(Val(is_hard_numeric(promote_type(typeof(t), typeof(t′)))), law, R, t, t′)
+_law_value(::Val{false}, law, R, t, t′) = _as_class_value(R, visco_eval(law, t, t′))
+function _law_value(::Val{true}, law, R, t, t′)
+    v = _as_class_value(R, visco_eval(law, t, t′))
+    return t′ > t ? zero(t′ - t) * v : v
+end
+_as_class_value(R::VolterraOperator, v) = _class_value(R.class, _value_blocks(R.class, v))
+
+# Computed from others: the kernel read on the grid (`_kernel_stencil`), from the two rows of
+# samples it needs, recovered block by block in O(n) (`_kernel_row!`).
+function _kernel_at(::Nothing, R, t, t′)
+    times = R.grid.times
+    st = _kernel_stencil(times, t, t′)
+    a, a₊ = st[1][1], st[4][1]          # the rows of the stencil, in every case
+    blocks = map(R.blocks, _block_sizes(R.class)) do B, s
+        row(i) = _kernel_row!(Vector{typeof(_block_entry(B, s, 1, 1))}(undef, i), (r, k) -> _block_entry(B, s, r, k), times, i)
+        fa = row(a)
+        fa₊ = a₊ == a ? fa : row(a₊)
+        mapreduce(((i, j, w),) -> w * (i == a ? fa : fa₊)[j], +, st)
+    end
+    return _class_value(R.class, blocks)
 end
 
 # On an operator: its kernel read back on the grid, switched, discretized again, in the
@@ -730,8 +812,17 @@ end
 The same transforms on a relaxation operator, on its grid: its kernel
 ([`operator_law`](@ref)) switched on at ``t_s`` or off at ``t_d``, and discretized again.
 """
-precipitated(R::VolterraOperator, t_s::Real) = VolterraOperator(precipitated(operator_law(R), t_s), R.grid)
-dissolved(R::VolterraOperator, t_d::Real) = VolterraOperator(dissolved(operator_law(R), t_d), R.grid)
+precipitated(R::VolterraOperator, t_s::Real) = _switched(R, _precipitation(t_s))
+dissolved(R::VolterraOperator, t_d::Real) = _switched(R, _dissolution(t_d))
+
+# The kernel samples of `R` kept where `alive` at the evaluation instants of the nodes (the
+# left limit of a doubled instant before it), zero elsewhere: exact on the grid.
+function _switched(R::VolterraOperator, alive::F) where {F}
+    law = operator_law(R)
+    τ = _evaluation_instants(R.grid.times)
+    z = 0 * law.samples[1, 1]       # `zero` of a tensor may narrow its class
+    return _operator_from_nodes((i, k) -> alive(τ[i], τ[k]) ? law.samples[i, k] : z, R.grid, nothing)
+end
 
 # The Volterra inverse of the matrix interface, block by block.
 function volterra_inverse(R::VolterraOperator; block_size::Int = _value_dim(R.class))

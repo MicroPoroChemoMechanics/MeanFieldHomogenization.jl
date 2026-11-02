@@ -5,17 +5,19 @@
 #  Given a kernel `f(t, t')` (scalar, tensor, or 6×6 matrix), build the
 #  lower-block-triangular matrix `M` of size `(B·n) × (B·n)` such that
 #  the discrete relation `y = M · x` approximates the Stieltjes integral
-#       y(t_i) = ∫_{t_0}^{t_i} f(t_i, τ) dx(τ)
-#  on the time grid `t_0 < t_1 < … < t_{n-1}` (ECHOES `visco_law.cpp:80–103`).
-#
-#  Block-row index `i = 1..n` corresponds to time `t_{i-1}` (1-based).
-#  Block-column index `j = 1..n` to the trapezoidal weight at time
-#  `t_{j-1}`.  The block matrix layout (1-based) is:
-#       M[1, 1]   = f(t_0, t_0)
-#       M[i, i]   = 0.5 (f(t_{i-1}, t_{i-2}) + f(t_{i-1}, t_{i-1}))   (i ≥ 2)
-#       M[i, 1]   = 0.5 (f(t_{i-1}, t_0)     - f(t_{i-1}, t_1))       (i ≥ 2)
-#       M[i, j]   = 0.5 (f(t_{i-1}, t_{j-2}) - f(t_{i-1}, t_j))       (1 < j < i)
-#       M[i, j]   = 0                                                  (j > i)
+#       y(t_i) = ∫_0^{t_i} f(t_i, τ) dx(τ)
+#  on the time grid `t_1 ≤ t_2 ≤ … ≤ t_n` (ECHOES `visco_law.cpp:80–103`, which
+#  evaluates the law at the instants themselves),
+#  with fₖ = f(t_i, t_k) on row i:
+#       M[1, 1]   = f₁                                   (the jump from 0 at t_1)
+#       M[i, i]   = (fᵢ₋₁ + fᵢ)/2                         (i ≥ 2)
+#       M[i, 1]   = (f₁ - f₂)/2                           (i ≥ 2)
+#       M[i, j]   = (fⱼ₋₁ - fⱼ₊₁)/2                       (1 < j < i)
+#       M[i, j]   = 0                                     (j > i)
+#  An instant given twice, t_{k-1} = t_k, is a jump: its first node is the
+#  left limit t⁻ (the law is evaluated just before t), and the interval of
+#  zero length between the two nodes is weighted by f(t_i, t⁺) instead of a
+#  mean (`_trapezoidal_weight`), which is the Stieltjes integral of a jump.
 # =============================================================================
 
 """
@@ -23,18 +25,17 @@
 
 Build the discrete ``(Bn)\\times(Bn)`` lower-block-triangular matrix
 representing the Stieltjes integral
-``y(t_i) = \\int_{t_0}^{t_i} f(t_i, \\tau)\\,\\mathrm{d}x(\\tau)``
-on the time grid `times` ``= (t_0, \\dots, t_{n-1})`` using the trapezoidal
+``y(t_i) = \\int_0^{t_i} f(t_i, \\tau)\\,\\mathrm{d}x(\\tau)``
+on the time grid `times` ``= (t_1, \\dots, t_n)`` using the trapezoidal
 rule of [sanahuja2013](@citet).  ``B = 1`` for scalar-valued kernels and ``B = 6``
 for 4-tensor- or ``6\\times 6``-matrix-valued kernels (Mandel form).
 
-The exact block layout is described at the top of `trapezoidal.jl`.
-The output is type-stable in the element type returned by
-`visco_eval(law, ...)`.
+The instants are in increasing order; one given twice is a jump, as in [`TimeGrid`](@ref). The exact
+block layout is described at the top of `trapezoidal.jl`. The output is type-stable in
+the element type returned by `visco_eval(law, ...)`.
 """
 function trapezoidal_matrix(law::AbstractViscoLaw, times::AbstractVector{<:Real})
-    n = length(times)
-    n ≥ 1 || throw(ArgumentError("trapezoidal_matrix: times must be non-empty"))
+    TimeGrid(times)   # in increasing order
     sample = visco_eval(law, times[1], times[1])
     return _trapezoidal_dispatch(law, times, sample)
 end
@@ -97,97 +98,98 @@ function _trapezoidal_dispatch(
     end
 end
 
-# ── Scalar case ─────────────────────────────────────────────────────────────
+# ── Doubled instants and evaluation instants ────────────────────────────────
 
-@inline function _fill_trapezoidal_scalar!(
-        M::AbstractMatrix, law::AbstractViscoLaw,
-        times::AbstractVector
-    )
+# A grid may hold an instant twice, t_{k-1} = t_k: the first node stands for the left limit
+# t⁻ and the second for t⁺, so that a history or a kernel jumps there. The interval between
+# them has zero length; node 1 ends the "interval" of the jump from zero at the first instant.
+@inline _is_jump(times, k) = k == 1 || times[k] == times[k - 1]
+
+# The instants at which a law or a history is evaluated at the nodes: the instant itself,
+# except at the first node of a doubled instant, evaluated just before it (its left limit).
+# A function with a jump there must be right-continuous, `t ≥ a ? … : …`.
+function _evaluation_instants(times::AbstractVector)
+    τ = float.(times)
+    for k in 2:length(times)
+        _is_jump(times, k) && (τ[k - 1] = _left_of(τ[k - 1]))
+    end
+    return τ
+end
+_left_of(t::AbstractFloat) = prevfloat(t)
+_left_of(t::ForwardDiff.Dual{T}) where {T} = ForwardDiff.Dual{T}(_left_of(ForwardDiff.value(t)), ForwardDiff.partials(t))
+
+# ── The weights ─────────────────────────────────────────────────────────────
+
+# On row i, with fₖ = f(tᵢ, τₖ), the response is y_i = Σₖ wₖ (xₖ - xₖ₋₁) (x₀ = 0), the
+# interval ending at node k weighted by wₖ = (fₖ₋₁ + fₖ)/2, or by fₖ when it has zero length
+# (a jump, integrated against the kernel just after it). The coefficient of xⱼ is
+# wⱼ - wⱼ₊₁ (wᵢ on the diagonal), written below without forming the wₖ, so that a grid
+# without doubled instants gives the classical weights to the last bit. `f` holds tuples of
+# blocks; every case is a map over them.
+@inline function _trapezoidal_weight(f, times, i, j, half)
+    left = _is_jump(times, j)
+    j == i && return left ? f[i] : map((a, b) -> (a + b) * half, f[i - 1], f[i])
+    right = _is_jump(times, j + 1)
+    left && right && return map(-, f[j], f[j + 1])
+    left && return map((a, c) -> (a - c) * half, f[j], f[j + 1])
+    right && return map((a, b, c) -> (a + b) * half - c, f[j - 1], f[j], f[j + 1])
+    return map((a, c) -> (a - c) * half, f[j - 1], f[j + 1])
+end
+
+# ── Filling the operators ───────────────────────────────────────────────────
+
+# Several operators at once, one per block of a symmetry class: `value(i, k)` is the kernel
+# at the pair of nodes (i, k), `blocks_of` turns it into the tuple of its blocks, of sizes
+# `sizes` (`Val`s), and block m of every value goes into `Ms[m]`. A per-row cache evaluates
+# each pair once. Threading the outer loop was tried and reverted: its overhead exceeded the
+# gain for cheap isotropic laws (50 % slower at n = 200, even on one thread).
+function _fill_trapezoidal_classes!(
+        Ms::Tuple, value::V, times::AbstractVector, sizes::Tuple, blocks_of::F
+    ) where {V, F}
     n = length(times)
-    n == 0 && return M
-    T = eltype(M)
-    # Per-row cache: cache[k] = visco_eval(law, times[i], times[k]) for k = 1..i.
-    # Halves the number of `visco_eval` calls (n(n+1)/2 instead of ~n(n+1)).
-    # Note: threading the outer loop with `Threads.@threads :static` was
-    # experimented and reverted — the macro overhead exceeds the gain for
-    # cheap iso ViscoLaws (a 50% slowdown was observed at n = 200 even
-    # with a single thread).  Re-enable behind an opt-in kwarg if/when
-    # heavy kernels (Mittag-Leffler, numerical integral) are dominant.
-    cache = Vector{T}(undef, n)
-    @inbounds begin
-        cache[1] = visco_eval(law, times[1], times[1])
-        M[1, 1] = cache[1]
-        for i in 2:n
-            for k in 1:i
-                cache[k] = visco_eval(law, times[i], times[k])
-            end
-            M[i, i] = (cache[i - 1] + cache[i]) / 2
-            M[i, 1] = (cache[1] - cache[2]) / 2
-            for j in 2:(i - 1)
-                M[i, j] = (cache[j - 1] - cache[j + 1]) / 2
-            end
+    n == 0 && return Ms
+    half = inv(eltype(first(Ms))(2))
+    b₁ = blocks_of(value(1, 1))
+    cache = Vector{typeof(b₁)}(undef, n)
+    @inbounds for i in 1:n
+        for k in 1:i
+            cache[k] = blocks_of(value(i, k))
         end
+        for j in 1:i
+            # `map` over the tuples, unrolled: the blocks have different sizes.
+            map((M, x, s) -> _put_block!(M, i, j, x, s), Ms, _trapezoidal_weight(cache, times, i, j, half), sizes)
+        end
+    end
+    return Ms
+end
+
+# The law at the evaluation instants of the nodes.
+_node_values(law::AbstractViscoLaw, times::AbstractVector) =
+    (τ = _evaluation_instants(times); (i, k) -> visco_eval(law, τ[i], τ[k]))
+
+# One operator of blocks B×B: 1 for a scalar kernel, 6 for a 4-tensor or a 6×6 Mandel matrix,
+# 3 for a 2-tensor or a 3×3 matrix. `convert_sample` turns a kernel value into its block.
+_fill_trapezoidal_scalar!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
+    _fill_trapezoidal_blocks!(M, law, times, Val(1), x -> SMatrix{1, 1}(x))
+@inline _fill_trapezoidal_blocks!(
+    M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
+) where {B, F} = (_fill_trapezoidal_classes!((M,), _node_values(law, times), times, (Val(B),), x -> (convert_sample(x),)); M)
+
+# Block (i, j) of `M` set to the B×B value `x`, entry by entry: measured faster than a
+# broadcast over views (1.3 times at B = 3).
+@inline function _put_block!(M, i, j, x, ::Val{B}) where {B}
+    r, c = B * (i - 1), B * (j - 1)
+    @inbounds for l in 1:B, k in 1:B
+        M[r + k, c + l] = x[k, l]
     end
     return M
 end
-
-# ── Tensor / Mandel case (block-by-block) ───────────────────────────────────
 
 # Convert a sample (4-tensor or 6×6 matrix) to a 6×6 Mandel array,
 # preserving element type.
 @inline _to_mandel(sample::AbstractMatrix) = sample
 @inline function _to_mandel(sample::TensND.AbstractTens{4, 3})
     return TensND.mandel(TensND.canonical_components(sample); symmetrize = true)
-end
-
-# The block cases, B×B blocks: 6 for a 4-tensor or a 6×6 Mandel matrix, 3 for a
-# 2-tensor or a 3×3 matrix. `convert_sample` turns a kernel value into its B×B
-# block.
-@inline _fill_trapezoidal_blocks!(
-    M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector, ::Val{B}, convert_sample::F
-) where {B, F} = (_fill_trapezoidal_classes!((M,), law, times, (Val(B),), x -> (convert_sample(x),)); M)
-
-# Several operators from one law at once, one per block of a symmetry class:
-# `blocks_of` turns a kernel value into the tuple of its blocks, of sizes
-# `sizes` (`Val`s), and block k of every value goes into `Ms[k]`. The law is
-# evaluated once per pair of instants. A per-row cache halves the number of
-# `visco_eval` calls; the weights are the layout at the top of this file.
-# (Threading reverted: see note in `_fill_trapezoidal_scalar!`.)
-function _fill_trapezoidal_classes!(
-        Ms::Tuple, law::AbstractViscoLaw, times::AbstractVector, sizes::Tuple, blocks_of::F
-    ) where {F}
-    n = length(times)
-    n == 0 && return Ms
-    half = inv(eltype(first(Ms))(2))
-    # `map` over the tuples, unrolled: the blocks have different sizes, so a
-    # zipped loop would not infer.
-    put!(i, j, a, b, op::O) where {O} = (map((M, x, y, s) -> _put_block!(M, i, j, x, y, op, half, s), Ms, a, b, sizes); nothing)
-    b₁ = blocks_of(visco_eval(law, times[1], times[1]))
-    cache = Vector{typeof(b₁)}(undef, n)
-    cache[1] = b₁
-    put!(1, 1, b₁, b₁, +)
-    @inbounds for i in 2:n
-        for k in 1:i
-            cache[k] = blocks_of(visco_eval(law, times[i], times[k]))
-        end
-        put!(i, 1, cache[1], cache[2], -)
-        for j in 2:(i - 1)
-            put!(i, j, cache[j - 1], cache[j + 1], -)
-        end
-        put!(i, i, cache[i - 1], cache[i], +)
-    end
-    return Ms
-end
-
-# Block (i, j) of `M` set to `op(a, b) / 2`, by a loop over its B×B entries:
-# measured faster than a broadcast over views (1.3 times at B = 3). `(a + a)/2`
-# writes the first block exactly.
-@inline function _put_block!(M, i, j, a, b, op::F, half, ::Val{B}) where {F, B}
-    r, c = B * (i - 1), B * (j - 1)
-    @inbounds for l in 1:B, k in 1:B
-        M[r + k, c + l] = op(a[k, l], b[k, l]) * half
-    end
-    return M
 end
 
 _fill_trapezoidal_tensor!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =

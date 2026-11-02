@@ -12,6 +12,7 @@ holds the Echoes side only:
 | [`cells.jl`](cells.jl) | the cells of the cases on the MeanFieldHomogenization side, shared by `run_mfh.jl` and the test suite |
 | [`run_mfh.jl`](run_mfh.jl) | rebuilds every case with MFH, compares and times it |
 | [`make_test_references.py`](make_test_references.py) | writes `test/Viscoelasticity/echoes_alv_cells.json` (the `g` and `h` cases on 4 instants), read by `test/Viscoelasticity/test_alv_echoes_cells.jl` |
+| [`make_doubled_instants_reference.py`](make_doubled_instants_reference.py) | writes `test/Viscoelasticity/echoes_doubled_instants.json` (laws and a Mori-Tanaka estimate on grids holding an instant twice), read by `test/Viscoelasticity/test_alv_jumps_evaluation.jl` |
 
 ## Rerun
 

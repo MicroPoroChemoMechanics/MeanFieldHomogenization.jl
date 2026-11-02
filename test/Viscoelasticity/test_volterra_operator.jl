@@ -160,7 +160,8 @@ end
     @test TimeGrid(g) === g
     @test sum(g) ≈ sum(VO_TIMES)
     @test occursin("6 instants", sprint(show, g))
-    @test_throws "increase strictly" TimeGrid([0.0, 1.0, 1.0])
+    @test_throws "must increase" TimeGrid([0.0, 2.0, 1.0])
+    @test length(TimeGrid([0.0, 1.0, 1.0])) == 3      # an instant twice: a jump
     @test_throws "no instant" TimeGrid(Float64[])
     Symbolics.@variables τ
     @test_throws "numbers that compare" TimeGrid([τ, 2τ])
@@ -334,9 +335,10 @@ end
     D = trapezoidal_matrix(vo_laws()[3][2], VO_TIMES)
     # One class, or the full blocks when the frames differ (a run-time value): a
     # union of two concrete types.
+    # A computed operator has no law: its type is that of `one(R)`.
     Dn = typeof(convert_class(R, DenseClass{4}()))
-    @inferred Union{typeof(R), Dn} R * R
-    @inferred Union{typeof(R), Dn} R + R
+    @inferred Union{typeof(one(R)), Dn} R * R
+    @inferred Union{typeof(one(R)), Dn} R + R
     @inferred inv(R)
     @inferred Matrix(R)
     @inferred VolterraOperator(vo_laws()[3][2], VO_TIMES)

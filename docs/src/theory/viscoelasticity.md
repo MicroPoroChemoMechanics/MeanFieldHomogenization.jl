@@ -151,6 +151,98 @@ ordinary matrix product and the Volterra inverse an ordinary matrix inverse
 `MeanFieldHomogenization` the discretization is [`trapezoidal_matrix`](@ref) and the
 inverse [`volterra_inverse`](@ref).
 
+### [Jumps: an instant given twice](@id th-visco-jumps)
+
+A stress applied at ``t'`` and held, or a phase that precipitates at ``t_s``, makes a
+history or a kernel **jump**. On a grid where that instant appears once, the history,
+linear between two instants, rises over the interval before it. The instant is
+therefore given twice, ``t_{k-1} = t_k``: the node ``k-1`` stands for the left limit
+``t_k^-`` and the node ``k`` for the right limit ``t_k^+``, and a function is evaluated
+just before ``t_k`` on the first. The grid becomes ``t_0 \le t_1 \le \dots \le t_n``,
+in increasing order.
+
+With ``\boldsymbol{\varepsilon}`` linear between two distinct instants, the integral is a
+sum over the intervals ``[t_{k-1}, t_k]``, with
+``\Delta\boldsymbol{\varepsilon}_k = \boldsymbol{\varepsilon}(t_k) - \boldsymbol{\varepsilon}(t_{k-1})``
+and ``\boldsymbol{\varepsilon}(t_{-1}) = 0``:
+
+```math
+\boldsymbol{\sigma}(t_i) = \sum_{k=0}^{i} \mathbb{W}_{ik} : \Delta\boldsymbol{\varepsilon}_k,
+\qquad
+\mathbb{W}_{ik} =
+\begin{cases}
+\tfrac{1}{2}\bigl[\mathbb{C}(t_i,t_{k-1}) + \mathbb{C}(t_i,t_k)\bigr], & t_{k-1} < t_k,\\[4pt]
+\mathbb{C}(t_i,t_k), & k = 0 \text{ or } t_{k-1} = t_k.
+\end{cases}
+```
+
+The first line is the trapezoidal rule. The second is the Stieltjes integral of a jump,
+which reads the kernel at the instant of the jump, its right limit: a phase that
+precipitates at ``t_s``, of kernel ``H(t' - t_s)\,\mathbb{C}(t, t')`` with ``H(0) = 1``,
+carries a strain jump at ``t_s`` whole, where the mean of the two limits would load half
+of it. Gathering the terms in ``\boldsymbol{\varepsilon}(t_k)``
+gives the blocks
+
+```math
+\bigl[\widetilde{\mathbb{C}}\bigr]_{ik} = \mathbb{W}_{ik} - \mathbb{W}_{i,k+1}\ (k < i),
+\qquad
+\bigl[\widetilde{\mathbb{C}}\bigr]_{ii} = \mathbb{W}_{ii},
+```
+
+which are those above when no instant is doubled. Composition and inversion are matrix
+operations, unchanged.
+
+### [The kernel between the instants](@id th-visco-kernel-between)
+
+A row of the matrix gives its kernel back. Summing the blocks of row ``i`` from ``k`` on
+telescopes:
+
+```math
+\sum_{j \ge k} \bigl[\widetilde{\mathbb{C}}\bigr]_{ij} = \mathbb{W}_{ik},
+```
+
+so that ``\mathbb{C}_{i0} = \mathbb{W}_{i0}``, then ``\mathbb{C}_{ik} = \mathbb{W}_{ik}`` at a
+jump and ``\mathbb{C}_{ik} = 2\,\mathbb{W}_{ik} - \mathbb{C}_{i,k-1}`` otherwise, with
+``\mathbb{C}_{ik} = \mathbb{C}(t_i, t_k)``. Any lower block-triangular matrix is thereby the
+trapezoidal matrix of exactly one set of samples, an inverse or a composition included:
+this is [`operator_law`](@ref).
+
+Between the instants, the matrix itself says what the kernel is in ``t'``. On
+``[t_{k-1}, t_k]``, a kernel linear in ``\tau`` against a history linear in ``\tau`` gives
+
+```math
+\int_{t_{k-1}}^{t_k} \mathbb{C}(t_i,\tau) : \dot{\boldsymbol{\varepsilon}}(\tau)\,\mathrm{d}\tau
+= \tfrac{1}{2}\bigl[\mathbb{C}_{i,k-1} + \mathbb{C}_{ik}\bigr] : \Delta\boldsymbol{\varepsilon}_k,
+```
+
+which is the trapezoidal weight. The matrix therefore integrates exactly the kernel
+``\widehat{\mathbb{C}}(t_i, \cdot)`` linear between the samples, right-continuous at a
+doubled instant, against the history linear between the instants: ``\widehat{\mathbb{C}}``
+is the kernel the operator holds. Between two rows the matrix holds nothing; the kernel is
+taken linear in ``t`` as well. With ``a`` and ``b`` the cells of ``t`` and ``t'``
+(``t_a \le t < t_{a+1}``, ``t_a`` the right limit of a doubled instant),
+``\theta = (t - t_a)/(t_{a+1} - t_a)`` and ``\varphi = (t' - t_b)/(t_{b+1} - t_b)``:
+
+```math
+\widehat{\mathbb{C}}(t,t') =
+\begin{cases}
+(1-\theta)(1-\varphi)\,\mathbb{C}_{ab} + (1-\theta)\varphi\,\mathbb{C}_{a,b+1}
++ \theta(1-\varphi)\,\mathbb{C}_{a+1,b} + \theta\varphi\,\mathbb{C}_{a+1,b+1}, & a > b,\\[4pt]
+(1-\theta)\,\mathbb{C}_{aa} + (\theta - \varphi)\,\mathbb{C}_{a+1,a} + \varphi\,\mathbb{C}_{a+1,a+1}, & a = b,\ t' \le t,\\[4pt]
+0, & t' > t.
+\end{cases}
+```
+
+Below the diagonal the interpolation is bilinear; on a cell the diagonal cuts, the fourth
+corner ``(a, a+1)`` lies above it, and the interpolation is linear on the triangle
+``t' \le t``. The two agree on the edges of the cells. A history is read the same way,
+linearly between the instants.
+
+The cell is found by a binary search over the instants, ``O(\log n)``, and the value
+takes four samples. Recovering the samples of a computed operator costs ``O(n^2)`` once
+([`operator_law`](@ref)) or ``O(n)`` for the two rows of a single evaluation; an operator
+built from a law evaluates the law instead.
+
 ## 2. The Eshelby problem in ALV
 
 Consider an ellipsoid ``\mathcal{E}`` of shape tensor ``\boldsymbol{A}``
