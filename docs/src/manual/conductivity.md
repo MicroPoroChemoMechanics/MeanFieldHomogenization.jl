@@ -99,7 +99,7 @@ COD ``b``, with the same geometric factors ``3/4`` (elliptic) and ``2/\pi``
 pc = PennyCrack(1.0)
 K₀ = TensISO{3}(2.5)
 
-b  = cod_tensor(pc, K₀)                    # scalar COD, = 2/(π²K) for a penny
+b  = cod_tensor(pc, K₀)                    # scalar COD, = 8/(3πK) for a penny
 R  = inverse_property_contribution(pc, K₀)       # 𝐑 = (3/4)·b·(ŵ⊗ŵ)
 ΔR = delta_inverse_property(pc, R, 0.05)        # dilute correction at density ε
 ```

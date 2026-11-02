@@ -262,7 +262,7 @@ the value at the pair of instants ``(t_i, t_j)`` as a tensor of the class;
 returns its result in the cheapest class that holds it; the costs are tabulated in
 [Symmetry classes and structured storage](@ref th-visco-classes).
 
-## 4. Homogenizing
+## [4. Homogenizing](@id man-visco-homogenizing)
 
 A phase property may be a law, an operator on the grid, or a [`Homogenized`](@ref)
 cell, homogenized on the same grid, as in elasticity. With operators, the grid is
@@ -369,7 +369,7 @@ add_phase!(cracked, :R, RibbonCrack(1.0; euler_angles = (0.4, 0.9, 0.2)),
 homogenize_alv(cracked, MoriTanaka(), :C; times)
 ```
 
-### 5.2 Cracks with finite interface stiffness (Sevostianov)
+### 5.2 Cracks with finite interface stiffness
 
 For a flat crack carrying a **spring-like interface stiffness** with
 time-dependent normal `Rn(t,t')` and tangential `Rt(t,t')` aging
@@ -450,8 +450,8 @@ q[end]
 ```
 
 The order-2 pipeline implements the bounds, `Dilute`, `DiluteDual`,
-`MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent` and
-`DifferentialScheme`. `Maxwell` and `PonteCastanedaWillis` take the Hill kernel
+`MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent`,
+`AsymmetricSelfConsistent` and `DifferentialScheme`. `Maxwell` and `PonteCastanedaWillis` take the Hill kernel
 of the distribution shape the RVE declares (`RVE(; distribution_shape = …)`).
 `scripts/56_aging_creep_order2.jl` runs them on an aging conductor.
 
@@ -584,8 +584,8 @@ homogenize_alv(iso_cell, DifferentialScheme(; formulation = :compliance), :C; ti
 Supported inclusions: ellipsoids and spheroids, `LayeredSphere`, and
 crack families through their density, at both orders — subject to the
 isotropic-reference requirement of [section 7](@ref man-alv-iso-reference). The
-self-consistent scheme accepts the same inclusions at both orders, and the
-asymmetric self-consistent one at order 4.
+self-consistent and the asymmetric self-consistent schemes accept the same
+inclusions at both orders.
 
 ## [9. Solving the self-consistent equation: Picard or Newton](@id man-visco-sc-solver)
 

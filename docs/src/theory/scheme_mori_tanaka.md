@@ -98,11 +98,22 @@ For a two-phase isotropic composite with spherical inclusions and well-ordered
 phases, the estimate coincides with a bound of [hashin1963](@citet): the upper
 bound when the matrix is the stiffer phase, the lower one when it is the softer.
 
-With several inclusion shapes the estimate is not, in general, major-symmetric.
-[ponte1995](@citet) trace this to the morphology the scheme implicitly assumes,
-which the page on [their estimate](@ref th-scheme-pcw) makes explicit. The package returns the estimate as
-computed: an asymmetric Mori–Tanaka tensor is the scheme's answer, not a
-numerical artifact.
+With inclusions of different stiffnesses *and* different shapes or orientations,
+the estimate is not, in general, major-symmetric [benveniste1991](@cite), a defect
+of the scheme; [ponte1995](@citet) trace it to the morphology the scheme
+implicitly assumes, which the page on [their estimate](@ref th-scheme-pcw) makes
+explicit. When every inclusion has the same stiffness ``\mathbb C_1``, the
+estimate is symmetric whatever the shapes: with
+``\delta\mathbb C = \mathbb C_1 - \mathbb C_0`` and
+``\mathbb X = f_0\,\mathbb I + \sum_i f_i\,\mathbb A_i``, the contribution term is
+``\delta\mathbb C : (\mathbb I - f_0\,\mathbb X^{-1})``, and
+``\mathbb X : \delta\mathbb C^{-1} = f_0\,\delta\mathbb C^{-1} + \sum_i f_i\,(\delta\mathbb C + \delta\mathbb C : \mathbb P_i : \delta\mathbb C)^{-1}``
+is symmetric. An effective stiffness derives from an energy, so the package returns
+the major-symmetric part of the estimate, as it does for the
+[self-consistent](@ref th-scheme-sc) iterate and as Echoes does, with a warning
+that gives the relative size of the part dropped when it exceeds ``10^{-5}``. That
+part does no work: the strain energy ``\boldsymbol E:\mathbb C:\boldsymbol E`` of
+the estimate is that of its symmetric part.
 
 The scheme reads one phase as the matrix, and the estimate depends on that
 choice ([Who is the matrix?](@ref man-who-is-the-matrix)). In conduction it is

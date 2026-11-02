@@ -214,6 +214,19 @@ const PROPERTIES = [
         orientation = 3,
     ),
     (;
+        name = "cubic_stiffness",
+        label = "Cubic (3 constants)",
+        order = 4,
+        builder = "TensCubic",
+        doc = "C₁₁, C₁₂ and C₄₄ in the cube frame, which is the Orientation block below; C₁₁ = C₁₂ + 2C₄₄ is the isotropic point.",
+        fields = [
+            (name = "C11", label = "C₁₁", type = "number", default = 170.0),
+            (name = "C12", label = "C₁₂", type = "number", default = 120.0),
+            (name = "C44", label = "C₄₄", type = "number", default = 75.0),
+        ],
+        orientation = 3,
+    ),
+    (;
         name = "maxwell_iso",
         label = "Viscoelastic — Maxwell (relaxation)",
         order = 4,
@@ -617,7 +630,7 @@ function catalog()
         "visco" => VISCO,
         "hill_methods" => ["auto", "analytical", "residues", "decuhr", "nestedquadgk"],
         "constraints" => Dict(
-            "no_multiscale_in_alv" => true, "matrix_amount_is_derived" => true,
+            "matrix_amount_is_derived" => true,
             "laminate_schemes" => collect(LAMINATE_SCHEMES),
         ),
     )

@@ -125,8 +125,8 @@ which presupposes a *single uniform* ``\mathbb C_1``. So:
   enough. `flux_gradient_concentration` and the rest follow from the generic methods.
 - **heterogeneous inclusion** (`is_homogeneous_inclusion == false`): there is
   no such ``\mathbb C_1``. The average stress has to be assembled from the
-  local fields, so you **must** supply `flux_gradient_concentration` as well (and
-  `flux_gradient_concentration` in transport). `LayeredSphere` and
+  local fields, so you **must** supply `flux_gradient_concentration` as well, in
+  elasticity and in transport alike. `LayeredSphere` and
   [`FEExcenteredSphere`](@ref) both take that route; the finite-element one
   gets the two tensors out of a single solve, which is the usual situation and
   the reason [`fe_axi_concentration`](@ref) returns them as a pair.

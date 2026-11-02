@@ -60,7 +60,7 @@ R  = inverse_property_contribution(pc, K₀)     # R = (3/4) b (ŵ⊗ŵ)
 ΔR = delta_inverse_property(pc, R, 0.05)      # = (4π/3) ε³ᵈ R
 ```
 
-## Cracks with finite interface stiffness (Sevostianov)
+## Cracks with finite interface stiffness
 
 A flat crack carrying a **spring-like interface elasticity** with stiffness
 tensor ``\boldsymbol{K}`` (order 2, ``3\times 3`` symmetric — e.g. isotropic with
@@ -78,6 +78,12 @@ the familiar ones: ``\boldsymbol{K} = \boldsymbol{0}`` gives a traction-free
 crack (recovering ``\boldsymbol{B}``), and
 ``\boldsymbol{K}\to\infty`` a rigid bond
 (``\boldsymbol{B}^{\mathrm{hom}}\to\boldsymbol{0}``, i.e. no crack at all).
+
+!!! warning "An approximation, exact in its two limits"
+    The correction is not derived from the integral equation of a crack with
+    spring-like faces, whose opening is not that of a traction-free crack: it is an
+    approximation, and no published source is known to the package for it. The
+    aging version has the same status ([theory](@ref th-visco-cracks)).
 
 ```julia
 # Elasticity : iso interface stiffness K = 5·𝟏

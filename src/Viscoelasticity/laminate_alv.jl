@@ -128,75 +128,63 @@ elastic (their compliances are numbers), which covers the usual case of an
 aging bulk with a time-independent interface. Reached through
 `homogenize_alv(lam, Laminated(), :C; times = …)`.
 """
-function laminate_alv(lam::Laminates.Laminate, ::Val{4}; times, property::Symbol = :C)
+function laminate_alv(
+        lam::Laminates.Laminate, order::Union{Val{2}, Val{4}};
+        times, property::Symbol = _alv_default_property(order)
+    )
     names = Laminates.layer_names(lam)
     n = length(times)
     basis = Laminates.laminate_basis(lam)
     _alv_check_numeric_frame(basis)
+    B = _alv_block_size(order)
 
-    Cs = map(names) do nm
+    # Each layer's relaxation blocks, in the layer frame.
+    Xs = map(names) do nm
         law = Laminates.layer_property(lam, nm, property)
         law isa ALVProperty || throw(
             ArgumentError(
                 "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law, a relaxation operator nor an elastic tensor"
             )
         )
-        return _alv_to_layer_frame(_trapezoidal_relaxation(law, times, 6), basis, n)
+        return _alv_to_layer_frame(_trapezoidal_relaxation(law, times, B), basis, n, order)
     end
     fs = [Laminates.layer_volume_fraction(lam, nm) for nm in names]
 
-    opinv = M -> _plane_pinv_alv(M, n, 6, (3, 4, 5), 3)
-    P_int, C_surf = _alv_interface_terms(lam, times, Val(4))
-    M_layer = MFH_Core.laminate_stiffness(
-        Cs, fs, P_int, C_surf; opinv = opinv, opinv_avg = opinv
-    )
+    opinv = M -> _plane_pinv_alv(M, n, B, _alv_normal_slots(order)...)
+    P_int, X_surf = _alv_interface_terms(lam, times, order)
+    X_layer = MFH_Core.laminate_stiffness(Xs, fs, P_int, X_surf; opinv = opinv, opinv_avg = opinv)
     # Back from the layer frame to the canonical one, where every other ALV
     # operator lives and where the elastic `Laminated` scheme puts its tensor.
-    return _alv_from_layer_frame(M_layer, basis, n)
+    return _alv_from_layer_frame(X_layer, basis, n, order)
 end
 
-# The 6n × 6n relaxation blocks rotated from the canonical frame to the layer
-# frame `basis`, and back. Nothing to do when the layer frame is the canonical
-# one.
-_alv_to_layer_frame(M, ::TensND.CanonicalBasis, n) = M
-_alv_to_layer_frame(M, basis, n) = _alv_rotate_blocks(M, _alv_bond6(basis), n, 6)
-_alv_from_layer_frame(M, ::TensND.CanonicalBasis, n) = M
-_alv_from_layer_frame(M, basis, n) = _alv_rotate_blocks(M, transpose(_alv_bond6(basis)), n, 6)
-_alv_bond6(basis) = TensND.mandel_rotation(Matrix(TensND.vecbasis(basis, :cov)))
+# What the two orders differ by: the property a layer carries by default, and the
+# slots of the normal components in a block with their count (the Mandel slots 3, 4,
+# 5 of ε₃₃, ε₂₃, ε₁₃ at order 4; the slot 3 of the normal gradient at order 2).
+_alv_default_property(::Val{4}) = :C
+_alv_default_property(::Val{2}) = :K
+_alv_normal_slots(::Val{4}) = ((3, 4, 5), 3)
+_alv_normal_slots(::Val{2}) = ((3,), 1)
 
-function laminate_alv(lam::Laminates.Laminate, ::Val{2}; times, property::Symbol = :K)
-    names = Laminates.layer_names(lam)
-    n = length(times)
-    basis = Laminates.laminate_basis(lam)
-    basis isa TensND.CanonicalBasis || throw(
-        ArgumentError(
-            "laminate_alv at order 2 currently needs a canonical frame " *
-                "(normal = e₃); rotate the layer properties instead"
-        )
-    )
-
-    Ks = map(names) do nm
-        law = Laminates.layer_property(lam, nm, property)
-        law isa ALVProperty || throw(
-            ArgumentError(
-                "laminate_alv: layer :$(nm) property :$(property) is neither a viscoelastic law, a relaxation operator nor an elastic tensor"
-            )
-        )
-        return _trapezoidal_relaxation(law, times, 3)
-    end
-    fs = [Laminates.layer_volume_fraction(lam, nm) for nm in names]
-
-    opinv = M -> _plane_pinv_alv(M, n, 3, (3,), 1)
-    P_int, K_surf = _alv_interface_terms(lam, times, Val(2))
-    return MFH_Core.laminate_stiffness(
-        Ks, fs, P_int, K_surf; opinv = opinv, opinv_avg = opinv
-    )
-end
+# The relaxation blocks rotated from the canonical frame to the layer frame `basis`,
+# and back: by the Bond matrix of the frame at order 4 (6 × 6 blocks), by its
+# rotation matrix at order 2 (3 × 3 blocks). Nothing to do when the layer frame is the
+# canonical one.
+_alv_to_layer_frame(M, ::TensND.CanonicalBasis, n, ::Val) = M
+_alv_to_layer_frame(M, basis, n, order::Val) =
+    _alv_rotate_blocks(M, _alv_frame_rotation(basis, order), n, _alv_block_size(order))
+_alv_from_layer_frame(M, ::TensND.CanonicalBasis, n, ::Val) = M
+_alv_from_layer_frame(M, basis, n, order::Val) =
+    _alv_rotate_blocks(M, transpose(_alv_frame_rotation(basis, order)), n, _alv_block_size(order))
+_alv_frame_rotation(basis, ::Val{4}) = TensND.mandel_rotation(_alv_frame_rotation(basis, Val(2)))
+_alv_frame_rotation(basis, ::Val{2}) = Matrix(TensND.vecbasis(basis, :cov))
+_alv_block_size(::Val{4}) = 6
+_alv_block_size(::Val{2}) = 3
 
 # Interface terms, lifted to Volterra operators. The interfaces are elastic,
 # so each is a constant block times the scalar Heaviside weights.
 function _alv_interface_terms(lam::Laminates.Laminate, times, ::Val{order}) where {order}
-    nc = order == 4 ? 6 : 3
+    nc = _alv_block_size(Val(order))
     n = length(times)
     Z = zeros(Float64, n * nc, n * nc)
     all(itf -> itf isa PerfectInterface, lam.interfaces) && return (Z, Z)

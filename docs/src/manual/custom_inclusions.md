@@ -253,7 +253,7 @@ the contract, with nothing downstream aware of it.
 
 | Page | Covers | Gate |
 | :--- | :--- | :--- |
-| [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the three shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
+| [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the five shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
 | [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both concentration tensors |
 
 A cavity is the case where gate B is at its simplest and most exact: its

@@ -399,12 +399,11 @@ crack, or simply an aligned spheroid, whose ``\mathbb A^{\mathrm{dil}}`` is
 transversely isotropic even between two isotropic materials), so the scheme
 probes each contribution once before integrating.
 
-*The residue algorithm cannot be used here.* When the running estimate is
-anisotropic from the first step, the Hill tensors are evaluated by cubature:
-the acoustic polynomial of the residue method degenerates precisely at the
-isotropic starting point of the integration. That is what `method = :auto`
-selects, and an explicit `method = :residues` on such an RVE raises an error
-saying so.
+*Which algorithm.* Once the running estimate is anisotropic, its Hill tensors are
+evaluated numerically, by nested Gauss–Kronrod quadrature under `method = :auto`.
+The integration starts from the isotropic matrix, whose Hill tensors are closed
+forms whatever the method, so an explicit `method = :residues` runs too and gives
+the same estimate (to ``10^{-6}`` on an aligned triaxial ellipsoid in the tests).
 
 ## 6. Concentration tensors
 

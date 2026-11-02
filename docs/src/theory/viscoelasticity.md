@@ -465,8 +465,7 @@ non-aging laws, or when one of them is elastic; an aging law, or a logarithmic
 grid, makes the order matter at the percent level. In the Mori–Tanaka row the
 inverse stands on the right of ``\sum_i f_i\,\mathbb{N}_i``, because it maps the
 average strain to that of the matrix, on which the contributions act. All ten
-schemes are implemented by [`homogenize_alv`](@ref) at order 4; at order 2 all
-of them but the asymmetric self-consistent one.
+schemes are implemented by [`homogenize_alv`](@ref), at orders 4 and 2.
 
 ## 6. The n-layer composite sphere
 

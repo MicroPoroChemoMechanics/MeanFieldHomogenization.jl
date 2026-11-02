@@ -221,12 +221,6 @@ end
 builder(c::Cell) = either(c.builder_name, "build_" * c.name)
 is_laminate(c::Cell) = c.kind == "laminate"
 
-"Is the stack normal to e₃, however its frame is given?"
-function is_canonical_frame(c::Cell)
-    c.frame_mode == "euler" && return !any(a -> a != "" && a !== nothing && a != 0, either(c.euler_angles, Any[]))
-    return !tilted_normal(c.normal)
-end
-
 "The members carrying properties: the phases of an RVE, the layers of a laminate."
 members(c::Cell) = is_laminate(c) ? c.layers : c.phases
 
@@ -571,16 +565,6 @@ function validate(m::StudioModel)
         )
     end
     m.sens.enabled && append!(problems, sens_problems(m))
-    # an inner Homogenized cannot sit inside an aging viscoelastic chain: the
-    # inner result would have to be re-expressed as a ViscoLaw
-    if m.alv.enabled && uses_multiscale(m)
-        push!(
-            problems,
-            "aging viscoelasticity cannot be combined with a nested scale: " *
-                "MeanFieldHomogenization cannot re-express a homogenized inner result as a " *
-                "ViscoLaw"
-        )
-    end
     return problems
 end
 
@@ -666,16 +650,6 @@ function scheme_problems(m::StudioModel)
     end
     if m.alv.enabled
         check(m.alv.cell, m.alv.scheme, "Viscoelastic")
-        # `laminate_alv` builds the order-2 kernel in the canonical frame
-        c = something(cell(m, m.alv.cell), root(m), Some(nothing))
-        if c !== nothing && is_laminate(c) && m.alv.property != ":C" && !is_canonical_frame(c)
-            push!(
-                problems,
-                "aging viscoelasticity of a laminate in transport (`:K`) " *
-                    "requires the canonical frame: MeanFieldHomogenization " *
-                    "builds that kernel with the normal along e₃."
-            )
-        end
     end
     m.sens.enabled && check(m.sens.cell, m.sens.scheme, "Sensitivity")
     # every property a `Homogenized` reads carries its own scheme

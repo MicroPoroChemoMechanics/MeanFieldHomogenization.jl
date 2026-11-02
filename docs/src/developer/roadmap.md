@@ -11,16 +11,17 @@ package already does is described in the [manual](@ref man-index) and the
 
 ## Open
 
-- Extended-COD crack model in conduction: resistive cracks (linear-spring
-  analog) **and** conductive cracks (elastic-membrane analog), via a
-  tensorial conduction COD.
+- Extended-COD crack model in conduction, beyond what ships (a scalar
+  Kapitza-like resistance `α_interface` on insulating cracks of any shape, and
+  [`ConductiveCrack`](@ref) for the penny crack only): resistive cracks
+  (linear-spring analog) **and** conductive cracks (elastic-membrane analog) of any
+  shape and anisotropy, via a tensorial conduction COD.
 - Multi-layer extensions: coated cylinders, anisotropic per-layer moduli, and
   an *analytic* excentered sphere (only the finite-element route reaches that
   morphology).
 - Laminate extensions: viscoelastic *interface* laws (the interface types
   carry `Number` fields today, so an aging interface needs a different
-  carrier), and `Homogenized` inside an ALV chain (the inner result would have
-  to be re-expressible as a `ViscoLaw`).
+  carrier).
 - `PairwiseDistribution` (Willis 1982) envelope for the PCW scheme.
 - Native Anderson acceleration with memory > 1, replacing the current
   `AndersonDefault` (currently Picard with relaxation, memory = 1).

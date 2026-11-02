@@ -59,8 +59,11 @@ plumbing.
 
 The first argument to `derivative`/`gradient`/`jacobian` is an
 `AbstractParameter` *lens* describing the scalar input you want to
-differentiate against. Four concrete lens kinds are shipped, plus a
-`sensitivity(f, x₀)` closure fallback for everything else.
+differentiate against. Four lens kinds serve an RVE, plus a
+`sensitivity(f, x₀)` closure fallback for everything else; the other cells add
+their own — `thickness` and `interface_param` on a [laminate](@ref man-laminates),
+`radius_param` and `center_param` on a [particle assembly](@ref man-assemblies),
+and `nested` through a scale ([Multiscale models](@ref man-multiscale)).
 
 | Helper                          | Kind                                | Underlying type             |
 | :------------------------------ | :---------------------------------- | :-------------------------- |

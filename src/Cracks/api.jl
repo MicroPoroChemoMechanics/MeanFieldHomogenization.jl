@@ -128,7 +128,7 @@ const B_tensor = cod_tensor
 """
     _apply_interface_stiffness(B::Tens{2,3}, K::Tens{2,3}, b) -> Tens{2,3}
 
-Apply the Sevostianov spring-like-interface correction to the COD
+Apply the spring-like-interface correction to the COD
 2-tensor ``\\boldsymbol{B}``, with ``\\boldsymbol{K}`` the interface stiffness tensor:
 
 ```math
@@ -141,7 +141,9 @@ Limits :
 * ``\\boldsymbol{K} = \\boldsymbol{0}`` (traction-free)        →  ``\\boldsymbol{B}^{\\mathrm{hom}} = \\boldsymbol{B}``
 * ``\\boldsymbol{K} \\to \\infty`` (rigid bond)   →  ``\\boldsymbol{B}^{\\mathrm{hom}} = \\boldsymbol{0}``
 
-Reference : [sevostianov2002](@citet).
+An approximation, exact in these two limits: it is not derived from the integral
+equation of a crack with spring-like faces, and no published source is known to the
+package for it.
 """
 function _apply_interface_stiffness(
         B::TensND.AbstractTens{2, 3},
@@ -210,7 +212,7 @@ function cod_tensor(
     )
     b_th = _cod_thermal(crack, K₀)
     α_interface === nothing && return b_th
-    # Sevostianov correction in the conductivity case (scalar form)
+    # the interface correction in the conductivity case (scalar form)
     #   b_eff = b / (1 + a · α · b),  a = semi_minor.
     #   α → 0   ⇒ b_eff = b (free crack);
     #   α → ∞   ⇒ b_eff = 0 (perfectly bonded interface).

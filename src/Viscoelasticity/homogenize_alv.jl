@@ -412,10 +412,32 @@ _relaxation_operator(R::VolterraOperator, grid::TimeGrid) = (_same_grid(R.grid, 
 # diagonal, in the class of C. More specific than a matrix: a second-order tensor is one.
 _relaxation_operator(C::TensND.AbstractTens, grid::TimeGrid) = VolterraOperator(C, grid)
 _relaxation_operator(C::TensND.AbstractTens{2}, grid::TimeGrid) = VolterraOperator(C, grid)
+# A plain matrix of an operator, 6n × 6n at order 4 or 3n × 3n at order 2 (the result of
+# an aging laminate, say): its block size is read on its size, and it is stored in the
+# cheapest canonical class that holds it.
 _relaxation_operator(M::AbstractMatrix, grid::TimeGrid) =
-    _compact(VolterraOperator(_check_operator(M, grid.times, 6), grid), (_ISO4, _TI4_E3, _ORTHO4_CANON))
+    _compact(
+    VolterraOperator(_check_operator(M, grid.times, _operator_block_size(M, grid)), grid),
+    (_ISO4, _ISO2, _TI4_E3, _TI2_E3, _ORTHO4_CANON, _ORTHO2_CANON)
+)
+_operator_block_size(M::AbstractMatrix, grid::TimeGrid) = size(M, 1) == 3 * length(grid.times) ? 3 : 6
 # A creep law is turned into the relaxation operator the schemes assume (a run-time mode).
 _as_relaxation(R, mode::Symbol) = mode === :creep ? inv(R) : R
+
+# Aging viscoelasticity covers an RVE, with its schemes, and a Laminate, with `Laminated`,
+# `Voigt` or `Reuss` (more specific methods); any other cell or scheme is refused by name,
+# directly or nested as a `Homogenized` phase. The N-body schemes of a `ParticleAssembly`
+# have no aging viscoelastic counterpart.
+homogenize_alv(cell::MFH_Core.AbstractHomogenizationCell, scheme::HomogenizationScheme, prop::Symbol; kw...) =
+    throw(
+    ArgumentError(
+        "homogenize_alv: no aging viscoelastic homogenization of a $(nameof(typeof(cell))) " *
+            "by $(nameof(typeof(scheme))). It is available for an RVE with its schemes, and for a " *
+            "Laminate with Laminated, Voigt or Reuss; the N-body schemes of a ParticleAssembly " *
+            "(ClusterModel, EquivalentInclusion) have no aging viscoelastic counterpart. An elastic " *
+            "cell can be homogenized first (`homogenize`) and its tensor given as the property."
+    )
+)
 
 # A nested cell met inside an aging viscoelastic homogenization, on its grid.
 MFH_Core._resolve_alv(cell, scheme, prop::Symbol, times; kw...) = homogenize_alv(cell, scheme, prop; times, kw...)
@@ -530,7 +552,7 @@ function _homogenize_alv_rve(
             Rn_law = get(ph.properties, :Rn, nothing)
             Rt_law = get(ph.properties, :Rt, nothing)
             # Compliance + stiffness contributions, with optional
-            # interface-stiffness Sevostianov correction
+            # interface-stiffness correction
             # `B̃_eff = B̃ ∘ (𝟙 + b·K ∘ B̃)^{-vol}`.
             # Stored in the cheapest class that holds it (transversely isotropic
             # about the normal of a penny crack along e₃), as every crack

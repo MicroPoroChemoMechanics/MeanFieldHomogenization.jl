@@ -93,11 +93,13 @@ distribution of crack orientations** (see the
 keyword on ordinary inclusions), so the macroscopic effect of an
 isotropically-oriented crack population is itself isotropic.
 
-Note: [`SelfConsistent`](@ref) does not support cracks (its
-strain-concentration tensor becomes singular for zero-volume
-inclusions); use [`AsymmetricSelfConsistent`](@ref) instead. See the
+Note: [`SelfConsistent`](@ref) refuses a crack family of a single
+orientation (its strain-concentration tensor becomes singular for a phase
+with no volume and no orientation average); with an isotropic or
+transversely isotropic distribution both self-consistent forms run, and
+[`AsymmetricSelfConsistent`](@ref) takes any. See the
 [cracks manual page](@ref man-cracks) for the full API, including
-finite interface stiffness (Sevostianov springs).
+finite interface stiffness (spring-like faces).
 
 ## Effective modulus vs. crack density
 

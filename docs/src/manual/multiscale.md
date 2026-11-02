@@ -186,20 +186,24 @@ looping: the usual cause is a cell nested inside itself.
 | several properties | one call per property per scale | one nested cell answers all keys |
 | intermediate results | directly available | recomputed unless you ask for them |
 | post-processing between scales | natural | do it explicitly instead |
-| aging viscoelasticity | supported | **not supported** (see below) |
+| aging viscoelasticity | supported | supported for an `RVE` or a `Laminate` (see below) |
 
 Neither is deprecated. Use the explicit style when the scales need individual
 attention, the declarative one when the model is the object of interest —
 typically when it is to be differentiated, fitted or swept.
 
-## Limitations
+## [Limitations](@id man-multiscale-limitations)
 
-- **`Homogenized` inside an ALV chain is not supported.** `homogenize_alv`
-  works on discretized Volterra operators; for a nested cell to take part, its
-  inner result would have to be re-expressible as a
-  [`ViscoLaw`](@ref). Chain aging-viscoelastic scales explicitly. This applies
-  to a [`ParticleAssembly`](@ref) exactly as it does to an `RVE`: the two
-  N-body schemes have no ALV twin.
+- **Aging viscoelasticity.** Inside [`homogenize_alv`](@ref), a `Homogenized`
+  phase is homogenized in aging viscoelasticity on the time grid of the
+  enclosing call, once for the whole call: the result is that of the explicit
+  two-step chain ([Homogenizing](@ref man-visco-homogenizing) shows both). The
+  nested cell must be one the aging pipeline covers, an `RVE` with its schemes
+  or a `Laminate` with `Laminated`, `Voigt` or `Reuss`. A
+  [`ParticleAssembly`](@ref) is refused with an `ArgumentError`, directly or
+  nested: its two N-body schemes have no aging counterpart. An elastic assembly
+  can be homogenized first, with [`homogenize`](@ref), and its tensor given as
+  the property.
 - The declarative form does not check scale separation. That remains the
   modeler's responsibility, exactly as in the explicit form.
 

@@ -279,7 +279,7 @@ of an RVE do not change according to which scheme is about to read them.
 
 **Then why do only two schemes read it?** For the same reason [`Voigt`](@ref)
 reads no shape at all: a cruder estimate uses less of the microstructure. Being
-ignored by nine schemes out of eleven is the normal condition of microstructural
+ignored by eight schemes out of ten is the normal condition of microstructural
 data, not a sign that the field is in the wrong place.
 
 !!! warning "An undeclared distribution shape is an error"
@@ -413,7 +413,7 @@ requirement.
 
 | Family | `abstol` | `reltol` | `maxiters` |
 | :--- | ---: | ---: | ---: |
-| [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) | `1e-12` | `1e-8` | `100` |
+| [`SelfConsistent`](@ref), [`AsymmetricSelfConsistent`](@ref) | `1e-12` | `1e-8` | `100` (`50` with `NewtonDefault()`) |
 | ALV (aging-viscoelastic) counterparts | `1e-10` | `1e-8` | `200` |
 | [`DifferentialScheme`](@ref) (forwarded to the SciML `solve`) | `1e-8` | `1e-6` | → `solve` |
 | [`hill_tensor`](@ref) cubature backends | `1e-8` | `1e-6` | `10^6` |

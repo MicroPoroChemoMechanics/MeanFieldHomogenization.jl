@@ -30,7 +30,7 @@ knows a solver was involved.
 
 ![A mesh of an elliptical crack and its matrix, refined toward the crack front](../assets/fe/crack_mesh_sketch.svg)
 
-Three are shipped, and the same machinery serves all of them:
+Five are shipped, and the same machinery serves all of them:
 
 | Type | Morphology | Discretization | What it supplies |
 |:--|:--|:--|:--|
@@ -40,7 +40,7 @@ Three are shipped, and the same machinery serves all of them:
 | [`FEAxiSupershapePore`](@ref MeanFieldHomogenization.FEAxiSupershapePore) | superspheroidal **cavity**, axisymmetric | axisymmetric Fourier modes | the strain-side tensor, in both physics |
 | [`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier modes | both concentration tensors, in both physics |
 
-The general principle and the shared syntax come first below; the three
+The general principle and the shared syntax come first below; the five
 morphologies, and the ones not yet written, come after.
 
 ## The principle: a finite cell, and why it must be corrected
@@ -74,7 +74,7 @@ than silently projected.
 
 ## The general syntax
 
-Three steps, identical for both types and for any type added later.
+Three steps, identical for every type and for any type added later.
 
 ### 1. Load a backend
 
@@ -88,8 +88,8 @@ using MeanFieldHomogenization
 import Ferrite, FerriteGmsh, Gmsh      # activates MeanFieldHomogenizationFerriteExt
 ```
 
-`Gridap` serves both morphologies too — `import Gridap, GridapGmsh`, then pass
-`backend = GridapBackend()`. With neither library loaded the inclusion types
+`Gridap` serves the crack and the off-center sphere too — `import Gridap, GridapGmsh`,
+then pass `backend = GridapBackend()`. With neither library loaded the inclusion types
 still exist and can be constructed; only the solve errors, and it says which
 `import` is missing.
 
@@ -336,8 +336,8 @@ polarization-fixed-point form.
 ### A superspherical or superspheroidal cavity
 
 [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore) is the
-non-ellipsoidal case, and the only one of the three that serves **both
-physics** from one object and one mesh. The shape comes from
+non-ellipsoidal case in three dimensions, and serves **both physics** from one
+object and one mesh. The shape comes from
 [`Supersphere`](@ref MeanFieldHomogenization.Superspheres.Supersphere) or
 [`Superspheroid`](@ref MeanFieldHomogenization.Superspheres.Superspheroid), and
 the exponent is ``2p``: ``p = 1`` the sphere, ``p = 1/2`` the octahedron,
@@ -544,8 +544,9 @@ Named here so that the boundary of what exists is explicit:
   (Pan–Chou or Barnett–Willis) in place of the closed-form Kelvin dipole. This
   single restriction is what forces `IsoSymmetrize()` under every iterative
   scheme;
-- **more than one inclusion, or a non-spherical envelope**, in the
-  axisymmetric cell;
+- **more than one off-center inclusion**, or an off-center core in a
+  non-spherical envelope, in the axisymmetric cell (nested coaxial spheroids are
+  [`FEAxiLayeredSpheroid`](@ref MeanFieldHomogenization.FEAxiLayeredSpheroid));
 - **transport** for the crack: the elliptical-crack driver solves elasticity
   only, and the conduction problem would need its own resolution;
 - **solid** supershape inclusions. The cell is set up for a cavity: it meshes
