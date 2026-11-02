@@ -1,5 +1,65 @@
 # Changelog
 
+## v0.26.2 — jumps on the time grid; operators, laws and histories read as functions of time
+
+A patch release: an instant may be given twice in an aging viscoelastic computation, which
+makes a load applied at that instant, or a phase appearing then, exact; and every operator,
+sampled law and history can be evaluated at any instant of its grid's span.
+
+### Added
+
+- **An instant given twice is a jump.** `TimeGrid` refused two equal consecutive instants,
+  so a stress applied at ``t'`` rose over the whole interval before ``t'`` and the material
+  crept during that rise; the aging creep application worked around it with an instant
+  placed arbitrarily just before each loading age. The instants now only need to be in
+  increasing order. On a doubled instant the first node is the left limit ``t^-`` (a law or
+  a history given as a function is evaluated just before ``t``), the second the right limit
+  ``t^+``, and the interval of zero length between them is weighted by the kernel just after
+  the jump instead of a trapezoidal mean, which is the Stieltjes integral of a jump. A stress
+  held from ``t'`` then answers exactly the creep kernel ``J(t, t')`` from ``t'^+`` on; a
+  phase `precipitated` at ``t_s`` ignores any strain applied before ``t_s`` and carries a
+  strain jump at ``t_s`` whole; a `dissolved` phase carries stress at ``t_d^-`` and none at
+  ``t_d^+``. On a grid without a doubled instant the weights are unchanged, to the last bit.
+- **`R(t, t′)` and `h(t)`.** A `VolterraOperator` built from a law keeps it and evaluates it
+  (zero for ``t' > t``); any other operator (a sum, an inverse, the result of
+  `homogenize_alv`) reads its kernel on the grid and interpolates it between the instants. A
+  `TimeHistory` built from a function keeps it; one given by values is interpolated. The
+  interpolation is the one the trapezoidal rule integrates exactly: linear between the
+  instants in ``t'`` (and taken linear in ``t``, on the triangle ``t' \le t`` of a cell the
+  diagonal cuts), right-continuous at a doubled instant, nothing outside the grid. The cell
+  is found by a binary search; a single `R(t, t′)` recovers the two rows of the kernel it
+  needs, and `operator_law(R)` recovers them all once, after which `law(t, t′)` costs a
+  binary search and four samples. Both accept ForwardDiff duals; a law-backed operator also
+  takes symbolic instants.
+
+### Changed
+
+- A `SampledViscoLaw` (what `operator_law` returns) evaluated between the instants of its
+  grid interpolates instead of throwing; outside the grid it throws a `DomainError`.
+- `precipitated` and `dissolved` on a `VolterraOperator` switch its kernel samples node by
+  node instead of going through a law evaluated by value, which a doubled instant would
+  have made ambiguous.
+- `trapezoidal_matrix` refuses instants that are not in increasing order (it silently
+  built a meaningless matrix).
+- `VolterraOperator` has a fifth type parameter (the law it keeps, or `Nothing`) and
+  `TimeHistory` a third (its function, or `Nothing`). `homogenize_alv` drops the law of a
+  phase operator, so that the phases share one operator type.
+
+### Documentation
+
+- The manual explains jumps on the grid and the evaluation of operators and histories; the
+  theory derives the weights of a jump, the recovery of the kernel samples from the matrix,
+  and the interpolation the trapezoidal rule integrates exactly.
+- The aging basic creep application (Lavergne and Barthélémy, 2020): its script runs as a
+  whole (`main()`, also from the REPL), its setup command works on an older local `docs`
+  environment, holds each loading
+  age twice in its grid, reads the compliance as the creep kernel ``J(t, t')`` at the
+  measured instants rather than at the nearest instant of the grid, and computes the
+  hydrate foams only where a grain is consumed. The page drops its instant at 2.997 days
+  and its explanation of a load rising over the interval before the loading age, and gives
+  the overestimate it measures (32, 21 and 14 % on average for the loadings at 3, 7 and
+  28 days) instead of a range, 6 to 33 %, that matched no measurement.
+
 ## v0.26.1 — laminates in aging conduction in any frame; nested cells in aging viscoelasticity, also in MFH Studio
 
 A patch release: two defects of aging viscoelasticity fixed, a refusal made explicit, and
