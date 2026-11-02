@@ -137,6 +137,9 @@ end
     law = operator_law(Rf)
     @test law(3.0, 0.5) ≈ Rf(3.0, 0.5) rtol = 1.0e-14
     @test operator_law(J)(3.0, 0.5) ≈ J(3.0, 0.5) rtol = 1.0e-14
+    # A phase that precipitates after the grid is zero all along, and so is its kernel.
+    Z = VolterraOperator(precipitated(je_scalar(), 100.0), JE_TIMES)
+    @test iszero(Matrix(Z)) && iszero(je_unwrap(Z)(5.0, 1.0)) && iszero(Z(5.0, 1.0))
     # Off the grid, nothing is extrapolated.
     @test_throws DomainError Rf(10.0, 1.0)
     @test_throws DomainError Rf(2.0, -1.0)

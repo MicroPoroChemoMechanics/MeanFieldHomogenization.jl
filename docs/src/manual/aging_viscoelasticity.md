@@ -161,7 +161,8 @@ J_log(t, t′) = t < t′ ? 0.0 : 1 / 30 + log1p((t - t′) / 0.5) / 60
 creep = VolterraOperator(J_log, jump)
 σ = TimeHistory(t -> t ≥ 1.0 ? 1.0 : 0.0, jump)            # 0 at 1⁻, 1 at 1⁺
 ε = creep * σ
-[ε[i][1] for i in 1:length(jump)] ≈ [J_log(t, 1.0) for t in jump]
+held = [i ≤ 3 ? 0.0 : J_log(t, 1.0) for (i, t) in enumerate(jump)]   # nothing up to 1⁻
+[ε[i][1] for i in 1:length(jump)] ≈ held
 ```
 
 The same holds for a phase that appears at ``t_s`` ([`precipitated`](@ref)) or

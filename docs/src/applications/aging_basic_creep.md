@@ -88,21 +88,24 @@ instance, is one line of it, the sum of two operators:
 R = dissolved(grain, times[i]) + precipitated(foams[i], times[i])
 ```
 
-A small check of these two operations: a soft phase in which a stiff one precipitates at
-one day, loaded at three days, has the compliance of the stiff phase.
+A creep test applies a stress at the loading age ``t'`` and holds it: the stress jumps at
+``t'``. The time grid therefore holds each loading age **twice**, its left and right limits
+(see [the time grid](@ref man-visco-jumps)), and the compliance ``J(t, t')`` is the kernel of
+the creep operator, the Volterra inverse of the relaxation one, read at any ``(t, t')`` by
+calling it. `uniaxial_compliance(R)` returns that function for the axial strain under a
+uniaxial stress, and `loading_grid` builds the grid.
+
+A small check of these operations: a soft phase in which a stiff one precipitates at one
+day, loaded at three days, has the compliance of the stiff phase.
 
 ```@example basiccreep
-times = [0.5, 1.0, 2.997, 3.0, 30.0]
+times = [0.5, 1.0, 3.0, 3.0, 30.0]          # loaded at 3 days: 3 given twice
 C = iso_stiffness_E_nu(30.0, 0.2)
 soft = VolterraOperator(TensISO{3}(3.0e-6, 2.0e-6), times)
 stiffening = soft + precipitated(VolterraOperator(C, times), 1.0)
-J = uniaxial_compliance(stiffening, times)
-@printf "J(30, 3) = %.5f per GPa, 1/E = %.5f\n" J[end, 4] 1 / 30
+J = uniaxial_compliance(stiffening)
+@printf "J(30, 3) = %.5f per GPa, J(10, 3) = %.5f per GPa, 1/E = %.5f\n" J(30.0, 3.0) J(10.0, 3.0) 1 / 30
 ```
-
-On the grid, a load "held from ``t_k``" rises over ``[t_{k-1}, t_k]``. The grid therefore
-carries an instant just before each loading age (`loading_grid`), so that this rise is a
-step.
 
 ## Le Roy's concretes
 
@@ -118,9 +121,10 @@ end
 ```
 
 The whole chain — hydration, four aging scales, compliance for every loading age — runs in
-`scripts/47_aging_basic_creep_concrete.jl`, about eight minutes; this page reads its
-results. The measurements are those of the NU database of [Hubler2015](@citet), entries
-`c_123_01` to `c_123_10`.
+`scripts/47_aging_basic_creep_concrete.jl`, in about five minutes; this page reads its
+results. The model itself, a set of functions, is
+`scripts/common/aging_creep_micromechanics.jl`. The measurements are those of the NU
+database of [Hubler2015](@citet), entries `c_123_01` to `c_123_10`.
 
 ```@example basiccreep
 res = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "docs", "src", "assets", "applications", "aging_basic_creep", "results.json"))
@@ -144,8 +148,9 @@ Lines: the model; points: the measurements.
 ## What it shows
 
 - For the ordinary concrete loaded at **3 days or later**, the model follows the shape
-  of the creep curves, the elastic part included, and overestimates the compliance by
-  6 to 33 %, the most at 3 days.
+  of the creep curves, the elastic part included, and overestimates the compliance: by
+  32 % on average over the measured points of the test loaded at 3 days, 21 % at 7 days
+  and 14 % at 28 days, 39 % at most.
 - Loaded at **0.83 and 1.12 days**, it overestimates the compliance by far (the 0.83-day
   curve of the ordinary concrete is off the scale): the paste is then close to its
   percolation threshold, where the self-consistent foam is most
@@ -171,7 +176,16 @@ Lines: the model; points: the measurements.
 
 ## Reproducing this page
 
+From the root of the package:
+
 ```
-julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+julia --project=docs -e 'using Pkg; Pkg.update()'
 julia scripts/47_aging_basic_creep_concrete.jl
 ```
+
+The first line installs the `docs` environment, or brings an older local one in line with
+`docs/Project.toml` (its manifest is not versioned; `Pkg.instantiate()` refuses one that
+predates a new dependency). The script activates that environment itself, prints the
+elastic compliance and the last measured point of each test against the model, and rewrites
+`docs/src/assets/applications/aging_basic_creep/results.json`. From the REPL,
+`include("scripts/47_aging_basic_creep_concrete.jl")` does the same.
