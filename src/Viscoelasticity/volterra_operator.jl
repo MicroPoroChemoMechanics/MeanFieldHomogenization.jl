@@ -684,7 +684,7 @@ struct TimeHistory{T, G <: TimeGrid, F}
     values::Matrix{T}
     grid::G
     f::F            # the function it was built from, or nothing
-    function TimeHistory(values::AbstractMatrix{T}, times, f::F = nothing) where {T, F}
+    function TimeHistory(values::AbstractMatrix{T}, times, f::F) where {T, F}
         grid = TimeGrid(times)
         size(values, 2) == length(grid) && size(values, 1) in (1, 3, 6) || throw(
             DimensionMismatch(
@@ -696,6 +696,8 @@ struct TimeHistory{T, G <: TimeGrid, F}
     end
 end
 
+# No default for the function: a default would leave `F` unbound in the two-argument method.
+TimeHistory(values::AbstractMatrix, times) = TimeHistory(values, times, nothing)
 TimeHistory(values::AbstractVector, times) = TimeHistory(reduce(hcat, map(_history_components, values)), times)
 function TimeHistory(f, times)
     g = TimeGrid(times)
