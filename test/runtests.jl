@@ -428,6 +428,7 @@ end
             include("Viscoelasticity/test_symbolic_rheology.jl")
         include("Viscoelasticity/test_symmetrize_alv.jl")
         include("Viscoelasticity/test_laminate_alv.jl")
+        include("Viscoelasticity/test_laminate_frames.jl")
         include("Viscoelasticity/test_visco_law.jl")
         include("Viscoelasticity/test_trapezoidal.jl")
         include("Viscoelasticity/test_sampled_law.jl")

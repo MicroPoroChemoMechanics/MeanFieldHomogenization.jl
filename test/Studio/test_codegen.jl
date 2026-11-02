@@ -119,6 +119,15 @@ end
     # fewer than three angles would make a 2-D basis
     @test endswith(pexpr(P(; builder = "TensOrtho", euler_angles = Any[0.3])), "RotatedBasis(0.3, 0.0, 0.0))")
     @test startswith(pexpr(P(; builder = "TensOrtho")), "TensOrtho(120.0, 90.0, 70.0, 40.0, 35.0, 30.0, 25.0, 22.0, 20.0, CanonicalBasis{3, Float64}()")
+    # the cubic form: its three constants in the cube frame, and the tensor they build
+    @test pexpr(P(; builder = "TensCubic", args = props("C11" => 170.0, "C12" => 120.0, "C44" => 75.0))) ==
+        "cubic_from_constants(170.0, 120.0, 75.0, CanonicalBasis{3, Float64}())"
+    @test endswith(pexpr(P(; builder = "TensCubic", euler_angles = Any[0.3, 0.2])), "RotatedBasis(0.3, 0.2, 0.0))")
+    # evaluated as a generated script would, with TensND loaded
+    script = Module(:StudioCubic)
+    Core.eval(script, :(using MeanFieldHomogenization, TensND))
+    expr = Meta.parse(pexpr(P(; builder = "TensCubic", args = props("C11" => 170.0, "C12" => 120.0, "C44" => 75.0))))
+    @test Core.eval(script, :(collect(cubic_constants($expr)))) ≈ [170.0, 120.0, 75.0]
 end
 
 function layered_spheroid_model()
@@ -327,8 +336,19 @@ end
     m = two_scale()
     m.sweep = MS.Sweep(; enabled = true, cell = m.cells[2].id, lens = MS.Lens(; kind = "nested", member = "FOAM", property = ":C", inner = MS.to_dict(MS.Lens(; kind = "amount", phase = "PORE"))))
     @test occursin("nested(:FOAM, :C, amount(:PORE))", gen(m))
+    # aging viscoelasticity across the seam: the inner scale is homogenized on the grid
+    # of the outer call, and the script runs
+    m = two_scale()
+    m.cells[1].phases[1].properties[1] = P(; builder = "maxwell_iso", args = props("k" => 72.0, "mu" => 32.0, "eta_k" => 50.0, "eta_mu" => 30.0))
     m.alv.enabled = true
-    @test any(p -> occursin("viscoelast", lowercase(p)), MS.validate(m))
+    m.alv.plot = false
+    @test !any(p -> occursin("nested scale", p), MS.validate(m))
+    src = gen(m)
+    @test occursin("Homogenized(build_foam()", src) && occursin("homogenize_alv(", src)
+    # the preamble activates the project of a script saved on disk; here the test
+    # environment is already active (it has the script's packages, but not Pkg)
+    @test occursin(MS.ACTIVATE, src)
+    @test (Base.include_string(Module(:StudioALVTwoScales), replace(src, MS.ACTIVATE => "")); true)
     # builders taking parameters, and a builder kept under its own name
     m = two_scale()
     m.cells[1].params = ["φ"]

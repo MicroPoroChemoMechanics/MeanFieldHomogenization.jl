@@ -25,10 +25,11 @@ flavor. A new scheme slots in beside them:
    `src/Schemes/scheme_types.jl`, and register its symbol alias in
    `SCHEME_ALIAS` (`src/Schemes/homogenize.jl`) if you want
    `homogenize(rve, :myscheme, :C)` to work.
-3. Implement `_evaluate(rve, ::MyScheme, ::Val{p}; kw...)`. Provide **one
-   method per tensor order** — dispatch on the order of `reference_property(rve, scheme, p)`
-   — so the scheme serves elasticity and transport from one implementation, as
-   `_mt_dispatch` does in `mori_tanaka.jl`.
+3. Implement `_evaluate(rve, ::MyScheme, ::Val{p}; kw...)` once for both tensor
+   orders: contract with `_compose` (`⊡` at order 4, `⋅` at order 2) and build
+   identities and zeros from the property (`one(P)`, `zero(P)`), so the scheme
+   serves elasticity and transport from one implementation, as `_mt_kernel` does in
+   `mori_tanaka.jl`.
 4. **Go through `contribution_helpers.jl`.** Never call
    `property_contribution` and friends directly on a phase geometry: the
    `_phase_*` helpers apply the amount, honor the `symmetrize` setting, hand

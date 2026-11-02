@@ -1103,8 +1103,6 @@ function sensDoc(kind) {
 function renderAlv() {
   const a = S.model.alv;
   a.component = a.component && a.component.length === 2 ? a.component : [1, 1];
-  const blocked = S.model.cells.some((c) =>
-    c.phases.some((p) => (p.properties || []).some((x) => x.source === "cell")));
   const viscoPhases = [];
   for (const c of S.model.cells) {
     for (const ph of c.phases) {
@@ -1116,12 +1114,6 @@ function renderAlv() {
   }
 
   $("#tab-alv").replaceChildren(
-    blocked
-      ? el("div", { class: "note problem" },
-          t("Aging viscoelasticity cannot be combined with a nested scale: "
-          + "MeanFieldHomogenization cannot re-express a homogenized inner result as a "
-          + "ViscoLaw. Remove the seam first."))
-      : el("span"),
     el("div", { class: "note" },
       t("Give a phase a viscoelastic law in Scales → Properties → Parametrization "
       + "(Maxwell, Kelvin chain, elastic, or a custom J(t, t′)).")

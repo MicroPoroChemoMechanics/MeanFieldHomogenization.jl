@@ -89,13 +89,20 @@ of each inclusion in the effective medium,
   + \sum_c \kappa_c\,\varepsilon_c\,\mathbb H_c(\mathbb C^{\mathrm{asc}}) .
 ```
 
-For solid phases the two forms are equivalent: multiplied by ``\mathbb S_m`` on
-the left, the stiffness form becomes the compliance one multiplied by
+The two forms have the same fixed point: multiplied by ``\mathbb S_m`` on the
+left, the stiffness form becomes the compliance one multiplied by
 ``\mathbb C^{\mathrm{asc}}`` on the right, since
-``(\mathbb S_i - \mathbb S_m):\mathbb C_i = \mathbb I - \mathbb S_m:\mathbb C_i``.
-They differ in how the iteration converges, and the package iterates on the
-stiffness when the Voigt mean is larger than the matrix stiffness in norm, on the
-compliance otherwise. Cracks, which only the compliance form carries, force it.
+``(\mathbb S_i - \mathbb S_m):\mathbb C_i = \mathbb I - \mathbb S_m:\mathbb C_i``;
+a crack family enters the stiffness form as
+``-\mathbb C_m:\Delta\mathbb H:\mathbb C^{\mathrm{asc}}`` and the compliance one
+as ``\Delta\mathbb H``, which the same multiplication relates. They differ in how
+the iteration converges, and the package iterates on the stiffness when the Voigt
+mean is larger than the matrix stiffness in norm, on the compliance otherwise; the
+Voigt mean passes cracks over, so a tie (cracks and no stiffer phase) takes the
+compliance form. Each iterate is projected on the major-symmetric tensors, as the
+self-consistent one is: with families of different frames, the projected fixed
+points of the two forms differ by a few ``10^{-4}``, and the form is the one the
+criterion selects, as in Echoes.
 
 The two self-consistent fixed points are related by a single term. Splitting
 ``\mathbb C_r - \mathbb C^{\mathrm{sc}} = (\mathbb C_r - \mathbb C_m) + (\mathbb C_m - \mathbb C^{\mathrm{sc}})``

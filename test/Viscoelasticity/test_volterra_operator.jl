@@ -369,6 +369,17 @@ end
     )
     nested = homogenize_alv(outer(Homogenized(cell(m, E_I, Ellipsoid(1.0)), MoriTanaka())), MoriTanaka(), :C; times)
     @test Matrix(nested) ≈ Matrix(homogenize_alv(outer(R), MoriTanaka(), :C; times)) rtol = 1.0e-13
+    # A cell the aging pipeline does not cover is refused by name, directly or nested:
+    # the N-body schemes of an assembly have no aging counterpart.
+    asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
+    add_matrix!(asm, Dict(:C => TensISO{3}(30.0, 20.0)))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(0.2), Dict(:C => TensISO{3}(90.0, 60.0)))
+    @test_throws "no aging viscoelastic homogenization of a ParticleAssembly by ClusterModel" homogenize_alv(
+        asm, ClusterModel(), :C; times
+    )
+    @test_throws "of a ParticleAssembly by ClusterModel" homogenize_alv(
+        outer(Homogenized(asm, ClusterModel())), MoriTanaka(), :C; times
+    )
     # Spheroids along e₃: transversely isotropic about e₃.
     @test homogenize_alv(cell(m, E_I, Spheroid(4.0)), MoriTanaka(), :C; times).class isa TensTI
     # Tilted spheroids of a phase transversely isotropic about their own axis: the

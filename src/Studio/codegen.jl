@@ -415,6 +415,9 @@ function prop_expr(g::CodeGen, p::Property)
         )
         return "TensOrtho($consts, $(frame_expr(p.euler_angles)))"
     end
+    # the three constants in the cube frame, which the tensor carries as its basis
+    b == "TensCubic" && return "cubic_from_constants($(num("C11", 170.0)), $(num("C12", 120.0)), " *
+        "$(num("C44", 75.0)), $(frame_expr(p.euler_angles)))"
     b == "maxwell_iso" && return "maxwell_iso($(num("k", 10.0)), $(num("mu", 5.0)), $(num("eta_k", 1.0)), $(num("eta_mu", 1.0)))"
     b == "kelvin_iso" && return "kelvin_iso($(num("k0", 10.0)), $(num("mu0", 5.0)), " *
         "[$(num("k1", 20.0))], [$(num("mu1", 10.0))], [$(num("tau_k", 1.0))], [$(num("tau_mu", 1.0))])"

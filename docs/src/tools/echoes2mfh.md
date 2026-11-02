@@ -58,8 +58,8 @@ end
 Three things happened that are not local rewrites:
 
 **The RVE was lifted into a builder.** Echoes mutates one module-level RVE;
-MFH's [`RVE`](@ref) is immutable, and its matrix fraction is *derived*
-(`1 - Σ f`) rather than settable. So the construction becomes a function of
+in MFH the fraction of the phase declared `:rest` is *derived*
+(`1 - Σ f`) rather than settable. The construction therefore becomes a function of
 whatever the script varies. Note that `ver["SOLID"].fraction = 1 - f` is
 **dropped, not translated** — in MFH it is not merely redundant, it raises.
 

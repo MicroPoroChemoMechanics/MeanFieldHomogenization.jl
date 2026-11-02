@@ -351,7 +351,7 @@ above. Unlike a homogeneous perfect-interface spheroid — whose response depend
 on shape only — ``\boldsymbol{k}^{\mathrm{eq}}`` is **size-dependent**, because an
 imperfect interface introduces a length scale (``\rho`` and ``k^{\mathrm s}`` are not
 dimensionless). Demonstrated in
-`scripts/34_spheroid_equivalent_conductivity.jl`.
+`scripts/32_spheroid_effective_conductivity.jl`.
 
 When every interface is perfect, only degree 1 survives, the coupling matrices
 drop out, and ``\boldsymbol{k}^{\mathrm{eq}}`` reduces to the closed-form nested
@@ -393,8 +393,7 @@ The integrand is smooth and bounded on ``[-1,1]`` for a prolate ``q``, and
 complex-analytic with no real singularity for an oblate ``q = \mathrm{i}\tau``:
 `Float64` quadrature reaches machine precision for any ``\mathcal{N}``. The
 `BigFloat` port of the monomial series is kept as an independent oracle
-(`test/LayeredSpheroids/test_coupling.jl`,
-`scripts/33_spheroid_series_convergence.jl`).
+(`test/LayeredSpheroids/test_coupling.jl`).
 
 ## 8. Integration with the schemes
 

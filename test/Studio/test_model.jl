@@ -86,10 +86,6 @@ end
 @testset "frames" begin
     @test !MS.tilted_normal(nothing) && !MS.tilted_normal(Any[]) && !MS.tilted_normal(Any[0, 0, 1])
     @test MS.tilted_normal(Any[1.0, 0.0, 1.0]) && MS.tilted_normal(Any["a", 0, 1]) && MS.tilted_normal(Any[0, 1])
-    @test MS.is_canonical_frame(MS.Cell(; euler_angles = Any[0, 0.0, ""]))
-    @test !MS.is_canonical_frame(MS.Cell(; euler_angles = Any["π / 4"]))
-    @test MS.is_canonical_frame(MS.Cell(; frame_mode = "normal", normal = Any[0, 0, 1]))
-    @test !MS.is_canonical_frame(MS.Cell(; frame_mode = "normal", normal = Any[1, 0, 0]))
 end
 
 problems(m) = MS.validate(m)
@@ -125,7 +121,8 @@ has(m, text) = any(p -> occursin(text, p), problems(m))
     @test !has(m, "transport")
     m.cells[1].frame_mode = "normal"
     m.cells[1].normal = Any[1, 0, 0]
-    @test has(m, "aging viscoelasticity of a laminate in transport (`:K`) requires the canonical frame")
+    # a tilted laminate in aging transport is computed like any other
+    @test !has(m, "transport")
     m.alv.enabled = false
     m.sens.enabled = true
     m.sens.scheme = "Voigt"
@@ -155,6 +152,7 @@ has(m, text) = any(p -> occursin(text, p), problems(m))
     @test has(two, "`outer`/`H`:C: `SelfConsistent` needs a matrix phase")
     two.alv.enabled = true
     two.alv.scheme = "Laminated"
-    @test has(two, "aging viscoelasticity cannot be combined with a nested scale")
+    # a nested scale in aging viscoelasticity is homogenized on the grid of the outer call
+    @test !has(two, "nested scale")
     @test MS.py_str(nothing) == "None"
 end

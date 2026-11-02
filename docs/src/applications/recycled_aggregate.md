@@ -486,7 +486,7 @@ pinned once solved: comparing the two means building two inclusions.
 Both build the same mesh, the same P2 space and the same quadrature, so they do
 not merely converge to the same limit — they agree to round-off, around
 ``10^{-14}`` on every tensor in both physics. That is what
-`test/FiniteElements/test_axi_gridap.jl` asserts, which makes it a sharp guard
+`test/FiniteElements/test_gridap_backend.jl` asserts, which makes it a sharp guard
 on the backend contract rather than a loose convergence check.
 
 Which to reach for: Ferrite to run, Gridap to *read* or to modify. The weak
@@ -570,8 +570,8 @@ schemes only ever hit one key.
   included). Any other anisotropy couples the Fourier modes, which is exactly
   what the formulation assumes away; it is refused rather than silently wrong.
 - **No automatic differentiation through the solve**: the sparse factorization
-  is `Float64`-only. Use finite differences for sensitivities in a geometric
-  parameter.
+  is `Float64`-only, so a sensitivity to a geometric parameter of the inclusion is
+  not available; the analytical layers of the model differentiate as usual.
 - **First order in ``V_{\mathcal D}/R^3``.** The correction keeps the leading
   dipole term only; the quadrupole and beyond survive in the shear part below
   ``R \approx 3a`` (see the table above). `radius_ratio = 4.0` is what ships.
@@ -598,7 +598,7 @@ cross-backend file:
 ```shell
 julia --project=. -e 'using MeanFieldHomogenization, Ferrite, FerriteGmsh, Gmsh,
                             Gridap, GridapGmsh, Test;
-                      include("test/FiniteElements/test_axi_gridap.jl")'
+                      include("test/FiniteElements/test_gridap_backend.jl")'
 ```
 
 ## Where to go next

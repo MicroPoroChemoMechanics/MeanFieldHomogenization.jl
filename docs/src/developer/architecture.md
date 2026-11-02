@@ -65,7 +65,7 @@ when touching it:
 | [`MeanFieldHomogenization.Cracks`](@ref) | Crack-opening-displacement (COD) tensor, compliance contribution, stress/displacement intensity factors. |
 | [`MeanFieldHomogenization.Conductivity`](@ref) | Second-order Hill tensor for transport problems (diffusion, conduction, Darcy flow), closed form for any matrix anisotropy. |
 | [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise concentration. |
-| [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, conduction, Kapitza / surface-conductive interfaces, series or quadrature evaluation. |
+| [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, in conduction (Kapitza / surface-conductive interfaces, series or quadrature evaluation) and in axisymmetric elasticity. |
 | [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer concentration. |
 | [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
 | [`MeanFieldHomogenization.Interactions`](@ref) | Two-inclusion interaction tensor ``\mathbb{T}^{ab}`` and the Green operator of the reference — closed forms for balls and disks, cubature for the anisotropic case. |
@@ -76,6 +76,9 @@ when touching it:
 | [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion contract: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
 | [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend contract (`Ferrite` or `Gridap`). |
 | [`MeanFieldHomogenization.NeuralInclusions`](@ref) | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology. |
+| [`MeanFieldHomogenization.Superspheres`](@ref) | The geometry of superspherical and superspheroidal shapes, from the octahedron to the cube: level set, volume, surface meshes; their tensors come from the finite-element and neural routes. |
+| [`MeanFieldHomogenization.MaterialLaws`](@ref) | Constitutive laws at a material point: writing a law, integrating it with its consistent tangent, driving it along a loading path, and the nonlinear laws derived from a microstructure. |
+| `MeanFieldHomogenization.Studio` | MFH Studio, the browser interface that writes the script of a model ([MFH Studio](@ref tools-mfhstudio)). |
 
 The table below says the same thing from the other side: not what a
 sub-module is for, but what it puts in the namespace.
@@ -90,7 +93,7 @@ sub-module is for, but what it puts in the namespace.
 | `Cracks`           | `EllipticCrack`, `RibbonCrack`, `cod_tensor`, `sif`, `dif`, and the crack methods of the contribution generics |
 | `Conductivity`     | additional `_kernel` methods for 2nd-order transport tensors                                        |
 | `LayeredSpheres`   | `LayeredSphere`, Hervé–Zaoui recurrences, five interface types, concentration fields                 |
-| `LayeredSpheroids` | `LayeredSpheroid` (confocal, conduction)                                                            |
+| `LayeredSpheroids` | `LayeredSpheroid` (confocal; conduction and axisymmetric elasticity)                                |
 | `Laminates`        | `Laminate`, the interface algebra, per-layer concentration, the ALV twin                              |
 | `Interactions`     | Green operator of the reference and the two-inclusion interaction tensor (closed forms, cubature, periodic sums) |
 | `Assemblies`       | `ParticleAssembly`, its generators and boundary treatments, the two N-body schemes                  |

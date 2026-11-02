@@ -367,10 +367,10 @@ lens rather than a hand-written closure:
 cell = set_param(base_cell, nested(:FOAM, :C, amount(:PORE)), φ)
 ```
 
-!!! note "Not combinable with aging viscoelasticity"
-    An inner `Homogenized` cannot sit inside an ALV chain — the inner result
-    would have to be re-expressible as a `ViscoLaw`. The interface refuses the
-    combination instead of writing a script that fails at run time.
+!!! note "With aging viscoelasticity"
+    A nested scale also enters an aging viscoelastic run: the inner cell is
+    homogenized on the time grid of the outer one, once for the whole run (see
+    [Multiscale](@ref man-multiscale-limitations)).
 
 ## Choosing what to compute
 
@@ -447,8 +447,9 @@ extraction used in [`scripts/62_alv_schemes.jl`](@ref tut-alv-schemes).
 
 Conductivity comes in three forms: isotropic ``k``, transversely
 isotropic ``(k_t, k_a)``, and orthotropic ``(k_1, k_2, k_3)``. Stiffness offers isotropic ``(k, \mu)`` or ``(E, \nu)``,
-transversely isotropic Hoenig parameters, and the nine orthotropic constants.
-Anything else is typed as a Julia expression, which the generator passes
+transversely isotropic Hoenig parameters, the nine orthotropic constants, and
+the three cubic constants ``(C_{11}, C_{12}, C_{44})``; a cubic conductivity is
+isotropic, so conduction has no cubic form. Anything else is typed as a Julia expression, which the generator passes
 through untouched.
 
 ### The frame the constants are written in
@@ -469,12 +470,13 @@ hoenig_stiffness(30.0, 0.3, 0.2, 0.25, 0.5, vecbasis(RotatedBasis(π/4, 0.7, 0.0
 TensTI{2}(1.0, 5.0, vecbasis(RotatedBasis(π/4, 0.7, 0.0))[:, 3])
 ```
 
-An orthotropic tensor needs all three directions, and takes the basis itself.
-`Tens(A, basis)` stores `A` as the components **in that basis**, which is what
-"diagonal in the material frame" means:
+An orthotropic or a cubic tensor needs all three directions, and takes the basis
+itself — for a cubic one, the cube axes. `Tens(A, basis)` stores `A` as the
+components **in that basis**, which is what "diagonal in the material frame" means:
 
 ```julia
 TensOrtho(120.0, 90.0, 70.0, 40.0, 35.0, 30.0, 25.0, 22.0, 20.0, RotatedBasis(0.3, π/3, 0.0))
+cubic_from_constants(170.0, 120.0, 75.0, RotatedBasis(0.3, π/3, 0.0))
 Tens([1.0 0.0 0.0; 0.0 2.0 0.0; 0.0 0.0 5.0], RotatedBasis(0.3, π/3, 0.0))
 ```
 

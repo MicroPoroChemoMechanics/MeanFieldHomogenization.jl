@@ -1,5 +1,65 @@
 # Changelog
 
+## v0.26.1 — laminates in aging conduction in any frame; nested cells in aging viscoelasticity, also in MFH Studio
+
+A patch release: two defects of aging viscoelasticity fixed, a refusal made explicit, and
+MFH Studio brought in line with the package.
+
+### Fixed
+
+- An aging laminate in conduction (`homogenize_alv(lam, Laminated(), :K; …)`) refused any
+  normal but ``\underline{e}_3``. Its relaxation blocks are now rotated into the frame of
+  the layers and back, as at order 4: the operator of a laminate turned by a rotation, its
+  layer properties turned with it, is the operator of the laminate along
+  ``\underline{e}_3`` turned block by block (anisotropic layers, aging laws, three
+  rotations), and its derivative with respect to the orientation is that of the elastic
+  scheme.
+- The plain ``3n\times 3n`` matrix of an operator in conduction, which an aging laminate
+  returns, was read with ``6\times 6`` blocks when given as a phase property, so a
+  laminate in conduction could not be nested as a `Homogenized` phase of an aging cell.
+  The block size is now read on the size of the matrix, at both orders.
+
+### Changed
+
+- `homogenize_alv` on a cell it does not cover, a `ParticleAssembly` with an N-body scheme
+  directly or as a nested `Homogenized` phase, throws an `ArgumentError` that names the
+  cell and the scheme, instead of a `MethodError`.
+- MFH Studio no longer refuses a nested scale in an aging viscoelastic run, nor an aging
+  laminate in conduction outside the canonical frame: both are computed by the package. It
+  offers a cubic stiffness, from its three constants ``(C_{11}, C_{12}, C_{44})`` in the
+  cube frame.
+- `laminate_alv` is one method for both orders.
+
+### Documentation
+
+- The multiscale manual stated that a `Homogenized` cell could not be nested in an aging
+  viscoelastic computation, and the roadmap listed it as future work: it has been possible
+  since 0.26.0 for an `RVE` or a `Laminate`, which the manual now says, with the refusal of
+  an assembly. The MFH Studio page documents the cubic form and the nested scales in aging
+  viscoelasticity.
+- A review of the pages against the code corrected:
+  - the aging viscoelasticity pages, which said the asymmetric self-consistent scheme
+    existed at order 4 only (it exists at both orders since 0.26.0);
+  - the Mori–Tanaka and asymmetric self-consistent theory pages, which still described
+    the estimates of 0.25 (the projection on the major-symmetric tensors, the choice of
+    the form, cracks in both forms);
+  - the differential scheme page, which said `method = :residues` raised an error (it
+    runs, and agrees);
+  - the conduction manual, whose comment gave a wrong COD for a penny crack
+    (``8/(3\pi k_0)``, not ``2/(\pi^2 k_0)``);
+  - the finite-element page, which counted three morphologies out of five and said
+    Gridap served all of them;
+  - and smaller points: a tutorial on cracks contradicting the manual on
+    `SelfConsistent`, an RVE described as immutable, two missing package extensions in
+    the quickstart, the count of lens kinds and of schemes reading the distribution, the
+    Newton default of `maxiters`, three file names that do not exist, the developer
+    guide pointing to a function that no longer exists, the architecture table missing
+    three modules.
+- The spring-interface correction of a crack in elasticity was attributed to Sevostianov;
+  as for its aging counterpart since 0.26.0, it is now stated as an approximation, exact in
+  its two limits, with no published source known to the package. The `Homogenized`
+  docstring said nesting in an aging viscoelastic computation was not supported.
+
 ## v0.26.0 — self-consistent solvers that keep the physical root; ALV ribbons and cracks in conduction
 
 A minor release: new exported API, and refusals where options were ignored. The Newton
