@@ -211,4 +211,16 @@ end
     @test occursin("no convergence", sprint(showerror, err))
     flat = ResidualLaw(; stress = (ε, y, p) -> ε, residual = (y, g, prev, Δt, p) -> (a = zero(y.a) + 1,), layout = (a = 1,))
     @test_throws LocalIntegrationError point_update(flat, _mve(1.0e-3, 0, 0), initial_state(flat), 0.0)
+    # A residual accurate to a floor only (a noise that its Jacobian does not see):
+    # below √ε the iterate is accepted there, at the accuracy of the floor, although
+    # the default tolerance cannot be met; well above, the step still fails.
+    noisy(η) = ResidualLaw(;
+        stress = (ε, y, p) -> ε, layout = (a = 1,), y₀ = [1.0],
+        residual = (y, g, prev, Δt, p) -> (a = y.a^2 - 2 + η * sin(1.0e12 * ForwardDiff.value(y.a)),),
+    )
+    floored = noisy(1.0e-10)
+    @test point_update(floored, _mve(1.0e-3, 0, 0), initial_state(floored), 0.0)[3].y[1] ≈ SQ2_ENG atol = 1.0e-9
+    coarse = noisy(1.0e-5)
+    err = (@test_throws LocalIntegrationError point_update(coarse, _mve(1.0e-3, 0, 0), initial_state(coarse), 0.0)).value
+    @test err.iterations == 50 && 1.0e-8 < err.correction < 1.0e-4
 end

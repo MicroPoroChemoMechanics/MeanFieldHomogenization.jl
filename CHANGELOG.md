@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.26.3 — the local Newton iteration stops at the accuracy its residual has
+
+A patch release: a local integration whose residual is only accurate to a round-off floor
+above the requested tolerance converges at that floor instead of failing.
+
+### Fixed
+
+- **`LocalNewton` stops at the round-off floor of the residual.** The iteration accepted
+  only a correction below `abstol + reltol·max|y|`. A residual computed through a
+  cancellation (the rigid-plastic cell of `NonlinearHomogenized`, accurate to about
+  ``\varepsilon\,k/\mu``, some `5e-10` relative at a contrast of 10) cannot bring the
+  correction below the default `reltol = 1e-12`: the corrections then stall at that floor
+  and the integration threw a `LocalIntegrationError` after `maxiters`, or converged by luck
+  depending on the last bits of the arithmetic (ForwardDiff 1.4.7 changed them in the
+  division of duals, which turned the strength tests red). The iterate is now also accepted
+  when the correction no longer decreases while it is below
+  ``\sqrt{\varepsilon}\max_i|y_i|`` (plus `abstol`), the attainable accuracy of a
+  residual evaluated in floating point; the guard against an iterate that has run away is
+  unchanged. An iteration whose corrections keep decreasing stops exactly as before, and
+  one stalled well above the floor still fails.
+
 ## v0.26.2 — jumps on the time grid; operators, laws and histories read as functions of time
 
 A patch release: an instant may be given twice in an aging viscoelastic computation, which
