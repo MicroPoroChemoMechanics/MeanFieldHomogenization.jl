@@ -31,7 +31,19 @@ variables ``\\boldsymbol{y}`` satisfies
 ``\\max_i|\\delta_i| \\le`` `abstol` ``+`` `reltol` ``\\max_i|y_i|``, the residual
 being no larger than at the start of the step or the correction small at the
 scale of the starting state: an iterate that has run away has a small
-correction against its own size only, and is not accepted. The
+correction against its own size only, and is not accepted.
+
+A tolerance below the accuracy of the residual cannot be met: once the iterate
+is as close to the root as rounding allows, the corrections stop decreasing and
+wander at that floor. Such an iterate is accepted when its correction is no
+smaller than the previous one while below ``\\sqrt{\\varepsilon}\\max_i|y_i|``
+(``\\varepsilon`` the machine epsilon of the values, `abstol` added), with the same
+guard against a runaway: Newton's method converges quadratically down to the floor,
+so a correction that stops decreasing there means the root is reached to half the
+digits or better, while a linear or failing convergence, whose corrections keep
+decreasing or stay large, is not accepted. The rigid-plastic solid of a strength
+computation is the typical case, its residual accurate to about
+``\\varepsilon\\,k/\\mu`` only, ``k/\\mu`` growing with the strain. The
 correction has the units of the internal variables whatever the units of the
 residual, so the residual of a law may be written in any units: the equations
 of a [`ResidualLaw`](@ref) in strain units and the stationarity condition of a
@@ -189,12 +201,16 @@ end
 # residual and its Jacobian being read through `primal` when the law carries
 # derivatives. Converged on the size of the correction, in the units of y.
 function _newton_values(R, y, alg::LocalNewton, name::Symbol)
-    last = Inf
+    # In the type of the values, so that the correction keeps one type.
+    last = typemax(float(eltype(y)))
     r = TensND.primal.(R(y))
     # The size of the residual at the start: an iterate whose residual exceeds it
     # has run away, however small its last correction looks against its own size.
     r₀ = mapreduce(abs, max, r; init = zero(eltype(r)))
     tol₀ = alg.abstol + alg.reltol * mapreduce(abs, max, y; init = zero(eltype(y)))
+    # The scale below which a correction that stops decreasing is the round-off
+    # floor of the residual (see `LocalNewton`).
+    floor_rtol = sqrt(eps(float(eltype(y))))
     for it in 1:alg.maxiters
         # An exact root needs no Jacobian, which may not exist there (a power
         # law has no finite tangent at zero strain).
@@ -216,11 +232,14 @@ function _newton_values(R, y, alg::LocalNewton, name::Symbol)
         step === nothing && throw(LocalIntegrationError(name, it, last, "residual not finite along the correction"))
         δ, r = step
         y = y - δ
-        last = maximum(abs, δ)
-        # Converged on the correction, and not a runaway: either the residual
-        # has not grown, or the correction is small at the scale of the start.
-        last <= alg.abstol + alg.reltol * maximum(abs, y) &&
-            (mapreduce(abs, max, r; init = zero(eltype(r))) <= r₀ || last <= tol₀) && return y
+        previous, last = last, maximum(abs, δ)
+        scale = maximum(abs, y)
+        # Converged on the correction, or at the floor of the residual; and not a
+        # runaway: either the residual has not grown, or the correction is small
+        # at the scale of the start.
+        converged = last <= alg.abstol + alg.reltol * scale ||
+            (last >= previous && last <= alg.abstol + floor_rtol * scale)
+        converged && (mapreduce(abs, max, r; init = zero(eltype(r))) <= r₀ || last <= tol₀) && return y
     end
     throw(LocalIntegrationError(name, alg.maxiters, last, "no convergence"))
 end
