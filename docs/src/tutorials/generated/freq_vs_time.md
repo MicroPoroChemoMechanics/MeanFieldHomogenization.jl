@@ -391,8 +391,11 @@ plt3
 
 ## Where to go next
 
-Once the matrix ages, the time route is the only one left.
-[Aging viscoelastic schemes side by side](@ref tut-alv-schemes) runs four
+Once the matrix ages, the time route is the only one left. Its objects, a history
+on a time grid, a kernel turned into a matrix and the inverse that turns a
+relaxation into a creep function, are taken apart on scalar examples in
+[Volterra operators: interpolation and inversion](@ref tut-volterra-inversion).
+[Aging viscoelastic schemes side by side](@ref tut-alv-schemes) then runs four
 schemes along it on an aging matrix, and shows where the shape assumed for the
 spatial distribution of the inclusions decides the answer. The time
 discretization behind [`homogenize_alv`](@ref) is derived in

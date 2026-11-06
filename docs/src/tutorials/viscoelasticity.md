@@ -153,6 +153,9 @@ and describes the phases by rheological models, the
 [exact Kelvin ⇄ Maxwell conversion](@ref tut-kelvin-maxwell), and
 [how to choose an inversion algorithm](@ref tut-laplace-inversion). The
 [three-route comparison](@ref tut-freq-vs-time) then checks this route, the
-frequency one and the aging one against each other on the same composite. The
+frequency one and the aging one against each other on the same composite.
+[Volterra operators: interpolation and inversion](@ref tut-volterra-inversion)
+opens the objects of the aging route on scalar examples, a history, a kernel and its
+inverse, checked against closed-form creep and relaxation functions. The
 calls of the aging route, its output and its handling of cracks are described
 in the [Viscoelasticity manual](@ref man-viscoelasticity).

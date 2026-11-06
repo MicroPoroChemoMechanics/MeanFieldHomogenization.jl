@@ -518,7 +518,7 @@ tex = '\eta'
 label = "η"
 name = "viscosity of a dashpot"
 unit = "Pa s"
-pages = ["manual/rheological_models.md", "theory/laplace_carson.md", "tutorials/generated/kelvin_maxwell.md"]
+pages = ["manual/rheological_models.md", "theory/laplace_carson.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/volterra_inversion.md"]
 
 [[symbol]]
 group = "Geometry and amounts"
@@ -1285,7 +1285,7 @@ tex = 'H'
 label = "H"
 name = "Heaviside step function"
 unit = "1"
-pages = ["theory/viscoelasticity.md", "tutorials/generated/alv_schemes.md", "applications/aging_basic_creep.md"]
+pages = ["theory/viscoelasticity.md", "tutorials/generated/alv_schemes.md", "applications/aging_basic_creep.md", "tutorials/generated/volterra_inversion.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1293,7 +1293,7 @@ tex = 'R'
 label = "R"
 name = "relaxation function"
 unit = "Pa"
-pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md"]
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/volterra_inversion.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1301,7 +1301,7 @@ tex = 'J'
 label = "J"
 name = "creep function"
 unit = "Pa<sup>−1</sup>"
-pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/aging_ages_aspect.md", "applications/aging_basic_creep.md"]
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "tutorials/generated/aging_ages_aspect.md", "applications/aging_basic_creep.md", "tutorials/generated/volterra_inversion.md"]
 
 [[symbol]]
 group = "Viscoelasticity"
@@ -1316,7 +1316,7 @@ tex = '\tau'
 label = "τ"
 name = "relaxation or retardation time"
 unit = "s"
-pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "applications/aging_basic_creep.md"]
+pages = ["theory/laplace_carson.md", "manual/rheological_models.md", "manual/aging_viscoelasticity.md", "manual/nonaging_viscoelasticity.md", "tutorials/viscoelasticity.md", "tutorials/generated/kelvin_maxwell.md", "tutorials/generated/laplace_inversion.md", "tutorials/generated/rheological_models.md", "tutorials/generated/freq_vs_time.md", "applications/bituminous.md", "applications/aging_basic_creep.md", "tutorials/generated/volterra_inversion.md"]
 
 [[symbol]]
 group = "Viscoelasticity"

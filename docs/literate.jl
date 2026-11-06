@@ -66,6 +66,7 @@ const PUBLISHED_SCRIPTS = [
     "59_alv_sensitivities.jl" => "alv_sensitivities",
     "61_freq_vs_time.jl" => "freq_vs_time",
     "62_alv_schemes.jl" => "alv_schemes",
+    "67_volterra_interpolation_inversion.jl" => "volterra_inversion",
     "63_kelvin_maxwell.jl" => "kelvin_maxwell",
     "64_laplace_inversion.jl" => "laplace_inversion",
     "65_rheological_models.jl" => "rheological_models",
@@ -157,6 +158,8 @@ end
 #      or the deployed site links to files the CI never produced.
 const BUILD_NOTEBOOKS = get(ENV, "MFH_DOCS_NOTEBOOKS", "0") == "1"
 
+# On the default branch, not at the commit of the build: the generated pages are
+# versioned, and a commit in the link would change every one of them at each build.
 const SCRIPTS_URL = "https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/"
 
 """

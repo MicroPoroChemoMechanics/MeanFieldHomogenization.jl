@@ -2,6 +2,7 @@ using Test
 using MeanFieldHomogenization
 using LinearAlgebra
 using TensND
+import ForwardDiff
 
 # =============================================================================
 #  test_volterra_inverse.jl — block-triangular forward-substitution.
@@ -144,4 +145,35 @@ end
     end
     X = volterra_left_divide(S, R; block_size = B)
     @test X ≈ S \ R rtol = 1.0e-12
+end
+
+# An aging pair known in closed form in both directions: a spring E in series with a
+# dashpot of viscosity η₀(1 + t/t₀). The creep and relaxation kernels are derived in the
+# tutorial "Volterra operators: interpolation and inversion" (scripts/67_*). The grid is
+# logarithmic and the law ages, the two conditions under which a defect of ordering or of
+# grid handling shows (a uniform grid with a non-aging law hides them).
+@testset "volterra inverse — aging Maxwell pair, against its closed form" begin
+    η₀, t₀ = 2.0, 1.0
+    R(E) = (t, t′) -> E * ((t₀ + t′) / (t₀ + t))^(E * t₀ / η₀)
+    J(E, t, t′) = 1 / E + (t₀ / η₀) * log((t₀ + t) / (t₀ + t′))
+    log_grid(n) = vcat(0.0, 10 .^ range(-2, 2; length = n - 1))
+    # The creep function under a unit stress step at t = 0, through the inverse.
+    creep(E, grid) = [(inv(VolterraOperator(R(E), grid)) * TimeHistory(t -> one(E), grid))[i][1] for i in eachindex(grid)]
+    err(n) = (g = log_grid(n); maximum(abs.(creep(1.0, g) .- J.(1.0, g, 0.0)) ./ J.(1.0, g, 0.0)))
+    e80, e160 = err(80), err(160)
+    @test e160 < 5.0e-5
+    @test 3.5 < e80 / e160 < 4.5          # second order, the order of the trapezoidal rule
+    # A load at an age given twice reads the kernel of the inverse at its right limit.
+    g = sort(vcat(log_grid(120), 10.0, 10.0))
+    Jop = inv(VolterraOperator(R(1.0), g))
+    @test Jop(100.0, 10.0) ≈ J(1.0, 100.0, 10.0) rtol = 1.0e-4
+    @test Jop(100.0, 10.0) ≈ (Jop * TimeHistory(t -> t ≥ 10.0 ? 1.0 : 0.0, g))[end][1] rtol = 1.0e-12
+    # The derivative in E carries through the discretization and the inversion; the
+    # reference is the derivative of the closed form, ∂J/∂E = −1/E². E also sets the
+    # exponent of the relaxation, so the derivative carries a larger discretization error
+    # than the value, and it converges at the same second order.
+    derr(n) = abs(ForwardDiff.derivative(E -> creep(E, log_grid(n))[end], 1.5) + 1 / 1.5^2) * 1.5^2
+    d80, d160 = derr(80), derr(160)
+    @test d160 < 1.0e-3
+    @test 3.5 < d80 / d160 < 4.5
 end
