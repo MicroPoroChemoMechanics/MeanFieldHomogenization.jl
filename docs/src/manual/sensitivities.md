@@ -213,7 +213,7 @@ projection automatically.
 
 [`test/Schemes/test_sensitivities.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/test/Schemes/test_sensitivities.jl)
 compares every sensitivity against centered finite differences on every scheme,
-plus the Christensen 1990 closed form for `∂k_MT/∂f`: `rtol ≈ 1e-6`
+plus the closed form of [christensen1990](@citet) for `∂k_MT/∂f`: `rtol ≈ 1e-6`
 (closed-form schemes), `rtol ≈ 1e-4` (iterative, limited by the fixed-point
 tolerance rather than the autodiff).
 

@@ -24,7 +24,7 @@ Discretization settings of an axisymmetric finite-element inclusion.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `radius_ratio` | `4.0` | radius `R` of the surrounding ball of matrix, in units of the inclusion radius. `4` suffices *because* the boundary condition is corrected — the uncorrected problem needs 10 or more (Adessina et al. 2017, Table 2). |
+| `radius_ratio` | `4.0` | radius `R` of the surrounding ball of matrix, in units of the inclusion radius. `4` suffices *because* the boundary condition is corrected — the uncorrected problem needs 10 or more [adessinaIJES2017; Table 2](@cite). |
 | `nradial` | `24` | element size inside the inclusion, as `a / nradial`. |
 | `coarsening` | `6.0` | ratio of the element size at the outer boundary to the size inside the inclusion. |
 | `order` | `2` | polynomial order of the displacement / temperature interpolation (1 or 2). |

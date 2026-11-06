@@ -31,7 +31,7 @@ observation point:
 The central identity
 ``\\underline{K} = \\pi\\,(\\boldsymbol{B}^{\\mathcal{R}})^{-1}\\cdot\\underline{N}``
 is purely local
-[kanaun1981, kunin1983, kanaun2009](@cite).
+[kanaun1981, kunin1983, kanaun2008](@cite).
 """
 function sif end
 

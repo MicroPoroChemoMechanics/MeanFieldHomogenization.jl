@@ -361,8 +361,8 @@ Implementation : amplitude-space recurrence with closed-form
 interface transitions ([`bulk_amplitude_seq_alv`](@ref)).  Stable
 for arbitrary modulus contrasts (pores, step-activated layers …).
 
-Reference : Hervé-Zaoui 1993 (elastic) ; ECHOES manual ch07
-§"n-layer ALV bulk recurrence" ; sanahuja2013.
+Reference: [herve1993](@cite) (elastic); ECHOES manual ch07
+§"n-layer ALV bulk recurrence"; [sanahuja2013](@cite).
 """
 function bulk_concentration_alv(
         sphere::LayeredSphere{T, N},
@@ -889,7 +889,7 @@ that picks the linear combination matching unit far-field
 amplitude block extracted from the combined inside state.
 
 Reference : ECHOES manual ch07 §"n-layer ALV shear recurrence" ;
-Hervé-Zaoui 1993 generalized to ALV via [sanahuja2013](@cite).
+[herve1993](@citet) generalized to ALV via [sanahuja2013](@cite).
 """
 function shear_concentration_alv(
         sphere::LayeredSphere{T, N},

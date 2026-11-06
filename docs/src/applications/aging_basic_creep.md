@@ -56,6 +56,30 @@ end
 current()
 ```
 
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/paste_micromechanics.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/paste_micromechanics.jl")
+```
+
+```@raw html
+</details>
+```
+
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/aging_creep_micromechanics.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/aging_creep_micromechanics.jl")
+```
+
+```@raw html
+</details>
+```
+
 ## Phases that form and dissolve
 
 In aging viscoelasticity a phase keeps one volume fraction over the whole history. What
@@ -125,6 +149,18 @@ The whole chain — hydration, four aging scales, compliance for every loading a
 results. The model itself, a set of functions, is
 `scripts/common/aging_creep_micromechanics.jl`. The measurements are those of the NU
 database of [Hubler2015](@citet), entries `c_123_01` to `c_123_10`.
+
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/47_aging_basic_creep_concrete.jl</code>, which computes the results read below</summary>
+```
+
+```@eval
+Main.show_source("scripts/47_aging_basic_creep_concrete.jl")
+```
+
+```@raw html
+</details>
+```
 
 ```@example basiccreep
 res = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "docs", "src", "assets", "applications", "aging_basic_creep", "results.json"))

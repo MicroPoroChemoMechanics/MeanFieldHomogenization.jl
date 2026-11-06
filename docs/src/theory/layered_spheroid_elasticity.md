@@ -40,7 +40,7 @@ The pieces exist separately, and none of them is the piece needed here.
   after [herve1993](@citet) and [herveLuanco2014](@citet).
 - The **operators** — ``\underline u`` and ``\boldsymbol\sigma`` expressed on
   the potentials, in the spheroidal frame — are in neither. Duan's (2.2) states
-  the representation and refers to Love (1927) for the rest.
+  the representation and refers to [love1927](@citet) for the rest.
 
 So they are derived below, from the chart, and every claim is checked by a
 `@example` block rather than asserted. The heavier checks live in
@@ -142,7 +142,7 @@ by problem, after [duanRSPA2005](@citet):
 | **III** | longitudinal shear (``\varepsilon_{13}``) | ``\varphi_0, \varphi_3`` at ``m=1``; ``\varphi_1`` at ``m=0``; **plus two rigid-body rotations** | ``1, 0`` |
 
 The rotations in case III are not decoration: Duan attributes to their omission
-the error in Riccardi & Montheillet (1999).
+the error in [riccardi1999](@citet).
 
 **Case I is what follows.** The gauge is the simplest of the three, and the one
 whose fields are axisymmetric — which turns out to give two structural checks
@@ -529,7 +529,7 @@ considerably more than either one agreeing with itself.
 ### [No rigid-body rotations are needed](@id th-spheroid-no-rotation)
 
 Duan adds two to case III and attributes to their omission the error in
-Riccardi & Montheillet (1999). They are not needed here, and the reason is that
+[riccardi1999](@citet). They are not needed here, and the reason is that
 the **full** four-potential set already spans them. A rotation about
 ``\underline e_2`` is
 

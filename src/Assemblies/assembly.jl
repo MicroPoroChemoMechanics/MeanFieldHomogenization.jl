@@ -63,8 +63,8 @@ Periodic elementary representative volume of
 the interaction sums are truncated to the images lying within `cutoff` of the
 receiver.
 
-The cutoff is a **sphere**, not a box, and that is not cosmetic: Molinari &
-El Mouden's Appendix B proves convergence from the vanishing of the interaction
+The cutoff is a **sphere**, not a box, and that is not cosmetic: Appendix B of
+[molinari1996](@citet) proves convergence from the vanishing of the interaction
 kernel integrated over the exterior of a sphere. Their own convergence study
 finds the estimate stable beyond a cutoff of about two periods; the default of three
 periods is comfortably inside that plateau.

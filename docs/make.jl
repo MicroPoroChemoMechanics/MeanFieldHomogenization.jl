@@ -34,6 +34,10 @@ Plots.default(;
 # scripts, including their Plots/GR calls.
 include("literate.jl")
 
+# `show_source`, which the pages call to show the scripts they include, and the
+# commit their GitHub links point to.
+include("source_links.jl")
+
 # The page tree, read by both the draft pre-flight and the real build.
 include("pages.jl")
 

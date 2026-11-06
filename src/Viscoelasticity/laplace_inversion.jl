@@ -113,7 +113,7 @@ end
 """
     FixedTalbot(N::Int = 24)
 
-Fixed-Talbot inversion (Abate & Valkó): the Bromwich contour is deformed into
+Fixed-Talbot inversion [abate2004](@cite): the Bromwich contour is deformed into
 the cotangent curve
 
 ```math

@@ -224,9 +224,9 @@ p3
 ## §5 The equivalent inclusion method gives the same answer
 
 On a periodic assembly the two N-body schemes of the package are the *same*
-linear system — the identity Brisard et al. (2014) state in their §3.1, their
+linear system — the identity [brisard2014; §3.1](@citet) state, their
 order-zero influence pseudotensors being the interaction tensors of
-El Mouden. They agree to machine precision, which is the acceptance gate of
+[molinari1996](@citet). They agree to machine precision, which is the acceptance gate of
 both implementations.
 
 ````@example cluster_model

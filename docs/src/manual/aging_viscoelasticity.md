@@ -317,6 +317,10 @@ J_law = operator_law(J)                      # every sample, once
 J_law(3.0, 0.7) ≈ J(3.0, 0.7)                # then a binary search and four samples
 ```
 
+The tutorial [Volterra operators: interpolation and inversion](@ref tut-volterra-inversion)
+plots both interpolations against the functions they approximate, and checks the inverse
+of a relaxation operator against a closed-form creep function.
+
 Both accept ForwardDiff duals, in the instants and in the parameters of a law.
 A law-backed operator also takes symbolic instants; an interpolated one refuses
 them, since finding the cell compares instants.

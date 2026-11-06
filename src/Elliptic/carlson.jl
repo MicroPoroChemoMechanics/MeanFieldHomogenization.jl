@@ -83,7 +83,7 @@ Carlson's symmetric elliptic integral of the second kind, degenerate in
 
 Same type-generic recursion as [`ell_RF`](@ref) with the additional
 ``(1, 1, 3)``-weighted mean and a running sum that accounts for the
-degenerate ``(t + z)`` factor (Carlson 1995 §2).
+degenerate ``(t + z)`` factor [carlson1995; §2](@cite).
 """
 function ell_RD(x::Tx, y::Ty, z::Tz) where {Tx <: Number, Ty <: Number, Tz <: Number}
     T = promote_type(Tx, Ty, Tz)

@@ -32,7 +32,7 @@
     hoenig_params(t::TensND.TensTI{4}) -> (E1, h, nu1, nu2, gamma)
     hoenig_params(t::TensND.AbstractTens{4,3}, axis) -> (E1, h, nu1, nu2, gamma)
 
-Hoenig (1978) parametrization of a transversely isotropic **stiffness**
+Parameters of [hoenig1978](@citet) for a transversely isotropic **stiffness**
 tensor: `E1` the in-plane Young's modulus, `h` the axial/in-plane modulus
 ratio, `nu1` the in-plane Poisson's ratio, `nu2` the out-of-plane Poisson's
 ratio, and `gamma` the shear anisotropy ratio: TensND's
@@ -51,7 +51,7 @@ hoenig_params(t::TensND.AbstractTens{4, 3}, axis) = hoenig_params(TensND.best_fi
 """
     hoenig_stiffness(E1, h, nu1, nu2, gamma, axis) -> TensND.TensTI{4,T,5}
 
-Build the TI stiffness tensor from its Hoenig (1978) parameters and symmetry
+Build the TI stiffness tensor from its [hoenig1978](@citet) parameters and symmetry
 axis — the reciprocal of [`hoenig_params`](@ref): the inverse of TensND's
 `TensND.ti_from_constants` compliance.
 """

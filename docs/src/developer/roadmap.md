@@ -22,7 +22,7 @@ package already does is described in the [manual](@ref man-index) and the
 - Laminate extensions: viscoelastic *interface* laws (the interface types
   carry `Number` fields today, so an aging interface needs a different
   carrier).
-- `PairwiseDistribution` (Willis 1982) envelope for the PCW scheme.
+- `PairwiseDistribution` envelope [willis1982](@cite) for the PCW scheme.
 - Native Anderson acceleration with memory > 1, replacing the current
   `AndersonDefault` (currently Picard with relaxation, memory = 1).
 - Optional structured `TensTI{4,T,8}` fast path for the ALV TI schemes.
@@ -176,7 +176,7 @@ and of the cluster model contain and the implementation does not. See
 - **Their Table 2** (polydisperse spheres at `φ = 0.45` in a spherical SVE)
   needs a polydisperse close-packing generator; `random_assembly` is
   monodisperse.
-- **The slender-fiber specialization** of Martin et al. (2023): the interaction
+- **The slender-fiber specialization** of [martin2023](@citet): the interaction
   integrals are reachable through the `:quadrature` back-end, but the axial
   polynomial enrichment and the finite-element self-influence coefficients are
   not implemented, and `Cylinder` is not accepted by the pair kernel.

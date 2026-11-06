@@ -12,7 +12,7 @@
 # the random morphologies the mean-field schemes describe.
 #
 # This script builds one, checks it against the closed form of
-# Backus (1962), and shows the two bound saturations that make a laminate a
+# [backus1962](@citet), and shows the two bound saturations that make a laminate a
 # useful calibration case: it is *exactly* Voigt in the plane of the layers
 # and *exactly* Reuss across them, simultaneously.
 #

@@ -587,7 +587,7 @@ derivation symbolically, with the shipped closed forms as its oracles.
 
 With ``\boldsymbol{N}(\underline{\xi}) = \underline{\xi}\cdot\mathbb{C}\cdot\underline{\xi}``
 the **acoustic** (Christoffel) tensor, the two Fourier kernels of the traction
-integral equation on the crack plane are [kunin1983, kanaun2009](@cite):
+integral equation on the crack plane are [kunin1983, kanaun2008](@cite):
 
 ```math
 \hat{\mathbb{G}}^0(\underline{\xi})
@@ -1149,7 +1149,7 @@ h = \sqrt{\frac{1-H\nu_2^{2}}{H\,(1-\nu_1^{2})}},
 ```
 
 the elliptic and ribbon COD tensors are
-[hoenig1978, kanaun2009, barthelemyIJES2021, barthelemyIJSS2026](@cite)
+[hoenig1978, kanaun2008, barthelemyIJES2021, barthelemyIJSS2026](@cite)
 
 ```math
 \begin{aligned}
@@ -1310,7 +1310,7 @@ expansions of the jump and the traction read [irwin1957, kassir1968, willis1968]
 local energy release rate is simply
 ``G = \underline{K}\cdot\underline{N}`` [barnett1972, rice1989](@cite).
 
-The central result of the anisotropic theory [kanaun1981, kunin1983, kanaun2009](@cite) is that SIF and DIF are **purely local**
+The central result of the anisotropic theory [kanaun1981, kunin1983, kanaun2008](@cite) is that SIF and DIF are **purely local**
 and are exchanged by the COD tensor of the **ribbon crack tangent** to the real
 crack at the observation point:
 

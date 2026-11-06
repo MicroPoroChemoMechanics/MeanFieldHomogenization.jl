@@ -68,8 +68,7 @@ precision; `BigFloat` needs only a few more.
 ## 3. Carlson symmetric forms
 
 Incomplete integrals are delegated to Carlson's symmetric integrals
-(Carlson 1995, *Numerical computation of real or complex elliptic
-integrals*):
+[carlson1995](@cite):
 
 ```math
 R_F(x, y, z) = \frac{1}{2}\int_0^{+\infty}
@@ -136,15 +135,11 @@ the integrals as unexpanded calls.
 
 ## 6. References
 
-- M. Abramowitz and I.A. Stegun, *Handbook of Mathematical Functions*,
-  §17.6, Dover 1972.
+- [abramowitz1972; §17.6](@citet).
 - NIST Digital Library of Mathematical Functions,
   [§19](https://dlmf.nist.gov/19).
-- B.C. Carlson, *Numerical computation of real or complex elliptic
-  integrals*, Numerical Algorithms **10** (1995) 13–26.
-- B.C. Carlson and E.M. Notis, *Algorithms for incomplete elliptic
-  integrals*, ACM Transactions on Mathematical Software **7** (1981)
-  398–403 — public-domain SLATEC routines `DRF` / `DRD`.
+- [carlson1995](@citet).
+- [carlson1981](@citet) — public-domain SLATEC routines `DRF` / `DRD`.
 
 ## Where to go next
 

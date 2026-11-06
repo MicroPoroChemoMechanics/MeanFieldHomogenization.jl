@@ -125,7 +125,7 @@ Maxwell(; matrix::Union{Nothing, Symbol} = nothing) = Maxwell(matrix)
 """
     PonteCastanedaWillis() <: HomogenizationScheme
 
-Ponte-Castañeda & Willis 1995 scheme — distribution-shape-aware
+The scheme of [ponte1995](@citet) — distribution-shape-aware
 generalization of Mori-Tanaka.
 """
 struct PonteCastanedaWillis{M} <: HomogenizationScheme

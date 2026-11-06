@@ -69,9 +69,9 @@ separation**; other geometries use the truncated multipole expansion of
 `:quadrature`, or `:auto` (default).
 
 This is the shared numerical ingredient of both N-body models in the package,
-[`EquivalentInclusion`](@ref MeanFieldHomogenization.Schemes.EquivalentInclusion) and [`ClusterModel`](@ref MeanFieldHomogenization.Schemes.ClusterModel) — Brisard et al.
-(2014), §3.1, note that their influence pseudotensors of order ``k = l = 0``
-coincide with the interaction tensors of Molinari & El Mouden.
+[`EquivalentInclusion`](@ref MeanFieldHomogenization.Schemes.EquivalentInclusion) and [`ClusterModel`](@ref MeanFieldHomogenization.Schemes.ClusterModel) — [brisard2014; §3.1](@citet)
+note that their influence pseudotensors of order ``k = l = 0``
+coincide with the interaction tensors of [molinari1996](@citet).
 
 !!! warning "Two sign conventions exist"
     The package follows [brisard2023](@citet), for

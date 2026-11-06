@@ -37,7 +37,7 @@
 """
     AxisymmetricCase()
 
-Case I of Duan et al. (2005): a remote strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)`` about the
+Case I of [duanRSPA2005](@citet): a remote strain ``\\mathrm{diag}(\\varepsilon_t, \\varepsilon_t, \\varepsilon_a)`` about the
 spheroid's axis. The Papkovich–Neuber gauge is ``\\varphi_1 = \\varphi_2 = 0``, both surviving
 potentials are of order ``m = 0``, and the fields are axisymmetric — ``u_\\varphi`` and
 ``\\sigma_{\\varphi q}`` vanish structurally rather than by assumption.

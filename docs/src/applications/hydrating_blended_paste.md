@@ -76,6 +76,30 @@ include(joinpath(SCRIPTS, "common", "stoichiometric_hydration.jl"))
 nothing # hide
 ```
 
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/paste_micromechanics.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/paste_micromechanics.jl")
+```
+
+```@raw html
+</details>
+```
+
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/stoichiometric_hydration.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/stoichiometric_hydration.jl")
+```
+
+```@raw html
+</details>
+```
+
 ## The binder
 
 The reference cement is the CEM I 52.5 N of [Lavergne2018](@citet) (its Table 9):

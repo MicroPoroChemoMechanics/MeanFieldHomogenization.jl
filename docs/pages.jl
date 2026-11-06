@@ -202,6 +202,7 @@ pages = [
             "tutorials/generated/kelvin_maxwell.md",
             "tutorials/generated/laplace_inversion.md",
             "tutorials/generated/freq_vs_time.md",
+            "tutorials/generated/volterra_inversion.md",
             "tutorials/generated/alv_schemes.md",
             "tutorials/generated/aging_ages_aspect.md",
             "tutorials/generated/alv_sensitivities.md",

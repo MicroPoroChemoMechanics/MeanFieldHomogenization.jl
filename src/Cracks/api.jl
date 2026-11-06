@@ -82,7 +82,7 @@ factorizations are related by ``\\boldsymbol{B}^{\\mathcal{R}} =
 \\tfrac{3\\pi}{8}\\,\\lim_{\\eta\\to 0}\\boldsymbol{B}^{\\mathcal{E}}``.
 
 For isotropic or aligned-TI matrices the kernel is analytical
-[hoenig1978, kanaun2009](@cite) with `method = :auto` or `:analytical`; an
+[hoenig1978, kanaun2008](@cite) with `method = :auto` or `:analytical`; an
 explicit numerical `method` is honored. For arbitrarily anisotropic
 matrices ``\\boldsymbol{B}`` is the inverse of an integral over the directions of
 the crack plane of the reduced kernel

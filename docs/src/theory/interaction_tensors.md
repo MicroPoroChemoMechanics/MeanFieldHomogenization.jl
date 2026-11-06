@@ -312,7 +312,7 @@ the closed forms are validated against.
 
 Everything above assumes an isotropic reference, whose Green operator is a closed
 form. That is not a restriction of the method, only of the kernel, and it is lifted by
-the Barnett line integral of Barnett (1972) and Willis (1975): for an arbitrary anisotropic
+the Barnett line integral [barnettPSSB1972, willis1975](@cite): for an arbitrary anisotropic
 stiffness the displacement Green function is
 
 ```math

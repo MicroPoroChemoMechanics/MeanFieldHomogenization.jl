@@ -11,7 +11,10 @@ EditURL = "../../../../scripts/62_alv_schemes.jl"
 
 !!! info "Before this page"
     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
-    which validates the time route used alone below, and the theory page
+    which validates the time route used alone below,
+    [Volterra operators: interpolation and inversion](@ref tut-volterra-inversion),
+    which reads a creep function off an inverted relaxation operator on scalar examples,
+    and the theory page
     [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), where the
     Volterra form of each scheme is derived.
 
