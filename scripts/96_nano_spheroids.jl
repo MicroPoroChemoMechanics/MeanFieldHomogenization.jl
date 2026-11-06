@@ -47,7 +47,7 @@ default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 #
 # `κs` and `μs` are the surface bulk and shear moduli, with the dimension of a
 # stiffness times a length. The values used here are those the paper identifies
-# for graphene sheets from the data of Alzebdeh (2012).
+# for graphene sheets from the data of [alzebdeh2012](@citet).
 
 κs, μs = 64.0, 51.3          ## Pa·m, graphene (paper, Fig. 3)
 a = 1.0                      ## in-plane semi-axis

@@ -271,7 +271,7 @@ The kernel is generic in the number type: the pseudo-inverse is a cofactor
 inverse (never an SVD) and every intermediate is an `SMatrix` (never an
 `MMatrix`, which cannot even be constructed for a symbolic element type). A
 laminate of symbolic layers therefore produces the closed forms directly —
-`scripts/38_laminate_symbolic.jl` derives Backus (1962) that way — and
+`scripts/38_laminate_symbolic.jl` derives the closed forms of [backus1962](@citet) that way — and
 `ForwardDiff` traverses moduli, thicknesses, interface compliances and nested
 scales alike.
 

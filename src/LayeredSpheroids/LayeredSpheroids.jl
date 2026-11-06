@@ -4,7 +4,7 @@
 Isotropic `n`-layer confocal spheroidal composite inclusion (core +
 concentric confocal shells), in **conduction** (thermal / electric /
 Darcy) and in **axisymmetric elasticity**
-([`spheroid_elastic_coefficients`](@ref), case I of Duan et al. 2005, with
+([`spheroid_elastic_coefficients`](@ref), case I of [duanRSPA2005](@citet), with
 perfect interfaces).
 
 The two do not share a solver shape. Confocal surfaces are not homothetic, so

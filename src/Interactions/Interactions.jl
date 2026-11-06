@@ -10,10 +10,10 @@ inclusion in a reference medium, the equivalent inclusion method
 ([`EquivalentInclusion`](@ref MeanFieldHomogenization.Schemes.EquivalentInclusion)) and the cluster model ([`ClusterModel`](@ref MeanFieldHomogenization.Schemes.ClusterModel))
 need one object more: the tensor ``\\mathbb{T}^{ab}`` measuring (minus) the field induced
 in one inclusion by a uniform polarization of another, whose self term is
-``\\mathbb{T}^{aa} = +\\mathbb{P}``. [brisard2014](@citet)
-(2014), §3.1, observe that their influence pseudotensors of order zero
-coincide with the interaction tensors of Berveiller et al. (1987) and
-Molinari & El Mouden (1996) — so the two families share this module.
+``\\mathbb{T}^{aa} = +\\mathbb{P}``. [brisard2014; §3.1](@citet)
+observe that their influence pseudotensors of order zero
+coincide with the interaction tensors of [berveiller1987](@citet) and
+[molinari1996](@citet) — so the two families share this module.
 
 Contents
 --------

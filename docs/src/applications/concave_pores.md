@@ -170,8 +170,8 @@ concave pore. Its shape, Eq. (1.2),
 is `Superspheroid(a, aγ, p)` without conversion, studied at `a = γ = 1`. Being a
 solid of revolution it is transversely isotropic — five constants for ℍ, two for
 ℝ — and it is the only one of the two papers to **tabulate** its numbers, which
-makes a component-by-component comparison possible where Chen *et al.*'s figures
-allow only a comparison of trends.
+makes a component-by-component comparison possible where the figures of
+[chenIJES2015](@citet) allow only a comparison of trends.
 
 !!! warning "Two conventions for `p`"
     On this page `p` is the concavity exponent of the shape, with `2p` the

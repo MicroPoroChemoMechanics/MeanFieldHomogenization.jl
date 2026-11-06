@@ -47,7 +47,7 @@ blk(M, i) = M[(6 * (i - 1) + 1):(6 * i), (6 * (i - 1) + 1):(6 * i)]
 # back, in every diagonal time block, the elastic laminate — and nothing
 # off-diagonal, an elastic material having no memory. That single check pins
 # the whole Volterra transposition against a result already validated in
-# closed form against Backus (1962).
+# closed form against [backus1962](@citet).
 
 times = [0.0, 1.0, 3.0, 7.0]
 

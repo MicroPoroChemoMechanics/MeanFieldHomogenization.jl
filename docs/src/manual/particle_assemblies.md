@@ -122,8 +122,8 @@ That difference lives in the boundary, not in the scheme.
 
 | | measure of `Ω` | far-field term | source |
 | :-- | :-- | :-- | :-- |
-| [`PeriodicBox`](@ref)`(L; cutoff = R_c)` | `Lᵈ` | Hill tensor of the inclusion shape | Molinari & El Mouden |
-| [`MixedBC`](@ref)`(shape)` | volume of `shape` | Hill tensor of the SVE, ``\mathbb P_\Omega`` | Brisard et al. |
+| [`PeriodicBox`](@ref)`(L; cutoff = R_c)` | `Lᵈ` | Hill tensor of the inclusion shape | [molinari1996](@cite) |
+| [`MixedBC`](@ref)`(shape)` | volume of `shape` | Hill tensor of the SVE, ``\mathbb P_\Omega`` | [brisard2014](@cite) |
 
 `PeriodicBox` tiles space and truncates the image sums to a **sphere** of radius `R_c`
 around the receiver; the default `3L` sits inside the convergence plateau reported in

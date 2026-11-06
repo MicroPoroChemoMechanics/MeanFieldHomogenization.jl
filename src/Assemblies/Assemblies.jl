@@ -13,7 +13,7 @@ induces in another depends on the vector joining their centers. Hence
 Two schemes consume it, and they share both the cell and the interaction
 kernel of `MeanFieldHomogenization.Interactions`:
 
-- [`ClusterModel`](@ref) — Molinari & El Mouden (1996), solving for the mean
+- [`ClusterModel`](@ref) — [molinari1996](@cite), solving for the mean
   strain of every inclusion inside a cluster of neighbors;
 - [`EquivalentInclusion`](@ref) — [brisard2014](@cite), a Galerkin
   discretization of the weak Lippmann-Schwinger equation, which additionally

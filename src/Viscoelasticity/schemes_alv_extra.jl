@@ -29,7 +29,7 @@
 """
     pcw_alv(C_0, contribs, fractions; H_dist) -> Matrix
 
-Ponte-Castañeda & Willis (1995) viscoelastic homogenization in
+The scheme of [ponte1995](@citet) for viscoelastic homogenization, in
 single-distribution-shape form.  The formula is algebraically
 identical to [`maxwell_alv`](@ref) ; the only difference is that the
 Hill kernel `H_dist` is computed against the **distribution shape**

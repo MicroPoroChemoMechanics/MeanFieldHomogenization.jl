@@ -163,7 +163,7 @@ Closed-form COD tensor of an elliptic crack in a transversely
 isotropic matrix whose TI axis is aligned with the crack normal
 ``\\underline{n}``. Expressions are given in the engineering
 parameterization ``(E,\\nu_{1},\\nu_{2},H,\\Gamma)`` of
-[hoenig1978, kanaun2009, barthelemyIJES2021](@cite); the auxiliary scalar
+[hoenig1978, kanaun2008, barthelemyIJES2021](@cite); the auxiliary scalar
 ``\\sigma_\\gamma`` is defined in `_ti_sigma_gamma`. Reduces to the
 isotropic case for ``\\nu_{1}=\\nu_{2}=\\nu``, ``H=\\Gamma=1``.
 """

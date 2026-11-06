@@ -15,8 +15,7 @@ contract is enough to reach every scheme.
 | [`FEAxiLayeredSpheroid`](@ref) | `N` nested coaxial spheroids, free semi-axes | axisymmetric Fourier | B — both concentration tensors |
 
 Both use the *finite Eshelby cell with a first-order corrected boundary
-condition* of Adessina, Barthélémy, Lavergne & Ben Fraj, *Int. J. Eng. Sci.*
-**119** (2017) 1-15: the infinite matrix is truncated to a ball of finite
+condition* of [adessinaIJES2017](@citet): the infinite matrix is truncated to a ball of finite
 radius and the truncation bias is removed by adding the inclusion's own dipole
 far field to the imposed boundary displacement.
 

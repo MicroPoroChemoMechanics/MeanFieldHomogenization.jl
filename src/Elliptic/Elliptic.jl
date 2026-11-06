@@ -26,12 +26,10 @@ callers will automatically pick them up.
 
 # References
 
-* AGM for ``K, E``: Abramowitz & Stegun 17.6, NIST DLMF 19.8.
-* Carlson's symmetric integrals: B.C. Carlson,
-  *Numerical computation of real or complex elliptic integrals*,
-  Numerical Algorithms 10 (1995) 13-26.
+* AGM for ``K, E``: [abramowitz1972; §17.6](@cite), NIST DLMF 19.8.
+* Carlson's symmetric integrals: [carlson1995](@cite).
 * Iterative duplication scheme: public-domain SLATEC routines
-  `DRF` / `DRD` (B.C. Carlson and E.M. Notis, Ames Laboratory, 1981).
+  `DRF` / `DRD` [carlson1981](@cite).
 """
 module Elliptic
 
