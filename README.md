@@ -64,6 +64,48 @@ the strength of a sandstone, bituminous mixtures — lives under [`docs/src/appl
 and the [Applications](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/applications/)
 section of the docs.
 
+## Lineage: Echoes
+
+`MeanFieldHomogenization.jl` is the Julia successor of **Echoes**, the mean-field
+homogenization library written in C++ with a Python interface by the same author at
+Cerema ([manual](https://jfbarthelemy.github.io/echoes/),
+[DOI 10.5281/zenodo.7348758](https://doi.org/10.5281/zenodo.7348758)). The Eshelby
+and Hill machinery, the crack tensors, the `n`-layer sphere, the schemes and the aging
+viscoelastic route were ported from it, with the methods of the articles it implements:
+
+- the crack in an anisotropic matrix: Barthélémy (2009),
+  [doi:10.1016/j.ijsolstr.2009.08.003](https://doi.org/10.1016/j.ijsolstr.2009.08.003),
+  and Barthélémy, Sevostianov & Giraud (2021),
+  [doi:10.1016/j.ijengsci.2021.103454](https://doi.org/10.1016/j.ijengsci.2021.103454);
+- the Hill tensors of transformed problems: Barthélémy (2020),
+  [doi:10.1016/j.ijengsci.2020.103326](https://doi.org/10.1016/j.ijengsci.2020.103326);
+- the Eshelby problem and the schemes of aging linear viscoelasticity:
+  Barthélémy et al. (2016),
+  [doi:10.1016/j.ijsolstr.2016.06.035](https://doi.org/10.1016/j.ijsolstr.2016.06.035),
+  and Barthélémy et al. (2019),
+  [doi:10.1016/j.ijengsci.2019.05.015](https://doi.org/10.1016/j.ijengsci.2019.05.015),
+  discretized in time as proposed by Sanahuja (2013),
+  [doi:10.1016/j.ijsolstr.2013.04.023](https://doi.org/10.1016/j.ijsolstr.2013.04.023).
+
+Echoes remains the reference of the port: the
+[Cross-validation](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/validation/)
+page runs the same problems with both libraries. The port extends it in five directions:
+
+- **numbers of any type**: `ForwardDiff` dual numbers through every computation, so
+  that the derivative of an effective property with respect to any parameter of the
+  model comes out of the same call, and symbolic numbers (`Symbolics`, `SymPy`) for
+  closed forms;
+- **morphologies**: confocal `n`-layer spheroids with imperfect interfaces
+  (Barthélémy & Bignonnet, 2020,
+  [doi:10.1016/j.ijengsci.2020.103274](https://doi.org/10.1016/j.ijengsci.2020.103274)),
+  periodic laminates, and inclusions computed by finite elements or by a trained network;
+- **interactions**: the cluster model and the equivalent inclusion method, which act on
+  the positions of the inclusions;
+- **time**: the non-aging route in the Laplace–Carson domain, with numerical inversion
+  and a catalog of rheological models, beside the aging route;
+- **use**: homogenization as a constitutive law for finite-element codes, MFH Studio,
+  and the `echoes2mfh` translator of Echoes scripts.
+
 ## Features
 
 | Sub-module | Responsibility |

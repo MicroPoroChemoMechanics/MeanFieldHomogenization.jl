@@ -15,7 +15,9 @@ Echoes live from Julia via [PythonCall.jl](https://github.com/JuliaPy/PythonCall
 
 The `@example` blocks run at build time; the Python and PythonCall blocks are
 shown for reference, and the Echoes numbers below were captured by running
-them against Echoes 1.0.
+them against Echoes 1.0. How the two libraries are related, the articles whose
+methods both implement, and what the port adds are summarized in
+[Lineage: Echoes](@ref index-lineage-echoes).
 
 ## API translation table
 
