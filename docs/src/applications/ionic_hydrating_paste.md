@@ -91,6 +91,42 @@ cs = build_ionic_system(:opc)
 nothing # hide
 ```
 
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/paste_micromechanics.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/paste_micromechanics.jl")
+```
+
+```@raw html
+</details>
+```
+
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/stoichiometric_hydration.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/stoichiometric_hydration.jl")
+```
+
+```@raw html
+</details>
+```
+
+```@raw html
+<details class="source-file"><summary>Show the code of <code>scripts/common/ionic_hydration.jl</code>, included above</summary>
+```
+
+```@eval
+Main.show_source("scripts/common/ionic_hydration.jl")
+```
+
+```@raw html
+</details>
+```
+
 `build_ionic_system` takes the CEMDATA18 subset: the dissolving phases, the
 candidate hydrates, and every aqueous species that `speciation` pulls in from
 `CEMDATA_PRIMARIES` — the ones that carry the pore chemistry.
