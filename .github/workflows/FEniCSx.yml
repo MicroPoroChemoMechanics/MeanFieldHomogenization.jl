@@ -85,7 +85,7 @@ jobs:
           Pkg.activate(ENV["PYTHON_JULIAPKG_PROJECT"])
           Pkg.instantiate()
           Pkg.status()
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: mamba-org/setup-micromamba@v3
         with:
           environment-name: fenicsx
           create-args: >-
