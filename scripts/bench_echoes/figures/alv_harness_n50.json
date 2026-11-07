@@ -2,62 +2,26 @@
   "cpu": "AMD EPYC-Milan Processor",
   "instants": 50,
   "julia": "1.13.3",
-  "mfh": "0.25.0",
+  "mfh": "0.26.3",
   "protocol": "minimum of 5 runs of `homogenize_alv` after a warm-up against the minimum of 3 runs of Echoes' `homogenize_visco`, each code alone on the machine",
   "rows": [
     {
-      "case": "d3_cond_prolate_rot_MT",
-      "class": "TensTI",
-      "gap": 2.1675324637762996e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 2.376591620390675e-17,
-      "t_echoes": 0.0081217922270298,
-      "t_mfh": 0.001622298
-    },
-    {
-      "case": "d2_cond_sph_SC",
+      "case": "h_o2_asymmetric_self_consistent",
       "class": "TensISO",
-      "gap": 8.087576167558795e-17,
+      "gap": 1.561068422279804e-16,
       "gap_with_echoes_source": null,
-      "phase_gap": 1.6856692907996521e-16,
-      "t_echoes": 0.03933214209973812,
-      "t_mfh": 0.006132576
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.08176547847688198,
+      "t_mfh": 0.025783625
     },
     {
-      "case": "f4_ellcrack_isoavg_SC",
-      "class": "TensISO",
-      "gap": 1.177691860828213e-14,
+      "case": "h_o2_pcw",
+      "class": "DenseClass",
+      "gap": 3.466013481058587e-15,
       "gap_with_echoes_source": null,
-      "phase_gap": 1.923779634006117e-16,
-      "t_echoes": 0.3226713314652443,
-      "t_mfh": 0.01465031
-    },
-    {
-      "case": "b5_oblate_rot_DIL",
-      "class": "TensTI",
-      "gap": 3.466269430484211e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.2244554946173435e-15,
-      "t_echoes": 0.026628077030181885,
-      "t_mfh": 0.00297885
-    },
-    {
-      "case": "b8_oblate_isoavg_SC",
-      "class": "TensISO",
-      "gap": 2.6832908615078647e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.923779634006117e-16,
-      "t_echoes": 0.24740216508507729,
-      "t_mfh": 0.01319608
-    },
-    {
-      "case": "a4_sph_maxwell_kelvin_MT",
-      "class": "TensISO",
-      "gap": 3.4392697366875093e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.2244554946173435e-15,
-      "t_echoes": 0.028599770739674568,
-      "t_mfh": 0.002521536
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.012997040525078773,
+      "t_mfh": 0.004035025
     },
     {
       "case": "b1_prolate_e3_MT",
@@ -65,8 +29,8 @@
       "gap": 3.3250815923389466e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.02530490607023239,
-      "t_mfh": 0.00296238
+      "t_echoes": 0.025286275893449783,
+      "t_mfh": 0.002972669
     },
     {
       "case": "a2_sph_maxwell_elastic_MT",
@@ -74,44 +38,26 @@
       "gap": 2.3430242948432063e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.0221699345856905,
-      "t_mfh": 0.001236413
+      "t_echoes": 0.021595057100057602,
+      "t_mfh": 0.001242463
     },
     {
-      "case": "b7_prolate_isoavg_MT",
+      "case": "g3_ellcrack_isoavg_ASC",
       "class": "TensISO",
-      "gap": 2.2369569487175346e-16,
+      "gap": 1.9005955250927456e-12,
       "gap_with_echoes_source": null,
-      "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.028389493003487587,
-      "t_mfh": 0.002572725
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.07483785413205624,
+      "t_mfh": 0.00728384
     },
     {
-      "case": "c2_prolate_tilaw_rot_MT",
-      "class": "TensTI",
-      "gap": 3.122449372823067e-16,
+      "case": "g6_elastic_sph_ellcrack_isoavg_ASC",
+      "class": "TensISO",
+      "gap": 1.7225362048990295e-11,
       "gap_with_echoes_source": null,
-      "phase_gap": 3.0474374726765085e-16,
-      "t_echoes": 0.026514044031500816,
-      "t_mfh": 0.002739622
-    },
-    {
-      "case": "b6_triaxial_rot_MT",
-      "class": "TensOrtho",
-      "gap": 3.788442142320375e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.027228405699133873,
-      "t_mfh": 0.003896336
-    },
-    {
-      "case": "c3_prolate_tilaw_misaligned_DIL",
-      "class": "DenseClass",
-      "gap": 1.9005842899894807e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 3.1870043081294814e-16,
-      "t_echoes": 0.022497115656733513,
-      "t_mfh": 0.006409553
+      "phase_gap": 0.0,
+      "t_echoes": 0.20826099999248981,
+      "t_mfh": 0.008925768
     },
     {
       "case": "f1_ellcrack_rot_DIL",
@@ -119,26 +65,17 @@
       "gap": 3.7440330657474714e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.017941633239388466,
-      "t_mfh": 0.003111958
+      "t_echoes": 0.01662330888211727,
+      "t_mfh": 0.003125057
     },
     {
-      "case": "c1_sph_tilaw_rot_MT",
+      "case": "h_o2_reuss",
       "class": "TensTI",
-      "gap": 3.1514079404321623e-16,
+      "gap": 1.9897617365022717e-16,
       "gap_with_echoes_source": null,
-      "phase_gap": 3.0474374726765085e-16,
-      "t_echoes": 0.025632446631789207,
-      "t_mfh": 0.002792982
-    },
-    {
-      "case": "f5_ellcrack_two_families_MT",
-      "class": "DenseClass",
-      "gap": 1.1685917204956566e-14,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.024751579388976097,
-      "t_mfh": 0.010511097
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.010289935395121574,
+      "t_mfh": 0.001593169
     },
     {
       "case": "a3_sph_maxwell_elastic_SC",
@@ -146,17 +83,26 @@
       "gap": 2.046349345904995e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.923779634006117e-16,
-      "t_echoes": 0.2831773664802313,
-      "t_mfh": 0.006954235
+      "t_echoes": 0.2804585564881563,
+      "t_mfh": 0.007175882
     },
     {
-      "case": "b3_prolate_rot_MT",
-      "class": "TensTI",
-      "gap": 5.231081394809068e-16,
+      "case": "h_o4_asymmetric_self_consistent",
+      "class": "TensISO",
+      "gap": 9.512112306677311e-12,
       "gap_with_echoes_source": null,
-      "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.026761041954159737,
-      "t_mfh": 0.003075278
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.34075977467000484,
+      "t_mfh": 0.092351211
+    },
+    {
+      "case": "g4_cond_sph_ASC",
+      "class": "TensISO",
+      "gap": 1.278380522544226e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6856692907996521e-16,
+      "t_echoes": 0.031059525907039642,
+      "t_mfh": 0.005458385
     },
     {
       "case": "f2_ellcrack_rot_MT",
@@ -164,44 +110,17 @@
       "gap": 1.707479787263597e-15,
       "gap_with_echoes_source": null,
       "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.026792019605636597,
-      "t_mfh": 0.004194393
+      "t_echoes": 0.02961600571870804,
+      "t_mfh": 0.004255622
     },
     {
-      "case": "d4_cond_oblate_rot_tilaw_DIL",
+      "case": "h_o4_dilute_dual",
       "class": "DenseClass",
-      "gap": 7.166990310248482e-17,
+      "gap": 8.117140747157814e-16,
       "gap_with_echoes_source": null,
-      "phase_gap": 1.890237850393966e-16,
-      "t_echoes": 0.007728235796093941,
-      "t_mfh": 0.002412138
-    },
-    {
-      "case": "b2_oblate_e3_MT",
-      "class": "TensTI",
-      "gap": 2.906113525715831e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.01855764165520668,
-      "t_mfh": 0.002074591
-    },
-    {
-      "case": "b9_triaxial_tiavg_MT",
-      "class": "DenseClass",
-      "gap": 2.4674386758628717e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.028026124462485313,
-      "t_mfh": 0.008045062
-    },
-    {
-      "case": "d1_cond_sph_MT",
-      "class": "TensISO",
-      "gap": 1.1157765993655276e-16,
-      "gap_with_echoes_source": null,
-      "phase_gap": 1.784421520882296e-17,
-      "t_echoes": 0.007517313584685326,
-      "t_mfh": 0.00077971
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.05995868518948555,
+      "t_mfh": 0.01531188
     },
     {
       "case": "a1_sph_maxwell_elastic_DIL",
@@ -209,17 +128,8 @@
       "gap": 1.7600142216337034e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.020435798913240433,
-      "t_mfh": 0.001179814
-    },
-    {
-      "case": "f3_penny_rot_MT",
-      "class": "TensTI",
-      "gap": 1.2256116463934152e-13,
-      "gap_with_echoes_source": null,
-      "phase_gap": 2.2645713360807476e-16,
-      "t_echoes": 0.03555058129131794,
-      "t_mfh": 0.004245272
+      "t_echoes": 0.020443134009838104,
+      "t_mfh": 0.001160104
     },
     {
       "case": "b4_oblate_rot_MT",
@@ -227,8 +137,323 @@
       "gap": 3.4583094764379787e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.6587459602861218e-16,
-      "t_echoes": 0.021683724597096443,
-      "t_mfh": 0.002080502
+      "t_echoes": 0.02168765850365162,
+      "t_mfh": 0.002082861
+    },
+    {
+      "case": "d3_cond_prolate_rot_MT",
+      "class": "TensTI",
+      "gap": 2.1675324637762996e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.376591620390675e-17,
+      "t_echoes": 0.008152296766638756,
+      "t_mfh": 0.001616538
+    },
+    {
+      "case": "d2_cond_sph_SC",
+      "class": "TensISO",
+      "gap": 8.087576167558795e-17,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6856692907996521e-16,
+      "t_echoes": 0.03990582190454006,
+      "t_mfh": 0.005891479
+    },
+    {
+      "case": "b5_oblate_rot_DIL",
+      "class": "TensTI",
+      "gap": 3.466269430484211e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.2244554946173435e-15,
+      "t_echoes": 0.026527367532253265,
+      "t_mfh": 0.002865381
+    },
+    {
+      "case": "b8_oblate_isoavg_SC",
+      "class": "TensISO",
+      "gap": 2.6832908615078647e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.24876809865236282,
+      "t_mfh": 0.013169779
+    },
+    {
+      "case": "a4_sph_maxwell_kelvin_MT",
+      "class": "TensISO",
+      "gap": 3.4392697366875093e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.2244554946173435e-15,
+      "t_echoes": 0.02782568149268627,
+      "t_mfh": 0.002411497
+    },
+    {
+      "case": "h_o2_differential",
+      "class": "TensISO",
+      "gap": 5.305940754364921e-8,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 1.3103724010288715,
+      "t_mfh": 0.20693809
+    },
+    {
+      "case": "h_o4_mori_tanaka",
+      "class": "DenseClass",
+      "gap": 2.9531381173119305e-14,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.04390794783830643,
+      "t_mfh": 0.015572856
+    },
+    {
+      "case": "h_o2_dilute_dual",
+      "class": "DenseClass",
+      "gap": 3.0932623180440463e-15,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.014524739235639572,
+      "t_mfh": 0.003400063
+    },
+    {
+      "case": "f5_ellcrack_two_families_MT",
+      "class": "DenseClass",
+      "gap": 1.1685917204956566e-14,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.02431276999413967,
+      "t_mfh": 0.009169974
+    },
+    {
+      "case": "h_o2_dilute",
+      "class": "DenseClass",
+      "gap": 2.1667597715475255e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.011775458231568336,
+      "t_mfh": 0.00281729
+    },
+    {
+      "case": "h_o4_voigt",
+      "class": "TensTI",
+      "gap": 1.4102406905405876e-13,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.018820367753505707,
+      "t_mfh": 0.007115023
+    },
+    {
+      "case": "h_o2_mori_tanaka",
+      "class": "DenseClass",
+      "gap": 2.4392797161158906e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.012024344876408577,
+      "t_mfh": 0.003316575
+    },
+    {
+      "case": "f4_ellcrack_isoavg_SC",
+      "class": "TensISO",
+      "gap": 1.177691860828213e-14,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.3181703742593527,
+      "t_mfh": 0.013077992
+    },
+    {
+      "case": "h_o4_differential",
+      "class": "TensISO",
+      "gap": 3.2683101987708823e-9,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 7.877097053453326,
+      "t_mfh": 0.602919149
+    },
+    {
+      "case": "c2_prolate_tilaw_rot_MT",
+      "class": "TensTI",
+      "gap": 3.122449372823067e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.0474374726765085e-16,
+      "t_echoes": 0.025606893002986908,
+      "t_mfh": 0.002668404
+    },
+    {
+      "case": "h_o2_voigt",
+      "class": "TensTI",
+      "gap": 2.1161785671452305e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.008713627234101295,
+      "t_mfh": 0.001505249
+    },
+    {
+      "case": "b6_triaxial_rot_MT",
+      "class": "TensOrtho",
+      "gap": 3.788442142320375e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.027754012495279312,
+      "t_mfh": 0.003816127
+    },
+    {
+      "case": "b3_prolate_rot_MT",
+      "class": "TensTI",
+      "gap": 5.231081394809068e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.02586255967617035,
+      "t_mfh": 0.002998169
+    },
+    {
+      "case": "d4_cond_oblate_rot_tilaw_DIL",
+      "class": "DenseClass",
+      "gap": 7.166990310248482e-17,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.890237850393966e-16,
+      "t_echoes": 0.007750602439045906,
+      "t_mfh": 0.002443266
+    },
+    {
+      "case": "b2_oblate_e3_MT",
+      "class": "TensTI",
+      "gap": 2.906113525715831e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.6587459602861218e-16,
+      "t_echoes": 0.018592899665236473,
+      "t_mfh": 0.002040221
+    },
+    {
+      "case": "d1_cond_sph_MT",
+      "class": "TensISO",
+      "gap": 1.1157765993655276e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.784421520882296e-17,
+      "t_echoes": 0.007562816143035889,
+      "t_mfh": 0.00077549
+    },
+    {
+      "case": "h_o4_maxwell",
+      "class": "DenseClass",
+      "gap": 5.541643129345287e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.05077171139419079,
+      "t_mfh": 0.017297793
+    },
+    {
+      "case": "h_o4_dilute",
+      "class": "DenseClass",
+      "gap": 5.224701518117096e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.04587915912270546,
+      "t_mfh": 0.011814508
+    },
+    {
+      "case": "f3_penny_rot_MT",
+      "class": "TensTI",
+      "gap": 1.2256116463934152e-13,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.03288860805332661,
+      "t_mfh": 0.004181523
+    },
+    {
+      "case": "g2_sph_ellcrack_isoavg_ASC",
+      "class": "TensISO",
+      "gap": 4.476207088466552e-11,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.33760660514235497,
+      "t_mfh": 0.013550354
+    },
+    {
+      "case": "g1_sph_ASC",
+      "class": "TensISO",
+      "gap": 2.0059321728318152e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 1.923779634006117e-16,
+      "t_echoes": 0.20466681011021137,
+      "t_mfh": 0.006107136
+    },
+    {
+      "case": "h_o2_maxwell",
+      "class": "DenseClass",
+      "gap": 3.322816080635876e-15,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.013102930039167404,
+      "t_mfh": 0.003478752
+    },
+    {
+      "case": "b7_prolate_isoavg_MT",
+      "class": "TensISO",
+      "gap": 2.2369569487175346e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.027681883424520493,
+      "t_mfh": 0.002542555
+    },
+    {
+      "case": "c3_prolate_tilaw_misaligned_DIL",
+      "class": "DenseClass",
+      "gap": 1.9005842899894807e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.1870043081294814e-16,
+      "t_echoes": 0.023973453789949417,
+      "t_mfh": 0.006394552
+    },
+    {
+      "case": "c1_sph_tilaw_rot_MT",
+      "class": "TensTI",
+      "gap": 3.1514079404321623e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 3.0474374726765085e-16,
+      "t_echoes": 0.025555623695254326,
+      "t_mfh": 0.002756243
+    },
+    {
+      "case": "h_o4_self_consistent",
+      "class": "TensISO",
+      "gap": 4.991335071032394e-15,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.31041607819497585,
+      "t_mfh": 0.076409693
+    },
+    {
+      "case": "h_o2_self_consistent",
+      "class": "TensISO",
+      "gap": 1.2229472769945936e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.7158894579531116e-16,
+      "t_echoes": 0.08656876161694527,
+      "t_mfh": 0.021622884
+    },
+    {
+      "case": "h_o4_reuss",
+      "class": "TensTI",
+      "gap": 2.2532792712342042e-13,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.027630554512143135,
+      "t_mfh": 0.007545947
+    },
+    {
+      "case": "b9_triaxial_tiavg_MT",
+      "class": "DenseClass",
+      "gap": 2.4674386758628717e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 2.2645713360807476e-16,
+      "t_echoes": 0.02813676744699478,
+      "t_mfh": 0.007858623
+    },
+    {
+      "case": "h_o4_pcw",
+      "class": "DenseClass",
+      "gap": 5.586661657161218e-16,
+      "gap_with_echoes_source": null,
+      "phase_gap": 5.435113378325778e-16,
+      "t_echoes": 0.047541774809360504,
+      "t_mfh": 0.017186074
     },
     {
       "case": "a5_sph_maxwell_maxwell_SC",
@@ -236,26 +461,8 @@
       "gap": 3.235065005491369e-16,
       "gap_with_echoes_source": null,
       "phase_gap": 1.2244554946173435e-15,
-      "t_echoes": 0.26202634163200855,
-      "t_mfh": 0.01100074
-    },
-    {
-      "case": "e2_multiscale_a3_as_matrix_MT",
-      "class": "TensTI",
-      "gap": 3.5204888326686773e-16,
-      "gap_with_echoes_source": 1.7121871597764566e-16,
-      "phase_gap": 2.046349345904995e-16,
-      "t_echoes": 0.012981647625565529,
-      "t_mfh": 0.001190404
-    },
-    {
-      "case": "e1_multiscale_b3_as_inclusion_MT",
-      "class": "TensTI",
-      "gap": 3.429868264898225e-16,
-      "gap_with_echoes_source": 2.1032218545373274e-16,
-      "phase_gap": 5.231081394809068e-16,
-      "t_echoes": 0.01907969079911709,
-      "t_mfh": 0.00217123
+      "t_echoes": 0.26831480860710144,
+      "t_mfh": 0.010815982
     },
     {
       "case": "e3_multiscale_d1_as_matrix_cond_MT",
@@ -263,10 +470,28 @@
       "gap": 2.2994668322566065e-16,
       "gap_with_echoes_source": 1.8178572533187987e-16,
       "phase_gap": 1.1157765993655276e-16,
-      "t_echoes": 0.004414604976773262,
-      "t_mfh": 0.000291147
+      "t_echoes": 0.004489218816161156,
+      "t_mfh": 0.000281416
+    },
+    {
+      "case": "e2_multiscale_a3_as_matrix_MT",
+      "class": "TensTI",
+      "gap": 3.5204888326686773e-16,
+      "gap_with_echoes_source": 1.7121871597764566e-16,
+      "phase_gap": 2.046349345904995e-16,
+      "t_echoes": 0.01292503997683525,
+      "t_mfh": 0.001165184
+    },
+    {
+      "case": "e1_multiscale_b3_as_inclusion_MT",
+      "class": "TensTI",
+      "gap": 3.429868264898225e-16,
+      "gap_with_echoes_source": 2.1032218545373274e-16,
+      "phase_gap": 5.231081394809068e-16,
+      "t_echoes": 0.01960836537182331,
+      "t_mfh": 0.002070641
     }
   ],
   "tensnd": "0.12.0",
-  "threads": 2
+  "threads": 1
 }

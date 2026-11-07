@@ -87,8 +87,9 @@ first-order steps.
 
 The cases of the aging viscoelastic harness (`scripts/bench_echoes/alv_harness`, its
 `README.md` describes them): spheres and spheroids, aligned and tilted, transversely
-isotropic laws about tilted axes, orientation averages, conduction, two-scale chains, and
-tilted elliptic cracks, on
+isotropic laws about tilted axes, orientation averages, conduction, two-scale chains,
+tilted elliptic cracks, the asymmetric self-consistent scheme, and every scheme of Echoes
+on two cells per order that mix families of different shapes, orientations and laws, on
 50 instants. Both codes start from the same closed-form kernels; Echoes calls them through
 Python at each pair of instants. `MeanFieldHomogenization` computes each scheme in the
 symmetry class of its operators ([Aging viscoelastic operators and histories](@ref man-volterra-operators)),
@@ -135,16 +136,19 @@ scheme_table(; strength = true)
   against tens of milliseconds through Echoes' Python API; the isotropic
   schemes inherit the factor.
 - **Same algorithm, comparable speed.** Residues against residues on a
-  triclinic medium, and the anisotropic conductivity, differ by a factor 2 to
-  2.5. The one case where Echoes is faster, `:decuhr` on the rotated triclinic
-  ellipsoid against Echoes' residues, is a cubature against residues.
+  triclinic medium, and the anisotropic conductivity, differ by a factor
+  1.2 to 2. The one case where Echoes is faster, `:decuhr` on the rotated
+  triclinic ellipsoid against Echoes' residues, is a cubature against residues.
 - **The cubatures are the fastest general back-ends.** `:nestedquadgk` agrees
-  with NUMINT3D to ``10^{-9}`` and is 80 to 400 times faster.
+  with NUMINT3D to a few ``10^{-9}`` and is 115 to 740 times faster.
 - **Derivatives by automatic differentiation cost no more than closed forms.**
   ForwardDiff through `hill_tensor` beats Echoes' closed-form derivative on the
   isotropic cases.
-- **Aging viscoelasticity**: 3.6 to 10 times faster on 11 instants, the
-  self-consistent schemes in the cheapest algebra of the reference kernel.
+- **Aging viscoelasticity**: 8 to 37 times faster on 11 instants, and 2.6 to
+  40 times on the 50 instants of the harness. The gain is largest where the result
+  stays isotropic (the self-consistent schemes on spheres or on families averaged
+  in orientation), and smallest, 2.6 to 4, where the result fills a dense operator or
+  the cell mixes several families.
 
 ## Reproducing
 
