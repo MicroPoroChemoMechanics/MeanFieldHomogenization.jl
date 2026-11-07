@@ -137,10 +137,10 @@ scheme_table(; strength = true)
   schemes inherit the factor.
 - **Same algorithm, comparable speed.** Residues against residues on a
   triclinic medium, and the anisotropic conductivity, differ by a factor
-  1.2 to 2. The one case where Echoes is faster, `:decuhr` on the rotated
-  triclinic ellipsoid against Echoes' residues, is a cubature against residues.
+  1.2 to 2. The cubature `:decuhr` on the rotated triclinic ellipsoid takes
+  the time of Echoes' residues.
 - **The cubatures are the fastest general back-ends.** `:nestedquadgk` agrees
-  with NUMINT3D to a few ``10^{-9}`` and is 115 to 740 times faster.
+  with NUMINT3D to a few ``10^{-9}`` and is 120 to 770 times faster.
 - **Derivatives by automatic differentiation cost no more than closed forms.**
   ForwardDiff through `hill_tensor` beats Echoes' closed-form derivative on the
   isotropic cases.
