@@ -14,6 +14,35 @@ through its Python API, from Python modules that also run on their own.
 1 is in bold. The *gap* is the largest relative difference between the two
 results, so that each ratio compares two computations of the same number.
 
+## What each code covers
+
+The timings compare what both codes compute; this table lists what each one covers,
+from Echoes' Python API and manual and from the modules of `MeanFieldHomogenization`.
+A dash marks what a code does not provide.
+
+| | Echoes | `MeanFieldHomogenization` |
+| :--- | :--- | :--- |
+| **Physics**: linear elasticity | 3D and 2D | 3D and 2D |
+| conduction, diffusion (second order) | yes | yes |
+| linear viscoelasticity | complex moduli; aging, in time | complex moduli; non-aging in the Laplace–Carson domain with numerical inversion, and a catalog of rheological models; aging, in time |
+| poroelasticity | through the schemes | Biot tensor and modulus, effective stress |
+| nonlinear homogenization | strength domains and elastoplastic response of porous media by secant moduli | secant methods on any linear scheme, incremental tangent and affine formulations, polycrystals, strength domains of porous and frictional media, damage by the growth of microcracks; phase laws written as residuals or potentials, tangents by automatic differentiation |
+| **Heterogeneities**: sphere, spheroid, ellipsoid, cylinder | yes | yes |
+| cracks | elliptic cracks: flat limit, crack compliance, densities | elliptic and ribbon cracks: opening and compliance tensors, intensity factors, densities |
+| layered inclusions | ``n``-layer sphere with spring or Gurtin–Murdoch interfaces | ``n``-layer sphere and confocal ``n``-layer spheroid with imperfect interfaces; periodic laminates |
+| user-defined inclusions | user inclusion | custom inclusions, inclusions computed by finite elements or by a trained network |
+| **Reference medium**: isotropic | closed forms | closed forms |
+| anisotropic | residues, cubature | residues, nested Gauss–Kronrod quadrature, DECUHR cubature; closed form for a spheroid coaxial with a transversely isotropic medium |
+| **Schemes**: Voigt, Reuss, dilute and dual dilute, Mori–Tanaka, self-consistent and asymmetric self-consistent, PCW, Maxwell, differential | yes | yes |
+| interaction schemes (cluster model, equivalent inclusion method) | — | yes |
+| orientation distributions | by symmetrization | by symmetrization and orientation averages |
+| **Outputs**: concentration tensors | yes | yes |
+| derivatives of the effective tensor | closed form for an isotropic reference, quadrature otherwise | automatic differentiation through every computation |
+| symbolic computation | — | `Symbolics`, `SymPy`, where the algorithm has no branch on a value |
+| **Use**: constitutive law in a finite-element code | — | Ferrite, FEniCSx |
+| graphical interface | — | MFH Studio |
+| language, distribution, license | Python on a C++ core; prebuilt wheels; academic, non-commercial | Julia; General registry; MIT |
+
 ## Kernels
 
 ```@eval
