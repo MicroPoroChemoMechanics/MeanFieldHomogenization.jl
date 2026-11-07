@@ -73,12 +73,12 @@ Cerema ([manual](https://jfbarthelemy.github.io/echoes/),
 and Hill machinery, the crack tensors, the `n`-layer sphere, the schemes and the aging
 viscoelastic route were ported from it, with the methods of the articles it implements:
 
-- the crack in an anisotropic matrix: Barthélémy (2009),
-  [doi:10.1016/j.ijsolstr.2009.08.003](https://doi.org/10.1016/j.ijsolstr.2009.08.003),
-  and Barthélémy, Sevostianov & Giraud (2021),
-  [doi:10.1016/j.ijengsci.2021.103454](https://doi.org/10.1016/j.ijengsci.2021.103454);
-- the Hill tensors of transformed problems: Barthélémy (2020),
-  [doi:10.1016/j.ijengsci.2020.103326](https://doi.org/10.1016/j.ijengsci.2020.103326);
+- the compliance and the Hill polarization tensor of a crack in an anisotropic matrix:
+  Barthélémy (2009),
+  [doi:10.1016/j.ijsolstr.2009.08.003](https://doi.org/10.1016/j.ijsolstr.2009.08.003);
+- the Hill polarization tensor of an ellipsoid and of a crack in an anisotropic
+  conductor: Barthélémy (2009),
+  [doi:10.1007/s11242-008-9241-9](https://doi.org/10.1007/s11242-008-9241-9);
 - the Eshelby problem and the schemes of aging linear viscoelasticity:
   Barthélémy et al. (2016),
   [doi:10.1016/j.ijsolstr.2016.06.035](https://doi.org/10.1016/j.ijsolstr.2016.06.035),
@@ -89,12 +89,21 @@ viscoelastic route were ported from it, with the methods of the articles it impl
 
 Echoes remains the reference of the port: the
 [Cross-validation](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/validation/)
-page runs the same problems with both libraries. The port extends it in five directions:
+page runs the same problems with both libraries. The port extends it in six directions:
 
 - **numbers of any type**: `ForwardDiff` dual numbers through every computation, so
   that the derivative of an effective property with respect to any parameter of the
   model comes out of the same call, and symbolic numbers (`Symbolics`, `SymPy`) for
   closed forms;
+- **closed forms**: the Hill tensor of a spheroid coaxial with a transversely isotropic
+  matrix, derived by transformation (Barthélémy, 2020,
+  [doi:10.1016/j.ijengsci.2020.103326](https://doi.org/10.1016/j.ijengsci.2020.103326)),
+  the opening displacement tensor of an elliptic crack in a matrix transversely isotropic
+  about its normal (Barthélémy, Sevostianov & Giraud, 2021,
+  [doi:10.1016/j.ijengsci.2021.103454](https://doi.org/10.1016/j.ijengsci.2021.103454)),
+  and the displacement and stress intensity factors of elliptic and ribbon cracks
+  (Barthélémy, 2026,
+  [doi:10.1016/j.ijsolstr.2026.114293](https://doi.org/10.1016/j.ijsolstr.2026.114293));
 - **morphologies**: confocal `n`-layer spheroids with imperfect interfaces
   (Barthélémy & Bignonnet, 2020,
   [doi:10.1016/j.ijengsci.2020.103274](https://doi.org/10.1016/j.ijengsci.2020.103274)),

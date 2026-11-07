@@ -17,8 +17,8 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 | Script | Validated | Tolerance |
 | :--- | :--- | :--- |
 | `benchmark.jl` | ``\mathbb P``, ``\Delta\mathbb S`` (residues, DECUHR), ``\partial\mathbb P/\partial\mathbb C`` | machine (aniso), ~1e-6 (iso) |
-| `benchmark_nlayers.jl` | n-layer averages ``\alpha_k, \beta_k``, local fields | 1e-6 |
-| `benchmark_porous.jl` | porous moduli, 10 schemes × 2 shapes × 7 porosities | 1e-6 |
+| `benchmark_nlayers.jl` | n-layer averages ``\alpha_k, \beta_k``, local fields | 1e-8 |
+| `benchmark_porous.jl` | porous moduli, 10 schemes × 2 shapes × 7 porosities | 1e-3 (spheres), 5e-3 (spheroids), absolute or relative |
 | `benchmark_strength.jl` | mortar ``k, \mu, E`` + strength ``f_c`` [pichler2011](@cite) | 1 % / 2 % |
 | `benchmark_hill_derivative.jl` | ``\partial\mathbb P/\partial\mathbb C`` (ISO, ORTHO) | 1e-5 / 1e-4 |
 | `make_schemes_complex_cells.py` | every elastic and conduction scheme on complex cells, written for `test_schemes_complex_cells.jl` | 1e-10 (differential 1e-6) |
@@ -28,21 +28,24 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 
 | Quantity | Agreement |
 | :--- | :--- |
-| Hill ``\mathbb P``, anisotropic (same residue algorithm both sides) | machine precision |
-| Hill ``\mathbb P``, isotropic (analytic vs quadrature) | 1e-6 … 1e-8 |
-| ``\partial\mathbb P/\partial\mathbb C`` | ISO 1e-15, ORTHO 1e-6 |
-| Crack ``\mathbb H``, penny | machine precision |
-| Porous moduli — Voigt, Reuss, Dilute, DiluteDual, Maxwell, PCW, MT | 2.5e-14 |
-| Porous moduli — SC, ``\varphi \le 0.3`` | 5.7e-7 |
-| n-layer sphere ``\alpha_k`` / ``\beta_k`` (30 random 2–8-layer stacks) | 4.6e-13 / 4.4e-14 |
-| n-layer sphere, local ``\sigma_{rr}, \sigma_{\theta\theta}`` (80 points) | 5.8e-16 |
+| Hill ``\mathbb P``, anisotropic (residues or cubature against Echoes' residues and NUMINT3D) | 5e-14 … 1e-7; `:decuhr` on the cubic prolate 6e-6 |
+| Hill ``\mathbb P``, isotropic (closed forms on both sides) | 3e-10 … 7e-10 |
+| Hill ``\boldsymbol{P}``, conduction | 1e-15 |
+| ``\partial\mathbb P/\partial\mathbb C`` | ISO 4e-15, ORTHO 9e-7 |
+| Crack ``\mathbb H``, penny, isotropic to triclinic matrix | 5e-10 … 7e-9 |
+| Porous moduli — Voigt, Reuss, Dilute, DiluteDual, Maxwell, PCW, MT | 1.5e-14 |
+| Porous moduli — SC, ASC, ``\varphi \le 0.3`` / ``\varphi \le 0.7`` | 1.3e-8 / 1.5e-5 |
+| Porous moduli — Differential, ``\varphi \le 0.95`` | 1.2e-5 |
+| Porous moduli — SC, ASC, ``\varphi \ge 0.9``, where both moduli are about ``10^{-6}`` of the solid's | 4e-2 (SC), 1.8e-1 (ASC) |
+| n-layer sphere ``\alpha_k`` / ``\beta_k`` (30 random 2–8-layer stacks) | 4.6e-13 / 4.5e-14 |
+| n-layer sphere, local ``\sigma_{rr}, \sigma_{\theta\theta}`` (80 points) | 7.0e-16 |
 | Rotational averages TI / ISO (C++ transcribed verbatim) | 1e-12 |
 | ALV per-layer ``\alpha(t,t')``, ``\beta(t,t')`` | 1e-16 diag, 1e-6 off-diag |
 | Dual-interface concentrations / effective diffusivity | 1e-8 / 1e-5 |
 | Cracked ALV creep, PCW / SC + interface | 1e-4 / 1.4e-4 |
 | Elastic and conduction schemes on complex cells (38 cells) | 6e-13; differential 8e-8 |
 | ALV schemes on complex cells (harness, 54 cells) | 4e-11; differential 8e-8 |
-| Three-scale mortar ``k, \mu, E`` | 1e-3 |
+| Three-scale mortar ``k, \mu, E`` / ``f_c`` | 0.65 % / 0.63 % for ``\alpha > 0.1``; 3.5 % / 2.9 % at ``\alpha = 0.05``, moduli below 1 GPa |
 
 ## Deliberate divergences
 
@@ -52,8 +55,6 @@ Conventions and formulation choices, not numerical error — do not "fix" them.
 | :--- | :--- | :--- |
 | Elliptic crack ``\mathbb H`` | normalization, see below | [COD tensors](@ref th-cod-tensors) |
 | MT on a cracked RVE | ``\mathbb B : \mathbb A^{-1}`` vs additive closure; both agree with PCW at low density | [Viscoelasticity](@ref man-viscoelasticity) |
-| ASC, porous oblate | Echoes' compliance-form ASC converges to another branch | `benchmark_porous.jl` |
-| DifferentialScheme, porous ``\varphi \ge 0.5`` | pre-existing gap, 2.6e-3 → 6.2e-2, reproducible | `benchmark_porous.jl` |
 | Strength ``f_c`` (2 %) | water/air regularized to a small positive stiffness | [Strength](@ref app-strength) |
 | Reuss with cracks | MFH passes a crack over (no volume); Echoes forms zero times an infinite compliance | `make_schemes_complex_cells.py` |
 

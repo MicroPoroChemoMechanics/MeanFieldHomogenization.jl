@@ -988,7 +988,7 @@ weakdeps = ["SparseArrays"]
 deps = ["Dates", "Elliptic", "ForwardDiff", "HTTP", "InteractiveUtils", "JSON", "LinearAlgebra", "Malt", "OrdinaryDiffEqTsit5", "Polynomials", "Printf", "QuadGK", "Random", "SimpleNonlinearSolve", "SpecialFunctions", "StaticArrays", "TOML", "TensND", "Tensors"]
 path = "../.."
 uuid = "c1e5f8a3-7b2d-4a6c-9e4f-3b8a2c5d7e9f"
-version = "0.25.0"
+version = "0.26.3"
 
     [deps.MeanFieldHomogenization.extensions]
     MeanFieldHomogenizationDECUHRExt = ["DECUHR", "Integrals"]

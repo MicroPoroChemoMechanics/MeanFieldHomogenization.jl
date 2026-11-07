@@ -14,6 +14,35 @@ through its Python API, from Python modules that also run on their own.
 1 is in bold. The *gap* is the largest relative difference between the two
 results, so that each ratio compares two computations of the same number.
 
+## What each code covers
+
+The timings compare what both codes compute; this table lists what each one covers,
+from Echoes' Python API and manual and from the modules of `MeanFieldHomogenization`.
+A dash marks what a code does not provide.
+
+| | Echoes | `MeanFieldHomogenization` |
+| :--- | :--- | :--- |
+| **Physics**: linear elasticity | 3D and 2D | 3D and 2D |
+| conduction, diffusion (second order) | yes | yes |
+| linear viscoelasticity | complex moduli; aging, in time | complex moduli; non-aging in the Laplace–Carson domain with numerical inversion, and a catalog of rheological models; aging, in time |
+| poroelasticity | through the schemes | Biot tensor and modulus, effective stress |
+| nonlinear homogenization | strength domains and elastoplastic response of porous media by secant moduli | secant methods on any linear scheme, incremental tangent and affine formulations, polycrystals, strength domains of porous and frictional media, damage by the growth of microcracks; phase laws written as residuals or potentials, tangents by automatic differentiation |
+| **Heterogeneities**: sphere, spheroid, ellipsoid, cylinder | yes | yes |
+| cracks | elliptic cracks: flat limit, crack compliance, densities | elliptic and ribbon cracks: opening and compliance tensors, intensity factors, densities |
+| layered inclusions | ``n``-layer sphere with spring or Gurtin–Murdoch interfaces | ``n``-layer sphere and confocal ``n``-layer spheroid with imperfect interfaces; periodic laminates |
+| user-defined inclusions | user inclusion | custom inclusions, inclusions computed by finite elements or by a trained network |
+| **Reference medium**: isotropic | closed forms | closed forms |
+| anisotropic | residues, cubature | residues, nested Gauss–Kronrod quadrature, DECUHR cubature; closed form for a spheroid coaxial with a transversely isotropic medium |
+| **Schemes**: Voigt, Reuss, dilute and dual dilute, Mori–Tanaka, self-consistent and asymmetric self-consistent, PCW, Maxwell, differential | yes | yes |
+| interaction schemes (cluster model, equivalent inclusion method) | — | yes |
+| orientation distributions | by symmetrization | by symmetrization and orientation averages |
+| **Outputs**: concentration tensors | yes | yes |
+| derivatives of the effective tensor | closed form for an isotropic reference, quadrature otherwise | automatic differentiation through every computation |
+| symbolic computation | — | `Symbolics`, `SymPy`, where the algorithm has no branch on a value |
+| **Use**: constitutive law in a finite-element code | — | Ferrite, FEniCSx |
+| graphical interface | — | MFH Studio |
+| language, distribution, license | Python on a C++ core; prebuilt wheels; academic, non-commercial | Julia; General registry; MIT |
+
 ## Kernels
 
 ```@eval
@@ -87,8 +116,9 @@ first-order steps.
 
 The cases of the aging viscoelastic harness (`scripts/bench_echoes/alv_harness`, its
 `README.md` describes them): spheres and spheroids, aligned and tilted, transversely
-isotropic laws about tilted axes, orientation averages, conduction, two-scale chains, and
-tilted elliptic cracks, on
+isotropic laws about tilted axes, orientation averages, conduction, two-scale chains,
+tilted elliptic cracks, the asymmetric self-consistent scheme, and every scheme of Echoes
+on two cells per order that mix families of different shapes, orientations and laws, on
 50 instants. Both codes start from the same closed-form kernels; Echoes calls them through
 Python at each pair of instants. `MeanFieldHomogenization` computes each scheme in the
 symmetry class of its operators ([Aging viscoelastic operators and histories](@ref man-volterra-operators)),
@@ -135,16 +165,19 @@ scheme_table(; strength = true)
   against tens of milliseconds through Echoes' Python API; the isotropic
   schemes inherit the factor.
 - **Same algorithm, comparable speed.** Residues against residues on a
-  triclinic medium, and the anisotropic conductivity, differ by a factor 2 to
-  2.5. The one case where Echoes is faster, `:decuhr` on the rotated triclinic
-  ellipsoid against Echoes' residues, is a cubature against residues.
+  triclinic medium, and the anisotropic conductivity, differ by a factor
+  1.2 to 2. The cubature `:decuhr` on the rotated triclinic ellipsoid takes
+  the time of Echoes' residues.
 - **The cubatures are the fastest general back-ends.** `:nestedquadgk` agrees
-  with NUMINT3D to ``10^{-9}`` and is 80 to 400 times faster.
+  with NUMINT3D to a few ``10^{-9}`` and is 120 to 770 times faster.
 - **Derivatives by automatic differentiation cost no more than closed forms.**
   ForwardDiff through `hill_tensor` beats Echoes' closed-form derivative on the
   isotropic cases.
-- **Aging viscoelasticity**: 3.6 to 10 times faster on 11 instants, the
-  self-consistent schemes in the cheapest algebra of the reference kernel.
+- **Aging viscoelasticity**: 8 to 37 times faster on 11 instants, and 2.6 to
+  40 times on the 50 instants of the harness. The gain is largest where the result
+  stays isotropic (the self-consistent schemes on spheres or on families averaged
+  in orientation), and smallest, 2.6 to 4, where the result fills a dense operator or
+  the cell mixes several families.
 
 ## Reproducing
 
