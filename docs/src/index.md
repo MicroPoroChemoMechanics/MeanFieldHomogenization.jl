@@ -83,21 +83,27 @@ mean-field homogenization library written in C++ with a Python interface by the 
 author at Cerema, documented in its own
 [manual](https://jfbarthelemy.github.io/echoes/). The Eshelby and Hill machinery,
 the crack tensors, the ``n``-layer sphere, the schemes and the aging viscoelastic route
-were ported from it, with the methods of the articles it implements: the crack in an
-anisotropic matrix [barthelemyIJSS2009, barthelemyIJES2021](@cite), the Hill tensors of
-transformed problems [barthelemyIJES2020_hilltrans](@cite), and the Eshelby problem and
-the schemes of aging linear viscoelasticity [barthelemyIJSS2016, barthelemyIJES2019](@cite),
-discretized in time as proposed by [sanahuja2013](@citet).
+were ported from it, with the methods of the articles it implements: the compliance and
+the Hill polarization tensor of a crack in an anisotropic matrix [barthelemyIJSS2009](@cite),
+the Hill polarization tensor of an ellipsoid and of a crack in an anisotropic conductor
+[barthelemyTIPM2009](@cite), and the Eshelby problem and the schemes of aging linear
+viscoelasticity [barthelemyIJSS2016, barthelemyIJES2019](@cite), discretized in time as
+proposed by [sanahuja2013](@citet).
 
 Echoes remains the reference of the port: the same problems are run by both libraries
 in [Cross-validation](@ref dev-validation), and their timings are compared in
-[Performance vs Echoes](@ref dev-benchmarks). The port extends it in five directions:
+[Performance vs Echoes](@ref dev-benchmarks). The port extends it in six directions:
 
 - **numbers of any type**: every computation accepts `ForwardDiff` dual numbers, so
   that the derivative of an effective property with respect to any parameter of the
   model (a fraction, an aspect ratio, a modulus at any scale, a time of a law) comes
   out of the same call, and symbolic numbers (`Symbolics`, `SymPy`), which give closed
   forms where the algorithm has no branch on a value;
+- **closed forms**: the Hill tensor of a spheroid coaxial with a transversely isotropic
+  matrix, derived by transformation [barthelemyIJES2020_hilltrans](@cite), the opening
+  displacement tensor of an elliptic crack in a matrix transversely isotropic about its
+  normal [barthelemyIJES2021](@cite), and the displacement and stress intensity factors
+  of elliptic and ribbon cracks [barthelemyIJSS2026](@cite);
 - **morphologies**: confocal ``n``-layer spheroids with imperfect interfaces
   [barthelemyBignonnetIJES2020](@cite), periodic laminates, and inclusions whose
   response comes from a finite-element solution or a trained network;
