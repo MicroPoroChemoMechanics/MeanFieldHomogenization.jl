@@ -88,7 +88,7 @@ viscoelastic route were ported from it, with the methods of the articles it impl
   [doi:10.1016/j.ijsolstr.2013.04.023](https://doi.org/10.1016/j.ijsolstr.2013.04.023).
 
 Echoes remains the reference of the port: the
-[Cross-validation](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/validation/)
+[Cross-validation](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/developer/validation)
 page runs the same problems with both libraries. The port extends it in six directions:
 
 - **numbers of any type**: `ForwardDiff` dual numbers through every computation, so
