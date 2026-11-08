@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.26.4 — the permeability from the Stokes flow in the pores
+
+A patch release: Brinkman inclusions bring the Stokes-to-Darcy upscaling of the
+permeability, after Bignonnet (2022), into every scheme of the package.
+
+### Added
+
+- **Brinkman inclusions.** A new sub-module, `Brinkman`, exports `BrinkmanSphere`,
+  `BrinkmanCylinder`, `BrinkmanLayer` and `BrinkmanCoatedSphere`, each filled with a porous
+  medium (`BrinkmanPorous`), a clear fluid (`BrinkmanFluid`) or an impervious solid
+  (`BrinkmanSolid`). Until now a permeability could be homogenized only from phases of
+  known permeability (Darcy–Darcy). A pore in which the fluid obeys the Stokes equations
+  is not such a phase, and neither is a solid grain. The auxiliary problem of these
+  inclusions is the Brinkman inhomogeneity problem, whose solution depends on the size of
+  the inclusion through ``R/\sqrt{k_0}`` and has no Hill tensor. The inclusions enter the
+  dilute, Mori–Tanaka, self-consistent, differential and Maxwell schemes through the
+  concentration gate of the custom-inclusion contract, so no scheme changed. Two
+  formulations are offered: `ResistanceForm` (the property is ``\boldsymbol{r} = \boldsymbol{k}^{-1}``,
+  finite for a clear-fluid reference) and `PermeabilityForm` (the property is
+  ``\boldsymbol{k}``, finite for an impervious reference, as spanning pores in a solid need). The
+  porous closed forms are written with functions of ``R/\sqrt{k_1}`` that stay accurate as
+  the inclusion tends to a clear fluid, where the published forms cancel to ``0/0``. The
+  inclusions accept `ForwardDiff` duals, nested ones included, and symbolic numbers (SymPy
+  for every shape, Symbolics for the sphere and the layer), so the dilute and Mori–Tanaka
+  estimates come out in closed form. Two problems without a solution are refused with a
+  message: an unbounded inclusion in a clear fluid (Stokes' paradox) and an impervious
+  layer.
+- **Documentation.** A theory page (*Permeability from Stokes flow*) derives the
+  inclusions along the symbolic route of TensND. A manual page (*Brinkman inclusions*)
+  gives the syntax, and an application (*Stokes-to-Darcy permeability of porous media*)
+  compares the schemes on granular, fibrous, tubular and double-porosity media. The
+  script `scripts/71_brinkman_permeability.jl` solves every inclusion symbolically with
+  TensND's curvilinear operators and SymPy before the full numerical study.
+
+### Tests
+
+- The self-consistent and differential schemes are now tested with a custom conduction
+  inclusion, through the Brinkman inclusions, against the closed-form estimates of the
+  paper. The porous closed forms are held to 256-bit evaluations, and Darcy's limit to the
+  conduction inclusions.
+
 ## v0.26.3 — the local Newton iteration stops at the accuracy its residual has
 
 A patch release: a local integration whose residual is only accurate to a round-off floor
