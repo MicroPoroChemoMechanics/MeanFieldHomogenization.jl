@@ -421,9 +421,11 @@ julia scripts/89_fe_concave_pores.jl      # the comparison, live
 
 The two cells of this page are the teachers of the supersphere and superspheroid
 surrogates described in [Neural-surrogate inclusions](@ref man-neural-inclusions),
-which replace the solve inside a scheme. This page closes the general
-concepts; the applications that follow are organized by material, starting with
-[Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste).
+which replace the solve inside a scheme. The shape of the pores matters still
+more for the flow through them: the next page,
+[Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy), estimates
+the permeability from the Stokes flow in the pores, with inclusions whose
+response depends on their size.
 
 - [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell)
   — the pore declination, and the octant's parity argument.

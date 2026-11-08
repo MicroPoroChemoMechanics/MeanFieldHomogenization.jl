@@ -30,8 +30,8 @@ isotropic Brinkman medium. Its concentration tensors are isotropic and depend on
 [bignonnetIJES2022](@cite):
 
 - Stokes sphere: ``\\boldsymbol{A} = 3\\,\\dfrac{15 + 15\\alpha_0 + 6\\alpha_0^2 + \\alpha_0^3}{45 + 45\\alpha_0 + 6\\alpha_0^2 + \\alpha_0^3}\\,\\boldsymbol{1}``;
-- impervious sphere: ``\\langle\\boldsymbol{r}\\cdot\\boldsymbol{A}\\rangle = \\dfrac{3\\,(3 + 3\\alpha_0 + \\alpha_0^2)}{2R^2}\\,\\boldsymbol{1}``, Brinkman's drag;
-- porous sphere: the closed form of `theory/brinkman.md`, which tends to
+- impervious sphere: ``\\langle\\boldsymbol{r}\\cdot\\boldsymbol{A}\\rangle = \\dfrac{3\\,(3 + 3\\alpha_0 + \\alpha_0^2)}{2R^2}\\,\\boldsymbol{1}``, the drag of [brinkmanASR1949](@citet);
+- porous sphere: the closed form derived in [Permeability from Stokes flow](@ref th-brinkman), which tends to
   ``3k_1/(k_1 + 2k_0)`` as ``R \\to \\infty`` (Darcy).
 
 The phase property is the resistance or the permeability, according to `form`
@@ -135,7 +135,7 @@ An impervious sphere of radius `R` wrapped in a shell of clear fluid up to the
 radius `R_out > R`, embedded in an unbounded Brinkman medium. The averages run
 over the whole coated sphere, so its volume fraction is that of the ball of
 radius `R_out`. Used alone at volume fraction 1 in a self-consistent scheme, it
-is the effective-medium version of the cell models of Happel and Kuwabara
+is the effective-medium counterpart of the cell model of [happelAIChE1958](@citet)
 [bignonnetIJES2022](@cite). The phase property is not read.
 """
 struct BrinkmanCoatedSphere{T <: Number, F <: BrinkmanForm} <: AbstractBrinkmanInclusion{T}

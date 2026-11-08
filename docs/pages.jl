@@ -87,6 +87,9 @@ pages = [
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
+            # The permeability from the Stokes flow in the pores: the same
+            # schemes, fed with size-dependent Brinkman inclusions.
+            "theory/brinkman.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
         # non-aging problem onto an elastic one, and the aging case, where
@@ -111,6 +114,7 @@ pages = [
             "manual/cracks.md",
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
+            "manual/brinkman_inclusions.md",
             "manual/fe_inclusions.md",
             "manual/neural_inclusions.md",
         ],
@@ -241,6 +245,8 @@ pages = [
             # The Fourier reduction of the first is reused by the second.
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",
+            # Pore shapes again, now for the Stokes flow through them.
+            "applications/stokes_darcy_permeability.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
         # the ITZ pages use the paste model of the strength page.

@@ -91,4 +91,7 @@ conducts most — visible in the numbers above.
 [Materials](@ref fe-materials) passes from the equations to the code, with the
 contract a material fulfills at each quadrature point. The permeability of this
 page reappears in [Building a fractured-rock material](@ref fe-fractured-rock),
-where it follows the fracture apertures.
+where it follows the fracture apertures. A permeability estimated from the
+Stokes flow in the pores themselves, rather than from phases of known
+permeability, is the subject of
+[Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy).

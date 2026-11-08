@@ -323,4 +323,7 @@ creep calculation. The order-2 calls of the library
 are collected in [Conductivity](@ref man-conductivity) of the manual, and
 [Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
 applies the cross-property route of the last section to a hydrating cement
-paste.
+paste. When the permeability is to be estimated from the Stokes flow in the
+pores rather than from phases of known permeability, the same schemes take
+Brinkman inclusions, as in
+[Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy).

@@ -245,16 +245,20 @@ in either physics) and the contribution tensors are derived from
 `is_homogeneous_inclusion` still `true`, and the average stress is silently
 wrong — `check_inclusion_interface` is there to catch that.
 
-## Two worked examples in the package
+## Worked examples in the package
 
-Both live in [`MeanFieldHomogenization.FiniteElements`](@ref) and both take the same
-route: a finite-element resolution of the Eshelby problem, plugged in through
-the contract, with nothing downstream aware of it.
+The first two live in [`MeanFieldHomogenization.FiniteElements`](@ref) and take
+the same route: a finite-element resolution of the Eshelby problem, plugged in
+through the contract, with nothing downstream aware of it. The third shows that
+the contribution need not be independent of the size: the Brinkman inclusions
+of the Stokes-to-Darcy upscaling depend on it through the reference medium,
+and enter through gate B all the same.
 
 | Page | Covers | Gate |
 | :--- | :--- | :--- |
 | [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the five shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
 | [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both concentration tensors |
+| [Brinkman inclusions](@ref man-brinkman) | size-dependent inclusions of the Stokes flow in the pores | B, both concentration tensors |
 
 A cavity is the case where gate B is at its simplest and most exact: its
 stress-side concentration is **identically zero**, so the package's own
