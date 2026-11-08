@@ -3,10 +3,12 @@
 #  mortar with interfacial transition zones, the three-scale bituminous mix,
 #  the lamellar clay (two scales and one interfoliar layer), the eccentric
 #  core–shell aggregate of the recycled-concrete page, and the nested scales
-#  of the hydrating cement paste.
+#  of the hydrating cement paste, and the Brinkman inhomogeneity problem of
+#  the Stokes-to-Darcy upscaling.
 #  Docs: tutorials/transport.md, applications/bituminous.md,
 #        applications/lamellar_clay.md, applications/recycled_aggregate.md,
-#        applications/hydrating_blended_paste.md.
+#        applications/hydrating_blended_paste.md,
+#        scripts/71_brinkman_permeability.jl.
 # =============================================================================
 
 "A leader line from `target` to a label written at `at`, left-aligned."
@@ -550,7 +552,91 @@ function solidifying_sphere(; path = "applications/solidifying_sphere", words = 
     end
 end
 
+# ── Stokes-to-Darcy permeability: the Brinkman inhomogeneity problem ─────────
+
+const SOLID = tint(SLATE, 0.35)      # an impervious grain
+const FLUID = PANEL                  # clear fluid
+
+"""
+The three steps of a Stokes-to-Darcy estimate: the pore-scale cell (Stokes flow
+in the pores, body force in the solid), one Brinkman inhomogeneity problem
+(an inclusion of size R in a porous reference, its boundary layer of thickness
+√k₀), and the patterns available to represent the regions.
+"""
+function brinkman_problems()
+    return sheet("applications/brinkman_problems", 1100, 420) do
+        top = 34.0
+        # ── (a) the pore-scale cell
+        ca = Point(170, 215)
+        label(txt("pore scale: Stokes flow"), Point(ca.x, top); size = 16)
+        rve_box(ca, 260, 260; fill = FLUID)
+        rng = StableRNG(7)
+        @layer begin
+            box(ca, 256, 256, 9, :clip)
+            for (p, r) in pack(
+                    rng, 26, (rng, r) -> ca + Point((236 - 2r) * (rand(rng) - 0.5), (236 - 2r) * (rand(rng) - 0.5)),
+                    rng -> 14 + 16 * rand(rng); gap = 5
+                )
+                disk(p, r; fill = SOLID, stroke = INK, lw = 1.0)
+            end
+        end
+        label(m("Omega_f"), ca + Point(-108, 114); size = 17, bg = PANEL)
+        label(m("angle.l underline(f) angle.r = nabla P"), Point(ca.x, 392); size = 16)
+        # ── arrow
+        then_arrow(Point(312, 215), Point(368, 215))
+        # ── (b) the Brinkman inhomogeneity problem
+        cb = Point(560, 215)
+        label(txt("one Brinkman inhomogeneity problem"), Point(cb.x, top); size = 16)
+        unbounded_box(cb, 360, 300; fill = MATRIX, label_tensor = "k_0")
+        R, ℓ = 62.0, 26.0
+        disk(cb, R + ℓ; fill = tint(BLUE, 0.7), stroke = BLUE, lw = 1.2, dash = [5, 4])
+        disk(cb, R; fill = tint(ORANGE, 0.55), stroke = INK, lw = 1.6)
+        label(m("k_1"), cb + Point(-14, -10); size = 20)
+        @layer (setcolor(INK); setline(1.2); line(cb, cb + Point(R * cos(0.6), R * sin(0.6)), :stroke); circle(cb, 2.6, :fill))
+        label(m("R"), cb + Point(0.5R * cos(0.6) + 10, 0.5R * sin(0.6) - 6); size = 17)
+        @layer (setcolor(BLUE); setline(1.2); line(cb + Point(-R, 0), cb + Point(-R - ℓ, 0), :stroke))
+        label(m("sqrt(k_0)"), cb + Point(-R - ℓ - 6, -18); size = 15, color = BLUE, halign = :right)
+        for dy in (-100, -50, 0, 50, 100)
+            arrow_ab(Point(cb.x - 168, cb.y + dy), Point(cb.x - 128, cb.y + dy); color = VECTOR)
+        end
+        label(m("underline(V)_0"), Point(cb.x - 148, cb.y - 126); size = 17, color = VECTOR)
+        label(m("alpha_0 = R \\/ sqrt(k_0)"), Point(cb.x + 92, cb.y + 118); size = 16)
+        label(m("-nabla p + mu Delta underline(v) - mu k^(-1) underline(v) = underline(0)"), Point(cb.x, 392); size = 15)
+        # ── arrow
+        then_arrow(Point(752, 215), Point(800, 215))
+        # ── (c) the patterns
+        x0 = 950.0
+        label(txt("patterns of the regions"), Point(x0, top); size = 16)
+        ys = (88.0, 150.0, 212.0, 274.0, 336.0)
+        names = ("solid sphere", "fluid sphere", "cylinder", "layer", "coated sphere")
+        for (y, nm) in zip(ys, names)
+            label(txt(nm), Point(x0 + 10, y); size = 14, halign = :left)
+        end
+        xs = x0 - 40
+        disk(Point(xs, ys[1]), 20; fill = SOLID, stroke = INK, lw = 1.4)
+        disk(Point(xs, ys[2]), 20; fill = FLUID, stroke = INK, lw = 1.4)
+        @layer begin
+            setcolor(tint(ORANGE, 0.55))
+            box(Point(xs, ys[3]), 76, 26, 0, :fill)
+            setcolor(INK); setline(1.4)
+            line(Point(xs - 38, ys[3] - 13), Point(xs + 38, ys[3] - 13), :stroke)
+            line(Point(xs - 38, ys[3] + 13), Point(xs + 38, ys[3] + 13), :stroke)
+            ell(Point(xs - 38, ys[3]), 5, 13; fill = nothing, stroke = INK, lw = 1.2)
+            ell(Point(xs + 38, ys[3]), 5, 13; fill = tint(ORANGE, 0.4), stroke = INK, lw = 1.2)
+        end
+        @layer begin
+            setcolor(tint(ORANGE, 0.55))
+            box(Point(xs, ys[4]), 80, 18, 0, :fill)
+            setcolor(INK); setline(1.4)
+            line(Point(xs - 40, ys[4] - 9), Point(xs + 40, ys[4] - 9), :stroke)
+            line(Point(xs - 40, ys[4] + 9), Point(xs + 40, ys[4] + 9), :stroke)
+        end
+        disk(Point(xs, ys[5]), 22; fill = FLUID, stroke = INK, lw = 1.4)
+        disk(Point(xs, ys[5]), 12; fill = SOLID, stroke = INK, lw = 1.2)
+    end
+end
+
 application_figures() = (
     veritz(), ver_multi_mix(), lamellar_scales(), interfoliar_layer(), axi_schematic(),
-    cement_paste_scales(), solidifying_sphere(),
+    cement_paste_scales(), solidifying_sphere(), brinkman_problems(),
 )

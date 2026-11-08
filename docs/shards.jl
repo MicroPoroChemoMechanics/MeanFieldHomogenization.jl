@@ -49,7 +49,7 @@ const DOC_SHARDS = [
         "applications/generated/eim_assembly.md",
         "applications/recycled_aggregate.md",
         "applications/concave_pores.md",
-        "applications/stokes_darcy_permeability.md",
+        "applications/generated/stokes_darcy_permeability.md",
         "applications/lamellar_clay.md",
         "applications/granular_friction.md",
         "applications/sandstone_strength.md",

@@ -246,7 +246,7 @@ pages = [
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",
             # Pore shapes again, now for the Stokes flow through them.
-            "applications/stokes_darcy_permeability.md",
+            "applications/generated/stokes_darcy_permeability.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
         # the ITZ pages use the paste model of the strength page.

@@ -20,7 +20,8 @@
 # is the same as before — does it cover a topic no other tutorial does — with
 # the classification kept in `Assets/plans/MFH_LITERATE_SCRIPTS.md`. Scripts
 # that duplicate an existing tutorial stay plain scripts, and SymPy-heavy ones
-# are never published (they are re-executed on every docs build).
+# are published only when the symbolic derivation is the subject of the page
+# (they are re-executed on every docs build).
 #
 # `PUBLISHED_SCRIPTS` maps each script to its **page name**. Scripts keep their
 # numeric prefixes (they encode a running order), while pages carry thematic
@@ -38,7 +39,7 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # whereas these exist to reproduce a particular paper's numbers and are read for
 # the comparison. Listed by page name, so the routing is visible here rather
 # than implied by the navigation in `make.jl`.
-const APPLICATION_PAGES = Set(["hill_transformation", "cluster_model", "eim_assembly"])
+const APPLICATION_PAGES = Set(["hill_transformation", "cluster_model", "eim_assembly", "stokes_darcy_permeability"])
 
 # The chapter on material laws (`MaterialLaws`) is written as one script per
 # model, theory and code together, under `scripts/material_laws/`; its pages,
@@ -71,6 +72,7 @@ const PUBLISHED_SCRIPTS = [
     "64_laplace_inversion.jl" => "laplace_inversion",
     "65_rheological_models.jl" => "rheological_models",
     "70_symmetrization_showcase.jl" => "symmetrization",
+    "71_brinkman_permeability.jl" => "stokes_darcy_permeability",
     "80_custom_inclusion_contract.jl" => "custom_inclusion_contract",
     "84_neural_inclusion_ellipsoid.jl" => "neural_inclusion",
     "85_neural_excentered_sphere.jl" => "neural_excentered_sphere",
