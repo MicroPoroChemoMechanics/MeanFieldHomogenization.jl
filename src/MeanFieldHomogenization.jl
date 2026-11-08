@@ -45,6 +45,8 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   Maxwell conversion joining them.
 - `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:
   `CustomInclusion` and `check_inclusion_interface`.
+- `MeanFieldHomogenization.Brinkman` — Brinkman inhomogeneities (sphere, cylinder,
+  layer, coated sphere) for the Stokes-to-Darcy homogenization of the permeability.
 - `MeanFieldHomogenization.FiniteElements`   — inclusions whose response comes out of a
   finite-element resolution of the Eshelby problem (`FEEllipticCrack`,
   `FEExcenteredSphere`); the discretization comes from a backend extension,
@@ -146,6 +148,9 @@ include("contribution.jl")
 # the shapes must be in scope first.
 include("Superspheres/Superspheres.jl")
 include("CustomInclusions/CustomInclusions.jl")
+# Brinkman inclusions: the Stokes-to-Darcy auxiliary problems, entered through
+# the custom-inclusion contract above.
+include("Brinkman/Brinkman.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
 # `Constitutive` turns a whole cell + scheme into a Gauss-point material law, so
@@ -159,6 +164,7 @@ include("MaterialLaws/MaterialLaws.jl")
 
 using .Superspheres
 using .CustomInclusions
+using .Brinkman
 using .FiniteElements
 using .NeuralInclusions
 using .Constitutive
@@ -207,6 +213,9 @@ export sif, dif
 
 # ── Custom (user-defined) inclusions ─────────────────────────────────────────
 export CustomInclusion, CustomShape, check_inclusion_interface
+export BrinkmanMedium, BrinkmanPorous, BrinkmanFluid, BrinkmanSolid
+export BrinkmanForm, ResistanceForm, PermeabilityForm
+export AbstractBrinkmanInclusion, BrinkmanSphere, BrinkmanCylinder, BrinkmanLayer, BrinkmanCoatedSphere
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb
