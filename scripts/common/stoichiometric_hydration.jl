@@ -16,7 +16,9 @@ using DynamicQuantities
 using OrdinaryDiffEq
 using OrderedCollections
 
-const CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json")
+# Resolved by ChemistryLab: from its cache, or downloaded from the publisher on
+# first use. The database is not shipped with the package.
+const CEMDATA = datapath("cemdata18-thermofun.json")
 
 # Phase families the micromechanical model consumes. Keys must match
 # `PASTE_HYDRATES`, `PASTE_INCLUSIONS` and `PASTE_PORES` of
@@ -39,6 +41,30 @@ const PASTE_PHASE_GROUPS = [
     "FH3" => "FeOOHmic",
     "water" => "H2O@",
 ]
+
+"""
+    species_identity(cs, roles) -> Vector{NTuple{5, String}}
+
+The species of `cs` by identity only, for the panel the documentation shows
+under the block that builds the system: symbol, name, formula, aggregate state
+and role in the model. `roles` maps the symbol of a solid to its role, any other
+solid being a hydrate; aqueous species are the pore solution, water apart. No
+thermodynamic value is read: those stay in the database.
+"""
+function species_identity(cs, roles::AbstractDict)
+    function role(s)
+        sym = symbol(s)
+        sym == "H2O@" && return "water"
+        aggregate_state(s) == AS_AQUEOUS && return "pore solution"
+        return get(roles, sym, "hydrate")
+    end
+    state(s) = lowercase(replace(string(aggregate_state(s)), "AS_" => ""))
+    ## The name as the database spells it, without the marker of a reduced entry.
+    label(s) = String(strip(replace(name(s), r"^_rdc_" => "")))
+    rows = [(symbol(s), label(s), unicode(formula(s)), state(s), role(s)) for s in cs.species]
+    ## The reactants, the hydrates, water, then the pore solution, each in alphabetical order.
+    return sort(rows; by = r -> (r[4] == "aqueous", r[5] == "pore solution", r[5] == "hydrate", r[1]))
+end
 
 """
     build_cement_system() -> ChemicalSystem

@@ -38,6 +38,10 @@ include("literate.jl")
 # commit their GitHub links point to.
 include("source_links.jl")
 
+# `show_literature` and `show_species`, which the pages call to show, folded, the
+# data they read.
+include("data_panels.jl")
+
 # The page tree, read by both the draft pre-flight and the real build.
 include("pages.jl")
 

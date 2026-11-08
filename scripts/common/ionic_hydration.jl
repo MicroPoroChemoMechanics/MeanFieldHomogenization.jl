@@ -25,7 +25,9 @@ using OrdinaryDiffEq
 using OptimaSolver
 using OrderedCollections
 
-const IONIC_CEMDATA = joinpath(pkgdir(ChemistryLab), "data", "cemdata18-thermofun.json")
+# Resolved by ChemistryLab: from its cache, or downloaded from the publisher on
+# first use.
+const IONIC_CEMDATA = datapath("cemdata18-thermofun.json")
 
 # Four systems. `:opc` is the model; the three smaller ones are the ladder that
 # was used to isolate what made it hard, and they are kept because reproducing an

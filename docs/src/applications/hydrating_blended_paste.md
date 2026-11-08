@@ -173,6 +173,14 @@ for r in hydration_reactions(cs; wb = 0.5, blaine = BLAINE)
 end
 ```
 
+```@example blended
+Main.show_species(species_identity(cs, Dict("C3S" => "clinker", "C2S" => "clinker", "C3A" => "clinker", "C4AF" => "clinker", "Gp" => "sulfate", "Cal" => "calcite filler", "Amor-Sl" => "pozzolanic addition")); # hide
+    database = "CEMDATA18, the species of this page", # hide
+    citation = "Lothenbach, B., Kulik, D. A., Matschei, T., Balonis, M., Baquerizo, L., Dilnesa, B., Miron, G. D., Myers, R. J. (2019). Cemdata18: A chemical thermodynamic database for hydrated Portland cements and alkali-activated materials. Cement and Concrete Research 115, 472–506. Read in the ThermoFun format.", # hide
+    doi = "10.1016/j.cemconres.2018.04.018", # hide
+    link = "https://MicroPoroChemoMechanics.github.io/ChemistryLab.jl/stable/manual/importing_databases") # hide
+```
+
 Two features of that set are worth pointing out.
 
 **The aluminate cascade.** Each aluminate drives *several* competing reactions,
