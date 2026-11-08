@@ -57,6 +57,7 @@ end
     for (isym, inum) in (
             (BrinkmanSphere(R; form = P), BrinkmanSphere(1.3; form = P)),
             (BrinkmanCylinder(R; form = P), BrinkmanCylinder(1.3; form = P)),
+            (BrinkmanCylinder(R, BrinkmanSolid(); form = P), BrinkmanCylinder(1.3, BrinkmanSolid(); form = P)),
             (BrinkmanLayer(R, BrinkmanFluid(); form = P), BrinkmanLayer(1.3, BrinkmanFluid(); form = P)),
             (BrinkmanCoatedSphere(R, 2R), BrinkmanCoatedSphere(1.3, 2.6)),
             (BrinkmanCoatedSphere(R, 2R; form = P), BrinkmanCoatedSphere(1.3, 2.6; form = P)),
