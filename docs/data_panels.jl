@@ -30,9 +30,14 @@ function _html_table(header, rows; class = "")
     </tbody></table></div>"""
 end
 
+# Every link of a panel opens a new tab, as VitePress does for the external links
+# of a page. It must: the sites of the MPCM packages share one origin, and
+# VitePress's router takes a link of the same origin without a `target` for a
+# page of the current site, which it cannot find (a 404 until the page is
+# reloaded).
 "A link to the DOI `d`, or nothing when there is none."
 _doi_link(::Nothing) = ""
-_doi_link(d) = """ <a href="https://doi.org/$(_esc(d))">doi:$(_esc(d))</a>"""
+_doi_link(d) = """ <a target="_blank" rel="noreferrer" href="https://doi.org/$(_esc(d))">doi:$(_esc(d))</a>"""
 
 "The folded panel: `summary` in the bar, `body` once unfolded."
 _panel(summary, body) = Base.HTML(
@@ -146,7 +151,7 @@ function show_literature(key::AbstractString)
     tables = join((_records(k, v) for (k, v) in d["tables"]), "\n")
     notes = isempty(d["notes"]) ? "" :
         "<h4>Notes</h4>\n<ul>" * join(("<li>$(_esc(n))</li>" for n in d["notes"])) * "</ul>"
-    link = """<p class="data-link">The file <a href="$(source_url(rel))"><code>$rel</code></a>
+    link = """<p class="data-link">The file <a target="_blank" rel="noreferrer" href="$(source_url(rel))"><code>$rel</code></a>
     on GitHub, at the commit this page was built from.</p>"""
     nq = length(qs)
     nt = sum(length, values(d["tables"]); init = 0)
@@ -173,7 +178,7 @@ function show_species(rows; database::AbstractString, citation::AbstractString, 
     <p class="citation">$(_esc(citation))$(_doi_link(doi))</p>
     <p class="note">The entries are listed by identity only: their thermodynamic
     data stay in the database, which is obtained as described in
-    <a href="$(_esc(link))">its import page</a>.</p>
+    <a target="_blank" rel="noreferrer" href="$(_esc(link))">its import page</a>.</p>
     </div>"""
     summary = """<span class="data-icon" aria-hidden="true"></span>Data read above: $(_esc(database))
     <span class="data-count">$(length(rows)) species</span>"""
