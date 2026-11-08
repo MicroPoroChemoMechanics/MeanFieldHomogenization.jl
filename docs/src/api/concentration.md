@@ -88,6 +88,28 @@ MeanFieldHomogenization.CustomShape
 MeanFieldHomogenization.check_inclusion_interface
 ```
 
+## [Brinkman inclusions](@id api-brinkman)
+
+Inclusions of the Stokes-to-Darcy upscaling, entered through the concentration
+gate of the custom-inclusion contract; see [Brinkman inclusions](@ref man-brinkman)
+and [Permeability from Stokes flow](@ref th-brinkman).
+
+```@docs
+MeanFieldHomogenization.Brinkman
+MeanFieldHomogenization.AbstractBrinkmanInclusion
+MeanFieldHomogenization.BrinkmanSphere
+MeanFieldHomogenization.BrinkmanCylinder
+MeanFieldHomogenization.BrinkmanLayer
+MeanFieldHomogenization.BrinkmanCoatedSphere
+MeanFieldHomogenization.BrinkmanMedium
+MeanFieldHomogenization.BrinkmanPorous
+MeanFieldHomogenization.BrinkmanFluid
+MeanFieldHomogenization.BrinkmanSolid
+MeanFieldHomogenization.BrinkmanForm
+MeanFieldHomogenization.ResistanceForm
+MeanFieldHomogenization.PermeabilityForm
+```
+
 ## Finite-element inclusions
 
 Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh` serve

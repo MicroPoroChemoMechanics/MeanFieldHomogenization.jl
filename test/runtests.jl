@@ -248,6 +248,10 @@ end
     # already compiled by then, which keeps this testset cheap.
     rungroup("CustomInclusions") && @testset "CustomInclusions" begin
         include("CustomInclusions/test_custom_inclusion.jl")
+        # Brinkman inclusions are clients of that contract: the Stokes-to-Darcy
+        # permeability against the closed-form estimates of Bignonnet (2022).
+        include("CustomInclusions/test_brinkman.jl")
+        HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_brinkman_symbolic.jl")
     end
 
     # Neural surrogates are another client of that same contract, so they run

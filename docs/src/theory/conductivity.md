@@ -96,11 +96,11 @@ the matrix. That reduction is worked through in
 
 ## Where to go next
 
-The next chapter changes the time dependence rather than the physics:
-[The Laplace-Carson route](@ref th-laplace-carson) reduces a non-aging
-viscoelastic problem to an elastic one at each value of a transform variable.
-The order-2 counterparts stated on this page are developed on the following
-pages.
+The next page keeps the order-2 schemes but changes the auxiliary problem:
+[Permeability from Stokes flow](@ref th-brinkman) estimates a permeability from
+the Stokes flow in the pores, where a pore is not a phase of finite
+permeability and the inclusions carry a size. The order-2 counterparts stated
+on this page are developed on the following pages.
 
 - [Hill polarization tensors](@ref th-hill-tensors) — the closed form of
   ``\boldsymbol{P}`` and its dispatch.

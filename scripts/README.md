@@ -57,7 +57,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | 40–49 | Strength & multiscale |
 | 50–59 | Viscoelasticity & ALV |
 | 60–69 | ALV cracks, interfaces, cross-validations & the Laplace-Carson route |
-| 70–79 | Symmetrization showcases |
+| 70–79 | Symmetrization showcases (70), Stokes-to-Darcy permeability (71) |
 | 80–89 | Custom (user-defined) inclusions, finite-element and neural-surrogate coupling |
 | 90–99 | Interacting particle assemblies: EIM & cluster model |
 
@@ -153,6 +153,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | `65_rheological_models.jl` | Di Benedetto & Olard (2S2P1D); Huet-Sayegh | **published tutorial** — the model catalog in one place: classical chains, the fractional family, the bituminous models with master curves, Cole-Cole and Black diagrams, and the exact 2S2P1D pair in both domains |
 | `66_symbolic_viscoelasticity.jl` | SymPy / Symbolics | symbolic model parameters and symbolic Laplace-Carson inversion; deliberately **not** published (SymPy costs ~45 s of build time), the hand-written `tutorials/symbolic_viscoelasticity.md` covers it |
 | `70_symmetrization_showcase.jl` | `symmetrize` / `.paramsym` | **exact rotation average vs best-fit projection** on a non-major-symmetric concentration tensor |
+| `71_brinkman_permeability.jl` | Bignonnet (2022), IJES 172, 103622 | Brinkman inhomogeneities solved symbolically with TensND's curvilinear operators and SymPy (sphere, cylinder, layer, coated sphere) and held to the `Brinkman*` inclusions; the symbolic dilute and Mori–Tanaka estimates, the self-consistent percolation threshold and dilute expansion, Stokes' paradox; then granular, fibrous, tubular and double-porosity media through every scheme, with AD sensitivities. **published application** (`stokes_darcy_permeability`), with figures in the normalizations of the paper |
 
 ### 80–89 Custom inclusions, finite elements & neural surrogates
 
