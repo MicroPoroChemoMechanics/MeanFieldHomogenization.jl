@@ -40,7 +40,7 @@ const DOC_SHARDS = [
         "applications/aging_basic_creep.md",
         "applications/strength.md",
         "applications/itz_concrete.md",
-        "applications/itz_elastic_limit.md",
+        "applications/generated/itz_elastic_limit.md",
     ],
     # The general concepts, the geomaterials and the bituminous mixture.
     "applications" => [

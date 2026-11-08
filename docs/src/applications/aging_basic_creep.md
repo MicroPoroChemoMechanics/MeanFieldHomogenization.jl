@@ -144,6 +144,10 @@ for p in ("leroy_ordinary", "leroy_hpc")
 end
 ```
 
+```@example basiccreep
+Main.show_literature("lavergne2020") # hide
+```
+
 The whole chain — hydration, four aging scales, compliance for every loading age — runs in
 `scripts/47_aging_basic_creep_concrete.jl`, in about five minutes; this page reads its
 results. The model itself, a set of functions, is
@@ -180,6 +184,10 @@ plot(panels...; layout = (1, 2), size = (900, 420), left_margin = 3Plots.mm, bot
 ```
 
 Lines: the model; points: the measurements.
+
+```@example basiccreep
+Main.show_literature("leroy1995") # hide
+```
 
 ## What it shows
 

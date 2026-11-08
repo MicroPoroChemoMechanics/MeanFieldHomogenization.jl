@@ -636,7 +636,208 @@ function brinkman_problems()
     end
 end
 
+# ── The elastic limit of concrete: ITZ–aggregate interaction ──────────────────
+
+const SEPARATION = ORANGE       # ITZ–aggregate separation, the interface criterion
+const ITZ_FAILURE = PURPLE      # ITZ failure, the volume criterion
+
+"A unit vector at angle `θ` from the upward vertical, clockwise, in drawing coordinates."
+updir(θ) = Point(sin(θ), -cos(θ))
+
+"""
+The layered piece of interface the zooms show: aggregate below, the ITZ layer,
+paste above, in the box of center `c` and size `w × h`; returns the heights of
+the interface and of the outer face of the ITZ.
+"""
+function interface_piece(c::Point, w, h; t = 0.22h)
+    y_int = c.y + 0.12h                              # aggregate | ITZ
+    y_out = y_int - t                                # ITZ | paste
+    @layer begin
+        box(c, w, h, 10, :clip)
+        setcolor(PASTE); box(c, w, h, 0, :fill)
+        setcolor(COATING); box(Point(c.x, (y_int + y_out) / 2), w, t, 0, :fill)
+        setcolor(AGGREGATE); box(Point(c.x, (y_int + c.y + h / 2) / 2), w, c.y + h / 2 - y_int, 0, :fill)
+        setcolor(INK); setline(1.6)
+        line(Point(c.x - w / 2, y_int), Point(c.x + w / 2, y_int), :stroke)
+        setcolor(MUTED); setline(1.0); setdash([5, 4])
+        line(Point(c.x - w / 2, y_out), Point(c.x + w / 2, y_out), :stroke)
+    end
+    @layer (setcolor(INK); setline(1.6); box(c, w, h, 10, :stroke))
+    return y_int, y_out
+end
+
+"""
+Two scales: concrete, where the ITZ is the surface of the aggregates; one
+aggregate, its poles, equator and spherical frame; a piece of the interface,
+where the ITZ is a layer bonded to the aggregate across the plane of normal n.
+"""
+function itz_scales()
+    return sheet("applications/itz_scales", 1060, 430) do
+        top = 32.0
+        # ── (a) concrete
+        ca = Point(170, 215)
+        label(txt("concrete: the ITZ is a surface"), Point(ca.x, top); size = 16)
+        rve_box(ca, 250, 250; fill = PASTE)
+        rng = StableRNG(5)
+        grains = pack(rng, 18, in_box(ca, 236, 236), rng -> 16 + 20 * rand(rng); gap = 7)
+        for (p, r) in grains
+            disk(p, r + 2.5; fill = COATING, stroke = nothing)
+            disk(p, r; fill = AGGREGATE, stroke = INK, lw = 0.8)
+        end
+        corner = ca + Point(125, 125)                     # the load, at the lower right corner
+        arrow_ab(corner, corner + Point(30, 30); color = INK)
+        label(m("bold(Sigma)"), corner + Point(36, 22); size = 20, halign = :left)
+        p0, r0 = grains[argmin([distance(q, ca + Point(60, 20)) for (q, _) in grains])]
+        spot(p0, r0 + 7)
+        # ── (b) one aggregate
+        cb, R = Point(520, 222), 112.0
+        label(txt("one aggregate"), Point(cb.x, top); size = 16)
+        zoom_cone(p0, r0 + 7, cb, R + 6)
+        disk(cb, R + 7; fill = COATING, stroke = nothing)
+        disk(cb, R; fill = AGGREGATE, stroke = INK, lw = 1.6)
+        @layer begin
+            setcolor(GUIDE); setline(1.2); setdash([6, 5])
+            line(cb + Point(0, -R - 46), cb + Point(0, R + 34), :stroke)
+            line(cb + Point(-R - 14, 0), cb + Point(R + 14, 0), :stroke)
+        end
+        arrow_ab(cb + Point(0, -R - 20), cb + Point(0, -R - 54); color = INK)
+        label(m("underline(e)_z"), cb + Point(16, -R - 50); size = 17, halign = :left)
+        label(txt("pole"), cb + Point(-14, -R - 18); size = 13, color = MUTED, halign = :right)
+        label(txt("equator"), cb + Point(-R - 18, -12); size = 13, color = MUTED, halign = :right)
+        θ = 0.30π
+        x = cb + R * updir(θ)
+        @layer begin
+            setcolor(INK); setline(1.0)
+            line(cb, x, :stroke)
+            arc2r(cb, cb + 34 * updir(0.0), cb + 34 * updir(θ), :stroke)
+        end
+        label(m("theta"), cb + 46 * updir(θ / 2); size = 16)
+        arrow_ab(x, x + 46 * updir(θ); color = VECTOR, lw = 2)
+        arrow_ab(x, x + 40 * updir(θ + π / 2); color = VECTOR, lw = 2)
+        label(m("underline(n) = underline(e)_r"), x + 46 * updir(θ) + Point(-10, -14); size = 16, color = VECTOR, halign = :right, bg = PANEL)
+        label(m("underline(e)_theta"), x + 40 * updir(θ + π / 2) + Point(-12, 4); size = 16, color = VECTOR, halign = :right)
+        label(m("bold(sigma)_\"agg\" = bb(B)_\"agg\" : bold(Sigma)"), cb + Point(0, 34); size = 16)
+        label(txt("uniform"), cb + Point(0, 60); size = 13, color = MUTED)
+        spot(x, 13)
+        # ── (c) a piece of the interface
+        cc, w, h = Point(870, 222), 260.0, 230.0
+        label(txt("a few micrometers: the ITZ is a layer"), Point(cc.x, top); size = 16)
+        zoom_cone(x, 13, cc + Point(-w / 2, -h / 2), cc + Point(-w / 2, h / 2))
+        y_int, y_out = interface_piece(cc, w, h)
+        label(txt("aggregate"), Point(cc.x + w / 2 - 12, cc.y + h / 2 - 18); size = 14, halign = :right)
+        label(txt("ITZ"), Point(cc.x + w / 2 - 12, (y_int + y_out) / 2); size = 14, halign = :right)
+        label(txt("paste"), Point(cc.x + w / 2 - 12, cc.y - h / 2 + 18); size = 14, halign = :right)
+        xn = cc.x - 70
+        arrow_ab(Point(xn, y_int), Point(xn, y_int - 40); color = VECTOR, lw = 2)
+        label(m("underline(n)"), Point(xn - 8, y_int - 34); size = 16, color = VECTOR, halign = :right)
+        label(m("bold(sigma)_\"ITZ\" dot underline(n) = bold(sigma)_\"agg\" dot underline(n)"), Point(cc.x, cc.y + h / 2 + 30); size = 15)
+        label(m("bold(epsilon)_\"ITZ\" = bold(epsilon)_\"agg\" + underline(a) limits(times.circle)^s underline(n)"), Point(cc.x, cc.y + h / 2 + 62); size = 15)
+    end
+end
+
+"""
+The two ways a crack starts next to an aggregate: the bond opens along the
+interface (separation), or the ITZ breaks inside its thickness (ITZ failure).
+"""
+function itz_failure_modes()
+    return sheet("applications/itz_failure_modes", 1000, 400) do
+        w, h = 400.0, 230.0
+        for (k, c) in enumerate((Point(255, 190), Point(745, 190)))
+            y_int, y_out = interface_piece(c, w, h; t = 0.3h)
+            k == 1 && for (txt_, y) in (("paste", c.y - h / 2 + 18), ("ITZ", (y_int + y_out) / 2), ("aggregate", c.y + h / 2 - 18))
+                label(txt(txt_), Point(c.x - w / 2 + 12, y); size = 13, color = MUTED, halign = :left)
+            end
+            if k == 1
+                label(txt("separation: a failure of the interface"), Point(c.x, 40); size = 17, color = SEPARATION)
+                # the bond opens along the aggregate surface
+                @layer begin
+                    setcolor(PANEL)
+                    poly([Point(c.x - 120, y_int), Point(c.x, y_int - 6), Point(c.x + 120, y_int), Point(c.x, y_int + 6)], :fill; close = true)
+                    setcolor(SEPARATION); setline(2.4)
+                    poly([Point(c.x - 120, y_int), Point(c.x, y_int - 6), Point(c.x + 120, y_int), Point(c.x, y_int + 6)], :stroke; close = true)
+                end
+                for dx in (-60, 0, 60)
+                    arrow_ab(Point(c.x + dx, y_int - 10), Point(c.x + dx, y_int - 46); color = VECTOR, lw = 2)
+                    arrow_ab(Point(c.x + dx, y_int + 10), Point(c.x + dx, y_int + 46); color = VECTOR, lw = 2)
+                end
+                label(m("T_r = underline(n) dot bold(sigma)_\"agg\" dot underline(n)"), Point(c.x, c.y + h / 2 + 28); size = 17)
+                label(m("max_(underline(n)) T_r = T^\"ult\""), Point(c.x, c.y + h / 2 + 58); size = 17, color = SEPARATION)
+            else
+                label(txt("ITZ failure: a failure of the volume"), Point(c.x, 40); size = 17, color = ITZ_FAILURE)
+                # a crack inside the layer, normal to the largest principal stress
+                φ = 0.35π                                   # angle of e_I from the vertical
+                ym = (y_int + y_out) / 2
+                u = updir(φ + π / 2)                        # along the crack
+                a, b = Point(c.x, ym) - 26 * u, Point(c.x, ym) + 26 * u
+                @layer begin
+                    setcolor(ITZ_FAILURE); setline(3.2)
+                    line(a, b, :stroke)
+                end
+                e = updir(φ)
+                arrow_ab(Point(c.x, ym) + 10 * e, Point(c.x, ym) + 52 * e; color = VECTOR, lw = 2)
+                arrow_ab(Point(c.x, ym) - 10 * e, Point(c.x, ym) - 52 * e; color = VECTOR, lw = 2)
+                label(m("underline(e)_\"I\""), Point(c.x, ym) + 66 * e; size = 16, color = VECTOR)
+                label(m("sigma_\"I\" (bold(sigma)_\"ITZ\"), quad bold(sigma)_\"ITZ\" = bb(M)(underline(n)) : bold(Sigma)"), Point(c.x, c.y + h / 2 + 28); size = 17)
+                label(m("max_(underline(n)) sigma_\"I\" = sigma^\"ult\"_\"ITZ\""), Point(c.x, c.y + h / 2 + 58); size = 17, color = ITZ_FAILURE)
+            end
+        end
+    end
+end
+
+"""
+Which mechanism starts the first crack, for each load, as the ratio of the two
+strengths grows; the boundaries are the ratios at which both give the same
+elastic limit.
+"""
+function itz_regimes()
+    return sheet("applications/itz_regimes", 1000, 300) do
+        x0, x1 = 250.0, 950.0
+        lmin, lmax = log10(0.01), log10(5.0)
+        X(ρ) = x0 + (x1 - x0) * (log10(ρ) - lmin) / (lmax - lmin)
+        rows = (
+            ("uniaxial tension", 0.98, 70.0),
+            ("uniaxial compression", 0.05, 120.0),
+            ("equibiaxial compression", 0.10, 170.0),
+        )
+        for (name, ρb, y) in rows
+            label(txt(name), Point(x0 - 16, y); size = 15, halign = :right)
+            @layer begin
+                setcolor(tint(SEPARATION, 0.35)); box(Point((x0 + X(ρb)) / 2, y), X(ρb) - x0, 26, 4, :fill)
+                setcolor(tint(ITZ_FAILURE, 0.35)); box(Point((X(ρb) + x1) / 2, y), x1 - X(ρb), 26, 4, :fill)
+            end
+        end
+        for (_, ρb, y) in rows
+            label(txt("separation"), Point((x0 + X(ρb)) / 2, y); size = 14)
+            label(txt("ITZ failure"), Point((X(ρb) + x1) / 2, y); size = 14)
+        end
+        # the axis
+        ya = 215.0
+        @layer begin
+            setcolor(INK); setline(1.4)
+            line(Point(x0, ya), Point(x1, ya), :stroke)
+        end
+        arrow_ab(Point(x1 - 2, ya), Point(x1 + 22, ya); color = INK)
+        for (ρ, s) in ((0.01, "0.01"), (0.05, "0.05"), (0.1, "0.1"), (0.5, "0.5"), (0.98, "0.98"), (5.0, "5"))
+            @layer (setcolor(INK); setline(1.2); line(Point(X(ρ), ya - 5), Point(X(ρ), ya + 5), :stroke))
+            label(m(s), Point(X(ρ), ya + 20); size = 14)
+        end
+        for ρ in (0.05, 0.10, 0.98)
+            @layer (setcolor(GUIDE); setline(1.0); setdash([5, 4]); line(Point(X(ρ), 48), Point(X(ρ), ya), :stroke))
+        end
+        label(m("rho = T^\"ult\" \\/ sigma^\"ult\"_\"ITZ\""), Point(x0 - 16, ya); size = 16, halign = :right)
+        # where the measured ratios of elastic limits are matched
+        yb = 262.0
+        @layer begin
+            setcolor(GREEN); setline(2.4)
+            line(Point(X(0.52), yb), Point(x1, yb), :stroke)
+            line(Point(X(0.52), yb - 6), Point(X(0.52), yb + 6), :stroke)
+        end
+        label(txt("both measured ratios matched"), Point(X(0.52) - 10, yb); size = 14, color = GREEN, halign = :right)
+    end
+end
+
 application_figures() = (
     veritz(), ver_multi_mix(), lamellar_scales(), interfoliar_layer(), axi_schematic(),
     cement_paste_scales(), solidifying_sphere(), brinkman_problems(),
+    itz_scales(), itz_failure_modes(), itz_regimes(),
 )

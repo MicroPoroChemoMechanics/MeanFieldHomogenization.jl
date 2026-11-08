@@ -130,6 +130,38 @@ _annotation(l::SceneLabel) =
 # ── The scene emitter ────────────────────────────────────────────────────────
 
 """
+    _scene_items(items) -> (traces, labels)
+
+The items of a scene, split into its Plotly trace strings and its
+[`SceneLabel`](@ref)s; anything else is refused.
+"""
+function _scene_items(items::AbstractVector)
+    all(x -> x isa AbstractString || x isa SceneLabel, items) ||
+        throw(ArgumentError("a scene is built from trace strings and SceneLabels"))
+    ## A partition of a mixed vector by element type, not a choice of computation.
+    return String[x for x in items if x isa AbstractString], SceneLabel[x for x in items if x isa SceneLabel]
+end
+
+"The range of the `k`-th axis of a scene, as a layout entry; none when Plotly sets it."
+_axis_range(::Nothing, k) = ""
+_axis_range(bounds, k) = "range:[$(_js(bounds[k][1])),$(_js(bounds[k][2]))],"
+
+"""
+The aspect of a scene: Plotly's `aspectmode` when it sets the ranges; with fixed
+`bounds`, the ratios of their extents, scaled by `zoom` (see [`plotly_scene`](@ref)).
+"""
+_aspect(::Nothing, aspectmode, zoom) = "aspectmode:\"$aspectmode\""
+function _aspect(bounds, aspectmode, zoom)
+    Δ = [Float64(b[2] - b[1]) for b in bounds]    # emitted as JavaScript numbers
+    r = zoom .* Δ ./ cbrt(prod(Δ))
+    return "aspectmode:\"manual\",aspectratio:{x:$(_js(r[1])),y:$(_js(r[2])),z:$(_js(r[3]))}"
+end
+
+"The eye of the camera, `(x, y, z)`, as a layout entry; none when it is left to Plotly."
+_eye(::Nothing) = ""
+_eye(c) = "eye:{x:$(_js(c[1])),y:$(_js(c[2])),z:$(_js(c[3]))},"
+
+"""
     plotly_scene(items; uid, title = "", height = 480, aspectmode = "data",
                  axes_visible = false, xlabel = "x", ylabel = "y", zlabel = "z",
                  showlegend = false, camera = nothing, orthographic = false,
@@ -169,31 +201,20 @@ function plotly_scene(
         zoom::Real = 1,
         sliders::AbstractString = "",
     )
-    all(x -> x isa AbstractString || x isa SceneLabel, items) ||
-        throw(ArgumentError("a scene is built from trace strings and SceneLabels"))
-    traces = String[x for x in items if x isa AbstractString]
-    labels = SceneLabel[x for x in items if x isa SceneLabel]
+    traces, labels = _scene_items(items)
     ## Left-aligned: Plotly puts its modebar at the top right, and a centered
     ## title long enough to be useful runs straight into it.
     ttl = isempty(title) ? "" :
         "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
-    eye = camera === nothing ? "" :
-        "eye:{x:$(_js(camera[1])),y:$(_js(camera[2])),z:$(_js(camera[3]))},"
+    eye = _eye(camera)
     proj = orthographic ? "projection:{type:\"orthographic\"}," : ""
     cam = isempty(eye) && isempty(proj) ? "" : "camera:{$eye$proj up:{x:0,y:0,z:1}},"
     ## Without axes there is nothing to read in a hover box but meaningless
     ## coordinates, so hovering is switched off with them.
     hover = axes_visible ? "\"closest\"" : "false"
-    rng(k) = bounds === nothing ? "" : "range:[$(_js(bounds[k][1])),$(_js(bounds[k][2]))],"
-    axis(t, k) = "{title:{text:\"$t\"},$(rng(k))visible:$(_jsbool(axes_visible)),color:\"$FIG_INK\"," *
+    axis(t, k) = "{title:{text:\"$t\"},$(_axis_range(bounds, k))visible:$(_jsbool(axes_visible)),color:\"$FIG_INK\"," *
         "gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\",showspikes:false}"
-    aspect = if bounds === nothing
-        "aspectmode:\"$aspectmode\""
-    else
-        Δ = [Float64(b[2] - b[1]) for b in bounds]
-        r = zoom .* Δ ./ cbrt(prod(Δ))
-        "aspectmode:\"manual\",aspectratio:{x:$(_js(r[1])),y:$(_js(r[2])),z:$(_js(r[3]))}"
-    end
+    aspect = _aspect(bounds, aspectmode, zoom)
     sl = isempty(sliders) ? "" : ", sliders:[$sliders]"
     return _plotly_html(
         uid, height,
@@ -322,6 +343,22 @@ function plane_patch(o, u, w, hu, hw)
 end
 
 """
+    section_ranges(S; pad = 0.06) -> NTuple{2, Tuple{Float64, Float64}}
+
+The axis ranges of the panel that frame the section `S` (a `2 × n` matrix,
+`NaN` columns ignored), widened on each side by `pad` times its larger extent.
+A section reduced to a point is framed by a unit square centered on it.
+"""
+function section_ranges(S::AbstractMatrix; pad::Real = 0.06)
+    ok = [j for j in axes(S, 2) if !isnan(S[1, j]) && !isnan(S[2, j])]
+    isempty(ok) && return ((-1.0, 1.0), (-1.0, 1.0))
+    (x0, x1), (y0, y1) = extrema(@view S[1, ok]), extrema(@view S[2, ok])
+    δ = pad * max(x1 - x0, y1 - y0)
+    δ > 0 || (δ = 0.5)
+    return ((Float64(x0 - δ), Float64(x1 + δ)), (Float64(y0 - δ), Float64(y1 + δ)))   # emitted as JavaScript numbers
+end
+
+"""
     section_figure(items, families; uid, title = "", height = 620,
                    xlabel = "x", ylabel = "y", zlabel = "z", camera = nothing,
                    aspectmode = "data") -> Base.HTML
@@ -333,6 +370,13 @@ panel, in coordinates of the plane, which is where a two-dimensional criterion
 is read. Where a family asks for it, the panel keeps equal scales on its two
 axes by shrinking the side that has room to spare, rather than its range, so
 that no section is clipped.
+
+The panel keeps the same ranges for every plane of a family, those that frame
+all its sections (see [`section_ranges`](@ref)), so that moving the plane shows
+how the section changes. They are set explicitly, never left to Plotly's
+autorange: with the two axes tied by a scale anchor, the autorange carried a
+bound of the previous section over to the next one and could flatten a section
+into a line.
 """
 function section_figure(
         items::AbstractVector, families::AbstractVector{CutFamily};
@@ -340,8 +384,7 @@ function section_figure(
         xlabel::AbstractString = "x", ylabel::AbstractString = "y", zlabel::AbstractString = "z",
         camera = nothing, aspectmode::AbstractString = "data",
     )
-    traces = String[x for x in items if x isa AbstractString]
-    labels = SceneLabel[x for x in items if x isa SceneLabel]
+    traces, labels = _scene_items(items)
     n0 = length(traces)
     idx = _jsints(n0:(n0 + 2))
     ## The three traces of the cut, hidden until a family is chosen: the plane,
@@ -369,12 +412,19 @@ function section_figure(
             "NaN" => "null"
         )
     end
+    ## The ranges of the panel, one pair per family, framing all its sections, so
+    ## that moving the plane shows how the section grows or shrinks.
+    function cut_ranges(f)
+        (x0, x1), (y0, y1) = section_ranges(reduce(hcat, f.sections))
+        return "\"xaxis.autorange\":false,\"yaxis.autorange\":false," *
+            "\"xaxis.range\":[$(_js(x0)),$(_js(x1))],\"yaxis.range\":[$(_js(y0)),$(_js(y1))]"
+    end
     nf = length(families)
     shown(i) = join(("\"sliders[$(j - 1)].visible\":$(_jsbool(j == i))" for j in 1:nf), ",")
     sliders = map(enumerate(families)) do (i, f)
         steps = join(
             (
-                "{label:\"$(f.labels[k])\",method:\"restyle\",args:[$(cut_args(f, k)),$idx]}"
+                "{label:\"$(f.labels[k])\",method:\"update\",args:[$(cut_args(f, k)),{$(cut_ranges(f))},$idx]}"
                     for k in eachindex(f.labels)
             ), ","
         )
@@ -388,7 +438,7 @@ function section_figure(
     ons = map(enumerate(families)) do (i, f)
         a = cut_args(f, f.active)
         """{label:"$(f.name)",method:"update",args:[$(a[1:(end - 1)]),visible:[true,true,true]},
-        {$(shown(i)),"sliders[$(i - 1)].active":$(f.active - 1),
+        {$(shown(i)),"sliders[$(i - 1)].active":$(f.active - 1),$(cut_ranges(f)),
          "xaxis.visible":true,"yaxis.visible":true,
          "xaxis.title.text":"$(f.labels2d[1])","yaxis.title.text":"$(f.labels2d[2])",
          "yaxis.scaleanchor":$(f.equal ? "\"x\"" : "null")},$idx]}"""
@@ -401,8 +451,7 @@ function section_figure(
         buttons:[$off,$(join(ons, ","))]}"""
     ttl = isempty(title) ? "" :
         "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
-    eye = camera === nothing ? "" :
-        "camera:{eye:{x:$(_js(camera[1])),y:$(_js(camera[2])),z:$(_js(camera[3]))},up:{x:0,y:0,z:1}},"
+    eye = isempty(_eye(camera)) ? "" : "camera:{$(_eye(camera))up:{x:0,y:0,z:1}},"
     axis3(t) = "{title:{text:\"$t\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\",showspikes:false}"
     axis2(extra) = "{$(extra)visible:false,title:{text:\"\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\"}"
     return _plotly_html(

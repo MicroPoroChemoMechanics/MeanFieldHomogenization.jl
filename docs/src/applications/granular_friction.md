@@ -219,6 +219,10 @@ plot!(φs, T_brittle; lw = 2, marker = :circle, ms = 2, color = 2, label = "brit
 plot!(φf, caquot_kerisel.(φf); lw = 2, color = :gray, label = "Caquot–Kérisel")
 ```
 
+```@example granular
+Main.show_literature("maalej2009") # hide
+```
+
 The ductile slope grows without bound as the porosity decreases to ``1/3``,
 which the experimental trend does not do: the ductile model describes loose
 sands only. The brittle model, with its finite ``\rho``, stays close to the

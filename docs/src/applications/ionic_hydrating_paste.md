@@ -91,6 +91,14 @@ cs = build_ionic_system(:opc)
 nothing # hide
 ```
 
+```@example ionic
+Main.show_species(species_identity(cs, Dict(sym => "anhydrous phase" for sym in IONIC_SYSTEMS[:opc].anhydrous)); # hide
+    database = "CEMDATA18, the species of this page", # hide
+    citation = "Lothenbach, B., Kulik, D. A., Matschei, T., Balonis, M., Baquerizo, L., Dilnesa, B., Miron, G. D., Myers, R. J. (2019). Cemdata18: A chemical thermodynamic database for hydrated Portland cements and alkali-activated materials. Cement and Concrete Research 115, 472–506. Read in the ThermoFun format.", # hide
+    doi = "10.1016/j.cemconres.2018.04.018", # hide
+    link = "https://MicroPoroChemoMechanics.github.io/ChemistryLab.jl/stable/manual/importing_databases") # hide
+```
+
 ```@raw html
 <details class="source-file"><summary>Show the code of <code>scripts/common/paste_micromechanics.jl</code>, included above</summary>
 ```
