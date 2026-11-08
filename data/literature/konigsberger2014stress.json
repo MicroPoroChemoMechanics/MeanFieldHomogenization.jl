@@ -4,10 +4,10 @@
     "key": "konigsberger2014stress",
     "doi": "10.1111/jace.12591",
     "citation": "Königsberger, M., Pichler, B., Hellmich, C. (2014). Micromechanics of ITZ-Aggregate Interaction in Concrete Part I: Stress Concentration. Journal of the American Ceramic Society 97, 535-542.",
-    "location": "Appendix A and Table I, p. 7"
+    "location": "Section V, p. 6, Appendix A and Table I, p. 7"
   },
   "transcription": {
-    "from": "the published article (PDF), Appendix A and Table I, p. 7, read on the page text",
+    "from": "the published article (PDF), Section V, p. 6, Appendix A and Table I, p. 7, read on the page text",
     "checked_against_source": true,
     "note": "The 'typical concrete' of the article: quartz aggregates, a cement paste of w/c = 0.5 at 95 % hydration, and an ITZ whose Young modulus is 85 % of that of the paste with the same Poisson ratio. The same values drive the Echoes example ITZ_Pichler_sphnalyers_JACS2013.py. Only ratios of moduli enter a stress concentration."
   },
@@ -18,7 +18,13 @@
     "nu_paste": {"value": 0.23, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Poisson ratio of the bulk cement paste."},
     "E_itz": {"value": 13.6, "unit": "GPa", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Young modulus of the ITZ, 85 % of that of the paste."},
     "nu_itz": {"value": 0.23, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Poisson ratio of the ITZ, equal to that of the paste."},
-    "f_aggregate": {"value": 0.65, "unit": "1", "kind": "published", "uncertainty": null, "location": "Appendix A, p. 7", "description": "Volume fraction of the aggregates in concrete."}
+    "f_aggregate": {"value": 0.65, "unit": "1", "kind": "published", "uncertainty": null, "location": "Appendix A, p. 7", "description": "Volume fraction of the aggregates in concrete."},
+    "Bvol": {"value": 1.138, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Volumetric part of the aggregate stress concentration tensor, Eq. (4)."},
+    "Bdev": {"value": 1.178, "unit": "1", "kind": "published", "uncertainty": null, "location": "Table I", "description": "Deviatoric part of the aggregate stress concentration tensor, Eq. (4)."},
+    "traction_pole_tension": {"value": 1.16, "unit": "1", "kind": "published", "uncertainty": null, "location": "Section V, p. 6", "description": "Radial traction at the poles of the aggregate per unit uniaxial tensile macrostress (an amplification of 16 %)."},
+    "traction_equator_compression": {"value": 0.013, "unit": "1", "kind": "published", "uncertainty": null, "location": "Section V, p. 6", "description": "Tensile radial traction at the equator of the aggregate per unit magnitude of uniaxial compressive macrostress (1.3 %)."},
+    "itz_peak_tension": {"value": 1.20, "unit": "1", "kind": "published", "uncertainty": null, "location": "Section V, p. 6", "description": "Largest principal ITZ stress per unit uniaxial tensile macrostress (an amplification of 20 %), reached about pi/8 off the poles."},
+    "itz_peak_compression": {"value": 0.27, "unit": "1", "kind": "published", "uncertainty": null, "location": "Section V, p. 6", "description": "Largest principal (tensile) ITZ stress per unit magnitude of uniaxial compressive macrostress (27 %), reached about pi/6 off the equator."}
   },
   "tables": {},
   "notes": []

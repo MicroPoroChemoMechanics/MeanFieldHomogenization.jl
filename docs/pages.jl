@@ -259,7 +259,7 @@ pages = [
             "applications/aging_basic_creep.md",
             "applications/strength.md",
             "applications/itz_concrete.md",
-            "applications/itz_elastic_limit.md",
+            "applications/generated/itz_elastic_limit.md",
         ],
         # Particles in contact through interfaces: sliding platelets, then
         # frictional contacts between rigid grains, then deformable grains.

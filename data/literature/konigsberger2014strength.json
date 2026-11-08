@@ -4,7 +4,7 @@
     "key": "konigsberger2014strength",
     "doi": "10.1111/jace.12606",
     "citation": "Königsberger, M., Pichler, B., Hellmich, C. (2014). Micromechanics of ITZ-Aggregate Interaction in Concrete Part II: Strength Upscaling. Journal of the American Ceramic Society 97, 543-551.",
-    "location": "Sections II-IV, pp. 3-6"
+    "location": "Sections II-IV, pp. 3-7"
   },
   "transcription": {
     "from": "the published article (PDF), Sections II-IV, pp. 3-6, read on the page images",
@@ -99,6 +99,142 @@
       "uncertainty": null,
       "location": "Eq. (24)",
       "description": "Symmetric biaxial compressive elastic limit for ITZ failure, in units of the ITZ tensile strength."
+    },
+    "crack_angle_tension": {
+      "value": 0.0182,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (15)",
+      "description": "Angle, in units of pi, between the loading axis and the direction of the largest principal ITZ stress where ITZ failure starts under uniaxial tension: the normal of the first ITZ crack."
+    },
+    "crack_angle_compression": {
+      "value": 0.5916,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (15)",
+      "description": "Angle, in units of pi, between the loading axis and the direction of the largest principal ITZ stress where ITZ failure starts under uniaxial compression: the normal of the first ITZ crack."
+    },
+    "theta_biaxial_compression": {
+      "value": 0.534,
+      "unit": "rad",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "p. 6, after Eq. (24)",
+      "description": "Zenith angle, measured from the axis normal to the loading plane, where ITZ failure starts under symmetric biaxial compression."
+    },
+    "ratio_ut_uc_separation": {
+      "value": 0.0116,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (19)",
+      "description": "Ratio of the uniaxial tensile to the absolute uniaxial compressive elastic limit when separation governs both."
+    },
+    "ratio_ut_uc_mixed_slope": {
+      "value": 0.23,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (19)",
+      "description": "Slope, with respect to the strength ratio T_ult/sigma_ult_ITZ, of the tensile-to-compressive elastic limit ratio when separation governs tension and ITZ failure compression."
+    },
+    "ratio_ut_uc_itz": {
+      "value": 0.225,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (19)",
+      "description": "Ratio of the uniaxial tensile to the absolute uniaxial compressive elastic limit when ITZ failure governs both."
+    },
+    "ratio_ut_uc_bound_low": {
+      "value": 0.05,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (19)",
+      "description": "Strength ratio T_ult/sigma_ult_ITZ above which ITZ failure governs uniaxial compression."
+    },
+    "ratio_ut_uc_bound_high": {
+      "value": 0.98,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (19)",
+      "description": "Strength ratio T_ult/sigma_ult_ITZ above which ITZ failure also governs uniaxial tension."
+    },
+    "ratio_bc_uc_separation": {
+      "value": 0.5,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (25)",
+      "description": "Ratio of the symmetric biaxial to the uniaxial compressive elastic limit when separation governs both."
+    },
+    "ratio_bc_uc_mixed_slope": {
+      "value": 9.94,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (25)",
+      "description": "Slope, with respect to the strength ratio T_ult/sigma_ult_ITZ, of the biaxial-to-uniaxial compressive elastic limit ratio when separation governs biaxial and ITZ failure uniaxial compression."
+    },
+    "ratio_bc_uc_itz": {
+      "value": 1.017,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (25)",
+      "description": "Ratio of the symmetric biaxial to the uniaxial compressive elastic limit when ITZ failure governs both."
+    },
+    "ratio_bc_uc_bound_low": {
+      "value": 0.05,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (25)",
+      "description": "Strength ratio T_ult/sigma_ult_ITZ above which ITZ failure governs uniaxial compression."
+    },
+    "ratio_bc_uc_bound_high": {
+      "value": 0.1,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (25)",
+      "description": "Strength ratio T_ult/sigma_ult_ITZ above which ITZ failure also governs symmetric biaxial compression."
+    },
+    "experimental_ratio_ut_uc_min": {
+      "value": 0.12,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (23)",
+      "description": "Lower end of the experimental range of the tensile-to-compressive elastic limit ratio, built from elastic-limit-to-strength ratios and the tensile-to-compressive strength ratio of the literature."
+    },
+    "experimental_ratio_ut_uc_max": {
+      "value": 0.33,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (23)",
+      "description": "Upper end of the experimental range of the tensile-to-compressive elastic limit ratio."
+    },
+    "experimental_ratio_bc_uc_min": {
+      "value": 0.766,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (28)",
+      "description": "Lower end of the experimental range of the biaxial-to-uniaxial compressive elastic limit ratio, built from the tests of Kupfer et al. (1969)."
+    },
+    "experimental_ratio_bc_uc_max": {
+      "value": 1.309,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Eq. (28)",
+      "description": "Upper end of the experimental range of the biaxial-to-uniaxial compressive elastic limit ratio."
     }
   },
   "tables": {},
