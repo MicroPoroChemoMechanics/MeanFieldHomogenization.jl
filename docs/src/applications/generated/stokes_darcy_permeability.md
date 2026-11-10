@@ -93,7 +93,7 @@ then fixes the orthoradial velocity from the radial one:
 ```
 
 Everything below comes from the operators `symgrad` and `divergence` of TensND
-in spherical coordinates, along the route of its tutorial
+in spherical coordinates, along the path of its tutorial
 [The elastic sphere, solved symbolically](@extref TensND tut-sphere-problems).
 
 ````@example stokes_darcy_permeability

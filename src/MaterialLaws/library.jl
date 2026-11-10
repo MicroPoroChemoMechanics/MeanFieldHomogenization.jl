@@ -23,7 +23,7 @@ _quadratic(a, 𝔸) = transpose(a) * (𝔸 * a) / 2
 
 Linear elasticity, ``\\psi = \\tfrac12\\,\\boldsymbol{\\varepsilon}:\\mathbb{C}:\\boldsymbol{\\varepsilon}``,
 from a stiffness tensor (TensND, any symmetry, any basis) or, isotropic, from
-Young's modulus and Poisson's ratio. The control case of the potential route:
+Young's modulus and Poisson's ratio. The control case of the potential approach:
 its response is ``\\mathbb{C}:\\boldsymbol{\\varepsilon}`` with the tangent
 ``\\mathbb{C}``, exactly.
 """
@@ -82,7 +82,7 @@ stiffness ``\\mathbb{C}`` (`E`, `ν`) in series with a dashpot of viscosity
 
 hence ``\\dot{\\boldsymbol{\\sigma}} = \\mathbb{C}:\\dot{\\boldsymbol{\\varepsilon}} - \\boldsymbol{\\sigma}/\\tau``:
 held at a fixed strain, the stress relaxes as ``e^{-t/\\tau}``. The example of
-the potential route with an internal variable.
+the potential approach with an internal variable.
 """
 MaxwellViscoelasticity(; E, ν, τ) = PotentialLaw(;
     name = :MaxwellViscoelasticity, energy = _maxwell_energy, dissipation = _maxwell_dissipation,
@@ -112,7 +112,7 @@ derived from the potential
 ``\\psi = \\tfrac12\\,\\boldsymbol\\varepsilon:\\mathbb{C}:\\boldsymbol\\varepsilon - b\\,p\\operatorname{tr}\\boldsymbol\\varepsilon - p^2/(2M)``,
 ``\\boldsymbol\\sigma = \\partial\\psi/\\partial\\boldsymbol\\varepsilon`` and
 ``\\phi = -\\partial\\psi/\\partial p``. Gradients `(ε = 6, p = 1)`, fluxes
-`(σ = 6, φ = 1)`; the tangent blocks are those of the Gauss-point contract,
+`(σ = 6, φ = 1)`; the tangent blocks are those of the Gauss-point interface,
 `σε` ``= \\mathbb{C}``, `σp` ``= -b\\,\\boldsymbol{1}``, `φε` ``= b\\,\\boldsymbol{1}``,
 `φp` ``= 1/M``. The example of a coupled law.
 """

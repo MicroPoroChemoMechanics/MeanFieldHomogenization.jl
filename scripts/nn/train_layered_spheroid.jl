@@ -11,7 +11,7 @@
 #
 #  `LayeredSpheroid` solves this body in closed form, and on this slice it is
 #  exact — so it is tempting to label from it and get a free dataset. It cannot
-#  supply the labels this needs: a heterogeneous inclusion enters through gate B
+#  supply the labels this needs: a heterogeneous inclusion enters through level B
 #  with **both** concentration tensors, and the analytic type implements the
 #  strain side only. Its `flux_gradient_concentration` is refused rather than answered
 #  (the generic `ℂ₁ : 𝔸_εε` presupposes a uniform stiffness a multilayer does
@@ -118,8 +118,8 @@ const FRAME = (0.0, 0.0, 1.0)
 # ─── Checkpointing, because a lost hour is a lost hour ───────────────────────
 #
 # One solve costs several seconds, so a full dataset is more than an hour of
-# uninterrupted finite elements, and an interrupted run used to lose every
-# sample it had already paid for. Each label is therefore appended to a
+# uninterrupted finite elements, and an interrupted run would lose every
+# sample already computed. Each label is therefore appended to a
 # checkpoint file the moment it exists, and a restart recomputes only what is
 # missing.
 #
@@ -314,7 +314,7 @@ sB, hB, valB = fit(
     reencode(ZBv, Xv, NI.FluxConcentrationTI(), SPEC_B);
     notes = "𝔸_σε of the same morphology, divided by 2μ₀ — it is of degree +1 " *
         "in the moduli where 𝔸_εε is of degree 0. The analytic type supplies " *
-        "no counterpart: this half of gate B exists only through the cell",
+        "no counterpart: this half of level B exists only through the cell",
 )
 
 # The speed-up, which is the whole practical point of a surrogate. The frame is

@@ -134,10 +134,9 @@ potentials, so the letters carry a potential index as well,
 ``a^{i,m}_{\\ell,n}, \\dots, d^{i,m}_{\\ell,n}``.
 
 !!! warning "A letter encodes `(regularity, trig)`, never a potential"
-    An earlier version of this module labeled case I's four families
-    `:A, :B, :C, :D` for ``(\\varphi_0, \\mathrm{reg})``, ``(\\varphi_0, \\mathrm{irr})``, ``(\\varphi_3, \\mathrm{reg})``, ``(\\varphi_3, \\mathrm{irr})``. That
-    collides with the convention above, where ``c`` and ``d`` are the *sine*
-    families. The pair is carried explicitly here for that reason.
+    Labeling case I's four families `:A, :B, :C, :D` for ``(\\varphi_0, \\mathrm{reg})``, ``(\\varphi_0, \\mathrm{irr})``, ``(\\varphi_3, \\mathrm{reg})``, ``(\\varphi_3, \\mathrm{irr})`` would
+    collide with the convention above, where ``c`` and ``d`` are the *sine*
+    families. The pair is therefore carried explicitly.
 """
 struct PNMode
     potential::Int

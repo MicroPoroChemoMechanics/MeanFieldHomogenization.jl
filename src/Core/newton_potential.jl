@@ -21,7 +21,7 @@ Returns:
 - `Iv` ``= (I_a, I_b, I_c)`` with ``I_a + I_b + I_c = 4\\pi``
 - `IIv` ``= (I_{aa}, I_{bb}, I_{cc}, I_{bc}, I_{ca}, I_{ab})``
 
-The route depends on whether comparisons on `T` return a `Bool`
+The approach depends on whether comparisons on `T` return a `Bool`
 (`is_hard_numeric`), not on `T <: Real`, which `Symbolics.Num` also satisfies:
 - numbers (`Float64`, `ForwardDiff.Dual`, …): a spheroid, sphere
   included, goes through the integrals of `src/Core/spheroid_integrals.jl`; a

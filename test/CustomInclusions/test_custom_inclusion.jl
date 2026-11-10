@@ -564,6 +564,6 @@ end
         (ok, read(path, String))
     end
     @test report[1] == false
-    @test occursin("does NOT satisfy the inclusion contract (physics = :conduction", report[2])
+    @test occursin("does NOT satisfy the inclusion interface (physics = :conduction", report[2])
     @test occursin("level 0: `shape_trait` has no method", report[2])
 end

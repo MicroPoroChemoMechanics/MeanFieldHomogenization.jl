@@ -119,7 +119,7 @@ convention above.
 
 See [Conduction and diffusion](@ref man-conductivity) for the call.
 
-## 4. Why this matters for a real material
+## 4. From the inclusion to a real material
 
 A real heterogeneous material is not one ellipsoid in an infinite medium. What
 comes closest is the **inhomogeneity** problem — an ellipsoid of a *different*

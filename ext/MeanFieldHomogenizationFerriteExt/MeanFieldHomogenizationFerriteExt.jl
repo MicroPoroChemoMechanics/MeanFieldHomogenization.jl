@@ -8,7 +8,7 @@ Two things live here. [`MeanFieldHomogenization.FEEllipticCrack`](@ref) is imple
 full — mesh, solver and the 3+3 corrected scheme — because the gmsh `Crack`
 plugin and the front welding it requires are Ferrite-grid surgery. For
 [`MeanFieldHomogenization.FEExcenteredSphere`](@ref) only the nine methods of the
-[`MeanFieldHomogenization.FEBackend`](@ref) contract are supplied, in `axi_backend.jl`;
+[`MeanFieldHomogenization.FEBackend`](@ref) interface are supplied, in `axi_backend.jl`;
 the physics of that solve lives in `src/FiniteElements/`.
 
 Both use the finite Eshelby cell with a first-order corrected boundary

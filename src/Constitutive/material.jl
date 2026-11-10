@@ -28,7 +28,7 @@ model. A concrete material bundles the microstructure (an
 the scheme used to upscale it, and whatever is needed to evaluate it
 repeatedly and cheaply.
 
-# The contract
+# The interface
 
 A material must implement:
 

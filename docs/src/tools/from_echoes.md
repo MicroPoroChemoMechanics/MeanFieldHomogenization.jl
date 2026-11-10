@@ -143,7 +143,7 @@ ENV["JULIA_PYTHONCALL_EXE"] = raw"/path/to/that/python"
 ```
 
 The same two settings can be exported in the shell before starting Julia, or
-stored once as preferences of PythonCall and CondaPkg. The complete recipe,
+stored once as preferences of PythonCall and CondaPkg. The complete procedure,
 with the benchmark scripts, is in `scripts/bench_echoes/README.md`.
 
 ```julia

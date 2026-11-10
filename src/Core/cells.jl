@@ -42,7 +42,7 @@ Two concrete cells ship with `MeanFieldHomogenization`:
 
 A new cell type must provide
 
-- `validate_cell(cell)` — structural sanity check, called by `homogenize`
+- `validate_cell(cell)` — structural check, called by `homogenize`
   (optionally `validate_cell(cell, scheme)` for scheme-dependent requirements);
 - at least one `_evaluate(cell, scheme, ::Val{property}; kw...)` method;
 - [`cell_member_names`](@ref), [`cell_container_property`](@ref) and
@@ -93,7 +93,7 @@ function homogenize end
     validate_cell(cell)
     validate_cell(cell, scheme)
 
-Structural sanity check of a homogenization cell, called by
+Structural check of a homogenization cell, called by
 [`homogenize`](@ref) before evaluation. `validate_cell(::RVE)` forwards to
 `validate_rve`, `validate_cell(::Laminate)` to `validate_laminate`.
 
@@ -232,7 +232,7 @@ next.
 
 Inside an aging-viscoelastic computation (`homogenize_alv`) the inner cell is
 homogenized on the time grid of the outer one, memoized in the same way; it must
-be a cell the aging pipeline covers, an `RVE` or a `Laminate`.
+be a cell the aging calculation covers, an `RVE` or a `Laminate`.
 
 See also [`NestedParameter`](@ref), [`resolve_property`](@ref).
 """

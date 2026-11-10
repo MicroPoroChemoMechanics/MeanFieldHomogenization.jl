@@ -248,7 +248,7 @@ re-projection, `iterations` times.
 The raw radial map is far from uniform: it compresses the mesh near the axis
 vertices of a concave shape and stretches it near the body diagonal.
 
-**What the sweep buys, and what it costs.** It equalizes *edge lengths*, and it
+**What the sweep gives, and what it costs.** It equalizes *edge lengths*, and it
 does so at the expense of the *minimum angle* — the two are not the same
 quality and cannot both be maximized. Measured at level 3, 30 iterations:
 

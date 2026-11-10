@@ -114,7 +114,7 @@ first-order steps.
 
 ### Aging viscoelasticity on a realistic grid
 
-The cases of the aging viscoelastic harness (`scripts/bench_echoes/alv_harness`, its
+The cases of the aging viscoelastic comparison script (`scripts/bench_echoes/alv_harness`, its
 `README.md` describes them): spheres and spheroids, aligned and tilted, transversely
 isotropic laws about tilted axes, orientation averages, conduction, two-scale chains,
 tilted elliptic cracks, the asymmetric self-consistent scheme, and every scheme of Echoes
@@ -136,11 +136,11 @@ include(joinpath(pkgdir(MeanFieldHomogenization), "docs", "benchmark_tables.jl")
 alv_table("alv_harness_n50.json")
 ```
 
-### The three-scale strength model: the same route, two stopping rules
+### The three-scale strength model: the same approach, two stopping rules
 
 The model of [Quasi-brittle strength of cement paste and mortar](@ref app-strength) computes a strength and its
 derivative with respect to the shear modulus of one family of hydrate needles.
-Both codes take the same route, described on the page of the model: the self-consistent
+Both codes take the same approach, described on the page of the model: the self-consistent
 foam is first converged with the needles averaged isotropically, whose Hill
 tensors are closed forms, and the 20 transversely isotropic families start from
 that estimate. They stop differently. Echoes takes a single step over the
@@ -148,7 +148,7 @@ families and obtains the derivative there, with numerical Hill tensors to
 ``10^{-3}``. `MeanFieldHomogenization` iterates the families to convergence,
 the derivative included through dual numbers, every Hill tensor to
 ``10^{-6}``. The second row starts the families from the hydrate stiffness
-instead, the direct route kept to validate the first
+instead, the direct approach kept to validate the first
 ([Validating the angular discretization](@ref app-strength-validation)); both rows
 reach the same strength.
 
@@ -174,7 +174,7 @@ scheme_table(; strength = true)
   ForwardDiff through `hill_tensor` beats Echoes' closed-form derivative on the
   isotropic cases.
 - **Aging viscoelasticity**: 8 to 37 times faster on 11 instants, and 2.6 to
-  40 times on the 50 instants of the harness. The gain is largest where the result
+  40 times on the 50 instants of that comparison script. The gain is largest where the result
   stays isotropic (the self-consistent schemes on spheres or on families averaged
   in orientation), and smallest, 2.6 to 4, where the result fills a dense operator or
   the cell mixes several families.
@@ -212,7 +212,7 @@ python3 -I scripts/bench_echoes/schemes_speed_echoes.py
 with `python3` the interpreter in which `import echoes` works.
 
 Internal (Julia-only) regression benchmarking is separate: `scripts/bench/`
-holds a gated suite with a committed baseline and a bitwise checksum gate,
+holds a suite with a committed baseline and a bitwise checksum check,
 described in its own `README.md`.
 
 ## Where to go next

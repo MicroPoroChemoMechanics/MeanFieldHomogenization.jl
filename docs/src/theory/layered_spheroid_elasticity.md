@@ -146,7 +146,7 @@ the error in [riccardi1999](@citet).
 
 **Case I is what follows.** The gauge is the simplest of the three, and the one
 whose fields are axisymmetric — which turns out to give two structural checks
-for free.
+at no extra cost.
 
 ## 3. Case I — the operators
 
@@ -357,7 +357,7 @@ conduction, whose perfect-interface blocks are diagonal.
     ```
 
     ``\partial_z`` already packages ``\partial_p`` as ``(1-p^2)\partial_p`` and
-    ``u_z`` is banded for free — but ``\partial_\rho`` carries ``p\,\partial_p``,
+    ``u_z`` is banded at no extra cost — but ``\partial_\rho`` carries ``p\,\partial_p``,
     and ``p\,P_n' = n\,P_n + P_{n-1}'`` puts the bare derivative straight back.
     The weighting is what matters, not the frame.
 
@@ -476,8 +476,7 @@ operators above is sound: TensND's spheroidal chart, the wiring of `grad`,
 [`symgrad`](@extref TensND TensND.symgrad) and `divergence`, the transcription of the gauge ``\varphi_1=\varphi_2=0``
 with its ``\underline e_3`` term, and the ``\lambda \leftrightarrow \nu``
 conversion. Every expression on this page comes out of that same machinery, so
-a non-zero residual here would have invalidated all of them. It is a plumbing
-test, and it is worth running for exactly that reason.
+a non-zero residual here would have invalidated all of them. It is a test of the implementation, and is run for that reason.
 
 In this chart and at ``m = 0``, harmonicity reads
 
@@ -523,7 +522,7 @@ differentiated when one asks for a sensitivity.
 operators of its own, and those were validated against Eshelby. The generic path
 reproduces them to ``7\cdot10^{-15}`` over both potentials, both regularities,
 degrees ``0`` to ``7`` and three points, and returns ``u_\varphi`` and
-``\sigma_{\varphi q}`` as exact zeros. Two independent routes agreeing is worth
+``\sigma_{\varphi q}`` as exact zeros. Two independent approaches agreeing is worth
 considerably more than either one agreeing with itself.
 
 ### [No rigid-body rotations are needed](@id th-spheroid-no-rotation)
@@ -544,7 +543,7 @@ combination, ``\varphi_1 = \alpha z`` with ``\varphi_3 = +\alpha x``, is the
 remote shear itself. Duan's extra unknowns are an artifact of a gauge that drops
 one of the two, not a physical requirement. A rotation carries no strain, so its
 traction must vanish identically — which is how the test states it — and the
-Eshelby oracle confirms the whole thing: case III lands on the analytic answer
+Eshelby solution confirms the whole thing: case III reproduces the analytic answer
 with no rotation in the unknown list.
 
 ### [One field-free combination per regular region](@id th-spheroid-field-free)
@@ -600,7 +599,7 @@ centered difference to ``10^{-11}``.
 
 ### [Two things that are not optional](@id th-spheroid-not-optional)
 
-Both were found by the oracle disagreeing, and both are easy to get wrong.
+Both were found through a disagreement with the Eshelby solution, and both are easy to get wrong.
 
 **Degree ``0`` of ``\varphi_0``.** Only its *regular* part is a constant and
 therefore inert; the irregular one is ``P_0(p)Q_0(q) = \operatorname{arccoth} q``,
@@ -645,7 +644,7 @@ small for a single inclusion, something upstream is wrong, which is exactly how
 the two defects in
 [the previous section](@ref th-spheroid-not-optional) announced themselves.
 
-### The oracle
+### The Eshelby reference
 
 A single homogeneous spheroid must be Eshelby — on **all 81 components** of the
 concentration tensor, not on one scalar — and its interior series must collapse
@@ -707,7 +706,7 @@ second-order tensors splits into three subspaces it does not mix:
 
 Six solves — the two members of each subspace, which are the same problem
 rotated about the axis — fill all six coefficients. That the two members of a
-pair agree is a check the assembly gets for free, and nothing in it enforces
+pair agree is a check obtained at no extra cost, and nothing in it enforces
 that agreement.
 
 ### Averaging without per-layer bookkeeping
@@ -735,7 +734,7 @@ irrecoverable from the total alone, the layers having different moduli. The
 inner term drops out on its own for the core: the confocal surface degenerates
 to the focal segment there and ``\mathrm dS \propto \bar q`` vanishes with it.
 
-The two routes — layers from differences of their own boundary moments, the
+The two approaches — layers from differences of their own boundary moments, the
 total from one moment on the outer boundary — are independent, so
 ``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a restatement. It
 holds to the truncation accuracy.
@@ -762,7 +761,7 @@ both the exactness of the Gauss projection and
 perfect interface escapes this because every geometric factor there is *shared*
 and cancels; a compliance is a new length scale that does not.
 
-**The route that does work is a thin interphase** — an extra confocal layer,
+**The approach that does work is a thin interphase** — an extra confocal layer,
 which the solver already handles. But the two are not interchangeable, and the
 difference is worth seeing. The normal thickness of a confocal shell is
 ``\chi_q\,\mathrm dq`` with ``\chi_q = c\,w/\bar q``, so
@@ -773,8 +772,8 @@ difference is worth seeing. The normal thickness of a confocal shell is
 ```
 
 exactly the aspect ratio. A confocal coating on a 1:5 spheroid is five times
-thicker around its waist than at its tips. That is "confocal surfaces are not
-homothetic" stated in millimeters, and it means a confocal interphase models a
+thicker around its waist than at its tips. This is "confocal surfaces are not
+homothetic" stated in millimeters; it means a confocal interphase models a
 compliance that **varies along the interface** rather than a uniform spring.
 
 ```@example spheroid_elastic

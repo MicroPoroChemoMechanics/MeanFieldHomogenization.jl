@@ -12,7 +12,7 @@ Abaqus UMAT plays.
     Here the finite-element code is the **caller**, and a whole microstructure
     plays the part of one material point.
 
-# The contract
+# The interface
 
 A material bundles a microstructure, a scheme, and whatever internal state the
 model needs. An FE driver builds it once, allocates one state per quadrature
@@ -29,7 +29,7 @@ r  = material_response(mat, ε, states[cell][qp], Δt; cache = cache)
 states[cell][qp] = state(r)
 ```
 
-The contract is **multi-gradient / multi-flux** — the shape MGIS uses for
+The interface is **multi-gradient / multi-flux** — the shape MGIS uses for
 MFront's generic behaviors — because the poroelastic case takes a strain *and*
 a pore pressure and returns a stress *and* a variation of fluid content. A
 purely mechanical law only ever sees the one-gradient specialization.
@@ -38,7 +38,7 @@ purely mechanical law only ever sees the one-gradient specialization.
 
 | | |
 |---|---|
-| [`AbstractMFHMaterial`](@ref), [`AbstractMaterialState`](@ref) | the contract |
+| [`AbstractMFHMaterial`](@ref), [`AbstractMaterialState`](@ref) | the interface |
 | [`material_response`](@ref), [`initial_state`](@ref) | the two required methods |
 | [`MaterialResponse`](@ref), [`stress`](@ref), [`tangent`](@ref), [`state`](@ref) | what a response carries |
 | [`HomogenizedElastic`](@ref) | linear law from any scheme — the control case |

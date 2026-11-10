@@ -32,7 +32,7 @@ silent zero.
 ## §1 What is learned, and why the features are ratios
 
 The morphology is **heterogeneous**: it has no Hill tensor, so it enters
-through gate B with *both* concentration tensors,
+through level B with *both* concentration tensors,
 ``\mathbb A_{\varepsilon\varepsilon}`` and ``\mathbb A_{\sigma\varepsilon}``. Two surrogates,
 one per tensor, sharing one finite-element solve per sample.
 
@@ -73,7 +73,7 @@ The convention is the package's usual one — column 3 of the inclusion basis �
 and a wrong choice does not pass silently, since the label extraction measures
 the projection residual.
 
-**The features are contrast ratios.** The homogeneity that gate A exploits,
+**The features are contrast ratios.** The homogeneity that level A exploits,
 ``\mathbb P(\lambda\mathbb C_0) = \mathbb P(\mathbb C_0)/\lambda``, does *not*
 transfer: a heterogeneous inclusion carries its constituents inside itself, so
 scaling ``\mathbb C_0`` alone changes the contrast. What is exact is the
@@ -192,7 +192,7 @@ end
 
 ## §5 In a scheme
 
-Gate B with both tensors means the contributions take the exact heterogeneous branch,
+Level B with both tensors means the contributions take the exact heterogeneous branch,
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0:\mathbb A_{\varepsilon\varepsilon}``,
 and every scheme that consumes them works.
 

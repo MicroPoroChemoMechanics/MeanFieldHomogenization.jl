@@ -46,7 +46,7 @@ physics.
 | `basis` | canonical | the revolution axis is the basis's third column |
 | `backend` | `AutoBackend()` | finite-element backend |
 
-Enters through **gate B**, with both concentration tensors measured on the same
+Enters through **level B**, with both concentration tensors measured on the same
 solve: the inclusion is heterogeneous, so the stress side is not ``\\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}``
 for any single ``\\mathbb{C}_1``.
 

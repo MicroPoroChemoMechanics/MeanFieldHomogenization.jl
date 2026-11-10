@@ -361,7 +361,7 @@ _alv2_phase_kernel(::LayeredSphere, law, K_ref, times) = K_ref
 """
     _homogenize_alv_order2(rve, scheme, prop::Symbol; times) -> Matrix
 
-Internal order-2 ALV pipeline.  Reached from [`homogenize_alv`](@ref)
+Internal order-2 ALV calculation.  Reached from [`homogenize_alv`](@ref)
 when the matrix property law samples to a ``3\\times 3`` / `TensND.AbstractTens{2,3}`
 value.  Returns the effective ``\\widetilde{\\boldsymbol{K}}^{\\mathrm{hom}}`` of size ``3n\\times 3n``.
 
@@ -821,8 +821,8 @@ end
 """
     homogenize_alv_order2(rve, scheme, prop; times)
 
-Backwards-compatible alias for [`homogenize_alv`](@ref) when the matrix
-property is order-2.  New code should call `homogenize_alv` directly —
+Alias for [`homogenize_alv`](@ref) when the matrix
+property is order-2; `homogenize_alv` can be called directly —
 the dispatch on order-2 vs order-4 is automatic from the law sample.
 """
 homogenize_alv_order2(

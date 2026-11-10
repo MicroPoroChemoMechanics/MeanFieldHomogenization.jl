@@ -55,10 +55,10 @@ a cube frame, its products and inverses are componentwise, [`cubic_from_constant
 class. None of that is reimplemented here.
 
 What this package adds is a name for the projection **residual**, which is the
-quantity a solver reads, and the symmetry trait. The trait is honest only now
-that a storage type exists: `material_symmetry` answers from the *container*,
-and before TensND had `TensCubic` a `CubicSym` would have let dispatch claim a
-structure the object did not carry.
+quantity a solver reads, and the symmetry trait. The trait is faithful because
+a storage type exists: `material_symmetry` answers from the *container*
+(`TensCubic` for a `CubicSym`), so dispatch never claims a structure the object
+does not carry.
 
 Read `cubic_residual` and `cubic_anisotropy` **together**. The first is the
 distance to a class the answer belongs to by group theory, so it is

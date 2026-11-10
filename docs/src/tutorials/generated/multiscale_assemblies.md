@@ -198,7 +198,7 @@ end
 
 The isotropic interaction tensor is a closed form; the anisotropic one is a
 quadrature differentiated twice, so it is some three orders of magnitude
-dearer. That is the price of the chaining above, and it is why the dispatcher
+dearer. That is the cost of the chaining above, and it is why the dispatcher
 keeps the closed form whenever the reference is isotropic.
 
 ````@example multiscale_assemblies

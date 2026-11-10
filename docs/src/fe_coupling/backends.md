@@ -1,7 +1,7 @@
 # [Ferrite backend](@id fe-backends)
 
 !!! info "Before this page"
-    [Materials](@ref fe-materials), for the contract the helpers below call at
+    [Materials](@ref fe-materials), for the interface the helpers below call at
     each quadrature point, and
     [The coupled poroelastic problem](@ref fe-poro-coupling) for the equations
     of the two-field element.
@@ -13,7 +13,7 @@ back the stress, the tangent and the new state. Here the law is an MFH material,
 its state the openings of its cracks or whatever else the material carries from
 step to step.
 
-The material contract knows nothing about any finite-element library. What a
+The material interface knows nothing about any finite-element library. What a
 library needs is split in two: the pieces that do not depend on it are in the
 package, and an adapter per library adds what only that library knows.
 
@@ -25,7 +25,7 @@ package, and an adapter per library adds what only that library knows.
 
 The adapter is activated by `using Ferrite` (or `import Ferrite`) **alone**,
 and its functions are those of the package: no `get_extension` is needed. The
-[quickstart](@ref fe-quickstart) uses them end to end, and
+[quickstart](@ref fe-quickstart) uses them in a complete calculation, and
 [Step by step](@ref fe-step-by-step) explains each.
 
 !!! note "Why a second extension"
@@ -80,12 +80,12 @@ Only Ferrite has an adapter today. Another code needs the same small piece of
 glue, written with the functions of the package: at each quadrature point,
 [`mandel_strain`](@ref) turns the strain of the element into the strain of the
 material, [`point_update`](@ref) (or [`material_response`](@ref) for any
-material of the contract) returns the stress, the consistent tangent and the
+material of the interface) returns the stress, the consistent tangent and the
 new state, read from and written to a [`QuadratureStates`](@ref), and
 [`volume_weight`](@ref) gives the factor of the volume element; the virtual
 strain of a shape function is [`mandel_strain`](@ref) of its gradient. Wrapping
 the assembly in a function `system!(u, t, Δt) -> (K, r)` then gives
-[`quasistatic!`](@ref) for free. Outside Julia, [`voigt_strain`](@extref TensND TensND.voigt_strain) and
+[`quasistatic!`](@ref) at no extra cost. Outside Julia, [`voigt_strain`](@extref TensND TensND.voigt_strain) and
 [`voigt_stress`](@extref TensND TensND.voigt_stress) carry `ε` and `σ` across the boundary.
 
 ## Where to go next

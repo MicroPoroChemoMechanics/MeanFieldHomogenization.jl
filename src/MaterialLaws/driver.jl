@@ -95,7 +95,7 @@ Drive a material point along `path` and return its response at every time of
 the path.
 
 `material` is a law of [`MaterialLaws`](@ref MeanFieldHomogenization.MaterialLaws)
-or any material of the Gauss-point contract ([`AbstractMFHMaterial`](@ref)). At
+or any material of the Gauss-point interface ([`AbstractMFHMaterial`](@ref)). At
 each time the components the path drives by their flux are matched to a
 relative residual `rtol` by Newton's method on the free gradients, with the
 consistent tangent; when the local integration or this iteration fails, the

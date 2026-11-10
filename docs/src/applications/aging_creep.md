@@ -164,7 +164,7 @@ The **elastic reference** ``1/E^{\mathrm{hom}}(t)`` (black dotted) is the
 instantaneous (glassy) compliance of the microstructure frozen at time ``t``:
 every layer past its setting time carries its *elastic* stiffness
 ``\mathbb C_1``, the others are still pores. It is built from the same topology
-but computed by the **purely elastic** pipeline — [`homogenize`](@ref), no
+but computed by the **purely elastic** calculation — [`homogenize`](@ref), no
 Volterra algebra anywhere — so its agreement with the start of each creep curve
 is an independent cross-check of `homogenize_alv`, not a restatement of it.
 
@@ -247,7 +247,7 @@ Three observations, all reproducing [sanahuja2013](@cite):
 trapezoidal block ``(1,1)`` of every phase kernel is ``\mathbb C(t_0, t_0)``, its
 glassy modulus, and the Volterra products, inverses and layered recurrences all
 preserve that block. The two sides below come from disjoint code paths — the
-time-domain ALV pipeline and the elastic Mori–Tanaka estimate — so the agreement
+time-domain ALV calculation and the elastic Mori–Tanaka estimate — so the agreement
 validates one against the other.
 
 ```@example creep

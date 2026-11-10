@@ -46,7 +46,7 @@ what the Fourier modes deliver: mode 0 gives a ``2\\times 2`` block, modes 1 and
 scalar each.
 
 `elastic` and `transport` take a trained surrogate in place of the solve, one
-per physics, exactly as for [`FESupershapePore`](@ref). That is the only route
+per physics, exactly as for [`FESupershapePore`](@ref). That is the only approach
 to a sensitivity with respect to the morphology: the finite-element solve runs
 in `Float64` and memoizes on the reference medium alone, so a derivative in `p`
 would come back a silent zero.
@@ -171,7 +171,7 @@ end
 
 ``\\|\\mathbb{L}_u:\\mathbb{F}\\|`` on one modal block — the diagnostic to watch rather than the answer.
 It is ``O((a/R)^3)``, so a log-log slope of ``-3`` against ``R`` says the correction is
-wired right, and the *corrected* answer falling faster than that says the sign
+implemented correctly, and the *corrected* answer falling faster than that says the sign
 is right too.
 """
 function _axi_pore_dipole_norm(block, C0_66::AbstractMatrix)

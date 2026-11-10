@@ -152,8 +152,8 @@ requires_distribution_shape(::Union{Maxwell, PonteCastanedaWillis}) = true
 
 The outer envelope of the spatial distribution that `scheme` reads off `rve`.
 
-An RVE that declares none is an error, and deliberately so. A spherical
-distribution — the value this used to default to — makes both
+An RVE that declares none is an error, and deliberately so. A default spherical
+distribution would make both
 [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) reduce **exactly** to
 Mori-Tanaka as soon as the inclusions are spheres too (more generally, whenever
 every inclusion phase has the Hill tensor of the distribution shape).

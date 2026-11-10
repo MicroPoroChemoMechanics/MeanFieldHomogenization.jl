@@ -26,7 +26,7 @@ the [elliptical crack](@ref man-fe-inclusions), here in its *general* form,
 with the polarization fixed point rather than the crack's 3 + 3 shortcut.
 
 Nothing downstream knows any of this: the inclusion satisfies the
-[custom-inclusion contract](@ref man-custom-inclusions) and every scheme takes
+[custom-inclusion interface](@ref man-custom-inclusions) and every scheme takes
 it.
 
 !!! note "This page is static"
@@ -452,7 +452,7 @@ FEExcenteredSphere(a, props; core_fraction, eccentricity = 0.0,
                    radius_ratio = 4.0, nradial = 24, coarsening = 6.0, order = 2)
 ```
 
-See [`FEAxiMeshOptions`](@ref) for what each knob does.
+See [`FEAxiMeshOptions`](@ref) for what each parameter does.
 
 ### Choosing a backend
 
@@ -487,7 +487,7 @@ Both build the same mesh, the same P2 space and the same quadrature, so they do
 not merely converge to the same limit — they agree to round-off, around
 ``10^{-14}`` on every tensor in both physics. That is what
 `test/FiniteElements/test_gridap_backend.jl` asserts, which makes it a sharp guard
-on the backend contract rather than a loose convergence check.
+on the backend interface rather than a loose convergence check.
 
 Which to reach for: Ferrite to run, Gridap to *read* or to modify. The weak
 form above is the equation of the axisymmetric problem transcribed, so adapting
@@ -506,8 +506,8 @@ the solver to another morphology is a one-line change there and a new mesh.
 ## Where it plugs in
 
 The inclusion is **heterogeneous** ([`is_homogeneous_inclusion`](@ref) is
-`false`), so it enters through gate B of the
-[inclusion contract](@ref dev-adding-inclusion) with *both* concentration
+`false`), so it enters through level B of the
+[inclusion interface](@ref dev-adding-inclusion) with *both* concentration
 tensors — the strain-side ``\mathbb A_{\varepsilon\varepsilon}`` and the
 stress-side ``\mathbb A_{\sigma\varepsilon}``. They come out of the same solve,
 so asking for one and then the other costs one solve, not two.
@@ -521,7 +521,7 @@ inclusion. A bound needs the volume average of the constituent properties over
 the inclusion, and the RVE cannot supply it: the phase property is a
 placeholder. Here the geometry fixes it exactly, `w` for the core and
 ``1-w`` for the shell whatever the eccentricity, so the type implements
-`Schemes._layer_voigt` / `Schemes._layer_reuss` and the bounds come for free.
+`Schemes._layer_voigt` / `Schemes._layer_reuss` and the bounds follow at no extra cost.
 
 `AsymmetricSelfConsistent` works whether or not the bounds do. Its iteration
 needs exactly what `SelfConsistent` needs — the same two concentration tensors —
@@ -614,6 +614,6 @@ the eccentricity that the solve itself cannot provide.
 
 - [Finite-element inclusions](@ref man-fe-inclusions) — the elliptical crack,
   the same correction in its 3 + 3 crack form
-- [Custom inclusions](@ref man-custom-inclusions) — the contract this type
+- [Custom inclusions](@ref man-custom-inclusions) — the interface this type
   satisfies
 - [Adding a new inclusion](@ref dev-adding-inclusion) — the developer reference

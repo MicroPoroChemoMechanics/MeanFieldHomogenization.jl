@@ -170,7 +170,7 @@ _gauge_group(::LongitudinalShearCase) = (2, 1)
 Amplitudes of the remote uniform strain, as `(group index, degree) => value`.
 
 Each case's remote field is two coefficients at most, which is why a single
-homogeneous inclusion is an *exact* oracle rather than a converged one. The
+homogeneous inclusion is an *exact* reference rather than a converged one. The
 derivations are on the theory page; in each, ``\\Phi`` comes out with no ``\\varphi_0`` part
 except in case I, and
 
@@ -580,7 +580,7 @@ with the elementary problem that solves it and the strain tensor it is:
 
 Loadings 3–4 and 5–6 are the same problem rotated about the axis, so their
 responses must match up to that rotation — which is a check the assembly gets
-for free.
+at no extra cost.
 """
 function _basis_loadings(::Type{T}) where {T}
     sym(f) = TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> T(f(i, j))))

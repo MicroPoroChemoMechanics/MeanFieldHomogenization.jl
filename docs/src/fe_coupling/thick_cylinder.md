@@ -50,7 +50,7 @@ mat = HomogenizedElastic(rve, MoriTanaka())      # E = 61.76 GPa, ν = 0.2427
 ![u_r and hoop stress against Lamé](../assets/fe_coupling/lame.png)
 
 The error converges at the expected second order for Q1 elements, which is what
-validates the coupling — any defect in the plumbing would show up here:
+validates the coupling — any defect in the implementation would show up here:
 
 | mesh | 24×24 | 48×48 | 96×96 |
 |:--|:--|:--|:--|

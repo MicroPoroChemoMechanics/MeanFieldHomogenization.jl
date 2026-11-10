@@ -214,7 +214,7 @@ want("elastic") && train_and_save(
     # one does: the measured cubic residual is 1e-4 to 1e-3 for p ≥ 0.7 but
     # reaches 1.5e-2 at p = 0.35. That is real mesh error in the concave range,
     # and the surrogate inherits it -- which is why the reported accuracy below
-    # is the honest figure and not a target to be tuned toward.
+    # is the accurate figure and not a target to be tuned toward.
     atol = 2.5e-2,
     notes = "𝑨_εε of a superspherical cavity on (𝕁, 𝔼, 𝕋); dimensionless, so " *
         "the inputs are the shape exponent and the reference Poisson ratio",

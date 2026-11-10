@@ -36,7 +36,7 @@ and coarsening to `R/3` at the outer boundary.
 
 The gmsh **module** is passed in rather than imported, for the reason given in
 [`_build_gmsh_axi_model`](@ref): it is a weak dependency reached by a different
-route from each backend. The caller owns `gmsh.initialize()` /
+approach from each backend. The caller owns `gmsh.initialize()` /
 `gmsh.finalize()`.
 """
 function _build_gmsh_crack_model(gmsh, a::Float64, b::Float64, R::Float64, htipdiv::Float64)

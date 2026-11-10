@@ -133,7 +133,7 @@ end
 
 p_full = plot(
     p_k, p_μ; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600),
-    plot_title = "Porous benchmark (spheres) — MeanFieldHomogenization v0.4"
+    plot_title = "Porous benchmark (spheres) — MeanFieldHomogenization"
 )
 
 figdir = joinpath(@__DIR__, "figures")
@@ -177,7 +177,7 @@ end
 
 p_full2 = plot(
     p_k2, p_μ2; layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1400, 600),
-    plot_title = "Porous benchmark (oblate + iso-symmetrize) — MeanFieldHomogenization v0.4"
+    plot_title = "Porous benchmark (oblate + iso-symmetrize) — MeanFieldHomogenization"
 )
 figpath2 = joinpath(figdir, "28_porous_schemes_oblate.png")
 savefig(p_full2, figpath2)

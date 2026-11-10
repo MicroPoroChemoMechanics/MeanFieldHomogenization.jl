@@ -382,7 +382,7 @@ matter of definition.
 This is what makes the package's exact contribution identities collapse to
 ``\\mathbb N = -\\mathbb C_0:\\mathbb A`` and
 ``\\mathbb H = \\mathbb A:\\mathbb S_0``, and it is why no contribution tensor
-is overridden here: the generic route is already the right one.
+is overridden here: the generic approach is already the right one.
 """
 Core.flux_gradient_concentration(
     ::FESupershapePore, ::TensND.AbstractTens{4, 3}, C₀::TensND.AbstractTens{4, 3}; kw...

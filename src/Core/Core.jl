@@ -5,9 +5,9 @@ Shared abstractions and numerical kernels used throughout `MeanFieldHomogenizati
 
 Contents
 --------
-- `counters.jl`           : opt-in work counters for the benchmark harness
+- `counters.jl`           : opt-in work counters for the benchmark script
 - `abstractions.jl`       : inclusion hierarchy (`AbstractInclusion` …)
-- `cells.jl`              : the homogenization *cell* contract
+- `cells.jl`              : the homogenization *cell* interface
                              (`AbstractHomogenizationCell`, `AbstractParameter`)
                              and the declarative multiscale seam
                              (`Homogenized`, `NestedParameter`)

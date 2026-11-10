@@ -1,7 +1,7 @@
 # [Non-aging viscoelasticity](@id man-viscoelasticity-nonaging)
 
 !!! info "Before this page"
-    [The Laplace-Carson route](@ref th-laplace-carson), the theory of this page,
+    [The Laplace-Carson approach](@ref th-laplace-carson), the theory of this page,
     [The law library](@ref man-rheological-models), where the materials below come
     from, and [Homogenization schemes](@ref man-schemes), whose schemes are used
     here unchanged.
@@ -13,8 +13,8 @@ law is then a convolution, which the Laplace-Carson transform turns into a produ
 value of the transform variable ``p`` the homogenization problem is an elastic one,
 of stiffness ``\mathbb{R}^{*}(p)``, which every scheme of the package solves
 unchanged (the correspondence principle). This page follows the three steps of that
-route: a material, a homogenization at a value of ``p``, and the way back to the
-time domain. A material that ages takes the other route, that of
+approach: a material, a homogenization at a value of ``p``, and the way back to the
+time domain. A material that ages takes the other approach, that of
 [Aging viscoelasticity (ALV)](@ref man-viscoelasticity).
 
 ```@example nonaging
@@ -149,7 +149,7 @@ Its nodes are real and positive. That is not a curiosity — it means an entire
 * costs roughly half as much per scheme evaluation as complex arithmetic, on
   top of needing a third fewer evaluations;
 * is the only way to use `SelfConsistent(algorithm = NewtonDefault())` on this
-  route, since its `ForwardDiff` Jacobian cannot carry a `Dual` over a complex
+  approach, since its `ForwardDiff` Jacobian cannot carry a `Dual` over a complex
   scalar;
 * lets `ForwardDiff` see plain `Dual` numbers rather than `Complex{Dual}`.
 
@@ -214,39 +214,39 @@ d = inverse_carson_rate(p -> Rstar(1.5, p), 0.8; f_glassy = 5.0)
 (d, -3.0 / 1.5 * exp(-0.8 / 1.5))
 ```
 
-Both routes are of comparable accuracy on the kernels tested. The identity is
+Both approaches are of comparable accuracy on the kernels tested. The identity is
 worth having because it asks nothing of the transform beyond what it already
 provides — it applies when `F` is not differentiable, and it is the cheaper
-route when the rate is wanted alongside the value.
+approach when the rate is wanted alongside the value.
 [`glassy_modulus`](@ref) supplies `f_glassy` for every model in the catalog.
 
 ### 4.4 Inversion by fitting
 
-There is a route that is not a quadrature: fit a Prony series to the transform
+There is an approach that is not a quadrature: fit a Prony series to the transform
 once, and read the time function off the fit. See
 [`prony_fit_relaxation`](@ref) and
 [the law library](@ref man-rheological-models), §3. The result is a *model* —
 closed-form in time, exactly convertible to its dual chain, and usable by the
-aging pipeline — rather than a value at one point.
+aging calculation — rather than a value at one point.
 
-## 5. The same material on the aging route
+## 5. The same material on the aging approach
 
 `ViscoLaw(m)` turns a model of the library into the kernel
-``(t, t') \mapsto R(t - t')`` that the aging route discretizes in time:
+``(t, t') \mapsto R(t - t')`` that the aging approach discretizes in time:
 
 ```@example nonaging
 law = ViscoLaw(matrix)
 law(1.0, 0.0) ≈ relaxation(matrix, 1.0)
 ```
 
-The two routes then compute the same effective behavior by disjoint means, which
-[Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-uses as a cross-check. The aging route is the only one for a material that ages,
-the transform route the cheaper and more accurate one for a material that does not.
+The two approaches then compute the same effective behavior by disjoint means, which
+[Frequency or time? Three approaches to the same viscoelastic composite](@ref tut-freq-vs-time)
+uses as a cross-check. The aging approach is the only one for a material that ages,
+the transform approach the cheaper and more accurate one for a material that does not.
 
 ## Where to go next
 
-* Theory: [The Laplace-Carson route](@ref th-laplace-carson), for the
+* Theory: [The Laplace-Carson approach](@ref th-laplace-carson), for the
   correspondence principle, the interlacing of creep and relaxation and the
   inversion methods.
 * Laws: [The law library](@ref man-rheological-models), every model and its
@@ -257,4 +257,4 @@ the transform route the cheaper and more accurate one for a material that does n
   Maxwell](@ref tut-kelvin-maxwell), and
   [Frequency or time?](@ref tut-freq-vs-time).
 * Application: [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous).
-* The aging route: [Aging viscoelasticity (ALV)](@ref man-viscoelasticity).
+* The aging approach: [Aging viscoelasticity (ALV)](@ref man-viscoelasticity).

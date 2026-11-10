@@ -3,7 +3,7 @@
 
 **Constitutive laws at a material point**: writing a law, linear or not, in a
 few lines, integrating it over a step with its consistent tangent, driving it along
-a loading path, and plugging it into any caller of the Gauss-point contract, a
+a loading path, and plugging it into any caller of the Gauss-point interface, a
 finite-element code included.
 
 # Four independent pieces

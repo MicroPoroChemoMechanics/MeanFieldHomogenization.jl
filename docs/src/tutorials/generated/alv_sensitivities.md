@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/59_alv_sensitivities.jl"
 ```
 
-# [Derivatives through the aging-viscoelastic pipeline](@id tut-alv-sensitivities)
+# [Derivatives through the aging-viscoelastic calculation](@id tut-alv-sensitivities)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/59_alv_sensitivities.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/59_alv_sensitivities.jl).
@@ -11,7 +11,7 @@ EditURL = "../../../../scripts/59_alv_sensitivities.jl"
 
 !!! info "Before this page"
     The tutorial [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
-    whose time-domain pipeline is differentiated below, and the manual page
+    whose time-domain calculation is differentiated below, and the manual page
     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), which
     introduces the `set_param` lens of the first pattern; the Volterra
     assembly itself is derived in
@@ -21,7 +21,7 @@ An *elastic* homogenization is differentiated in
 [Derivatives and sensitivities](@ref tut-sensitivities), and nothing in that
 calculation is specific to elasticity: the ALV path is built from the same generic Julia code, so `ForwardDiff` propagates
 a `Dual` straight through the Volterra assembly, the block inversions and the
-scheme, and returns ``\partial \mu^{\mathrm{hom}}/\partial p`` for free — no adjoint,
+scheme, and returns ``\partial \mu^{\mathrm{hom}}/\partial p`` at no extra cost — no adjoint,
 no hand-written derivative, no finite difference.
 
 Two patterns cover every case, and every derivative below is validated against
@@ -33,7 +33,7 @@ a central finite difference.
 | closure capture | the parameter lives inside the **`ViscoLaw`** — a modulus, a relaxation time | close it into the kernel; it lifts to `Dual` on its own |
 
 The first allocates nothing outside the differentiation and works for every
-scheme; the second is the only route to a material parameter, because the
+scheme; the second is the only approach to a material parameter, because the
 kernel is a user function the package never inspects.
 
 ````@example alv_sensitivities

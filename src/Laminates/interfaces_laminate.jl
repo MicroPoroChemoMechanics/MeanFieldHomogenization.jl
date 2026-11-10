@@ -334,7 +334,7 @@ Returns a pair `(primal, dual)` ready for
 `Core.laminate_stiffness` / `Core.laminate_conductivity`.
 
 Short-circuits to a pair of zeros when every interface is perfect, so the
-common case pays nothing and is **bit-identical** to the no-interface path.
+common case costs nothing and is **identical to the last digit** to the no-interface path.
 """
 function _interface_terms(lam::Laminate, ::Type{T}, ::Val{4}) where {T}
     all(itf -> itf isa PerfectInterface, lam.interfaces) &&

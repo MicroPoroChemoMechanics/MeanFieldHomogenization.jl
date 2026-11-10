@@ -206,7 +206,7 @@ p3
 # On a periodic assembly the two N-body schemes of the package are the *same*
 # linear system — the identity [brisard2014; §3.1](@citet) state, their
 # order-zero influence pseudotensors being the interaction tensors of
-# [molinari1996](@citet). They agree to machine precision, which is the acceptance gate of
+# [molinari1996](@citet). They agree to machine precision, which is the acceptance criterion of
 # both implementations.
 
 println("\n  cutoff    cluster        EIM            ‖difference‖")

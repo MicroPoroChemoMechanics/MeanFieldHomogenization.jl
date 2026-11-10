@@ -1032,7 +1032,7 @@ expansions are derived symbolically, and held to the package, in
 [The flat spheroid and the crack](@ref app-hill-transformation-flat) and
 [The needle](@ref app-hill-transformation-needle).
 
-The dispatcher routes a `TensTI{4}` matrix combined with a coaxial
+The dispatcher sends a `TensTI{4}` matrix combined with a coaxial
 `Ellipsoid{3, Spherical|Prolate|Oblate}` to this path by default; coaxiality is
 detected by `_ti_coaxial(C₀, ell)`. Non-coaxial spheroids and triaxial
 ellipsoids fall back to the anisotropic default, i.e. a cubature.
@@ -1040,7 +1040,7 @@ Implementation: `src/Elasticity/hill_3d_ti_coaxial.jl`.
 
 ### Anisotropic matrix, cylinder limit
 
-`Cylinder` is a first-class inclusion type here (extension over Echoes). For
+`Cylinder` is an inclusion type of its own here (extension over Echoes). For
 an arbitrarily anisotropic matrix the residue algorithm does **not**
 apply: it rests on the six complex roots of the acoustic polynomial along
 ``\underline{\xi}_3``, and at the cylinder limit one root escapes to infinity,

@@ -482,7 +482,7 @@ The closed forms of the next section give ``\boldsymbol{B}``, and ``\mathbb{H}``
 follows from it by the ``3/4``. Comparing ``\mathbb{H}`` to those closed forms
 would therefore verify nothing: it is the same formula read twice.
 
-Read from right to left the boxed definition is a **recipe**: take a flat
+Read from right to left the boxed definition is a procedure: take a flat
 ellipsoid, compute ``\mathbb{P}``, assemble
 ``\mathbb{Q} = \mathbb{C}-\mathbb{C}:\mathbb{P}:\mathbb{C}``, invert, scale by
 the flatness ``\rho = c/b``. That path never touches the crack machinery, so
@@ -522,13 +522,13 @@ The three curves are straight lines of **slope 1**: the error decays like
 [barthelemyIJSS2009](@cite). That slope is the real content of the check — a
 single ``\rho`` would not distinguish a true limit from a coincidence.
 
-!!! note "How flat the flattening route goes"
+!!! note "How flat the flattening approach goes"
     The sweep stops at ``\rho = 10^{-3}``. Both numerical back-ends hold far
     below it: at ``c = 10^{-4}`` the residues agree with the cubature to
     ``10^{-15}``. None of this concerns [`cod_tensor`](@ref), which resolves the
     limit analytically instead of flattening an ellipsoid.
 
-### [Every route, in a triclinic matrix](@id th-cod-every-route)
+### [Every approach, in a triclinic matrix](@id th-cod-every-route)
 
 In a matrix without any symmetry, ``\boldsymbol{B}`` comes from the reduced
 kernel ``\hat{\boldsymbol{Q}}^{\star}_{nn}`` of [section 4](@ref th-cod-green)
@@ -569,8 +569,8 @@ flattening meets them to about ``10^{-9}`` with the cubature and the residues,
 and to about ``10^{-5}`` with DECUHR, taken at ``\rho = 10^{-2}`` and
 ``10^{-3}`` only, where it stays fast.
 
-The tutorial [Two routes to a crack](@ref tut-crack-routes) takes the limit
-otherwise: from the first-order term of ``\mathbb{P}`` in ``\rho``, the route of
+The tutorial [Two approaches to a crack](@ref tut-crack-routes) takes the limit
+otherwise: from the first-order term of ``\mathbb{P}`` in ``\rho``, the approach of
 [barthelemyIJSS2009](@citet), with no extrapolation, in random anisotropic
 matrices and for several aspect ratios, and exactly in SymPy for an isotropic
 one.
@@ -581,7 +581,7 @@ The closed forms of the next section are usually quoted. They are in fact
 derivable in closed form from the Fourier Green operator, and knowing *where*
 each factor comes from is what tells you which anisotropies admit a closed form
 at all. The script `scripts/09_cod_symbolic_green.jl` carries out the whole
-derivation symbolically, with the shipped closed forms as its oracles.
+derivation symbolically, with the shipped closed forms as its reference.
 
 ### The reduced kernel ``\hat{\boldsymbol{Q}}^{\star}_{nn}``
 
@@ -1284,7 +1284,7 @@ definition above gives ``N a^{3}``.
 To compare with a source, convert the density with the compliance: the same family has
 ``\varepsilon = N a b^{2}`` here and ``N a^{3} = \varepsilon/\eta^{2}`` in Echoes, whose
 dilute correction ``\tfrac{4\pi}{3}\,N a^{3}\,\eta\,\mathbb{H}_a`` is the same. Measured on
-the aging viscoelastic harness against Echoes (`scripts/bench_echoes/alv_harness`, tilted
+the aging viscoelastic comparison script against Echoes (`scripts/bench_echoes/alv_harness`, tilted
 elliptic cracks of ``\eta = 0.4``): the dilute estimates agree to ``3\times10^{-16}`` with
 this conversion, and differ by the factor ``\eta`` without it.
 

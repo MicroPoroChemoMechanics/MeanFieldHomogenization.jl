@@ -233,7 +233,7 @@ println("  A^par : ", typeof(A_par))
 println("  <C:A> : ", typeof(isotropify(Cpar ⊡ A_par)), "  (exact SO(3) average, no quadrature)")
 
 # The equivalent form of the self-consistent condition, kept as an independent
-# gate: <A> = I. For a spherical Hill tensor the two are equivalent, so this
+# criterion: <A> = I. For a spherical Hill tensor the two are equivalent, so this
 # must vanish on the solution and nowhere else.
 res_A = _coeffs((1 - φ) * isotropify(A_par) + φ * isotropify(A_por) - 𝕀)
 
@@ -282,7 +282,7 @@ x_paper = tsimplify(y_paper * 2 * (1 + ν_paper) / (3 * (1 - 2ν_paper)))
 report("(18) satisfies the 1st self-consistent equation", tsubs(eq1, x => x_paper, y => y_paper))
 report("(18) satisfies the 2nd self-consistent equation", tsubs(eq2, x => x_paper, y => y_paper))
 report(
-    "(18) satisfies the <A> = I gate",
+    "(18) satisfies the <A> = I criterion",
     [tsubs(z, x => x_paper, y => y_paper) for z in _reduce.(res_A)]
 )
 
@@ -291,7 +291,7 @@ sols = sympy.solve([eq1, eq2], [x, y]; dict = true)
 println("\n  sympy.solve returned $(length(sols)) branch(es)")
 
 # A function, not a loop with an assignment: `branch = …` inside a `for` at
-# top level lands in a soft scope and never reaches the global.
+# top level falls in a soft scope and never reaches the global.
 function physical_branch(sols)
     for sol in sols
         xs = tsimplify(get(sol, x, Sym(0)))
@@ -457,5 +457,5 @@ println("\n§6  Figure 2 written to ", figpath)
 
 println("\n" * "="^79)
 println("Every residual above is 0: (4), (5), (6), (7), (8), (9)-(10), (17) and")
-println("(18) come out of the code, the article being the oracle, not the input.")
+println("(18) come out of the code, the article being the reference, not the input.")
 println("="^79)

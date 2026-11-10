@@ -256,7 +256,7 @@ for (k, t_0) in enumerate(loading_ages)
     plot!(p, T_grid, E0 .* J_frozen; lw = 2, color = cmap[k], linestyle = :dash, label = "frozen t₀=$(round(t_0; digits = 2))")
 end
 
-# ─── Elastic reference — purely elastic pipeline, same topology ─────────────
+# ─── Elastic reference — purely elastic calculation, same topology ─────────────
 #
 # `1 / E^hom(t)` is the instantaneous (glassy) compliance of the
 # microstructure frozen at time t : every layer whose setting time has
@@ -264,7 +264,7 @@ end
 # pores.  It is computed with the elastic `homogenize`, NOT with
 # `homogenize_alv` on a one-point grid — the latter would merely echo the
 # starting point of the creep curves, whereas this is an independent
-# cross-check of the ALV pipeline.
+# cross-check of the ALV calculation.
 #
 # The reference MUST use the same topology as the creep curves : the
 # `:layers` (composite sphere) and `:whole_pores` (N + 1 separate

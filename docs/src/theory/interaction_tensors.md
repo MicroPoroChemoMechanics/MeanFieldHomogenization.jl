@@ -266,7 +266,7 @@ the package and its normative reference share one convention.
     - (2\boldsymbol{N}-\boldsymbol{1})\otimes(2\boldsymbol{N}-\boldsymbol{1})\Big],
 ```
 
-``\mathbb{K}_2`` being the plane deviatoric projector. Note that
+``\mathbb{K}_2`` being the plane deviatoric projector.
 ``\Delta\mathbb{G}^0`` does not depend on the reference Poisson ratio, and that both
 terms of the bracket above carry the same overall convention: ``\mathbb{G}^0`` and
 ``\Delta\mathbb{G}^0`` are negated together, never one without the other.
@@ -305,7 +305,7 @@ frame —
 Truncating there is `method = :multipole`, the default for non-spherical geometries. It
 is asymptotic in (inclusion size / center distance) and reduces to the exact ball
 formula when both moments are isotropic. `method = :quadrature` integrates the
-definition directly by a product rule — geometry-agnostic, far slower, and the oracle
+definition directly by a product rule — geometry-agnostic, far slower, and the reference
 the closed forms are validated against.
 
 ## 6. Anisotropic reference media
@@ -334,7 +334,7 @@ differentiating the line integral by hand — exact, and reusing one verified
 expression instead of introducing a second. See
 [`green_function_aniso`](@ref) and [`green_operator_aniso`](@ref); the dispatcher
 [`green_operator`](@ref) keeps the closed form whenever the reference is isotropic,
-which matters because the anisotropic route is some three orders of magnitude dearer.
+which matters because the anisotropic approach is some three orders of magnitude dearer.
 
 In conduction no quadrature is needed at all — the anisotropic scalar Green function is
 elementary,
@@ -361,7 +361,7 @@ The one case still open is **plane-strain elasticity with an anisotropic referen
 whose Green function needs the Stroh formalism rather than the Barnett integral;
 [`green_operator`](@ref) raises rather than returning an isotropic approximation.
 
-### Why this matters for multiscale chaining
+### Consequence for multiscale chaining
 
 This is not a corner case. A cluster or equivalent-inclusion estimate on a cubic array
 *is* anisotropic — its two shear constants differ — so using one N-body result as the

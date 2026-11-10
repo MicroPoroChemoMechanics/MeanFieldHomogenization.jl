@@ -240,10 +240,8 @@ checks, at runtime, whether the weak extension
 `MeanFieldHomogenizationNonlinearSolveExt` is active (`Base.get_extension`) — i.e.
 whether `NonlinearSolve.jl` has been loaded into the session, by an
 explicit `using NonlinearSolve` or through another package that loads it.
-MeanFieldHomogenization itself does not: since 0.20.2 it depends on
-`OrdinaryDiffEqTsit5` alone, which does not load `NonlinearSolve.jl`
-(the full `OrdinaryDiffEq` did, which made the extension active as soon as
-the package was loaded).
+MeanFieldHomogenization itself does not: it depends on
+`OrdinaryDiffEqTsit5` alone, which does not load `NonlinearSolve.jl`.
 
 - If active, it dispatches to a globalized SciML algorithm
   (`NonlinearSolve.TrustRegion()` — chosen over a plain `NewtonRaphson()`

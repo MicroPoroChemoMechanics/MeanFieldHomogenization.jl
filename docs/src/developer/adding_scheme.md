@@ -1,7 +1,7 @@
 # [Adding a homogenization scheme](@id dev-adding-scheme)
 
 !!! info "Before this page"
-    [Adding a new inclusion](@ref dev-adding-inclusion), for the entry gates a
+    [Adding a new inclusion](@ref dev-adding-inclusion), for the entry levels a
     scheme kernel may require of an inclusion, and the manual page
     [Homogenization schemes](@ref man-schemes), which the added scheme joins.
 
@@ -43,7 +43,7 @@ flavor. A new scheme slots in beside them:
    when you need two objects per phase: they share the single expensive solve.
 6. Consider what your kernel *requires* of an inclusion. Needing only the
    contribution tensors keeps the scheme usable with inclusions entered through
-   gate C of the [inclusion contract](@ref dev-adding-inclusion); needing
+   level C of the [inclusion interface](@ref dev-adding-inclusion); needing
    the concentration tensor restricts it.
 7. Export through `src/Schemes/Schemes.jl` and re-export from
    `src/MeanFieldHomogenization.jl`.
@@ -66,4 +66,4 @@ flavor. A new scheme slots in beside them:
 ## Where to go next
 
 [Testing conventions](@ref dev-testing-conventions) says what the unit test of
-step 8 should assert beyond a smoke test.
+step 8 should assert beyond a quick test.

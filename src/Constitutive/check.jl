@@ -10,7 +10,7 @@
 """
     check_material_interface(m::AbstractMFHMaterial; verbose = true, kw...) -> Bool
 
-Exercise a Gauss-point material against the contract and report what it does
+Exercise a Gauss-point material against the interface and report what it does
 and does not honor. Returns `true` when every check passes.
 
 What is verified:
@@ -20,9 +20,9 @@ What is verified:
    ([`probe_gradients`](@ref)), returns a [`MaterialResponse`](@ref);
 3. every name declared by [`flux_names`](@ref) and [`tangent_blocks`](@ref) is
    actually present in the response;
-4. the response is **frame-honest**: the fluxes and tangents come back in the
+4. the response is **frame-faithful**: the fluxes and tangents come back in the
    canonical basis, which is what an FE code will read them as;
-5. `state_old` is **not mutated** — the contract requires a new state, so that a
+5. `state_old` is **not mutated** — the interface requires a new state, so that a
    rejected Newton iteration can simply be retried;
 6. the declared `σε` block agrees with a **central finite difference** of the
    stress, the other gradients held fixed. This is the check that matters: a plausible-but-wrong tangent costs

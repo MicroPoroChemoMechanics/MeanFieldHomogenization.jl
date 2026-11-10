@@ -33,7 +33,7 @@ ratio, whose interesting behavior is spread over decades rather than over an
 interval.
 
 The box travels into the trained surrogate as its
-[`check_domain`](@ref) limits, which is why it is a first-class object and not
+[`check_domain`](@ref) limits, which is why it is an object in its own right and not
 just a pair of loops in a script.
 
 # Example
@@ -43,7 +43,7 @@ just a pair of loops in a script.
 SampleBox([:log_aspect, :nu0], [log(1/20), 0.0], [log(20), 0.49])
 ```
 
-Note that `lo`/`hi` are given in *feature* units: `:log_aspect` is already a
+The bounds `lo`/`hi` are given in *feature* units: `:log_aspect` is already a
 logarithm, so `scale = :linear` on it samples the exponent uniformly, which is
 what a log sweep of the aspect ratio means.
 """
@@ -263,7 +263,7 @@ What the labels are depends on `spec`:
 - [`AffineHill`](@ref) — two `response` calls per sample at two different
   Poisson ratios, and the shape tensors ``\\mathbb{U}^{\\boldsymbol{A}}``, ``\\mathbb{V}^{\\boldsymbol{A}}`` are recovered by solving the
   exact ``2\\times 2`` affine system componentwise. ``\\nu_0`` must *not* be in the box: the
-  whole point is that it is not a degree of freedom.
+  purpose is that it is not a degree of freedom.
 
 `atol` is the residual a label may leave when projected onto the class, and the
 default of `1.0e-8` is right for an **analytic** teacher, which lands in its
@@ -520,7 +520,7 @@ The floor is the component's own RMS over the set, so a component that merely
 passes through zero — the Walpole ``\\ell_3`` of a near-spherical inclusion — does not
 report an unbounded error. When a component is **identically** zero over the
 whole set the floor falls back to the global RMS instead, which turns a ``0/0``
-into the honest statement "this component is that fraction of the tensor's
+into the faithful statement "this component is that fraction of the tensor's
 magnitude". A structurally-vanishing component is not a rarity: ``\\mathbb{V}^{\\boldsymbol{A}}`` has no ``\\ell_3``
 at all, since the analytic kernel gives ``p_3 = d\\,u_3`` with no ``1/\\mu_0`` term.
 """

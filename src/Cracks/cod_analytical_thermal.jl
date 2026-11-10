@@ -161,7 +161,7 @@ ellipticity. Reduces to ``4/(3k_0\\mathcal{E}_\\eta)`` for
 
 Being a 2×2 eigenvalue problem, this is closed form and **type-generic** —
 `ForwardDiff.Dual` and symbolic scalars included. It replaces the
-``\\boldsymbol{K}_0^{-1/2}`` route of [giraudMOM2019](@citet),
+``\\boldsymbol{K}_0^{-1/2}`` approach of [giraudMOM2019](@citet),
 which is equivalent but needs `eigen` on a 3×3 and `svdvals`, and so is
 restricted to `Float64`. Derived in
 `scripts/16_cod_symbolic_thermal.jl`.

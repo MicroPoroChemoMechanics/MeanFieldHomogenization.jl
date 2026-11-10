@@ -280,7 +280,7 @@ hydration degree where the pore network is still well connected. As
 
 ## Direct composite-sphere form
 
-Because a [`LayeredSphere`](@ref) is a first-class RVE phase, the paste scale
+Because a [`LayeredSphere`](@ref) is an RVE phase of its own, the paste scale
 can also be written exactly as in [sanahuja2007](@citet): one composite
 inclusion made of an anhydrous core coated by the inner hydrates, embedded in
 the outer matrix. The radius ratio follows from the volume-fraction constraint

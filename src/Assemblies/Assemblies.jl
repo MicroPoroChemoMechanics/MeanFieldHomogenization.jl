@@ -23,7 +23,7 @@ Contents
 --------
 - `assembly.jl`      : `Particle`, the boundary treatments (`MixedBC`,
                         `PeriodicBox`), the `ParticleAssembly` cell and its
-                        `AbstractHomogenizationCell` contract
+                        `AbstractHomogenizationCell` interface
 - `generators.jl`    : cubic lattices and hard-particle random microstructures
 - `block_solve.jl`   : linear systems whose unknowns are tensors, flattened
                         onto the Kelvin-Mandel basis

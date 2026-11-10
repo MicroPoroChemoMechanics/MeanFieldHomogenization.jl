@@ -3,7 +3,7 @@
 !!! info "Before this page"
     [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration),
     whose binder, kinetics and four-scale micromechanics are reused here
-    unchanged, and against whose stoichiometric route every result of this page
+    unchanged, and against whose stoichiometric approach every result of this page
     is compared.
 
 The previous chapter, [A hydrating blended cement paste, coupled to its chemistry](@ref app-blended-hydration), computes the elastic
@@ -51,7 +51,7 @@ flowchart TB
     D --> E["E(t)"]
 ```
 
-What the ionic route buys, and the stoichiometric one cannot give at all:
+What the ionic approach provides, and the stoichiometric one cannot give at all:
 
 - the **pore-solution pH** and composition over time;
 - the **aluminate sequence as a result** rather than as an input — and, as §4
@@ -59,7 +59,7 @@ What the ionic route buys, and the stoichiometric one cannot give at all:
 - a **setting threshold**: below percolation the self-consistent fixed point
   collapses and the model reports a zero modulus, which is physical.
 
-!!! note "Requires ChemistryLab ≥ 0.9 — and the compositions here are proved optimal"
+!!! note "Requires ChemistryLab ≥ 0.40 — and the compositions here are proved optimal"
     `speciated_states` passes every instant to `DualEquilibriumSolver`, which
     solves the KKT system and returns a certificate. The Gibbs problem is convex —
     an ideal mixing entropy plus terms linear in the amounts of the pure phases,
@@ -268,7 +268,7 @@ Two different histories out of one model:
 
 Nothing in the code distinguishes the two cases. The free energy does. The
 previous chapter has to encode this ordering by hand, as a cascade of priority
-gates — and would have to be re-derived for a mix it was not written for.
+conditions — and would have to be re-derived for a mix it was not written for.
 
 ## 5. Calorimetry
 
@@ -484,7 +484,7 @@ end
 A sealed paste **desaturates as it hydrates** though no water ever leaves it:
 the saturation falls from 0.93 to 0.80 while the chemical shrinkage grows to
 7.1 % of the fresh volume — within a tenth of a percent of the 7.2 % the
-stoichiometric route gives, by a completely independent path.
+stoichiometric approach gives, by a completely independent path.
 
 ## 7. Elastic modulus
 
@@ -539,11 +539,8 @@ has not percolated, and the model says so rather than returning a small number.
 
 - The modulus at 28 days sits at the low end of the published range for a
   w/b = 0.50 paste, and that is not an artifact of the chemistry. The figures
-  below are **computed rather than quoted**, because an earlier version of this
-  page asserted them in prose and they had drifted — a mean degree of hydration
-  of 0.833 against the 0.815 the model now gives, and a modulus "near 16 GPa"
-  against 15.2. A number stated in prose beside a model that keeps changing is a
-  number that will be wrong eventually.
+  below are **computed rather than quoted**, since a number stated in prose
+  beside a model that keeps changing is a number that will be wrong eventually.
 
 ```@example ionic
 ᾱ_28 = mean_degree_of_hydration(run_calcite.sol, run_calcite.kp; times = [TEND])[1]

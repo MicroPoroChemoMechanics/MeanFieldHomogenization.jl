@@ -53,7 +53,7 @@ in `sc.options` (`abstol`, `reltol`, `maxiters`, `damping`, `verbose`,
 `select_best`) override their defaults. The stopping test is the additive
 SciML convention ``\\|\\Delta x\\| \\le \\mathrm{abstol} + \\mathrm{reltol}\\,\\|x\\|``, so `reltol` (default `1e-8`)
 is what binds on a stiffness of physical magnitude — see [`_solve_sc`](@ref)
-for the full contract. External algorithms from `NonlinearSolve.jl` are
+for the full interface. External algorithms from `NonlinearSolve.jl` are
 supported via the weak extension `MeanFieldHomogenizationNonlinearSolveExt`.
 
 Crack families enter through their compliance contribution in the current
@@ -250,7 +250,7 @@ non-coaxial crack families it is not: the asymmetry starts at roundoff and is
 then **amplified by the fixed-point iteration** (measured: ``3\\times10^{-15}`` at the second
 iterate, ``2\\times10^{-4}`` at the third). A stiffness that is not major-symmetric is not a
 valid Eshelby reference medium, and the anisotropic crack cubature returns a
-`NaN` integrand on it, which used to abort the whole solve with a `DomainError`.
+`NaN` integrand on it, which aborts the solve with a `DomainError`.
 
 Projecting at every step keeps the iteration inside the admissible set. It is a
 no-op up to roundoff whenever the product is already symmetric, and it matches
@@ -811,7 +811,7 @@ Prototype whose symmetry class defines the Newton parameter space.
 
 Returns `x0` when one application of `step` stays in the same class, and
 `step(x0)` when it lands in a richer one (e.g. `TensISO` → `TensTI{4,T,8}`
-for `TISymmetrize` phases).  Parameterizing on `x0` alone is what used to
+for `TISymmetrize` phases).  Parameterizing on `x0` alone would
 make the residual subtract vectors of different lengths.
 
 The extra `step` call is not wasted work: its result is also a strictly
@@ -964,7 +964,7 @@ branch).
     media: about 2.5 % apart on ``k`` for an oblate ``\\omega = 0.2`` inclusion in a
     spherical matrix, 6 % at ``\\omega = 0.05``. An orientation average does not
     restore the identity. Pick the scheme on physical grounds, not on the
-    assumption that it is the cheaper route to the same answer.
+    assumption that it is the cheaper approach to the same answer.
 
 Compliance form is selected when the matrix property is "stiffer"
 (in squared Frobenius norm) than the Voigt upper bound — the

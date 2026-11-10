@@ -1,6 +1,6 @@
 # # [From the Green operator to the COD tensor 𝐁](@id tut-cod-symbolic-green)
 #
-# End-to-end **symbolic** derivation of the crack-opening-displacement tensor
+# Fully **symbolic** derivation of the crack-opening-displacement tensor
 # ``\boldsymbol{B}``, starting from the Fourier Green operator and stopping only
 # where the elliptic integrals appear. Everything in between is done by SymPy.
 #
@@ -45,9 +45,9 @@
 # the published closed form comes *out of* the calculation instead of being
 # quoted.
 #
-# The oracles are the closed forms already shipped by the package
+# The reference is given by the closed forms already shipped by the package
 # ([`cod_tensor`](@ref)), which share no code with anything below: a clean run
-# of this script is a proof that the two routes agree.
+# of this script shows that the two derivations agree.
 #
 # Prerequisite: `Pkg.add("SymPy")`.
 #
@@ -55,7 +55,7 @@
 # **§3** Behavior at infinity · **§4** The ``\xi_3`` integral (isotropic) ·
 # **§5** The crack-plane integral → elliptic integrals · **§6** 𝐁 isotropic,
 # penny and ribbon · **§7** Transversely isotropic, crack in the isotropy plane ·
-# **§8** Where the symbolic route stops.
+# **§8** Where the symbolic approach stops.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -109,7 +109,7 @@ println()                                                          #jl
 # ## §1 The Fourier Green operator, order 4
 #
 # Built exactly as in `TensND`'s own symbolic tutorials: the acoustic tensor,
-# its inverse, ``\hat{\mathbb{G}}^0``, then ``\hat{\mathbb{Q}}``. Note that
+# its inverse, ``\hat{\mathbb{G}}^0``, then ``\hat{\mathbb{Q}}``.
 # ``\hat{\mathbb{Q}}`` already carries the subtraction of the large-``\xi_3``
 # asymptote — which is why the integral of § 4 converges with no *ad hoc*
 # regularization.
@@ -147,7 +147,7 @@ println()                              #jl
 #
 # This is the identity every numerical back-end of the package already uses
 # (`Core/green_helpers.jl`). Verified here rather than asserted, and used from
-# § 7 on, where the order-4 route on five symbolic constants would be
+# § 7 on, where the order-4 approach on five symbolic constants would be
 # needlessly expensive.
 
 println("="^78)                                               #jl
@@ -160,7 +160,7 @@ reduced_blocks(C, n, ξ) = (Matrix(n ⋅ C ⋅ n), Matrix(n ⋅ C ⋅ ξ), Matri
 let (A, V, Nm) = reduced_blocks(ℂ, 𝐧, 𝛏)
     gap = tsimplify.(A - V * inv(Nm) * transpose(V) - Matrix(𝐐ₙₙ))
     @assert all(iszero, gap) "the reduced identity does not reproduce n̲·Q̂·n̲"
-    println("  reduced identity vs order-4 route : exact match")   #jl
+    println("  reduced identity vs order-4 approach : exact match")   #jl
     println()                                                     #jl
 end
 
@@ -295,14 +295,14 @@ println()                                                                     #j
 # The integrand decays like ``\xi_3^{-2}``, so
 # ``\int_{\mathbb{R}} = 2i\pi\sum_{\mathrm{UHP}}\mathrm{Res}`` and
 # ``\hat{\boldsymbol{Q}}^{\star}_{nn} = i\sum_{\mathrm{UHP}}\mathrm{Res}``. This
-# is the route the package's `Residue` back-end takes numerically
+# is the approach the package's `Residue` back-end takes numerically
 # (`Cracks/green_residue.jl`): there the poles are the roots of the degree-6
 # ``\det\boldsymbol{N}(z)``, here they collapse to the single ``+i\rho``.
 
 let Q = Matrix(𝐐ₙₙ),
         res = [IU * sympy.residue(Q[i, j], ξ₃, IU * ρ) for i in 1:3, j in 1:3]
     @assert all(iszero, tsimplify.(res - 𝐐ˢ)) "residue sum ≠ direct integration"
-    println("  residue route vs direct integration : exact match")   #jl
+    println("  residue approach vs direct integration : exact match")   #jl
     println()                                                        #jl
 end
 
@@ -526,7 +526,7 @@ end
 #
 # **The angular structure is unchanged.** The matrix is still invariant under
 # rotations about ``\underline{n}``, so § 5 applies verbatim — same three
-# elliptic integrals, same assembly. This is exactly why the shipped TI closed
+# elliptic integrals, same assembly. This is why the shipped TI closed
 # form has the same ``\mathcal{C},\mathcal{S},\mathcal{E}`` skeleton as the
 # isotropic one.
 
@@ -718,7 +718,7 @@ let iso = Dict(
     println()                                                                #jl
 end
 
-# ## §8 Where the symbolic route stops
+# ## §8 Where the symbolic approach stops
 #
 # Tilt the TI axis away from the crack normal and both enabling structures
 # collapse at once — no need to go to a full triclinic stiffness. With an axis

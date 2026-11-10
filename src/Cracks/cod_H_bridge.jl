@@ -69,8 +69,7 @@ cod_from_compliance(H, crack::MFH_Core.AbstractCrack, ℬ::TensND.AbstractBasis 
     cod_from_compliance(H, ℬ=get_basis(H)) -> Tens{2,3}
 
 Elliptic / 3D default: identical to `cod_from_compliance(H, EllipticCrack-like, ℬ)`
-with the Kachanov factor ``k = 3/4``.  Kept for back-compatibility with
-code that does not carry the crack object.  For a ribbon, pass the
+with the Kachanov factor ``k = 3/4``.  For code that does not carry the crack object.  For a ribbon, pass the
 `RibbonCrack` explicitly.
 """
 cod_from_compliance(H, ℬ::TensND.AbstractBasis = TensND.get_basis(H)) =
@@ -93,7 +92,6 @@ compliance_from_cod(B, crack::MFH_Core.AbstractCrack, ℬ::TensND.AbstractBasis 
     compliance_from_cod(B, ℬ=get_basis(B)) -> Tens{4,3}
 
 Elliptic / 3D default: identical to `compliance_from_cod(B, EllipticCrack-like, ℬ)`.
-Kept for back-compatibility.
 """
 compliance_from_cod(B, ℬ::TensND.AbstractBasis = TensND.get_basis(B)) =
     _H_from_B(B, _H_over_B_factor(EllipticShape, eltype(B)), ℬ)

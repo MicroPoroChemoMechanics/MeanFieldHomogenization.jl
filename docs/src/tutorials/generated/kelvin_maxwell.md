@@ -164,7 +164,7 @@ plot!(
 )
 ````
 
-## §4 Round trip, and the regime the symbolic route cannot reach
+## §4 Round trip, and the regime the symbolic approach cannot reach
 
 Converting back must return the input exactly. Below, a chain with an
 increasing number of branches log-spaced over six decades is sent through
@@ -199,7 +199,7 @@ hline!(p_roundtrip, [eps(Float64)]; color = :grey, ls = :dash, label = "eps(Floa
 @printf "worst round-trip error at 20 branches : %.2e\n" errors[end]
 ````
 
-## §5 Two independent closed forms as oracles
+## §5 Two independent closed forms as references
 
 ### The Zener relations
 
@@ -240,7 +240,7 @@ Kelvin chain has branches.
 Its relaxation function was derived independently in closed form (a
 `cosh`/`sinh` expression, transcribed here from the ECHOES reference
 `fluage_echoes_ijss2013_jsanahuja_relaxBurgers.py`), which makes it the ideal
-oracle for the fluid path: degenerate-branch detection, the unbounded
+reference for the fluid path: degenerate-branch detection, the unbounded
 outermost bracket and both residue signs are all exercised at once.
 
 ````@example kelvin_maxwell
@@ -290,7 +290,7 @@ The conversion needs a Prony chain to start from. When the material is given
 as an arbitrary transform instead — a fractional model, or a homogenized
 `C*(p)` — [`prony_fit_relaxation`](@ref) fits one by collocation, and
 everything above becomes available: a closed-form time function, an exact
-dual chain, and a [`ViscoLaw`](@ref) for the aging pipeline.
+dual chain, and a [`ViscoLaw`](@ref) for the aging calculation.
 
 ````@example kelvin_maxwell
 fz = FractionalZener(2.0, 10.0, 1.0, 0.6)

@@ -4,7 +4,7 @@
 Second finite-element backend of the axisymmetric Fourier solve, activated by
 `import Gridap, GridapGmsh`.
 
-Implements the nine methods of the [`MeanFieldHomogenization.FEBackend`](@ref) contract
+Implements the nine methods of the [`MeanFieldHomogenization.FEBackend`](@ref) interface
 for [`MeanFieldHomogenization.GridapBackend`](@ref), and nothing else: the Fourier
 operators, the boundary data, the fixed point of the corrected boundary
 condition and the memoization all live in `MeanFieldHomogenization.FiniteElements`, shared
@@ -129,7 +129,7 @@ the boundary set `tag`.
 Two traps here. `get_cell_dof_ids(V, BoundaryTriangulation(...))` returns every
 dof of each cell *adjacent* to the boundary, which would pin a whole layer of
 elements to the analytical field instead of the boundary alone; the reliable
-route is a throwaway space tagged on that set — Gridap numbers its constrained
+approach is a throwaway space tagged on that set — Gridap numbers its constrained
 dofs negatively — compared cell by cell with the untagged space, whose local
 dof ordering is identical because the reference element is.
 

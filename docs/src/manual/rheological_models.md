@@ -1,7 +1,7 @@
 # [The rheological model library](@id man-rheological-models)
 
 !!! info "Before this page"
-    [The Laplace-Carson route](@ref th-laplace-carson), where the
+    [The Laplace-Carson approach](@ref th-laplace-carson), where the
     correspondence principle and the transforms tabulated below are set out,
     and [Viscoelastic homogenization](@ref man-viscoelasticity) for the
     `ViscoLaw` that section 5 builds from a model.
@@ -127,14 +127,14 @@ or more. The fractional elements broaden the spectrum without adding branches.
     The kernel is usually written with a Mittag-Leffler function,
     ``\mathfrak{I}(t) = \bigl(1 - E_{\alpha+1,1}(-\beta t^{\alpha+1})\bigr)/\beta``.
     Its Carson transform is simply ``1/(p^{\alpha+1}+\beta)``, which is what the
-    table above shows — no special function is involved on this route at all.
+    table above shows — no special function is involved on this approach at all.
     A passive material has ``\lambda_0 < 0``; the benchmark of
     [barthelemyIJES2019](@cite) §5 uses `μ₀ = 1.7`, `λ₀ = -0.495`, `α = -0.46`,
     `β = 0.98`.
 
 The two models whose *time-domain* form is a Mittag-Leffler function use it
 when `MittagLeffler.jl` is loaded, and fall back on numerical inversion of the
-closed-form transform otherwise. Both routes agree to about `1e-10`:
+closed-form transform otherwise. Both approaches agree to about `1e-10`:
 
 ```@example rheo
 fz = FractionalZener(2.0, 10.0, 1.0, 0.6)
@@ -183,7 +183,7 @@ Di Benedetto and Olard and the ECHOES sources; `0 < k < h < 1`.
     model. [`creep_kernel`](@ref) gives ``\varphi(t)``,
     [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
     [`creep_kernel_law`](@ref) packages the former as a [`ViscoLaw`](@ref) so
-    that the *aging* pipeline can consume it:
+    that the *aging* calculation can consume it:
 
     ```julia
     Φ = trapezoidal_matrix(creep_kernel_law(m), times)
@@ -192,7 +192,7 @@ Di Benedetto and Olard and the ECHOES sources; `0 < k < h < 1`.
 
     That discrete `R` must agree with `relaxation(m, t)` obtained by inverting
     the transform. It does, and that is the sharpest available check that the
-    two routes of the package are consistent.
+    two approaches of the package are consistent.
 
 ```@example rheo
 binder = Model2S2P1D(1.0e-7, 1000.0, 2.2, 1.94507827e-3, 0.22, 0.63, 50.0)
@@ -209,7 +209,7 @@ transform involves the exponential integral,
 ``e^{p\tau}`` alone would overflow.
 
 The *aging* version — where `E`, `C` and `τ` depend on the loading age — is a
-different object and belongs to the [time-domain route](@ref man-viscoelasticity).
+different object and belongs to the [time-domain approach](@ref man-viscoelasticity).
 
 ## 3. Fitting a chain to something that is not one
 
@@ -254,7 +254,7 @@ ratio, which may be a constant or a model of its own.
     it deconvolves. A constant `nu` is unambiguous and is handled as a special
     case, including for the closed-form time values.
 
-## 5. One object, both routes
+## 5. One object, both approaches
 
 This is what the library is for. From a single model:
 
@@ -270,9 +270,9 @@ law   = ViscoLaw(Zm)                    # → homogenize_alv
 ```
 
 `ViscoLaw(model)` builds a genuinely non-aging kernel `(t, t') ↦ R(t - t')`,
-which the existing aging pipeline consumes unchanged. The two routes then
+which the existing aging calculation consumes unchanged. The two approaches then
 compute the same thing by disjoint means, which is what
-[the three-route comparison](@ref tut-freq-vs-time) uses as a cross-check.
+[the three-method comparison](@ref tut-freq-vs-time) uses as a cross-check.
 
 !!! note "Cost of the bridge"
     If the model has no closed-form time value, every entry of the trapezoidal

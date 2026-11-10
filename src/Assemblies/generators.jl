@@ -128,7 +128,7 @@ disks (`dim = 2`) by the hard-particle Metropolis algorithm used by
 
 The particles start on a regular lattice and are then shuffled by `cycles`
 sweeps of trial moves, the move amplitude being re-tuned every 50 sweeps to
-hold the acceptance ratio near 0.3 — the recipe of the paper. Overlap is
+hold the acceptance ratio near 0.3 — the procedure of the paper. Overlap is
 tested in the *periodic* metric, so the resulting microstructure tiles space
 whatever boundary treatment is then applied.
 

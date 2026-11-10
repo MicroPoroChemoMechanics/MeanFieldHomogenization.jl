@@ -201,7 +201,7 @@ six-coefficient Walpole span is closed under product and inverse. So the result
 is exactly a `TensTI{4,T,6}`, the tightest type that loses nothing.
 
 Why it is worth the trouble: a generic `Tens{4,3}` carries 81 components and no
-structure, so the caller pays a full array contraction for every product, an
+structure, so the caller performs a full array contraction for every product, an
 `inv` through a 6×6 factorization, and — symbolically — expressions an order of
 magnitude larger than the six coefficients that actually describe the tensor.
 """

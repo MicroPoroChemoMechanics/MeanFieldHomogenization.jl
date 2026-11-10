@@ -27,7 +27,7 @@ The factor ``\sqrt2`` makes the basis orthonormal: the double contraction
 vectors, and a fourth-order tensor with the minor symmetries acts on them as a
 ``6\times6`` matrix. Nothing in a law has to remember a factor 2 on the shears.
 
-## The residual route
+## The residual approach
 
 Integrating the evolution laws of the internal variables over the step by an
 implicit scheme (backward Euler in all the laws shipped) gives as many
@@ -108,7 +108,7 @@ blocks are the coupling terms a coupled finite-element formulation assembles,
 ``\partial\boldsymbol{\sigma}/\partial p``, ``\partial\phi/\partial\boldsymbol{\varepsilon}``,
 ``\partial\phi/\partial p`` for poroelasticity.
 
-## The potential route
+## The potential approach
 
 Many laws derive from two potentials, in the framework of generalized standard
 materials [germain1983](@cite): a free energy ``\psi(\mathsf{g}, \boldsymbol{\alpha})``
@@ -138,7 +138,7 @@ are convex. This variational form of the update is due to
 \mathsf{R}(\mathsf{y}) = \frac{\partial W}{\partial \boldsymbol{a}}(\mathsf{y}),
 ```
 
-with its Jacobian the Hessian of ``W``: the potential route reuses the whole
+with its Jacobian the Hessian of ``W``: the potential approach reuses the whole
 residual machinery, Newton's method and the consistent tangent included, and
 automatic differentiation provides the first and second derivatives of the two
 potentials.

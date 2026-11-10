@@ -97,7 +97,7 @@ add_phase!(rve, :nano, Spheroid(0.1), Dict(:C => C_eq); fraction = f)
 homogenize(rve, MoriTanaka(), :C)
 ```
 
-Note that the strain average rule is unaffected by the interface, but the
+The strain average rule is unaffected by the interface, but the
 *stress* average rule is not: the interface contributes ``\\mathbb{C}^{\\mathrm{int}}:
 \\boldsymbol{\\varepsilon}_I`` to the macroscopic stress, which is precisely what using
 ``\\mathbb{C}^{\\mathrm{eq}}`` in the scheme accounts for.

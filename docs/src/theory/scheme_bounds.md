@@ -59,7 +59,7 @@ inequality
 
 in the sense of quadratic forms, whatever the microstructure. A phase without
 stiffness, a void, makes ``\mathbb C^{\mathrm R}`` vanish: the lower bound is
-then uninformative, which is the price of using no geometry at all.
+then uninformative, which is the cost of using no geometry at all.
 
 ## 3. Cracks, conduction, laminates
 

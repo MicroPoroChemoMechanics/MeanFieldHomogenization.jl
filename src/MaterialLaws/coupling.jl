@@ -338,7 +338,7 @@ end
 
 Assemble the element stiffness `Ke` and the internal-force vector `re` of one
 cell of a small-strain mechanical problem, whose material is any material of
-the Gauss-point contract (a law of `MaterialLaws` or a homogenized material),
+the Gauss-point interface (a law of `MaterialLaws` or a homogenized material),
 under the [`ModelingHypothesis`](@ref) `hypothesis`; the states of the cell's
 quadrature points are read from `states.old[cell]` and written into
 `states.new[cell]`.

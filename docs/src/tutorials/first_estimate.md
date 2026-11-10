@@ -34,7 +34,7 @@ rve
 and an **amount** to each phase. `fraction = 0.2` means 20 % of the RVE by
 volume; `fraction = :rest` means "whatever the others leave", here 80 %.
 
-Note that nothing so far says which phase is a matrix — that is the scheme's
+Nothing so far says which phase is a matrix — that is the scheme's
 to decide, and `MoriTanaka()` below takes the `:rest` phase because it is the
 only candidate. See [Who is the matrix?](@ref man-who-is-the-matrix).
 

@@ -1,30 +1,30 @@
-# # [The custom-inclusion contract: three entry gates, one answer](@id tut-custom-inclusion-contract)
+# # [The custom-inclusion interface: three entry levels, one answer](@id tut-custom-inclusion-contract)
 #
 # !!! info "Before this page"
 #     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
-#     whose Hill tensor is the first of the three entry gates, and the theory
+#     whose Hill tensor is the first of the three entry levels, and the theory
 #     page [Concentration and contribution tensors](@ref th-concentration), which
-#     derives every tensor of the contract from that one.
+#     derives every tensor of the interface from that one.
 #
 # `MeanFieldHomogenization` lets an arbitrary morphology take part in every homogenization
 # scheme, in elasticity and in transport, without touching the package. This is
 # the counterpart of the `user_inclusion` mechanism of the C++/Python `echoes`
-# codebase, but leveled: you implement the **lowest gate you can reach** and
+# codebase, but leveled: you implement the **lowest level you can reach** and
 # the package derives everything above it.
 #
-# | Gate | You supply | You get |
+# | Level | You supply | You get |
 # |---|---|---|
 # | **A** | the Hill tensor ``\mathbb P`` | the 8 concentration tensors, the 4 contribution tensors, every scheme |
 # | **B** | the concentration tensor ``\mathbb A`` (both sides of it if the inclusion is heterogeneous) | the derived concentrations, the contributions, every scheme |
 # | **C** | the contribution tensors ``\mathbb N``, ``\mathbb H`` | the contribution-based schemes |
 #
-# This script drives the same physical inclusion through all three gates and
+# This script drives the same physical inclusion through all three levels and
 # checks that the schemes cannot tell them apart. The point is not the numbers
-# — they are identical by construction — but that *the plumbing is identical*.
+# — they are identical by construction — but that *the bookkeeping is identical*.
 #
 # See the manual page [Custom inclusions](@ref man-custom-inclusions) and the
 # developer page [Adding a new inclusion](@ref dev-adding-inclusion) for the full
-# contract.
+# requirements.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -48,7 +48,7 @@ ell = Ellipsoid(3.0, 1.0, 1.0; euler_angles = (0.3, 0.7, 0.0))
 semi = (3.0, 1.0, 1.0)
 basis = MeanFieldHomogenization.inclusion_basis(ell)
 
-# ## Gate A — the Hill tensor
+# ## Level A — the Hill tensor
 #
 # One callback. Everything else is derived: the eight concentration tensors, the
 # four contribution tensors, and every scheme.
@@ -61,7 +61,7 @@ gate_A = CustomInclusion(
 # `P₀` is a 4th-order stiffness in elasticity and a 2nd-order conductivity in
 # transport, so a single callback serves both physics.
 
-# ## Gate B — the concentration tensor
+# ## Level B — the concentration tensor
 #
 # For a morphology whose ``\mathbb P`` has no convenient closed form, or when
 # an external solver returns ``\mathbb A`` directly.
@@ -72,16 +72,16 @@ gate_A = CustomInclusion(
 # A heterogeneous inclusion has no such ``\mathbb C_1`` and must supply
 # `flux_gradient_concentration` as well, as `LayeredSphere` does. Omitting it is
 # silent: `Dilute` and `MoriTanaka` stay right, only the self-consistent schemes
-# drift. As for gate A, each callback serves both physics.
+# drift. As for level A, each callback serves both physics.
 
 gate_B = CustomInclusion(
     semi; basis,
     gradient_gradient_concentration = (P₁, P₀; kw...) -> gradient_gradient_concentration(ell, P₁, P₀; kw...),
 )
 
-# ## Gate C — the contribution tensors
+# ## Level C — the contribution tensors
 #
-# The last resort, and the one that buys the least: contribution tensors alone
+# The last resort, and the one that gives the least: contribution tensors alone
 # do not determine the dilute concentration tensor ``\mathbb A``, so
 # Mori-Tanaka and the self-consistent schemes stay out of reach.
 
@@ -91,10 +91,10 @@ gate_C = CustomInclusion(
     inverse_property_contribution = (P₁, P₀; kw...) -> inverse_property_contribution(ell, P₁, P₀; kw...),
 )
 
-# ## Checking conformance before wiring anything
+# ## Checking conformance before use
 #
-# `check_inclusion_interface` reports the level-0 methods, the gate it found,
-# and — this is the useful part — what that gate leaves unavailable.
+# `check_inclusion_interface` reports the level-0 methods, the level it found,
+# and — this is the useful part — what that level leaves unavailable.
 
 println("="^78)
 check_inclusion_interface(gate_A)
@@ -123,7 +123,7 @@ ALL = (
 GATE_C_OK = ("Dilute", "DiluteDual", "Maxwell", "PCW", "Differential")
 
 println("\nElasticity — C_eff[1,1,1,1]\n", "-"^78)
-@printf "%-16s %14s %14s %14s %14s\n" "scheme" "Ellipsoid" "gate A" "gate B" "gate C"
+@printf "%-16s %14s %14s %14s %14s\n" "scheme" "Ellipsoid" "level A" "level B" "level C"
 for (name, sch) in ALL
     ref = c1111(homogenize(rve_with(ell, C₀, C₁, :C), sch, :C))
     vA = c1111(homogenize(rve_with(gate_A, C₀, C₁, :C), sch, :C))
@@ -137,7 +137,7 @@ for (name, sch) in ALL
 end
 
 println("\nConduction — K_eff[1,1]\n", "-"^78)
-@printf "%-16s %14s %14s %14s %14s\n" "scheme" "Ellipsoid" "gate A" "gate B" "gate C"
+@printf "%-16s %14s %14s %14s %14s\n" "scheme" "Ellipsoid" "level A" "level B" "level C"
 for (name, sch) in (
         "Dilute" => Dilute(), "DiluteDual" => DiluteDual(),
         "MoriTanaka" => MoriTanaka(), "Maxwell" => Maxwell(),
@@ -153,7 +153,7 @@ for (name, sch) in (
     end
 end
 
-# Every column agrees to the last digit: the gates are algebraically equivalent
+# Every column agrees to the last digit: the levels are algebraically equivalent
 # reformulations of the same information, and the schemes consume whichever is
 # available.
 
@@ -235,9 +235,9 @@ println(
 #
 # ## Where to go next
 #
-# The callbacks above return closed-form tensors, but the contract only asks for
+# The callbacks above return closed-form tensors, but the interface only asks for
 # tensors. [An inclusion whose response is a neural network](@ref tut-neural-inclusion)
-# supplies them from a trained surrogate, through gates A and B, and examines
+# supplies them from a trained surrogate, through levels A and B, and examines
 # what stays exact whatever the quality of the fit. Morphologies solved by
-# finite elements enter through the same gates, as described in
+# finite elements enter through the same levels, as described in
 # [Finite-element inclusions](@ref man-fe-inclusions).

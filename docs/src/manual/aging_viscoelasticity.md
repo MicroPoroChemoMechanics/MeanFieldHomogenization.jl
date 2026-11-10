@@ -4,7 +4,7 @@
     [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity), the theory of
     the Volterra operators and of the schemes used below, and
     [Homogenization schemes](@ref man-schemes), whose `RVE` this page reuses. A
-    material that does not age may also take the shorter route of
+    material that does not age may also take the shorter approach of
     [Non-aging viscoelasticity](@ref man-viscoelasticity-nonaging).
 
 In aging linear viscoelasticity the stress at time ``t`` depends on the whole
@@ -80,10 +80,10 @@ law_lib = ViscoLaw(m)
 nothing # hide
 ```
 
-The same model also drives the Laplace-Carson route of
+The same model also drives the Laplace-Carson approach of
 [Non-aging viscoelasticity](@ref man-viscoelasticity-nonaging), so that the two
-routes compare the same material, which is what the
-[three-route check](@ref tut-freq-vs-time) relies on.
+approaches compare the same material, which is what the
+[three-method check](@ref tut-freq-vs-time) relies on.
 
 ### 2.2 Ready-made isotropic laws
 
@@ -516,7 +516,7 @@ q = K_eff ⋅ g
 q[end]
 ```
 
-The order-2 pipeline implements the bounds, `Dilute`, `DiluteDual`,
+The order-2 implementation covers the bounds, `Dilute`, `DiluteDual`,
 `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis`, `SelfConsistent`,
 `AsymmetricSelfConsistent` and `DifferentialScheme`. `Maxwell` and `PonteCastanedaWillis` take the Hill kernel
 of the distribution shape the RVE declares (`RVE(; distribution_shape = …)`).
@@ -630,7 +630,7 @@ homogenize_alv(needles, DifferentialScheme(), :K; times)
 ```
 
 !!! note "The elastic schemes have no such restriction"
-    This is specific to ALV. In the elastic pipeline the Hill tensor is
+    This is specific to ALV. In the elastic calculation the Hill tensor is
     available for anisotropic references, so `homogenize(rve,
     SelfConsistent())` and `homogenize(rve, DifferentialScheme())` handle a
     running medium of any symmetry class — the differential scheme even
@@ -679,7 +679,7 @@ refused rather than ignored.
 
 ## 10. Sensitivities (autodiff via ForwardDiff)
 
-The pipeline carries `ForwardDiff.Dual` numbers from end to end, so derivatives of an
+The whole calculation carries `ForwardDiff.Dual` numbers, so derivatives of an
 effective property follow by automatic differentiation. Here the property is the
 effective shear relaxation modulus ``\mu(t_n, t_1)``, read on the kernel of the result:
 
@@ -712,7 +712,7 @@ ForwardDiff.gradient(μ_of, [0.2, 5.0, 2.0])
 
 More patterns, each checked against an independent reference, are in
 `scripts/59_alv_sensitivities.jl` and the tutorial
-[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities).
+[Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities).
 
 ## 11. Validation against ECHOES C++
 
@@ -735,11 +735,6 @@ with no Mittag-Leffler function in it at all. Loading `MittagLeffler.jl` (a weak
 dependency) switches on the closed-form *time* value; without it the numerical
 inversion of that transform supplies the same number to about `1e-10`.
 
-!!! note "History of the Rabotnov kernel in this package"
-    The benchmark first took the Rabotnov kernel from an external Python module,
-    through a Python bridge, which made the script depend on the machine. The
-    kernel is now a model of the library, computed in Julia like the others.
-
 Random-RVE cross-checks vs the reference implementation live in
 `scripts/bench_echoes/benchmark.jl` (relative error `≤ 1e-8` on the
 Mandel `(1, 1)` block, `≤ 1e-6` on the full matrix).
@@ -751,11 +746,11 @@ Mandel `(1, 1)` block, `≤ 1e-6` on the full matrix).
   [solution of the self-consistent equation](@ref th-visco-sc-solve).
 * Laws: [the law library](@ref man-rheological-models) supplies non-aging laws
   for `ViscoLaw(m)`; [Non-aging viscoelasticity](@ref man-viscoelasticity-nonaging)
-  takes such a material through the Laplace-Carson route instead.
+  takes such a material through the Laplace-Carson approach instead.
 * Tutorials: [Aging viscoelastic schemes side by side](@ref tut-alv-schemes),
-  [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
+  [Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities)
   (which extends section 10),
-  [Frequency or time?](@ref tut-freq-vs-time), which sets this route against the
+  [Frequency or time?](@ref tut-freq-vs-time), which sets this approach against the
   non-aging ones on the same material.
 * Applications: [Aging creep of solidifying cementitious materials](@ref app-aging-creep)
   and [Aging basic creep of concrete](@ref app-aging-basic-creep).

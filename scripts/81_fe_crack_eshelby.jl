@@ -1,6 +1,6 @@
 # # A crack whose COD tensor comes out of a finite-element solve
 #
-# The custom-inclusion contract exists so that a morphology with no closed form
+# The custom-inclusion interface exists so that a morphology with no closed form
 # can still take part in the schemes. This script exercises it on a case where
 # the closed form *does* exist — an elliptical crack — precisely so the
 # finite-element answer can be checked against it.
@@ -138,4 +138,4 @@ convergence(1.0, 0.25, (6, 9, 12))         # elongated, η = 1/4
 # For reference, the FEniCSx implementation of the same scheme in `SifAniso`
 # reports ±5 % on ``B_\infty`` at `htipdiv = 12` with P3 elements; `Ferrite`
 # provides no cubic Lagrange element on tetrahedra, so this port runs P2 on
-# straight tetrahedra and lands in the same band.
+# straight tetrahedra and falls in the same band.

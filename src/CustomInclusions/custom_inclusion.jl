@@ -37,7 +37,7 @@ const _CUSTOM_CALLBACKS = (
     CustomInclusion{dim,T,B,NT} <: AbstractCustomInclusion{T}
 
 Inclusion whose mechanical / transport response is supplied by user
-callbacks, so that an arbitrary morphology becomes a first-class citizen of
+callbacks, so that an arbitrary morphology becomes a phase type of its own of
 every [`homogenize`](@ref MeanFieldHomogenization.Core.homogenize) scheme without
 defining a new type.
 
@@ -56,7 +56,7 @@ defining a new type.
 | `homogeneous` | `true` | value returned by [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) |
 | `density_factor` | `nothing` | prefactor of the *amount × contribution* seam; set it (e.g. ``4\\pi/3``) to register the phase with a [`CrackDensity`](@ref MeanFieldHomogenization.Schemes.CrackDensity) amount |
 
-# Callbacks — pick **one** entry gate
+# Callbacks — pick **one** entry level
 
 Every callback is a keyword argument named exactly after the generic it
 implements, and receives the tensor arguments only (the geometry is captured
@@ -68,19 +68,19 @@ callback whose arguments are typed on one order serves that physics only, and
 the schemes forward `method`, tolerances, and — for density-based phases —
 `K_interface` / `α_interface`.
 
-| Gate | Callbacks | Signature |
+| Level | Callbacks | Signature |
 |---|---|---|
 | **A — Hill tensor** | `hill_tensor` | `(P₀; kw...) -> Tens` |
 | **B — concentration** | `gradient_gradient_concentration` (+ `flux_gradient_concentration` if heterogeneous) | `(P₁, P₀; kw...) -> Tens` |
 | **C — contribution, solid** | `property_contribution`, `inverse_property_contribution` | `(P₁, P₀; kw...) -> Tens` |
 | **C — contribution, flat** | same names, with `density_factor` set | `(P₀; kw...) -> Tens` |
 
-Gate A yields every concentration and contribution tensor for free; gate B
+Level A yields every concentration and contribution tensor at no extra cost; level B
 yields the derived concentrations and the contributions. `P₀` is a 4th-order
 stiffness in elasticity (``\\mathbb{C}_0``) and a 2nd-order conductivity
 (``\\boldsymbol{K}_0``) in transport.
 
-!!! warning "Gate B and heterogeneous inclusions"
+!!! warning "Level B and heterogeneous inclusions"
     The strain-side concentration determines the stress-side one *only* through
     ``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1 : \\mathbb{A}_{\\varepsilon\\varepsilon}``, which needs a single uniform ``\\mathbb{C}_1``. If you set
     `homogeneous = false`, supply `flux_gradient_concentration` as well —
@@ -97,9 +97,9 @@ stiffness in elasticity (``\\mathbb{C}_0``) and a 2nd-order conductivity
     `Schemes.has_layer_average`). Every scheme that consumes concentration or
     contribution tensors is unaffected, `AsymmetricSelfConsistent` included.
 
-!!! warning "Gate C and the dilute concentration tensor"
+!!! warning "Level C and the dilute concentration tensor"
     Contribution tensors alone do not determine `A`.  A **volume-fraction**
-    phase entered through gate C therefore works with `Voigt`, `Reuss`,
+    phase entered through level C therefore works with `Voigt`, `Reuss`,
     `Dilute`, `DiluteDual`, `Maxwell`, `PonteCastanedaWillis` and
     `DifferentialScheme`, but **not** with `MoriTanaka`, `SelfConsistent` or
     `AsymmetricSelfConsistent`, whose kernels also need `A`.  Density-based
@@ -109,7 +109,7 @@ Orientation averaging (`IsoSymmetrize` / `TISymmetrize`) is applied by the
 scheme *after* the callback returns, so the returned tensors must be
 expressed in the **global** frame.
 
-# Example — a sphere, through gate A
+# Example — a sphere, through level A
 
 ```julia
 sphere = CustomInclusion((1.0, 1.0, 1.0);
@@ -122,7 +122,7 @@ homogenize(rve, MoriTanaka(), :C)
 ```
 
 See also [`check_inclusion_interface`](@ref) and the developer page
-*Adding a new inclusion* for the full contract.
+*Adding a new inclusion* for the full interface.
 """
 struct CustomInclusion{dim, T <: Number, B <: TensND.AbstractBasis, NT <: NamedTuple} <:
     Core.AbstractCustomInclusion{T}
@@ -184,7 +184,7 @@ function CustomInclusion(
     isempty(fns) && throw(
         ArgumentError(
             "a CustomInclusion needs at least one callback — see " *
-                "`check_inclusion_interface` and the entry-gate table in the docstring"
+                "`check_inclusion_interface` and the entry-level table in the docstring"
         )
     )
     semi_axes !== nothing && length(semi_axes) != dim && throw(
@@ -246,19 +246,19 @@ function _no_callback(c::CustomInclusion, name::Symbol)
         ArgumentError(
             "this CustomInclusion has no `$name` callback (it provides " *
                 "$(Tuple(keys(c.fns)))). Supply it at construction, or use a " *
-                "different entry gate — see `check_inclusion_interface(incl)`."
+                "different entry level — see `check_inclusion_interface(incl)`."
         )
     )
 end
 
-# ─── Gate A — Hill tensor ────────────────────────────────────────────────────
+# ─── Level A — Hill tensor ───────────────────────────────────────────────────
 
 function Elasticity.hill_tensor(c::CustomInclusion, P₀::TensND.AbstractTens; kw...)
     _has(c, Val(:hill_tensor)) || _no_callback(c, :hill_tensor)
     return c.fns.hill_tensor(P₀; kw...)
 end
 
-# ─── Gate B — concentration ───────────────────────────────────────────────────
+# ─── Level B — concentration ──────────────────────────────────────────────────
 
 #  Both sides of the pair are forwarded.  For a homogeneous inclusion the
 #  stress-side one may be omitted — the generic `A_σε = C₁ : A_εε` fallback is
@@ -288,7 +288,7 @@ for (fname, gen) in (
     end
 end
 
-# ─── Gate C — contribution tensors ───────────────────────────────────────────
+# ─── Level C — contribution tensors ──────────────────────────────────────────
 #
 #  Three-argument (solid) forms fall back to the generic algebra of
 #  `contribution.jl`; two-argument (flat) forms have no generic fallback.
@@ -358,12 +358,12 @@ Checks, in order:
    [`inclusion_basis`](@ref MeanFieldHomogenization.Core.inclusion_basis),
    [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait),
    [`shape_tensor`](@ref MeanFieldHomogenization.Core.shape_tensor).
-2. **Level 1** — which entry gate is available: the Hill tensor, the
+2. **Level 1** — which entry level is available: the Hill tensor, the
    concentration tensor, or the contribution tensors.
 3. **Level 2** — for `amount = :density`, the three-argument `delta_*` seams.
 
 Works on any `AbstractInclusion`, not only [`CustomInclusion`](@ref) — use it
-on your own type before wiring it into an `RVE`.
+on your own type before using it in an `RVE`.
 """
 function check_inclusion_interface(
         incl::Core.AbstractInclusion;
@@ -412,11 +412,11 @@ function check_inclusion_interface(
 
     if gate_a
         push!(
-            msgs, "  ✓ level 1, gate A: `hill_tensor` — all concentration and " *
+            msgs, "  ✓ level 1, entry level A: `hill_tensor` — all concentration and " *
                 "contribution tensors are derived"
         )
     elseif gate_b
-        push!(msgs, "  ✓ level 1, gate B: `$locname` — contributions are derived")
+        push!(msgs, "  ✓ level 1, entry level B: `$locname` — contributions are derived")
         # The strain-side concentration fixes the stress-side one only through
         # `A_σε = C₁ : A_εε`, which needs a single uniform property.
         if !Core.is_homogeneous_inclusion(incl)
@@ -435,12 +435,12 @@ function check_inclusion_interface(
         end
     elseif gate_c
         push!(
-            msgs, "  ✓ level 1, gate C: `$(contrib[1][1])` / " *
+            msgs, "  ✓ level 1, entry level C: `$(contrib[1][1])` / " *
                 "`$(contrib[2][1])` supplied directly"
         )
         if amount === :fraction
             push!(
-                msgs, "    ! gate C alone does not provide the dilute " *
+                msgs, "    ! entry level C alone does not provide the dilute " *
                     "concentration tensor, so `MoriTanaka`, `SelfConsistent` and " *
                     "`AsymmetricSelfConsistent` are unavailable for this " *
                     "volume-fraction phase (Voigt, Reuss, Dilute, DiluteDual, " *
@@ -451,7 +451,7 @@ function check_inclusion_interface(
         ok = false
         args = amount === :density ? "(incl, P₀)" : "(incl, P₁, P₀)"
         push!(
-            msgs, "  ✗ level 1: no entry gate for :$physics — supply one of " *
+            msgs, "  ✗ level 1: no entry level for :$physics — supply one of " *
                 "`hill_tensor(incl, P₀)`, `$locname(incl, P₁, P₀)`, or " *
                 "`$(contrib[1][1])$args` + `$(contrib[2][1])$args`"
         )
@@ -476,8 +476,8 @@ function check_inclusion_interface(
     end
 
     if verbose
-        head = ok ? "✓ $(typeof(incl)) satisfies the inclusion contract" :
-            "✗ $(typeof(incl)) does NOT satisfy the inclusion contract"
+        head = ok ? "✓ $(typeof(incl)) satisfies the inclusion interface" :
+            "✗ $(typeof(incl)) does NOT satisfy the inclusion interface"
         println(head, " (physics = :$physics, amount = :$amount)")
         foreach(println, msgs)
     end

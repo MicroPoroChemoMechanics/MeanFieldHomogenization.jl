@@ -14,7 +14,7 @@
 #    * schemes : Mori-Tanaka, Self-Consistent.
 #
 #  Note : the original Python script also exercises `DIFF`
-#  (Differential), which is **not** part of the ALV pipeline yet.  We
+#  (Differential), which is **not** part of the ALV calculation yet.  We
 #  cover MT and SC here ; DIFF stays a follow-up.
 #
 #  Output : effective uniaxial creep response `J^E_eff(t, t')` from a

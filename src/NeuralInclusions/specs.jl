@@ -537,7 +537,7 @@ is learned.
 
 The general-purpose choice: it needs nothing of the reference medium beyond a
 scale, so the same shape of surrogate transfers to an anisotropic matrix, and
-to a concentration pair (gate B) where no affine structure exists.
+to a concentration pair (level B) where no affine structure exists.
 """
 struct DimensionlessHill{C <: AbstractHillClass} <: AbstractOutputSpec
     class::C
@@ -571,8 +571,7 @@ dependence that is already known — applied to a different kind of knowledge.
 `AffineHill` factors out the *material* dependence exactly; `AnchoredHill`
 factors out a whole *shape family* on which a closed form exists.
 
-**When it pays, and when it does not — measured, so nobody repeats the
-experiment.** The gain depends on how *close* the baseline is, not on its
+**When it helps, and when it does not — measured.** The gain depends on how *close* the baseline is, not on its
 existence.
 
 On the axisymmetric superspheroidal cavity it does **not** pay. A superspheroid
@@ -818,7 +817,7 @@ stress side.
 For a **stress** class the baseline is ``\\overline{\\mathbb{C}}:\\mathbb{A}_{\\mathrm{b}}``, not ``\\mathbb{A}_{\\mathrm{b}}``: the quantity being
 anchored is ``\\mathbb{A}_{\\sigma\\varepsilon}``, which is of degree one in the moduli where ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` is of
 degree zero, so anchoring it against a strain concentration would leave the
-target carrying a modulus and the whole point — a dimensionless correction near
+target carrying a modulus and the purpose — a dimensionless correction near
 ``\\mathbb{I}`` — would be lost.
 """
 function _anchor(::Val{:layered_spheroid}, class, x, features, P₀, frame)

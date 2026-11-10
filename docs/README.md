@@ -47,7 +47,7 @@ deploys.
 
 ## Previewing the site
 
-The site lands in `docs/build/1`, and its links have no `.html` suffix
+The site is written to `docs/build/1`, and its links have no `.html` suffix
 (`cleanUrls`), so a plain static server answers 404 to all of them. Serve it
 with VitePress instead, from `docs/`:
 

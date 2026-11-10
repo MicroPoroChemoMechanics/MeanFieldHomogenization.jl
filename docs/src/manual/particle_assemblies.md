@@ -197,7 +197,7 @@ homogenize(asm, ClusterModel(; method = :multipole, order = 2), :C)
 | :-- | :-- | :-- |
 | `:analytical` | ball and disk pairs, **isotropic reference** | closed form, **exact at any separation** |
 | `:multipole` | any ellipsoid pair | truncated expansion, default off the isotropic ball case |
-| `:quadrature` | anything | product rule on the definition; the validation oracle, far too slow to assemble a system |
+| `:quadrature` | anything | product rule on the definition; the reference solution for validation, far too slow to assemble a system |
 
 The reference medium may be anisotropic: 3D elasticity goes through the Barnett line
 integral ([`green_operator_aniso`](@ref)), conduction through a closed form in 2D and
@@ -254,7 +254,7 @@ derivative(asm, ClusterModel(), center_param(:p2, 1); indexer = C -> canonical_c
 derivative(asm, ClusterModel(), radius_param(:p1);    indexer = C -> canonical_components(C)[1, 2, 1, 2])
 ```
 
-`PropertyParameter` works through the generic cell contract, so moduli need nothing
+`PropertyParameter` works through the generic cell interface, so moduli need nothing
 special. A `RadiusParameter` on a sphere sets every semi-axis together, so the geometry
 stays spherical — and keeps its closed-form kernel — along the whole derivative.
 
@@ -292,7 +292,7 @@ Both give exactly the two-step result computed by hand.
     Barnett line integral is not an optional extra but the enabler of multiscale
     chaining. `scripts/92` walks through a three-level example.
 
-    The isotropic route stays the default and costs microseconds; the anisotropic one
+    The isotropic approach stays the default and costs microseconds; the anisotropic one
     is a differentiated quadrature and costs milliseconds. Tune it with `green_nodes`
     (default 32) if a strongly anisotropic reference needs more.
 

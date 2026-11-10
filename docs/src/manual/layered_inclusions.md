@@ -19,7 +19,7 @@ The strain is **not uniform inside it**, so Eshelby's result does not apply and
 it has no Hill tensor. What it does have is a volume-averaged concentration
 tensor, computed exactly by a recurrence over the layers, and that is all a
 scheme needs — the family enters through
-[gate B](@ref man-custom-inclusions), supplying both concentration tensors
+[level B](@ref man-custom-inclusions), supplying both concentration tensors
 directly.
 
 Two families are shipped, and they share their whole surface:
@@ -203,7 +203,7 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
   puts an *odd* power of the metric factor ``w = \sqrt{q^2-p^2}`` into the
   matching condition, so it stops being a polynomial identity in ``p`` and takes
   both the exactness of the projection and the banding with it. The workable
-  route is a thin confocal interphase — an extra layer, already handled — but
+  approach is a thin confocal interphase — an extra layer, already handled — but
   not an *equivalent* one: such a shell is exactly ``\omega`` times thicker at
   the equator than at the pole, so it models a compliance that varies along the
   interface.
@@ -216,8 +216,8 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
 ## Where to go next
 
 A morphology outside the shipped families enters the schemes through
-[Custom inclusions](@ref man-custom-inclusions), the contract the two layered
-families themselves use through gate B. The tutorials
+[Custom inclusions](@ref man-custom-inclusions), the interface the two layered
+families themselves use through level B. The tutorials
 [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere)
 and
 [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)

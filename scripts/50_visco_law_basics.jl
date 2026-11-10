@@ -1,7 +1,7 @@
 # =============================================================================
 #  50_visco_law_basics.jl
 #
-#  Basic walkthrough of the ALV pipeline:
+#  Basic walkthrough of the ALV calculation:
 #    * build a Maxwell relaxation `ViscoLaw` for an iso 4-tensor matrix,
 #    * discretize the Stieltjes integral on a time grid (`trapezoidal_matrix`),
 #    * compute its Volterra inverse to obtain the corresponding creep

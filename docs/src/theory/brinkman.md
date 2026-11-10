@@ -121,8 +121,8 @@ symmetric by the reciprocity of the Brinkman problem. With the velocity in the
 role of the gradient and the drag density in that of the flux, these are exactly
 the gradient-side concentration, the flux-side concentration and the
 contribution tensor that the schemes consume. The package therefore enters
-Brinkman inhomogeneities through the concentration gate of the
-[custom-inclusion contract](@ref man-custom-inclusions).
+Brinkman inhomogeneities through the level B of the
+[custom-inclusion interface](@ref man-custom-inclusions).
 
 **Why the size enters.** Brinkman's equation compares the viscous term
 ``\mu\Delta\underline{v}`` with the drag ``\mu\underline{v}/k_0``: they balance over the
@@ -150,7 +150,7 @@ tensor of conduction may be used, as Maxwell's scheme requires.
 
 The derivation below is the one carried out symbolically in
 `scripts/71_brinkman_permeability.jl` with the curvilinear operators of TensND,
-along the route of [The elastic sphere, solved symbolically](@extref TensND tut-sphere-problems)
+along the approach of [The elastic sphere, solved symbolically](@extref TensND tut-sphere-problems)
 (operators: [Curvilinear differential calculus](@extref TensND th-curvilinear)).
 
 **Fields.** Under a remote velocity ``V\underline{e}_3``, the axial symmetry and the
@@ -326,12 +326,12 @@ evaluations of the published closed forms.
 ## Where to go next
 
 The next chapter changes the time dependence rather than the physics:
-[The Laplace-Carson route](@ref th-laplace-carson) reduces a non-aging
+[The Laplace-Carson approach](@ref th-laplace-carson) reduces a non-aging
 viscoelastic problem to an elastic one.
 
 - [Brinkman inclusions](@ref man-brinkman): the inclusions, the two formulations
   and the choice of the self-consistent seed.
 - [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy): the estimates on
   granular, fibrous, tubular and double-porosity media.
-- [Custom inclusions](@ref man-custom-inclusions): the contract through which
+- [Custom inclusions](@ref man-custom-inclusions): the interface through which
   these inclusions enter the schemes.

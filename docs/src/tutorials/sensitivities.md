@@ -70,7 +70,7 @@ sensitivity(f_eval, 3 * 60.0)
 ```
 
 `sensitivity` auto-detects derivative vs. gradient vs. Jacobian from the
-shape of its input and output — this is exactly what the lens-based
+shape of its input and output — this is what the lens-based
 `derivative`/`gradient`/`jacobian` do internally, exposed for cases the
 lenses do not cover.
 
@@ -118,6 +118,6 @@ macroscopic strength criterion built entirely from such derivatives.
 [From derivatives to a strength criterion](@ref tut-strength-criteria) uses these
 derivatives to build a macroscopic strength criterion of a porous solid. The
 same lenses differentiate a time-domain calculation in
-[Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities),
+[Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities),
 and the full list of lenses and indexers is given in
 [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities).

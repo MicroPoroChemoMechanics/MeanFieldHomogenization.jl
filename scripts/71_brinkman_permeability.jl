@@ -83,7 +83,7 @@ nothing #hide
 # ```
 #
 # Everything below comes from the operators `symgrad` and `divergence` of TensND
-# in spherical coordinates, along the route of its tutorial
+# in spherical coordinates, along the path of its tutorial
 # [The elastic sphere, solved symbolically](@extref TensND tut-sphere-problems).
 
 Spherical = coorsys_spherical()

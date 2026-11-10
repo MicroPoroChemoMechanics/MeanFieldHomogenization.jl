@@ -1,14 +1,14 @@
 # [Materials](@id fe-materials)
 
 !!! info "Before this page"
-    [Scale transition](@ref fe-scale-transition), which states what the contract
+    [Scale transition](@ref fe-scale-transition), which states what the interface
     below must return and the frame rule that governs its output.
 
 A **material** bundles a microstructure, a scheme and its internal state. The FE
 driver builds it once, allocates one state per quadrature point, and calls
 [`material_response`](@ref) in its element loop.
 
-## The contract
+## The interface
 
 Two methods make a material:
 
@@ -29,7 +29,7 @@ and a response carries three things:
 retried by simply keeping the old state, and what makes a threaded element loop
 safe.
 
-## A linear material, end to end
+## A linear material, in full
 
 ```@example mat
 using MeanFieldHomogenization, TensND
@@ -56,7 +56,7 @@ r = material_response(mat, ε, st, 0.0)
 
 ## Checking a material
 
-[`check_material_interface`](@ref) exercises the contract and, crucially,
+[`check_material_interface`](@ref) exercises the interface and, crucially,
 compares the declared tangent against a central finite difference:
 
 ```@example mat
@@ -70,7 +70,7 @@ too much per quadrature point, per Newton iteration, per step. But for flat
 cracks the compliance contribution ``\mathbb{H}`` is the ``\omega \to 0`` limit
 and does **not** depend on the aperture, so the homogenized quantities depend on
 the state only through the *discrete* open/closed configuration. Pass a
-[`MaterialCache`](@ref) and every point sharing a configuration pays once:
+[`MaterialCache`](@ref) and every point sharing a configuration is computed once:
 
 ```@example mat
 cache = MaterialCache()

@@ -108,7 +108,7 @@ r2[:σ11][end]                       # the residual stress after unloading to ze
 
 ## Any material of the package
 
-The driver accepts every material of the Gauss-point contract, not only the
+The driver accepts every material of the Gauss-point interface, not only the
 laws of this module. A homogenized elastic material, or the fractured rock of
 the [ARMA 2011 model](@ref fe-fractured-rock), is driven the same way:
 

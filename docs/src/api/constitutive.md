@@ -4,7 +4,7 @@
 MeanFieldHomogenization.Constitutive
 ```
 
-## The contract
+## The interface
 
 ```@docs
 AbstractMFHMaterial

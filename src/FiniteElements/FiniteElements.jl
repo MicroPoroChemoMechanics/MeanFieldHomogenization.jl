@@ -4,9 +4,9 @@
 Inclusions whose response is obtained from a **finite-element resolution of the
 Eshelby problem** rather than from a closed form — the package's own
 demonstration that the [`CustomInclusions`](@ref MeanFieldHomogenization.CustomInclusions)
-contract is enough to reach every scheme.
+interface is enough to reach every scheme.
 
-| Type | Morphology | Discretization | Entry gate |
+| Type | Morphology | Discretization | Entry level |
 |---|---|---|---|
 | [`FEEllipticCrack`](@ref) | flat elliptical crack | 3-D tetrahedra | COD tensor → crack algebra |
 | [`FEExcenteredSphere`](@ref) | sphere with an off-center spherical core | axisymmetric Fourier | B — the two concentration tensors |
@@ -23,7 +23,7 @@ The types, the Fourier operators, the boundary data and the algebra of the
 corrected boundary condition all live here. What a package extension supplies
 is only the **discretization** — a mesh, scalar Lagrange spaces, an assembly
 and a quadrature — through the generics of [`FEBackend`](@ref), which come in
-three groups: the crack, the axisymmetric contract (ten methods, the tenth being
+three groups: the crack, the axisymmetric interface (ten methods, the tenth being
 `fe_axi_pore_boundary`, needed by a cavity alone since it has no interior to
 average over) and the three-dimensional cell.
 

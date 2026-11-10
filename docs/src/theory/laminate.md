@@ -303,7 +303,7 @@ Two of these are **exact bound saturations**, valid for arbitrary anisotropy:
 \quad\text{(Voigt, in plane)} .
 ```
 
-They are the two oracles the test suite is built on, and they remain exact
+They are the two exact reference solutions the test suite is built on, and they remain exact
 when imperfect interfaces are added — each picking up one interface family
 and ignoring the other.
 
@@ -475,7 +475,7 @@ contributes to ``\langle\mathbb{P}\rangle`` **and to nothing else**:
   \boldsymbol{\mathcal{K}}\stackrel{s}{\otimes}\underline{n} .
 ```
 
-The out-of-plane oracle therefore becomes, still exactly,
+The out-of-plane reference solution therefore becomes, still exactly,
 
 ```math
 \big(\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n}\big)^{-1}
@@ -483,7 +483,7 @@ The out-of-plane oracle therefore becomes, still exactly,
   + \frac{1}{L}\sum_j \boldsymbol{\mathcal{K}}_j ,
 ```
 
-while the in-plane oracle is left untouched. Limits: ``\boldsymbol{\mathcal{K}}\to\boldsymbol{0}``
+while the in-plane reference solution is left untouched. Limits: ``\boldsymbol{\mathcal{K}}\to\boldsymbol{0}``
 recovers perfect bonding, an unbounded ``\boldsymbol{\mathcal{K}}`` decouples the layers
 (``\underline{n}\cdot\mathbb{C}^{\mathrm{hom}}\cdot\underline{n}\to\boldsymbol{0}``).
 The same statement in transport reads

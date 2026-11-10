@@ -159,7 +159,7 @@ directly, by applying the chart's Laplacian:
     Papkovich–Neuber expands each of its potentials in the very same spheroidal
     harmonics [duanRSPA2005](@cite). Adding order 2 to `legendre.jl` is then
     three seed tables — the stability machinery below is order-generic and
-    comes for free. See [the roadmap's checklist](@ref dev-elastic-spheroid).
+    comes at no extra cost. See [the roadmap's checklist](@ref dev-elastic-spheroid).
 
 ## 3. Boundary value problem
 
@@ -358,7 +358,7 @@ drop out, and ``\boldsymbol{k}^{\mathrm{eq}}`` reduces to the closed-form nested
 recursion of the paper's §3 — built from the classical conduction
 depolarization factors already available through [`tens_IA`](@ref) and
 [`hill_tensor`](@ref) for a single spheroid. That closed form is used as an
-exact oracle in `test/LayeredSpheroids/test_conductivity.jl`.
+exact reference in `test/LayeredSpheroids/test_conductivity.jl`.
 
 ## 7. Numerical precision: quadrature, not the monomial series
 
@@ -386,24 +386,24 @@ the **stable three-term recurrence**, never through the monomial expansion:
 
 ```julia
 coupling_matrices(q, Nseries; method = :quadrature)   # default
-coupling_matrices(q, Nseries; method = :series)       # BigFloat validation oracle
+coupling_matrices(q, Nseries; method = :series)       # BigFloat validation reference
 ```
 
 The integrand is smooth and bounded on ``[-1,1]`` for a prolate ``q``, and
 complex-analytic with no real singularity for an oblate ``q = \mathrm{i}\tau``:
 `Float64` quadrature reaches machine precision for any ``\mathcal{N}``. The
-`BigFloat` port of the monomial series is kept as an independent oracle
+`BigFloat` port of the monomial series is kept as an independent reference
 (`test/LayeredSpheroids/test_coupling.jl`).
 
 ## 8. Integration with the schemes
 
-`LayeredSpheroid` is wired into the schemes exactly like `LayeredSphere` (see
+`LayeredSpheroid` enters the schemes exactly like `LayeredSphere` (see
 [Layered sphere](@ref th-layered-sphere) and
 `src/LayeredSpheres/scheme_integration.jl` for the elastic and conduction
 analogues): it declares `is_homogeneous_inclusion = false` and overrides
 [`gradient_gradient_concentration`](@ref), [`flux_gradient_concentration`](@ref) and
 `property_contribution`. Every dilute, Mori–Tanaka, self-consistent, Maxwell
-and differential kernel then routes through the confocal transfer-matrix
+and differential kernel then approaches through the confocal transfer-matrix
 solution with no change to `src/Schemes/`.
 
 ## Where to go next

@@ -9,7 +9,7 @@
 When a morphology has no closed-form Eshelby solution, its response can be
 computed on a **finite** cell — the inclusion inside a ball of matrix of radius
 ``R`` — and fed to the schemes through the
-[custom-inclusion contract](@ref man-custom-inclusions). The difficulty is that
+[custom-inclusion interface](@ref man-custom-inclusions). The difficulty is that
 Eshelby's problem is posed on an *infinite* medium. This page states the
 first-order correction of [adessinaIJES2017](@citet), which removes the
 truncation bias, in the general form and in the two declinations the package
@@ -102,7 +102,7 @@ where ``\boldsymbol G`` is the Green tensor of the reference medium and
 ```
 
 Imposing ``\underline u = \boldsymbol E\cdot\underline x`` on a sphere of radius ``R`` therefore leaves an
-``O\bigl((a/R)^3\bigr)`` bias. Adding the dipole term removes it, at the price of a fixed point,
+``O\bigl((a/R)^3\bigr)`` bias. Adding the dipole term removes it, at the cost of a fixed point,
 because ``\bar{\boldsymbol\tau}`` is *itself* an output of the problem.
 
 Split by linearity into two boundary-value problems on the truncated cell, the
@@ -264,7 +264,7 @@ place, and only a radius sweep exposes it.
 Zero traction on the cavity wall in elasticity, zero normal flux in transport.
 Nothing is meshed inside: the cell is a shell of matrix between the shape and
 the outer sphere. Two consequences the implementation leans on — the
-**stress-side concentration is identically zero**, so gate B is served by one
+**stress-side concentration is identically zero**, so level B is served by one
 tensor rather than two; and the normalizing volume is the **curved** volume of
 the cavity, `fe_cell_curved_volume`, not the volume of the flat triangulation
 that bounds the mesh, which differs from it by a percent at usable refinements.
@@ -277,7 +277,7 @@ The diagnostic is ``\|\mathbb A_u : \mathbb F\|``, which is
 
 An octant divides the cost by eight. Separating the azimuth into Fourier modes
 divides it by orders of magnitude, and for an axisymmetric cavity that is the
-route [`FEAxiSupershapePore`](@ref app-concave-pores) takes. Each mode is a
+approach [`FEAxiSupershapePore`](@ref app-concave-pores) takes. Each mode is a
 problem on the **meridian half-plane**, and the modes do not couple, so a
 macroscopic loading excites exactly one of them:
 
@@ -318,9 +318,9 @@ whose ratio is ``(R/a)^3``. Two digits go at ``R/a = 4`` and more as the cell
 grows — the opposite of what a larger cell is for. Measured before it was
 abandoned: the implied cavity volume is 2.9 % wrong at ``V_\Omega/V_{\mathcal D}
 = 8`` and 9.2 % at 216, with the concentration error tracking it, and convergence
-of ``O(h)`` where the direct route gives more.
+of ``O(h)`` where the direct approach gives more.
 
-One consequence of that route is worth keeping even after abandoning it:
+One consequence of that approach is worth keeping even after abandoning it:
 **normalize by the volume the meshed wall actually encloses**, not by the closed
 form. Integrating over one boundary and dividing by another's volume leaves a
 systematic error of the geometry's own size, and refining removes none of it
@@ -329,7 +329,7 @@ because it shrinks both together.
 !!! note "The solid declination in two dimensions, and its region count"
     An `N`-layer spheroid is the *solid* declination of the same correction —
     ``\mathbb B^{\mathrm E}`` and ``\mathbb B^{\tau}`` are not zero, and both outputs of the fixed point are
-    used, the second being gate B's stress side. So the cavity was the easy
+    used, the second being level B's stress side. So the cavity was the easy
     case: it degenerates the correction to
     ``\mathbb A = (\mathbb I - \mathbb A_u:\mathbb F)^{-1}:\mathbb A_s`` with one useful output, where a heterogeneous
     inclusion carries the pair.
@@ -492,7 +492,7 @@ the opening profile:
 
 The correction is put to the test in
 [Validating a finite-element crack](@ref tut-fe-crack), which measures what the
-dipole term buys against the closed form of the opening tensor. The pore
+dipole term gains against the closed form of the opening tensor. The pore
 declination of §4 is used by
 [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate),
 and the calls that run these solves are described in

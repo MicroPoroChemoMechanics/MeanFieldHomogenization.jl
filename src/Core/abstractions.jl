@@ -87,13 +87,13 @@ Subtyping this abstract type is *not* mandatory — an inclusion may equally
 well subtype [`AbstractEllipsoidalInclusion`](@ref), [`AbstractCrack`](@ref)
 or [`AbstractLayeredInclusion`](@ref) when it genuinely belongs to that
 family, and will then inherit that family's dispatch rules.  What this branch
-buys is a neutral home for morphologies that belong to none of them: it is
+provides is a neutral home for morphologies that belong to none of them: it is
 disjoint from the other three, so adding methods for it can never create a
 dispatch ambiguity, and [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor)
 accepts it directly (the ellipsoid-typed entry point does not).
 
 See the developer page *Adding a new inclusion* for the full interface
-contract, and [`CustomInclusion`](@ref man-custom-inclusions) for a
+interface, and [`CustomInclusion`](@ref man-custom-inclusions) for a
 ready-made concrete type driven by callbacks.
 """
 abstract type AbstractCustomInclusion{T} <: AbstractInclusion{T} end
@@ -408,7 +408,7 @@ self-consistent kernels; computing them separately evaluates
 [`hill_tensor`](@ref MeanFieldHomogenization.Elasticity.hill_tensor) — the dominant cost — twice with byte-identical
 arguments.
 
-!!! note "Contract"
+!!! note "Interface"
     The returned pair must be **bitwise identical** to
     `(gradient_gradient_concentration(incl, P₁, P₀; kw...),
       property_contribution(incl, P₁, P₀; kw...))`.
@@ -423,7 +423,7 @@ function concentration_and_contribution end
     concentration_and_flux_average(incl, P₁, P₀; kw...) -> (A, B)
 
 Bundled `(gradient_gradient_concentration, flux_gradient_concentration)`, sharing
-one concentration solve. Same bitwise contract as
+one concentration solve. Same bitwise guarantee as
 [`concentration_and_contribution`](@ref).
 
 Internal seam — not exported.
@@ -438,7 +438,7 @@ density-amount counterpart of [`concentration_and_contribution`](@ref), sharing
 whatever single expensive solve produces both (for a crack, one
 [`cod_tensor`](@ref MeanFieldHomogenization.Cracks.cod_tensor)): the pair
 `(inverse_property_contribution, property_contribution)`. Same bitwise
-contract as [`concentration_and_contribution`](@ref): the generic fallback in
+interface as [`concentration_and_contribution`](@ref): the generic fallback in
 `src/contribution.jl` *is* that pair, and any specialization is a pure
 performance concern.
 

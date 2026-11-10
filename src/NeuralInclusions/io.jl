@@ -80,7 +80,7 @@ Write `s` to `path` as pretty-printed JSON and return the path.
 
 The round trip is exact: weights go out as `Float64` decimals with full
 precision, so `load_surrogate(save_surrogate(p, s))` reproduces every
-prediction bit-for-bit.
+prediction to the last digit.
 """
 function save_surrogate(path::AbstractString, s::NeuralSurrogate)
     mkpath(dirname(abspath(path)))

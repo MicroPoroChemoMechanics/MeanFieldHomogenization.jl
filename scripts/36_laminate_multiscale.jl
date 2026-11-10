@@ -16,7 +16,7 @@
 #   ([`Homogenized`](@ref)), resolved lazily. The whole model is one object.
 #
 # This script writes the same three-scale model both ways, checks that they
-# agree exactly, and shows what the declarative form buys: a sensitivity that
+# agree exactly, and shows what the declarative form gives: a sensitivity that
 # crosses every scale in a single `ForwardDiff` pass, and one microstructure
 # answering several physics.
 #
@@ -78,7 +78,7 @@ end
 # ## Declarative chaining
 #
 # The same three scales, but the model is assembled once and evaluated once.
-# Note that nothing is homogenized while the object is being built.
+# Nothing is homogenized while the object is being built.
 
 function declarative_model(; φ = 0.2, f_lay = 0.4, f_agg = 0.3)
     meso = Laminate(; normal = (0, 0, 1))
@@ -108,7 +108,7 @@ kd, μd = k_mu(C_d)
 @printf "declarative : k = %.10f   μ = %.10f\n" kd μd
 @printf "difference  : %.2e / %.2e\n" abs(kx - kd) abs(μx - μd)
 
-# ## What the declarative form buys, 1: sensitivities across every scale
+# ## What the declarative form gives, 1: sensitivities across every scale
 #
 # [`NestedParameter`](@ref) addresses a scalar *inside* a nested cell. Two
 # levels down, the shear modulus of the solid skeleton:
@@ -152,7 +152,7 @@ g = gradient(model, MoriTanaka(), [p_μ, p_h, p_φ]; indexer = C -> k_mu(C)[2])
 @printf "                             ∂μ/∂h_POROUS   = %.6f\n" g[2]
 @printf "                             ∂μ/∂φ_pore     = %.6f\n" g[3]
 
-# ## What the declarative form buys, 2: one microstructure, several physics
+# ## What the declarative form gives, 2: one microstructure, several physics
 #
 # `Homogenized(cell, scheme)` without an explicit `property` **inherits the key
 # it is stored under**. The same nested object therefore answers `:C` with the

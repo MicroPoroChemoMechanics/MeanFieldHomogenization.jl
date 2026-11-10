@@ -270,7 +270,7 @@ the crack's own frame vectors *in that same basis* — where they are, by
 construction, the canonical triad ``(\\underline{e}_1, \\underline{e}_2, \\underline{e}_3)``
 with ``\\underline{e}_3 = \\underline{n}``.
 
-Frame consistency is the whole point. `eachcol(TensND.vecbasis(ℬ, :cov))` returns the
+Frame consistency is the purpose. `eachcol(TensND.vecbasis(ℬ, :cov))` returns the
 crack frame in *global* coordinates; combining those with components expressed
 in `ℬ` mixes two frames and yields a wrong COD for every crack that is not
 aligned with the canonical axes. The aligned case coincides, which is exactly

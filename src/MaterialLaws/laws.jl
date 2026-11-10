@@ -31,7 +31,7 @@ with [`ResidualLaw`](@ref) or [`PotentialLaw`](@ref), integrated over a step by
 [`point_update`](@ref).
 
 Being an [`AbstractMFHMaterial`](@ref), a law answers
-[`material_response`](@ref) and plugs into any caller of that contract, a
+[`material_response`](@ref) and plugs into any caller of that interface, a
 finite-element element loop included, exactly as a homogenized material does.
 """
 abstract type AbstractPointLaw <: AbstractMFHMaterial end

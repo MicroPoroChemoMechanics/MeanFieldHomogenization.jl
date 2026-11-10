@@ -105,7 +105,7 @@ MeanFieldHomogenization.Core.laminate_stress_strain_concentration
 MeanFieldHomogenization.Core.laminate_strain_stress_concentration
 ```
 
-## The cell contract and declarative nesting
+## The cell interface and declarative nesting
 
 ```@docs
 MeanFieldHomogenization.Core.AbstractHomogenizationCell

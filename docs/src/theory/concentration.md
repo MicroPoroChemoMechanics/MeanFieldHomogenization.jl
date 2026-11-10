@@ -171,7 +171,7 @@ the contribution tensors as soon as it provides [`hill_tensor`](@ref). When
 [`gradient_gradient_concentration`](@ref) instead — the rest is derived algebraically.
 
 See the developer guide [Adding a new inclusion](@ref dev-adding-inclusion)
-for a step-by-step recipe.
+for a step-by-step procedure.
 
 ## Where to go next
 
@@ -181,5 +181,5 @@ what one inclusion induces in another, the ingredient of the two schemes that
 resolve interactions pair by pair. The contribution tensors of §2 are what the
 [Homogenization schemes](@ref th-homogenization) add up, the crack form of §3
 is derived in [Crack opening displacement and compliance](@ref th-cod-tensors),
-and the gates through which a user-defined morphology enters the chain of this
+and the entry levels through which a user-defined morphology enters the chain of this
 page are described in [Custom inclusions](@ref man-custom-inclusions).

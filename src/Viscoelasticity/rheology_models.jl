@@ -388,7 +388,7 @@ end
     Rabotnov(mu_0, lambda_0, α, β)
 
 The Rabotnov fractional-exponential kernel, in the form ECHOES uses as its
-analytical benchmark for the aging pipeline
+analytical benchmark for the aging calculation
 (`tests/python/creep/fluage_echoes_maxwell_papier_rabotnov.py`):
 
 ```math
@@ -532,18 +532,10 @@ series dashpot ``\\beta`` makes the model a **fluid**.
     can be pushed through [`homogenize_lc`](@ref) and through
     [`homogenize_alv`](@ref) with no approximation on the input side, and the
     two must agree.  That is what makes it the headline cross-validation of the
-    two routes.
+    two approaches.
 
     [`creep_kernel_law`](@ref) returns ``\\varphi`` packaged as a
-    [`ViscoLaw`](@ref) for the aging pipeline.
-
-!!! warning "The field names in older code are swapped"
-    `docs/src/applications/bituminous.md` used to define its own struct whose
-    fields were named `E0` for the static modulus and `Einf` for the glassy one
-    — the reverse of the convention here and in the literature.  The *formula*
-    and the *positional order* were already right, so migrating that page is a
-    pure rename with no numerical change; the twelve calibrated parameter sets
-    carry over argument for argument.
+    [`ViscoLaw`](@ref) for the aging calculation.
 """
 struct Model2S2P1D{T <: Number} <: AbstractRheology
     E00::T
@@ -630,7 +622,7 @@ overflow.
 This is the non-aging skeleton of the aging law
 `logcompliance` in the ECHOES `ageing_visco_mat.py`; the aging version, where
 ``E``, ``C`` and ``\\tau`` depend on the loading age, belongs to the
-[time-domain route](@ref man-viscoelasticity) instead.
+[time-domain approach](@ref man-viscoelasticity) instead.
 """
 struct LogarithmicCreep{T <: Number} <: AbstractRheology
     E::T
@@ -660,9 +652,9 @@ equilibrium_modulus(m::LogarithmicCreep) = zero(m.E)
 
 The dimensionless 2S2P1D creep kernel ``\\varphi`` packaged as a scalar
 `:creep` [`ViscoLaw`](@ref) ``(t, t') \\mapsto \\varphi(t - t')``, ready for the aging
-pipeline.
+calculation.
 
-This is the entry point that lets one 2S2P1D object drive **both** routes.  The
+This is the entry point that lets one 2S2P1D object drive **both** approaches.  The
 relaxation modulus in the time domain is
 
 ```math
@@ -678,7 +670,7 @@ R   = m.E00 * I + (m.E0 - m.E00) * volterra_inverse(Φ; block_size = 1)
 ```
 
 and that discrete `R` must agree with `relaxation(m, t)` obtained by inverting
-[`carson_relaxation`](@ref) — the two-route consistency check of
+[`carson_relaxation`](@ref) — the two-approach consistency check of
 `test/Viscoelasticity/test_rheology.jl`.
 
 Reproduces `VM(...)` of the ECHOES reference

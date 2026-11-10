@@ -7,7 +7,7 @@
     [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
     where the dipole correction measured on this page is derived.
 
-How much the corrected boundary condition buys, and how close the
+How much the corrected boundary condition improves the result, and how close the
 finite-element crack gets to the closed form it is meant to reproduce. The
 method is in
 [The finite Eshelby cell](@ref th-corrected-cell); how to call it is in
@@ -38,8 +38,7 @@ available check that the dipole boundary condition has the right magnitude
 *and* the right sign — a sign error would not merely change the exponent, it
 would send ``\boldsymbol{B}_\infty`` the wrong way.
 
-Note how *small* the correction is at `R = 5a` (≈ 0.1 % on `B`). That is the
-whole point: it is what makes so small a domain legitimate, at the cost of
+The correction is *small* at `R = 5a` (≈ 0.1 % on `B`), which makes so small a domain legitimate, at the cost of
 three extra solves that share the existing factorization.
 
 ## Convergence to the closed form

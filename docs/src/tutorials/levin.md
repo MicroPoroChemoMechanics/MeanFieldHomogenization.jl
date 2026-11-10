@@ -63,7 +63,7 @@ For two phases the theorem needs no concentration tensor at all: the free
 strain is fixed by the effective compliance alone, and for isotropic phases by
 the effective bulk modulus,
 ``\alpha^{\mathrm{hom}} = \alpha_M + (\alpha_I - \alpha_M)\,(1/k^{\mathrm{hom}} - 1/k_M)/(1/k_I - 1/k_M)``.
-The two routes agree:
+The two approaches agree:
 
 ```@example tutlevin
 k_hom, _ = k_mu(ct.effective)

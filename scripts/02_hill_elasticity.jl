@@ -134,7 +134,7 @@ end
 #
 # With an anisotropic ``\mathbb{C}_0`` no closed form survives and
 # ``\mathbb{P}`` becomes a surface integral over the unit sphere. `MeanFieldHomogenization`
-# offers several independent routes to it — a residue evaluation of the
+# offers several independent approaches to it — a residue evaluation of the
 # acoustic-tensor poles, and two cubatures (`:nestedquadgk`, built in, and
 # `:decuhr` when the DECUHR extension is loaded). Agreement between two of them
 # is the strongest available check, since they share no code.
@@ -288,7 +288,7 @@ end
 # Every Hill tensor above is computed directly on its ellipsoid.
 # [Hill tensors by reduction to a sphere](@ref tut-hill-reduction) computes the
 # same tensors a second way, from a sphere in a transformed medium, and checks
-# that both routes agree. The oblate spheroid of §1 has a limit that the volume
+# that both approaches agree. The oblate spheroid of §1 has a limit that the volume
 # fraction cannot follow: as the aspect ratio vanishes, the inclusion becomes a
 # crack, the subject of [Cracks and crack density](@ref tut-cracks). Every
 # inclusion family that `hill_tensor` accepts, with its constructor and its

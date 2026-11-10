@@ -136,7 +136,7 @@ concentration tensor.
 
 The ``\mathbb{H}`` above is built from ``\boldsymbol{B}`` by the factor ``3/4``
 [proved on the theory page](@ref th-cod-compliance).
-[Two routes to a crack](@ref tut-crack-routes) computes it independently, from
+[Two approaches to a crack](@ref tut-crack-routes) computes it independently, from
 the Hill tensor of a flattening ellipsoid, and checks that factor in anisotropic
 matrices. The cracks above are averaged over all orientations.
 [Crack distributions: isotropic or parallel](@ref tut-crack-distributions)

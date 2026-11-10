@@ -88,7 +88,7 @@ State in the docstring whether the algorithm is `ForwardDiff`-compatible, and
 claims, so an unverified one propagates straight into the manual. A polynomial
 root finder or an in-place `Float64` buffer usually makes an algorithm
 `Float64`-only — that is acceptable, but it must be stated, and `:auto` must not
-route `Dual` inputs to it.
+approach `Dual` inputs to it.
 
 If the algorithm sits behind a weak dependency, as `DECUHR` does, remember it
 only exists once the extension loads: `import DECUHR, Integrals` is required in

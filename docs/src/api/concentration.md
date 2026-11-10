@@ -78,7 +78,7 @@ MeanFieldHomogenization.inverse_and_property_contribution
 ## Custom (user-defined) inclusions
 
 See [Custom inclusions](@ref man-custom-inclusions) for the tutorial and
-[Adding a new inclusion](@ref dev-adding-inclusion) for the full contract.
+[Adding a new inclusion](@ref dev-adding-inclusion) for the full interface.
 
 ```@docs
 MeanFieldHomogenization.CustomInclusions
@@ -91,7 +91,7 @@ MeanFieldHomogenization.check_inclusion_interface
 ## [Brinkman inclusions](@id api-brinkman)
 
 Inclusions of the Stokes-to-Darcy upscaling, entered through the concentration
-gate of the custom-inclusion contract; see [Brinkman inclusions](@ref man-brinkman)
+level (B) of the custom-inclusion interface; see [Brinkman inclusions](@ref man-brinkman)
 and [Permeability from Stokes flow](@ref th-brinkman).
 
 ```@docs
@@ -184,7 +184,7 @@ MeanFieldHomogenization.FiniteElements.fe_crack_mean_jump
 
 Eight methods for the third cell family. Two things distinguish it from the
 crack's: the geometry is **quadratic**, the mid-edge nodes of the inclusion
-boundary having been moved onto the exact shape, and one contract serves two
+boundary having been moved onto the exact shape, and one interface serves two
 physics — a scalar temperature and a vector displacement — with only the
 material and the two averages differing.
 
@@ -281,7 +281,7 @@ Two volume measures rather than one, and the difference is the point: the flat
 [`mesh_volume`](@ref MeanFieldHomogenization.Superspheres.mesh_volume) cannot
 see a curved boundary at all, so
 [`fe_cell_curved_volume`](@ref) is what shows what snapping the mid-edge nodes
-onto the exact shape actually bought.
+onto the exact shape actually gained.
 
 ```@docs
 MeanFieldHomogenization.FECellMeshOptions
@@ -302,7 +302,7 @@ MeanFieldHomogenization.Core.dipole_temperature_iso
 
 ## Neural-surrogate inclusions
 
-The fourth route into the contract: the response comes out of a trained network.
+The fourth approach into the interface: the response comes out of a trained network.
 See [Neural-surrogate inclusions](@ref man-neural-inclusions) for the tutorial.
 Evaluating needs nothing beyond the package; *training* needs
 `import Lux, Optimisers, Zygote`.

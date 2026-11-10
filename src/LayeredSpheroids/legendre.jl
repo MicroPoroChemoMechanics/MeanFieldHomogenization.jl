@@ -470,7 +470,7 @@ recurrences being what they are, so asking for a sparse set costs nothing extra.
     starts above the highest degree requested and normalizes on a closed form —
     so the arithmetic path, and with it the last couple of bits, depends on
     `Nmax`. Two calls with different degree sets agree to a few ulp, never
-    bit-for-bit.
+    to the last digit.
 """
 function legendre_degrees(kind::Symbol, x, degrees)
     isempty(degrees) && throw(ArgumentError("legendre_degrees: empty degree set"))

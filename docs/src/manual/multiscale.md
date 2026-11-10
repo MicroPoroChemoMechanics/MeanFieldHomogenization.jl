@@ -40,7 +40,7 @@ flowchart TB
 ```
 
 Two features of that chain drive the API below: a scale consumes only the
-**effective tensor** of the scales beneath it — note that the cement paste feeds
+**effective tensor** of the scales beneath it — the cement paste feeds
 *two* consumers — and the scales are otherwise independent, which is exactly what
 makes the two writing styles equivalent.
 
@@ -128,12 +128,12 @@ C_paste = homogenize(paste, MoriTanaka(), :C)   # resolves `foam` on the way
 
 Both snippets return the same tensor, to the last bit.
 
-### What the declarative form buys
+### What the declarative form provides
 
 **One object per model.** The chain can be stored, passed around, compared and
 parameterized as a whole, instead of living in the control flow of a script.
 
-**Sensitivities across every scale, without plumbing.**
+**Sensitivities across every scale, without bookkeeping.**
 [`NestedParameter`](@ref) addresses a scalar *inside* a nested cell, so
 `derivative` / `gradient` / `jacobian` cross the whole chain in a single
 `ForwardDiff` pass:
@@ -145,8 +145,8 @@ gradient(paste, MoriTanaka(), [p]; indexer = C -> k_mu(C)[2])
 
 Written explicitly, the same derivative needs a hand-rolled closure over every
 scale and, if the scales are to be differentiated jointly, explicit
-`ForwardDiff.Tag` handling — which is exactly what
-[Quasi-brittle strength](@ref app-strength) used to do.
+`ForwardDiff.Tag` handling, as in the explicit style of
+[Quasi-brittle strength](@ref app-strength).
 
 **One inner cell, several properties.** `Homogenized(cell, scheme)` with no
 `property` **inherits the key it is stored under**: the same object answers
@@ -198,7 +198,7 @@ typically when it is to be differentiated, fitted or swept.
   phase is homogenized in aging viscoelasticity on the time grid of the
   enclosing call, once for the whole call: the result is that of the explicit
   two-step chain ([Homogenizing](@ref man-visco-homogenizing) shows both). The
-  nested cell must be one the aging pipeline covers, an `RVE` with its schemes
+  nested cell must be one the aging calculation covers, an `RVE` with its schemes
   or a `Laminate` with `Laminated`, `Voigt` or `Reuss`. A
   [`ParticleAssembly`](@ref) is refused with an `ArgumentError`, directly or
   nested: its two N-body schemes have no aging counterpart. An elastic assembly

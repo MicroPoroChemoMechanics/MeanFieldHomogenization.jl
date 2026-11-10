@@ -374,7 +374,7 @@ axis, in the canonical basis.
 
 At ``\\underline{x} = \\underline{0}`` every Walpole coefficient degenerates to the isotropic pair
 ``(\\tilde A_1, a_1)``, so the returned tensor is the same for any axis; `(0,0,1)` is
-used. Note that ``a_1`` is the **pointwise** core value and differs in general
+used. Here ``a_1`` is the **pointwise** core value and differs in general
 from the layer average ``\\beta_1``, which folds in the mode-2 term.
 
 `side` disambiguates a point lying exactly on an interface — see

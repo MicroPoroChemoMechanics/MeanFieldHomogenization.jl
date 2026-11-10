@@ -36,10 +36,8 @@ The two cross-validation scripts that `pyimport("echoes")` through `PythonCall`
 (`15`, `60`) need a Python environment with `echoes` installed (and `sympy`,
 which `SymPyPythonCall` asks for), pointed at as described in
 [`bench_echoes/README.md`](bench_echoes/README.md), and depend
-on the machine whichever project is active. They are validation harnesses, not
-demos. (`52` used to be a third: it reached for a Python Mittag-Leffler module,
-and no longer needs to — the Rabotnov kernel is in the model library, whose
-Laplace-Carson transform involves no special function.)
+on the machine whichever project is active. They are validation scripts, not
+demos.
 
 Shared code lives in [`common/`](common/) — currently the quasi-brittle strength
 three-scale model (`common/quasibrittle_strength.jl`), used by both the demo script
@@ -159,13 +157,13 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 
 | Script | reference / topic | Notes |
 |---|---|---|
-| `80_custom_inclusion_contract.jl` | echoes `user_inclusion` | the three entry gates (Hill / concentration / contribution) driven through every scheme — identical to the last digit; plus the density seam and free orientation averaging |
+| `80_custom_inclusion_contract.jl` | echoes `user_inclusion` | the three entry levels (Hill / concentration / contribution) driven through every scheme — identical to the last digit; plus the density seam and free orientation averaging |
 | `81_fe_crack_eshelby.jl` | Adessina et al. (2017), IJES 119, 1-15 | elliptical crack by finite elements (`Ferrite` + `Gmsh`): mesh, first-order corrected boundary condition, `‖B_u‖ ∝ (a/R)³`, convergence and Richardson extrapolation vs the closed-form COD |
 | `82_fe_crack_schemes.jl` | — | the finite-element crack as a drop-in `EllipticCrack` in Dilute / MT / SC / Differential, with `IsoSymmetrize` and the memoization count |
 | `83_fe_excentered_sphere.jl` | Adessina et al. (2017), IJES 119, 1-15 | the sphere with an off-center core by **axisymmetric Fourier** elements: the concentric limit against Hervé-Zaoui, what the boundary correction buys in `R/a`, the eccentricity sweep, the schemes, and transport |
 | `84_neural_inclusion_ellipsoid.jl` | — | **published tutorial** (`neural_inclusion`): a trained network as an inclusion, both phases. §1 how one is trained — Mermaid schematics of the network and of the fitting loop, the recipe (shown, not run) and the committed learning curve; §2 onwards how one is used — what stays exact whatever the fit (zero contrast, homogeneity, symmetry class, frame), accuracy against the closed form, the `AffineHill` factorization that makes ν₀ exact, every scheme, and `ForwardDiff` on the aspect ratio. Loads the committed models: no ML dependency, nothing trained at build time |
 
-| `85_neural_excentered_sphere.jl` | Adessina et al. (2017), IJES 119, 1-15 | **published tutorial** (`neural_excentered_sphere`): a surrogate trained on the *finite-element* concentration tensors of `FEExcenteredSphere`. Gate B with the 6-component TI pair, why the features are contrast ratios and not the gate-A homogeneity, accuracy and speed-up against the finite elements, and `ForwardDiff` on the eccentricity — which the finite-element type refuses. Trained by `scripts/nn/train_excentered.jl` (~1500 solves), compared by `scripts/nn/make_excentered_figures.jl`; the page loads the committed models |
+| `85_neural_excentered_sphere.jl` | Adessina et al. (2017), IJES 119, 1-15 | **published tutorial** (`neural_excentered_sphere`): a surrogate trained on the *finite-element* concentration tensors of `FEExcenteredSphere`. Level B with the 6-component TI pair, why the features are contrast ratios and not the level-A homogeneity, accuracy and speed-up against the finite elements, and `ForwardDiff` on the eccentricity — which the finite-element type refuses. Trained by `scripts/nn/train_excentered.jl` (~1500 solves), compared by `scripts/nn/make_excentered_figures.jl`; the page loads the committed models |
 | `86_crack_distributions.jl` | echoes `crack` + `symmetrize=[ISO]` | **published tutorial** (`crack_distributions`): the same penny cracks at ε = 0.6 under two orientation rules. MT and the symmetric SC match Echoes 1.0 to ~1e-7 in both cases; `AsymmetricSelfConsistent` is the compliance-form fixed point instead; both percolate but at different densities (9/16 exactly for the compliance form, about 1.158 for the stiffness one, both independent of the matrix Poisson ratio). Also documents the local-versus-canonical component trap of a `TensRotated` result, and reads the five Walpole coefficients with `TensND.ti_params_from_mandel` |
 | `87_aging_ages_aspect.jl` | — | **published tutorial** (`aging_ages_aspect`): aging creep with `ViscoLaw(J, :creep)` on both phases — three loading ages t' x three inclusion aspect ratios under Mori-Tanaka. Shows that the morphological effect is a near-constant offset independent of t', and that flattening the inclusions *reduces* the effective creep. Eleven ALV runs on a 60-point grid |
 
@@ -235,7 +233,7 @@ Biaxial strength envelope (CCR 2013) and the multi-model
 
 ## Literate.jl convention (pilot, 2026-07-24)
 
-A script converted to this contract stays runnable exactly as before
+A script converted to this format stays runnable exactly as before
 (`julia scripts/NN_*.jl`) **and** becomes a source for
 [Literate.jl](https://github.com/fredrikekre/Literate.jl), which generates a
 Documenter markdown page, a Jupyter notebook, and a cleaned standalone
@@ -256,7 +254,7 @@ order) while pages carry thematic names — inserting a tutorial never
 forces a renumbering. That mapping is what Literate's `name` option is
 for.
 
-Converting a script to the contract, whether or not it ends up promoted:
+Converting a script to this format, whether or not it ends up promoted:
 
 - **Title & prose.** Replace the `# ===...===` banner with a Literate
   header: `# # Title`, then prose paragraphs as plain `# ` lines, math as

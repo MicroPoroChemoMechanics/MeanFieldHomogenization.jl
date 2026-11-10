@@ -128,7 +128,7 @@ end
 
 Base.float(s::MyScalar) = s.x
 
-# Route K and E through the fast Float64 path
+# Send K and E through the fast Float64 path
 MeanFieldHomogenization.Elliptic.ell_K(s::MyScalar) = ell_K(s.x)
 MeanFieldHomogenization.Elliptic.ell_E(s::MyScalar) = ell_E(s.x)
 ```

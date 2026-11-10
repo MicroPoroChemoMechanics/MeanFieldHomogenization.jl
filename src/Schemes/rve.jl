@@ -197,8 +197,8 @@ The single phase declared `fraction = :rest` takes the volume the others leave,
 `1 - Σ f`.
 
 `on_negative` says what happens when that complement comes out negative, i.e.
-when the declared inclusion fractions already exceed one: `:warn` (default,
-the historical behavior — a non-physical RVE is still useful for symbolic or
+when the declared inclusion fractions already exceed one: `:warn` (default;
+a non-physical RVE is still useful for symbolic or
 `ForwardDiff` exploration) or `:error`.
 """
 struct ComplementFraction <: AbstractFractionClosure
@@ -389,7 +389,7 @@ Coerce `x` to a concrete `AbstractDistributionShape`. Accepts:
 - an `AbstractInclusion` → wrapped as `UniformDistribution(x)`,
 - an `AbstractDistributionShape` → passed through.
 
-`nothing` used to be coerced to a unit sphere here, which erased the
+`nothing` is not coerced to a unit sphere, which would erase the
 difference between a caller who declared a spherical distribution and one who
 declared none at all. The two are not the same statement: a sphere makes
 [`Maxwell`](@ref) and [`PonteCastanedaWillis`](@ref) coincide with
@@ -434,7 +434,7 @@ Phase(geometry::AbstractInclusion, properties::AbstractDict) =
     RVE{T<:Number, S<:Union{Nothing,AbstractDistributionShape}}
 
 Multi-phase representative volume element — a **description of a
-microstructure**, and nothing more. No phase is singled out: which one, if any,
+microstructure** only. No phase is singled out: which one, if any,
 plays the reference medium of a homogenization scheme is stated on that scheme
 (see [`matrix_name`](@ref)), because the same RVE is a matrix/inclusion
 composite under Mori-Tanaka and a matrix-free aggregate under the
@@ -1011,7 +1011,7 @@ end
 """
     validate_rve(rve::RVE)
 
-Sanity-check the RVE: at least one phase, no negative amount, and the
+Check the RVE: at least one phase, no negative amount, and the
 fraction-closure policy satisfied. Throws `ArgumentError` on hard failures;
 emits `@warn` for a negative complement under the default
 `ComplementFraction(on_negative = :warn)` — a non-physical RVE stays useful

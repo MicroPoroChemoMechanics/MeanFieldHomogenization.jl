@@ -108,7 +108,7 @@ end
 Refuse the generic stress-side formula for an inclusion that declares itself
 internally heterogeneous.
 
-The warning above this has been in the docstring since the contract was written;
+The warning above this has been in the docstring since the interface was written;
 this enforces it. Without the check the generic returns a number — and for a
 heterogeneous inclusion that number is wrong, by order one rather than by a
 little: measured on a two-layer confocal spheroid, ``\\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` differs from the
@@ -162,8 +162,8 @@ Dilute **stress-stress concentration tensor**
 
 Derived from [`flux_gradient_concentration`](@ref) rather than from ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` directly, so
 that a heterogeneous inclusion which supplies its own stress-side
-concentration gets a correct ``\\mathbb{A}_{\\sigma\\sigma}`` for free. For a homogeneous inclusion the
-two routes are the same expression (`⊡` is left-associative), hence bitwise
+concentration gets a correct ``\\mathbb{A}_{\\sigma\\sigma}`` at no extra cost. For a homogeneous inclusion the
+two approaches are the same expression (`⊡` is left-associative), hence bitwise
 identical.
 """
 function flux_flux_concentration(

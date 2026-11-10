@@ -81,12 +81,12 @@ runs it: the blocks of a page, in order, form a script of
 | page | |
 |:--|:--|
 | **Common ground** | |
-| [Integrating a law over a step](@ref ml-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential route, exact derivatives |
+| [Integrating a law over a step](@ref ml-theory) | the incremental problem, the consistent tangent by the implicit-function theorem, the potential approach, exact derivatives |
 | **Manual** | |
-| [Writing a law](@ref ml-writing) | the residual route, the potential route, internal variables, coupled fields |
+| [Writing a law](@ref ml-writing) | the residual approach, the potential approach, internal variables, coupled fields |
 | [The laws shipped](@ref ml-laws) | the six laws, their equations, parameters and behavior along typical paths |
 | [Driving a point](@ref ml-driving) | loading paths, mixed control, reading the response |
-| [Plugging a law into a computation](@ref ml-plugging) | the Gauss-point contract, the flat interface for speed, differentiating with respect to parameters |
+| [Plugging a law into a computation](@ref ml-plugging) | the Gauss-point interface, the flat interface for speed, differentiating with respect to parameters |
 | **Laws** | |
 | [Elastoplastic bar under cycles](@ref ml-ex-plasticity) | J2 plasticity against the closed form, isotropic and kinematic hardening |
 | [A damage law written from scratch](@ref ml-ex-damage) | a law of your own, with a threshold and an evolving internal variable |

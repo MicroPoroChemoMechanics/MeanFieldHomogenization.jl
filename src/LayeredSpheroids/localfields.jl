@@ -254,7 +254,7 @@ coefficient sequences, solved once.
 
 Build it once and pass it wherever `(s, k₀)` is accepted. The `(s, k₀)`
 forms re-run **both** state sequences on every call, which a field map over
-thousands of points pays for in full.
+thousands of points incurs in full.
 
 Transport twin of
 [`LayeredSphereTransportFields`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphereTransportFields).

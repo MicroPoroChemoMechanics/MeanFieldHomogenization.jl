@@ -1,7 +1,7 @@
 # [Viscoelastic complex modulus of a bituminous mixture](@id app-bituminous)
 
 !!! info "Before this page"
-    [The Laplace-Carson route](@ref th-laplace-carson), where the
+    [The Laplace-Carson approach](@ref th-laplace-carson), where the
     correspondence principle used below is set out,
     [The rheological model library](@ref man-rheological-models) for the 2S2P1D
     binder, and [Numerical Laplace inversion](@ref man-laplace-inversion) for
@@ -42,22 +42,14 @@ E^*(p) = E_{00} + \frac{E_0 - E_{00}}
 
 with ``E_{00}`` the static modulus and ``E_0`` the glassy one. This is
 [`Model2S2P1D`](@ref) from the
-[rheological model library](@ref man-rheological-models) — the page used to
-define its own struct, and no longer needs to.
+[rheological model library](@ref man-rheological-models).
 
 ![The 2S2P1D network, with the symbols of the formula above. The denominator is a sum of compliances, so it reads directly as a chain in series: the spring ``E_0 - E_{00}``, two parabolic elements of orders ``k`` and ``h`` weighted by ``\delta``, and the linear dashpot ``\beta`` — that last one being the "1D" of the name and the reason the binder is a fluid. The whole branch sits in parallel with the static spring ``E_{00}``, whose Huet-Sayegh form (same network, no dashpot) is drawn above it.](../assets/rheology/huet_sayegh_2s2p1d.svg)
 
-!!! note "The parameter sets are unchanged"
-    The inline struct this page carried named its fields the other way round
-    (`E0` for the static modulus, `Einf` for the glassy one), but its formula
-    and its positional order were already the literature's. Switching to
-    [`Model2S2P1D`](@ref) is therefore a pure rename: every one of the twelve
-    calibrated sets below is copied argument for argument, and every number on
-    this page is bit-identical to what it was.
-
-    One consequence worth having: `E00 = 1e-7` was a numerical device to keep
-    ``E^*(0)`` away from zero. A genuinely fluid binder, `E00 = 0`, is now
-    legitimate — the fluid branch is handled exactly by
+!!! note "Parameter sets"
+    The twelve calibrated sets below are given in the positional order of
+    [`Model2S2P1D`](@ref), which is the literature's. A genuinely fluid binder
+    is represented by `E00 = 0`, the fluid branch being handled exactly by
     [`kelvin_to_maxwell`](@ref).
 
 ```@example bitumen
@@ -296,8 +288,8 @@ gap widens as the load becomes slower.
       keeps them all at **real** `p`, so the whole chain runs in real rather
       than complex arithmetic. It costs about five significant digits, which
       is well inside the uncertainty on any calibrated binder;
-    * [`DeHoog`](@ref) shares one node set across a block of times, which pays
-      off precisely on a ten-decade grid like this one.
+    * [`DeHoog`](@ref) shares one node set across a block of times, which is
+      worthwhile precisely on a ten-decade grid like this one.
 
     See [the inversion manual](@ref man-laplace-inversion). The 2S2P1D
     transform has a branch cut at the origin, from its ``(p\tau)^{-k}`` terms;
@@ -306,10 +298,10 @@ gap widens as the load becomes slower.
 
 ## Where to go next
 
-The frequency route of this page, the time route of
+The frequency approach of this page, the time approach of
 [Aging creep of solidifying cementitious materials](@ref app-aging-creep) and
-the Laplace–Carson route are checked against one another on a non-aging
-composite in [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time).
+the Laplace–Carson approach are checked against one another on a non-aging
+composite in [Frequency or time? Three approaches to the same viscoelastic composite](@ref tut-freq-vs-time).
 This page closes the applications. The time-dependent behavior of a
 cementitious material, which ages and so does not admit complex moduli, is the
 subject of [Aging creep of solidifying cementitious materials](@ref app-aging-creep).

@@ -96,7 +96,7 @@ that is, component-wise,
              = \dot f_i - \frac{f_i}{f_0}\,\dot f_0 .
 ```
 
-This is exactly what the RHS of the scheme evaluates at every step
+The RHS of the scheme evaluates exactly this at every step
 (`_diff_ode_rhs!` in `src/Schemes/differential.jl`); nothing else about
 the trajectory enters the volume balance.
 
@@ -387,7 +387,7 @@ The ODE is integrated by the SciML `solve`, adaptive `Tsit5` by default;
 the algorithm and its tolerances are user-facing — see
 [Homogenization schemes](@ref man-schemes) for the keywords.
 
-Two things about it are theory rather than plumbing.
+Two things about it belong to the theory rather than to the implementation.
 
 *The state is sized by the running estimate, not by the matrix.* It carries the
 canonical components in the smallest symmetry class that estimate can stay in —

@@ -26,15 +26,15 @@ cost is measured, and which path dominates a computation.
 - `ForwardDiff.Dual` propagates through the nested `QuadGK` paths. The AD path
   must stay clear of polynomial root finding (the eigenvalues of a companion
   matrix, by LAPACK), which is why `Residue` is `Float64`-only and `:auto`
-  routes `Dual` inputs elsewhere.
+  approaches `Dual` inputs elsewhere.
 
 ## Measuring
 
 - `scripts/bench_echoes/` — timings against Echoes:
   [Performance vs Echoes](@ref dev-benchmarks); accuracy:
   [Cross-validation](@ref dev-validation).
-- `scripts/bench/` — Julia-only regression gating: 77 cases, committed
-  baseline, bitwise checksum gate (`bench_suite.jl --help`).
+- `scripts/bench/` — Julia-only regression suite: 77 cases, committed
+  baseline, bitwise checksum check (`bench_suite.jl --help`).
 
 !!! warning "The Echoes benchmark needs its extension imports"
     `scripts/bench_echoes/benchmark.jl` exercises `jl_method = :decuhr`, which
@@ -63,164 +63,92 @@ wrong change.
 
 ## Fast paths of the shapes and the self-consistent schemes
 
-Two paths ran far slower than the arithmetic they perform: building a shape
-whose semi-axes have to be sorted, and the step of a self-consistent iteration.
-In both, the computation itself took a fraction of the time; the rest went to
-lookups, allocations and dispatches decided at run time. Both were rewritten
-in version 0.20.2.
+Two paths would run far slower than the arithmetic they perform if left to run-time lookups, allocations and dispatches: building a shape whose semi-axes have to be sorted, and the step of a self-consistent iteration. Both are written so that these decisions are taken at compile time.
 
-!!! tip "The same numbers, to the bit"
-    Both rewrites perform the same arithmetic operations in the same order as
-    before. The benchmark suite checks it: every case of `scripts/bench`, the
-    common cases below included, returns a checksum identical to the bit with
-    the code of version 0.20.1. Nothing a user computes has moved, and neither
-    has the work done: the counters of Hill tensors evaluated and of
-    self-consistent iterations are the same.
+Timings on one thread (minimum of the samples), with the RVE or the shape built inside the timed call as a user builds it:
 
-The gains, on one thread of the same machine (minimum of the samples), with
-the RVE or the shape built inside the timed call as a user builds it:
-
-| Case of `scripts/bench` | 0.20.1 | 0.20.2 |
-| :--- | ---: | ---: |
-| `common/ctor.spheroid5`: `Spheroid(5.0)` | 1.48 µs | 0.45 µs |
-| `common/hill.spheroid5.iso`: its Hill tensor, isotropic matrix | 1.41 µs | 0.57 µs |
-| `common/hill.ellipsoid.iso`: triaxial ellipsoid, isotropic matrix | 0.85 µs | 0.38 µs |
-| `common/rve.build`: a two-phase RVE | 0.85 µs | 0.46 µs |
-| `common/mt.spheres`: Mori–Tanaka, spheres | 1.95 µs | 1.44 µs |
-| `common/mt.spheroids5`: Mori–Tanaka, isotropic spheroids | 3.72 µs | 2.38 µs |
-| `common/asc.spheres`: asymmetric self-consistent, spheres | 20.6 µs | 5.7 µs |
-| `common/asc.spheroids5`: the same, isotropic spheroids | 23.1 µs | 8.6 µs |
-| `schemes/sc.porous.sphere.phi30`: self-consistent, porous, spheres | 37.7 µs | 20.9 µs |
+| Case of `scripts/bench` | Time |
+| :--- | ---: |
+| `common/ctor.spheroid5`: `Spheroid(5.0)` | 0.45 µs |
+| `common/hill.spheroid5.iso`: its Hill tensor, isotropic matrix | 0.57 µs |
+| `common/hill.ellipsoid.iso`: triaxial ellipsoid, isotropic matrix | 0.38 µs |
+| `common/rve.build`: a two-phase RVE | 0.46 µs |
+| `common/mt.spheres`: Mori–Tanaka, spheres | 1.44 µs |
+| `common/mt.spheroids5`: Mori–Tanaka, isotropic spheroids | 2.38 µs |
+| `common/asc.spheres`: asymmetric self-consistent, spheres | 5.7 µs |
+| `common/asc.spheroids5`: the same, isotropic spheroids | 8.6 µs |
+| `schemes/sc.porous.sphere.phi30`: self-consistent, porous, spheres | 20.9 µs |
 
 ```julia
 julia --project=scripts/bench scripts/bench/bench_suite.jl --filter=common
 ```
 
-The anisotropic cubatures (`common/hill.ellipsoid.ortho`, the crack cases) are
-unchanged: their cost is the integration, which these rewrites do not touch.
+The anisotropic cubatures (`common/hill.ellipsoid.ortho`, the crack cases) cost the integration itself, which these techniques do not touch.
 
 ### Building a shape
 
-`Ellipsoid(a, b, c)` stores its semi-axes in decreasing order and permutes the
-vectors of its basis to match, so a prolate `Spheroid(5.0)`, declared with its
-axis along ``\underline{e}_3``, is built on a permuted basis.
+`Ellipsoid(a, b, c)` stores its semi-axes in decreasing order and permutes the vectors of its basis to match, so a prolate `Spheroid(5.0)`, declared with its axis along ``\underline{e}_3``, is built on a permuted basis.
 
-| | up to 0.20.1 | from 0.20.2 |
-| :--- | :--- | :--- |
-| order of the semi-axes | `sortperm` on a vector collected from the tuple | `Core._descending_order`, an insertion sort on the tuple; the same permutation, ties kept in order |
-| permuted basis | [`RotatedBasis`](@extref TensND TensND.RotatedBasis) built from a matrix whose size, hence the dimension, was read at run time; orthogonality checked again | with TensND ≥ 0.8.3, built with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis |
-| type of the shape's basis | not inferred: every computation on the shape started with a dynamic dispatch | a union of the canonical and the rotated basis of dimension 3 |
-
-!!! note "The gain needs TensND 0.8.3"
-    The sort is in this package and works with any TensND it supports. The
-    permuted basis is built by TensND: with an earlier version the result is
-    the same, the constructor only slower.
+- The order of the semi-axes is given by `Core._descending_order`, an insertion sort on the tuple, which keeps ties in order and allocates nothing.
+- The permuted basis is a [`RotatedBasis`](@extref TensND TensND.RotatedBasis) built by TensND with its dimension as a type parameter, without re-checking the orthogonality of an orthonormal basis.
+- The type of the shape's basis is a union of the canonical and the rotated basis of dimension 3, which inference handles without a dynamic dispatch.
 
 ### A self-consistent iteration
 
-[`SelfConsistent`](@ref) and [`AsymmetricSelfConsistent`](@ref) solve a fixed
-point whose step is a sum over the phases of their dilute concentration
-tensors in the current estimate. Everything the step reads of the RVE except
-that estimate is the same at every iteration.
+[`SelfConsistent`](@ref) and [`AsymmetricSelfConsistent`](@ref) solve a fixed point whose step is a sum over the phases of their dilute concentration tensors in the current estimate. Everything the step reads of the RVE except that estimate is the same at every iteration.
 
-| | up to 0.20.1 | from 0.20.2 |
-| :--- | :--- | :--- |
-| what a step read of the RVE | at each step, the list of phase names (a new vector), then the fraction, property and orientation average of each phase from dictionaries holding `Any` | a view of each phase (`Schemes._PhaseView`), gathered once per solve by `Schemes._phase_views` |
-| call of the concentration kernel | a dynamic dispatch per phase and per step | static, in an isotropic reference; dynamic otherwise (see below) |
-| specialization of the step | none: the step saw abstract types | the solver loop specializes on the views, behind one function barrier (`Schemes._solve_sc_on`) |
-| conductivity and stiffness | two copies of each step, one per tensor order | one step per scheme form; `_compose` is the contraction of the order |
+- The step reads a view of each phase (`Schemes._PhaseView`), gathered once per solve by `Schemes._phase_views`, instead of the list of phase names and the dictionaries holding `Any` of the RVE.
+- The concentration kernel is called statically in an isotropic reference, and dynamically otherwise (see below).
+- The solver loop specializes on the views, behind one function barrier (`Schemes._solve_sc_on`).
+- Conductivity and stiffness share one step per scheme form; `_compose` is the contraction of the order.
 
 !!! warning "Compiled once per kind of RVE"
-    Up to eight phases, the views go in a tuple, so that the step compiles for
-    the shapes and properties of that RVE. The first estimate of a new kind of
-    RVE therefore costs a compilation, which later ones reuse. Beyond eight
-    phases (a discretized distribution of orientations) the views stay a
-    vector, so that one method serves every length.
+    Up to eight phases, the views go in a tuple, so that the step compiles for the shapes and properties of that RVE. The first estimate of a new kind of RVE therefore costs a compilation, which later ones reuse. Beyond eight phases (a discretized distribution of orientations) the views stay a vector, so that one method serves every length.
 
 !!! warning "Why the kernel is called dynamically in an anisotropic reference"
-    A fully inferable step lets inference reach down through the
-    concentration kernel, the anisotropic Hill cubature included. With a crack
-    family next to an inclusion, the second step has a generic anisotropic
-    reference, and inferring that step took more than 4.8 GB, against 1.6 GB
-    for the same kernel compiled on its own. In a reference that is not
-    isotropic, the kernel is therefore called through an inference barrier,
-    as it was before; its cost there, a cubature, dwarfs that of the dispatch.
-    In an isotropic reference, the common case, the call is static and the
-    step allocates nothing for the phases. In an anisotropic reference the
-    dynamic call boxes its result: a porous self-consistent estimate with
-    oblate spheroids (`schemes/sc.porous.oblate.phi15`) allocates 11 % more
-    bytes than before, in the same time.
+    A fully inferable step lets inference reach down through the concentration kernel, the anisotropic Hill cubature included. With a crack family next to an inclusion, the second step has a generic anisotropic reference, and inferring that step takes more than 4.8 GB, against 1.6 GB for the same kernel compiled on its own. In a reference that is not isotropic, the kernel is therefore called through an inference barrier; its cost there, a cubature, dwarfs that of the dispatch. In an isotropic reference, the common case, the call is static and the step allocates nothing for the phases. In an anisotropic reference the dynamic call boxes its result.
 
-### The solver stays a damped Picard iteration
+### The solver is a damped Picard iteration
 
-!!! info "Measured, not retained: Newton as the default"
-    [`NewtonDefault`](@ref) converges in fewer iterations, but each of them
-    computes a Jacobian by automatic differentiation. On the asymmetric
-    self-consistent cases above, measured with version 0.20.1 (23 against
-    20 µs), it was slower than the default damped Picard iteration
-    ([`AndersonDefault`](@ref)), and the default is the solver that runs every
-    case of the tests, tutorials and applications, the bifurcation of a porous
-    medium at percolation included. The default is unchanged.
+!!! info "Newton is not the default"
+    [`NewtonDefault`](@ref) converges in fewer iterations, but each of them computes a Jacobian by automatic differentiation. On the asymmetric self-consistent cases above it is slower than the default damped Picard iteration ([`AndersonDefault`](@ref)) (23 against 20 µs), and the default is the solver that runs every case of the tests, tutorials and applications, the bifurcation of a porous medium at percolation included.
 
-## Cracks in the schemes: checks that cost more than the computation
+## Cracks in the schemes: avoiding redundant symmetry checks
 
-Until version 0.23.1, a Mori–Tanaka step with a penny crack in an isotropic
-matrix spent most of its time checking symmetries it already had. The crack
-compliance ``\mathbb{H} = k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}``
-was formed as a product of components, through an array of 81 entries, and the
-operations of the scheme with the isotropic matrix did the same; each time,
-the result was checked at run time for the minor symmetries before being
-stored. Two changes remove them:
+A Mori–Tanaka step with a penny crack in an isotropic matrix would spend most of its time checking symmetries it already has, if the crack compliance ``\mathbb{H} = k\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` were formed as a product of components, through an array of 81 entries, and checked at run time for the minor symmetries before being stored. Two choices avoid them:
 
-- ``\mathbb{H}`` is read off the out-of-plane block of ``\boldsymbol{B}`` in
-  the frame of the crack ([`compliance_op_block`](@extref TensND TensND.compliance_op_block)), whose Kelvin–Mandel matrix it
-  is, and stored directly with its symmetries;
-- TensND 0.8.5 keeps that storage through the sum, the difference and the
-  double contraction with an isotropic tensor, and through the negation.
+- ``\mathbb{H}`` is read off the out-of-plane block of ``\boldsymbol{B}`` in the frame of the crack ([`compliance_op_block`](@extref TensND TensND.compliance_op_block)), whose Kelvin–Mandel matrix it is, and stored directly with its symmetries;
+- TensND keeps that storage through the sum, the difference and the double contraction with an isotropic tensor, and through the negation.
 
-On one thread of the same machine (minimum of the samples), values unchanged to
-rounding:
+Timings on one thread (minimum of the samples):
 
-| Case of `scripts/bench` | 0.23.0 | 0.23.1 |
-| :--- | ---: | ---: |
-| `schemes/mt.crack.penny`: Mori–Tanaka, penny crack, isotropic matrix | 96 µs, 1.26 MB | 1.45 µs, 3.6 kB |
-| `schemes/mt.crack.penny.tri`: the same, triclinic matrix | 369 µs, 680 kB | 302 µs, 58 kB |
+| Case of `scripts/bench` | Time, allocation |
+| :--- | ---: |
+| `schemes/mt.crack.penny`: Mori–Tanaka, penny crack, isotropic matrix | 1.45 µs, 3.6 kB |
+| `schemes/mt.crack.penny.tri`: the same, triclinic matrix | 302 µs, 58 kB |
 
 ```julia
 julia --project=scripts/bench scripts/bench/bench_suite.jl --filter=mt.crack
 ```
 
-With a triclinic matrix the opening displacement tensor, an integral over the
-crack front, is what remains of the cost.
+With a triclinic matrix the opening displacement tensor, an integral over the crack front, is what remains of the cost.
 
 ## Starting a session
 
-A new session pays three costs before its first result: precompiling the
-package (once per installation or change), loading it, and compiling each path
-at its first call. Measured in fresh processes (median of three):
+A new session incurs three costs before its first result: precompiling the package (once per installation or change), loading it, and compiling each path at its first call. Measured in fresh processes (median of three):
 
-| | 0.23.0 | 0.23.1 |
-| :--- | ---: | ---: |
-| `using MeanFieldHomogenization` | 5.4 s | 2.05 s |
-| first Hill tensor, ellipsoid in an orthotropic matrix | 7.4 s | 3.1 s |
+| | Time |
+| :--- | ---: |
+| `using MeanFieldHomogenization` | 2.05 s |
+| first Hill tensor, ellipsoid in an orthotropic matrix | 3.1 s |
 
 ```julia
 julia --project=scripts/bench scripts/bench/ttfx.jl --runs=3
 ```
 
-The load lost 3.3 s with TensND 0.9.0, which no longer loads PythonCall, the
-bridge to Python of SymPy, for sessions that write no SymPy symbol. The first
-anisotropic Hill tensor compiled QuadGK four times where it needs it twice: a
-second instance of each integral for the work counters of the benchmark, and a
-second outer integral for the breakpoints of a very flat ellipsoid. The
-integrand of the counters now reads their flag at each node, and the
-breakpoint variant sits behind an inference barrier, compiled when a flat
-ellipsoid comes.
+TensND does not load PythonCall, the bridge to Python of SymPy, in sessions that write no SymPy symbol, which keeps the load short. The first anisotropic Hill tensor compiles QuadGK twice, where it would compile it four times with a second instance of each integral for the work counters of the benchmark and a second outer integral for the breakpoints of a very flat ellipsoid: the integrand of the counters reads their flag at each node, and the breakpoint variant sits behind an inference barrier, compiled when a flat ellipsoid comes.
 
-A precompile workload was measured and not kept: compiling the first calls
-into the package image removed them (0.005 s for the anisotropic Hill tensor)
-but added 31 s to every precompilation of the package, and moved the run time
-of a few microsecond kernels by up to 5 % either way.
+A precompile workload was measured and not kept: compiling the first calls into the package image removes them (0.005 s for the anisotropic Hill tensor) but adds 31 s to every precompilation of the package, and moves the run time of a few microsecond kernels by up to 5 % either way.
 
 ## Where the cost actually is
 
@@ -232,7 +160,7 @@ Rough ordering, useful for deciding what to optimize:
 | `Residue` (3-D anisotropic, `:residues` only) | ~3 ms; one eigenvalue solve and a residue sum per node of a 1-D quadrature. Not the default: it takes `Float64` coefficients only |
 | `NestedQuadGK` / `DECUHR` (3-D anisotropic; `:auto` is `NestedQuadGK`) | ~1 ms / ~4 ms on a triaxial ellipsoid in a triclinic matrix ([Performance vs Echoes](@ref dev-benchmarks)); adaptive cubature, AD-safe, robust everywhere; `NestedQuadGK` is also the more accurate, ~1e-13 against 1e-11 to 1e-8 at the default tolerances |
 | ALV (aging linear Volterra) | dominates everything: operators are ``(B n)\times(B n)`` block-triangular matrices, so cost grows with the *square* of the time-grid length. [`VolterraOperator`](@ref) stores an operator by the blocks of its symmetry class precisely to cut the storage and the Volterra algebra from ``36n^2`` down to ``2n^2``–``12n^2``; see [Aging linear Volterra behavior](@ref th-viscoelasticity). |
-| Spheroid coupling matrices | quadrature backend is `Float64` and converges to machine precision; the `:series` BigFloat backend is an *oracle*, orders of magnitude slower, and should never be a default |
+| Spheroid coupling matrices | quadrature backend is `Float64` and converges to machine precision; the `:series` BigFloat backend is a reference solution, orders of magnitude slower, and should never be a default |
 
 ## Where to go next
 

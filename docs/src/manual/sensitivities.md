@@ -21,11 +21,11 @@ Every kernel (`hill_tensor`, `eshelby_tensor`, the ten schemes, the
 SC/ASC/Differential solvers) is `ForwardDiff.Dual`-friendly, pinned by
 `test/Schemes/test_dual_compat.jl`. The sensitivity API lifts that property
 into a user-facing form: no manual RVE rebuild with `Dual` values, no `Tag`
-plumbing, no scalar extraction by hand.
+bookkeeping, no scalar extraction by hand.
 
 Practical consequences:
 
-- **Geometry parameters are first-class.** Differentiate w.r.t. semi-axes,
+- **Geometry parameters are differentiable in their own right.** Differentiate w.r.t. semi-axes,
   crack opening, distribution-shape envelopes, anything stored as a `Number`
   field on an inclusion.
 - **User-defined inclusions just work.** Define your own
@@ -53,7 +53,7 @@ add_phase!(rve, :I, Ellipsoid(1.0),
 ```
 
 That's it — no closure to write, no manual `set_param`/`homogenize`
-plumbing.
+bookkeeping.
 
 ## [Parameter lenses](@id man-sensitivities-lenses)
 
@@ -155,11 +155,11 @@ upscaling (SC hydrate foam + two Mori-Tanaka stages) requiring
 
 - **Manual chain rule** — one `jacobian` per scale, then a tensor product of
   the partial Jacobians; use it when the intermediate partials matter.
-- **End-to-end autodiff** — a single `ForwardDiff.derivative` on the nested
+- **Whole-calculation autodiff** — a single `ForwardDiff.derivative` on the nested
   closure; shorter and scheme-agnostic.
 
 Both approaches agree to the floor of ForwardDiff itself, and the
-end-to-end approach is the recommended default unless you specifically
+whole-calculation approach is the recommended default unless you specifically
 need the intermediate Jacobians.
 
 ## Symmetrize and orientation distributions
@@ -203,7 +203,7 @@ projection automatically.
   in the parametric type, so the symmetry-imposed derivative is `0`. To
   get a non-trivial geometric sensitivity, perturb around an already
   non-degenerate (`Triaxial` / `Prolate` / `Oblate`) configuration.
-- **TI symmetrize on non-coaxial inclusions** routes the matrix used for
+- **TI symmetrize on non-coaxial inclusions** passes the matrix used for
   the concentration-tensor computation through an isotropic projection —
   the result still satisfies the outer `TI(axis)` projection, and is
   exact at the iso fixed-point of the SC iteration. This is documented

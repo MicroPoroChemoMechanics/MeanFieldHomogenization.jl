@@ -34,7 +34,7 @@ in a matrix `C₀`.  For a dilute family of inclusions of volume fraction
     ``\\mathbb{N} = \\mathbb{A}_{\\sigma\\varepsilon} - \\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` is used instead — it needs no `C₁`, only the two
     concentration tensors, and reduces to the expression above whenever a
     uniform `C₁` does exist. This is what lets a layered or finite-element
-    inclusion reach the schemes through gate B alone.
+    inclusion reach the schemes through level B alone.
 
 See [kachanov2018](@citet).
 """

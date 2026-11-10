@@ -30,7 +30,7 @@
 # `09_cod_symbolic_green.jl` stops at transverse isotropy aligned with the crack.
 # Here ``\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi}`` is a
 # **scalar**, a quadratic in ``\xi_n``, and the integral closes for *every*
-# anisotropy. There is no § "where the symbolic route stops".
+# anisotropy. There is no § "where the symbolic approach stops".
 #
 # What the script establishes, with the six components of ``\boldsymbol{K}_0``
 # free symbols throughout:
@@ -459,7 +459,7 @@ let b_penny_text = 8 / (3 * PI * k₀),
     println("  penny (η=1) : b = ", b_penny_here, "  = 8/(3πk₀), the textbook jump")   #jl
 end
 
-# ### The Hill-tensor flattening oracle
+# ### The Hill-tensor flattening check
 #
 # Independent of everything above: take the order-2 second Hill tensor of a
 # flat ellipsoid, ``\boldsymbol{\Lambda} = \boldsymbol{K}_0 -
@@ -468,7 +468,7 @@ end
 # ``\omega = c/\underline{b}``. The limit must be
 # ``\tfrac34\,b\,\underline{n}\otimes\underline{n}``.
 
-"`R₃₃` from the flattening route, at finite flatness `ω = c/b`."
+"`R₃₃` from the flattening approach, at finite flatness `ω = c/b`."
 function R_from_hill(a, bmin, ω, k)
     Λ = second_hill_tensor(Ellipsoid(a, bmin, ω * bmin), TensISO{3}(k))   # 𝑲₀ − 𝑲₀·𝑷·𝑲₀
     return ω * canonical_components(inv(Λ))[3, 3]
@@ -478,18 +478,15 @@ for ηv in (1.0, 0.5)
     b_here = Float64(N(subs(b_iso, Dict(k₀ => Sym(1), η => Sym(ηv)))))
     target = 0.75 * b_here
     vals = [R_from_hill(1.0, ηv, ω, 1.0) for ω in (1.0e-2, 1.0e-3)]
-    @printf "  η = %.2f : (3/4)·b = %.6f   vs  ω-oracle %.6f → %.6f\n" ηv target vals[1] vals[2]   #jl
-    @assert abs(vals[2] - target) / target < 5.0e-3 "the flattening oracle disagrees at η = $ηv"
+    @printf "  η = %.2f : (3/4)·b = %.6f   vs  ω-reference %.6f → %.6f\n" ηv target vals[1] vals[2]   #jl
+    @assert abs(vals[2] - target) / target < 5.0e-3 "the flattening reference disagrees at η = $ηv"
 end
 
 # ### The shipped closed forms
 #
-# Since v0.4.0 the package evaluates exactly the formulas derived above, through
-# the same adjugate route — so this is a genuine end-to-end check of
-# [`cod_tensor`](@ref) against the symbolic chain, isotropic, aligned-TI and
-# fully anisotropic alike. (Up to v0.3.2 the shipped values were smaller by
-# ``4\pi/(3\eta)`` and ``\pi^{2}/4``; writing this derivation down is what
-# surfaced that.)
+# The package evaluates exactly the formulas derived above, through the same
+# adjugate path, so that this is a check of [`cod_tensor`](@ref) against the
+# symbolic chain, for isotropic, aligned-TI and fully anisotropic media alike.
 
 let vals = Dict(k₀ => Sym(1))
     for ηv in (1.0, 0.6, 0.3)

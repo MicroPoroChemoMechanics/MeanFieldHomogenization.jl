@@ -1,7 +1,7 @@
 # [Finite-element inclusions](@id man-fe-inclusions)
 
 !!! info "Before this page"
-    [Custom inclusions](@ref man-custom-inclusions), whose entry gates every
+    [Custom inclusions](@ref man-custom-inclusions), whose entry levels every
     finite-element inclusion implements, and
     [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
     where the cell solved below is derived.
@@ -63,7 +63,7 @@ This is the first-order corrected boundary condition of
 [adessinaIJES2017](@cite). It is set out in full, with the fixed point and the
 closed-form dipole fields, in
 [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell);
-what it buys, measured against the closed form, is in
+what it gives, measured against the closed form, is in
 [Validating a finite-element crack](@ref tut-fe-crack).
 
 One consequence of using a closed-form dipole is worth stating up front,
@@ -99,7 +99,7 @@ Geometry first, then the mesh as keyword arguments. Every finite-element
 inclusion takes its discretization this way, with defaults that already work:
 
 ```julia
-crack = FEEllipticCrack(1.0, 0.25; htipdiv = 12.0)          # a, b, mesh knobs
+crack = FEEllipticCrack(1.0, 0.25; htipdiv = 12.0)          # a, b, mesh parameters
 ```
 
 Nothing is meshed yet. The mesh is built, assembled and factorized on the
@@ -117,8 +117,8 @@ add_phase!(rve, :cracks, crack, Dict(:C => C₀); density = 0.05,
 homogenize(rve, MoriTanaka(), :C)
 ```
 
-That is the whole point of the [custom-inclusion
-contract](@ref man-custom-inclusions): the inclusion implements *one* response
+This is the purpose of the [custom-inclusion
+interface](@ref man-custom-inclusions): the inclusion implements *one* response
 function, and everything else — the other concentration tensors, the
 contribution tensors, orientation averaging, the bounds — is derived by the
 package from that one. The tensor can also be asked for on its own, which is
@@ -152,7 +152,7 @@ inclusion in the same matrix shares a single finite-element resolution.
 So one-shot schemes (`Dilute`, `MoriTanaka`, `Maxwell`,
 `PonteCastanedaWillis`) cost exactly one solve — including an orientation
 average under `IsoSymmetrize`. Iterative schemes (`SelfConsistent`,
-`DifferentialScheme`) move the reference medium at every step and pay one solve
+`DifferentialScheme`) move the reference medium at every step and need one solve
 per distinct ``\mathbb C_0``: usable, but expect a handful of assemblies per
 run.
 
@@ -223,8 +223,8 @@ backend exists.
 subtypes `AbstractCustomInclusion`, declares its
 [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait), holds an
 [`FECache`](@ref MeanFieldHomogenization.FECache), and implements the one
-response function of its entry gate. [Adding a new
-inclusion](@ref dev-adding-inclusion) is the leveled contract, gate by gate.
+response function of its entry level. [Adding a new
+inclusion](@ref dev-adding-inclusion) is the leveled interface, level by level.
 
 Two questions come up for almost any new shape, so they are answered here
 rather than inside a case.
@@ -235,14 +235,14 @@ nodes and triangles, no parametrization — and let it mesh the volume between
 that surface and the outer boundary. It leaves the given surface meshes
 untouched, which is the division of labor wanted: the boundary is yours, the
 interior is the mesher's. That is how the supersphere is done, and the same
-route works for anything star-shaped about its center.
+approach works for anything star-shaped about its center.
 
 *My inclusion is a cavity.* Then declare
 `is_homogeneous_inclusion` **false** and supply an exactly zero stress-side
 concentration. That reads as a paradox — a cavity is uniformly empty, so surely
 it is homogeneous — but the flag asks whether a single ``\mathbb C_1``
 describes the interior, and for a cavity ``\mathrm{inv}(\mathbb C_1)`` is
-meaningless. Answering `false` routes every contribution tensor through the
+meaningless. Answering `false` sends every contribution tensor through the
 package's exact identities, which for a zero stress side collapse to
 ``\mathbb N = -\mathbb C_0:\mathbb A`` and
 ``\mathbb H = \mathbb A:\mathbb S_0``. Answering `true` instead sends the
@@ -311,7 +311,7 @@ capped at P2 for the reason listed above.
 ### A sphere with an off-center core
 
 [`FEExcenteredSphere`](@ref MeanFieldHomogenization.FEExcenteredSphere) is the
-*heterogeneous* case, and it enters through gate B: being internally
+*heterogeneous* case, and it enters through level B: being internally
 heterogeneous it has no Hill tensor, so it supplies both concentration tensors
 directly. Its constituents live in the geometry object, core first then shell,
 and the `Dict` handed to `add_phase!` is a placeholder the kernel ignores.
@@ -329,7 +329,7 @@ within the inclusion. Because the geometry is axisymmetric, the cell is meshed
 in the **meridian half-plane** and the azimuthal dependence is carried by
 Fourier modes — a two-dimensional mesh for a three-dimensional answer. See
 [`FEAxiMeshOptions`](@ref MeanFieldHomogenization.FEAxiMeshOptions) for the
-knobs and [A recycled-concrete aggregate](@ref app-recycled-aggregate) for the
+mesh parameters and [A recycled-concrete aggregate](@ref app-recycled-aggregate) for the
 worked application, where the same correction is used in its general
 polarization-fixed-point form.
 
@@ -366,12 +366,12 @@ checks.
 |:--|:--|:--|
 | `radius_ratio` | `4.0` | outer radius over the shape's **bounding** radius |
 | `level` | `4` | inclusion surface subdivision: ``8\cdot4^{\mathrm{level}}`` triangles |
-| `outer_level` | `3` | outer sphere subdivision — not a free knob, see below |
+| `outer_level` | `3` | outer sphere subdivision — not a free parameter, see below |
 | `relax` | `60` | tangential relaxation sweeps on the inclusion surface |
 | `octant` | `false` | mesh one **eighth** of the cell — see below |
 | `max_dofs`, `min_free_gb` | `200_000`, `6.0` | refuse a solve this machine cannot afford |
 
-Five things about this cell are worth knowing before turning the knobs.
+Five things about this cell are worth knowing before the parameters are changed.
 
 **`octant = true` meshes one eighth of it, and the answer is the same.** The
 condition is that the three coordinate planes be mirror planes of the shape —
@@ -391,14 +391,14 @@ few percent of the norm, the octant at zero. The derivation is in
 
 **`radius_ratio` multiplies the bounding radius, not ``a``.** For an elongated
 superspheroid the two differ by the aspect ratio, and using ``a`` lets the outer
-boundary come within ``1.2c`` of the body — where the exact spheroid gate falls
+boundary come within ``1.2c`` of the body — where the error against the exact spheroid rises
 from ``10^{-5}`` to ``5.7\times10^{-3}``. For a supersphere with ``p \le 1`` the
 bounding radius *is* ``a``, so the literature's ``R/a`` convention is preserved
 exactly where the literature uses it.
 
 **`outer_level` is not a resolution trade-off.** At `outer_level = 2` the outer
 boundary carries 128 curved triangles, which does not resolve the ``1/r^2``
-dipole term of the corrected condition: the exact spherical-pore gate then
+dipole term of the corrected condition: the error against the exact spherical pore then
 stalls at ``-2.6\times10^{-4}``. Level 3 takes it to ``-6.9\times10^{-6}``.
 
 **The boundary is curved, and it matters by a factor of about 16 in cost.**
@@ -433,7 +433,7 @@ pore = FEAxiSupershapePore(Superspheroid(1.0, 2.0, 0.7);
                            opts = FEAxiMeshOptions(; nradial = 24, radius_ratio = 6.0))
 ```
 
-Everything downstream is unchanged — the same gate B, the same exactly-zero
+Everything downstream is unchanged — the same level B, the same exactly-zero
 stress side, the same `Dict` placeholder for the phase property. What differs is
 what you get for the cost:
 
@@ -447,7 +447,7 @@ what you get for the cost:
   exterior perturbation being a pure dipole with no higher multipole for the
   corrected condition to truncate.
 
-Three things to know before turning the knobs. `radius_ratio` multiplies the
+Three points on the mesh parameters. `radius_ratio` multiplies the
 **bounding radius**, as for the three-dimensional cell, so an elongated shape
 does not end up with its boundary at ``1.2c``. The meridian profile is **graded**
 towards its two corners for a concave shape — `nprofile` sets how finely it is
@@ -497,7 +497,7 @@ Nesting is checked at construction by
 two coaxial concentric ellipses are nested if and only if **both** semi-axes
 grow outwards, so it is two comparisons per layer. Worth doing rather than
 trusting — a violation is not a wrong answer but a self-intersecting geometry
-that gmsh rejects from inside its own pipeline, naming neither the layer nor the
+that gmsh rejects from inside its own meshing chain, naming neither the layer nor the
 semi-axis.
 
 **What it is checked against.** The space of nested spheroids is crossed by two
@@ -529,7 +529,7 @@ in the package is the three-dimensional crack's — so a spring, membrane, Kapit
 or surface-conductive layer is refused **by name** at construction rather than
 accepted and ignored.
 
-Being heterogeneous, the inclusion enters through gate B with **both**
+Being heterogeneous, the inclusion enters through level B with **both**
 concentration tensors, measured on the same solve: the stress side is not
 ``\mathbb C_1 : \mathbb A_{\varepsilon\varepsilon}`` for any single
 ``\mathbb C_1``. `Voigt` and `Reuss` work because the internal volume fractions
@@ -552,7 +552,7 @@ Named here so that the boundary of what exists is explicit:
 - **solid** supershape inclusions. The cell is set up for a cavity: it meshes
   the matrix shell alone and leaves the inclusion boundary free, which is what
   makes the stress-side concentration exactly zero. A solid inclusion would have
-  to be meshed too, and would enter through gate B with two measured tensors,
+  to be meshed too, and would enter through level B with two measured tensors,
   as the off-center core does;
 
 These are tracked in the [roadmap](@ref dev-roadmap).
@@ -579,9 +579,9 @@ limitations with a network trained on these solves. The tutorial
 [Validating a finite-element crack](@ref tut-fe-crack) measures the corrected
 cell against the closed form, and
 [A recycled-concrete aggregate](@ref app-recycled-aggregate) works the
-axisymmetric case end to end.
+axisymmetric case through the whole calculation.
 
-- [Custom inclusions](@ref man-custom-inclusions) — the contract these
-  implement, and its three entry gates
+- [Custom inclusions](@ref man-custom-inclusions) — the interface these
+  implement, and its three entry levels
 - [Adding a new inclusion](@ref dev-adding-inclusion) — the full developer
-  contract
+  interface

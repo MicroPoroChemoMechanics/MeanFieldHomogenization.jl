@@ -62,7 +62,7 @@ Give **at most one** of:
 The default is the canonical frame `n = e₃`, for which the kernel skips the
 frame rotation entirely.
 
-All three routes accept **symbolic** components, and so does the element type of
+All three approaches accept **symbolic** components, and so does the element type of
 the frame itself: `Laminate(; normal = (0, sin(θ), cos(θ)))` and
 `Laminate(; euler_angles = (θ, 0, 0))` are ordinary laminates.
 
@@ -195,7 +195,7 @@ given as a plain matrix, or converted from its own basis when given as a
 `TensND` tensor. Feeding the tensor form the isotropic values reproduces the
 scalar form exactly.
 
-Both oracles stay exact with a full tensor — the compliance simply adds to the
+Both exact reference solutions stay exact with a full tensor — the compliance simply adds to the
 out-of-plane series law, the surface stiffness to the in-plane one. What does
 change is the **symmetry of the result**: an anisotropic interface breaks
 transverse isotropy just as an anisotropic layer does, so such a cell returns

@@ -1,7 +1,7 @@
 # =============================================================================
 #  52_rabotnov_mittag_leffler.jl
 #
-#  Closed-form validation of the ALV homogenization pipeline against the
+#  Closed-form validation of the ALV homogenization against the
 #  Rabotnov / Mittag-Leffler benchmark of @barthelemyIJES2019 §5.
 #
 #  The matrix is a non-aging fractional Maxwell with shear relaxation
@@ -24,9 +24,7 @@
 #  This script computes the homogenized effective shear via
 #  `homogenize_alv` and overlays the closed-form curves.
 #
-#  The Mittag-Leffler function used to come from the ECHOES Python test suite
-#  through a Python bridge, which made this script machine-dependent.  It no longer
-#  does.  Two things replaced it:
+#  The Mittag-Leffler function is evaluated in pure Julia, by one of two ways:
 #
 #    * `MittagLeffler.jl` (a weak dependency) when it is loaded — the
 #      `Rabotnov` model then evaluates `E_{α+1,1}` directly, and `α ∈ (-1,0)`

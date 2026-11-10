@@ -144,7 +144,7 @@ for (i, ϖ) in enumerate(OBL)
     @printf "%-8.3f %12.4f %12.4f %12.4f %12.4f\n" ϖ kt_obl[0.25][i] ka_obl[0.25][i] kt_obl[2.0][i] ka_obl[2.0][i]
 end
 println()
-println("Sanity checks:")
+println("Checks:")
 @printf "  β → 0 recovers the insulating particle : k_t = %.2e (expect ≈ %.0e)\n" _keq(0.5, 1.0e-9)[1] KCORE
 println(
     "  k^eq grows monotonically with β at fixed shape :        ",

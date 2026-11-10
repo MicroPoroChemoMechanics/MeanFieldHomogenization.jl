@@ -65,7 +65,7 @@ supplied here if that scheme is wanted.
     geometries and preserves the particle names.
 
 !!! warning "There is no way back"
-    `RVE(asm)` discards the positions, which is the whole point — but it means
+    `RVE(asm)` discards the positions, which is the purpose — but it means
     the result can no longer feed [`ClusterModel`](@ref) or
     [`EquivalentInclusion`](@ref). Those need the assembly itself.
 

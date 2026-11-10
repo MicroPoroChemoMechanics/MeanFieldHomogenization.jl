@@ -244,7 +244,7 @@ const AXI = FEAxiMeshOptions(; nradial = 28, radius_ratio = 6.0)
 # A subset of their Table B.1 and B.4, for comparison. Seven of eighteen rows,
 # spanning the concave range they study and their `p = 1` control.
 # Table B.1 in full, all eighteen rows, transcribed from the paper. Their own
-# mesh-convergence check is Table B.3, and it is the honest yardstick for any
+# mesh-convergence check is Table B.3, and it is the faithful yardstick for any
 # comparison: between their two meshes the components move by up to 2.50 % at
 # `p = 0.30` (on `H₁₁₃₃`) and 0.4 % on `H₃₃₃₃`, so agreement closer than that
 # is agreement to within their own resolution.
@@ -399,7 +399,7 @@ let path = joinpath(tempdir(), "axi_vs_sevostianov.csv")
 end
 
 println("\n", "="^78)
-println("What the correction buys, and the proof of its sign")
+println("What the correction gives, and the proof of its sign")
 println("-"^78)
 println("The uncorrected answer drifts as (a/R)^3; the corrected one does not.")
 println("A wrong sign would leave twice the bias instead of none.")
