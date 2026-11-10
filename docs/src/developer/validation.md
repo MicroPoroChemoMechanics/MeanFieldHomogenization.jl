@@ -3,7 +3,7 @@
 !!! info "Before this page"
     [From Echoes to MeanFieldHomogenization](@ref tools-from-echoes), for the
     PythonCall setup the cross-checks rely on, and
-    [Testing conventions](@ref dev-testing-conventions), for the oracles of the
+    [Testing conventions](@ref dev-testing-conventions), for the reference solutions of the
     test suite that these cross-checks complement.
 
 `MeanFieldHomogenization` is a port of the C++ [`Echoes`](@cite echoes) code, so nearly
@@ -44,7 +44,7 @@ ones also ship `*_python.json` dumps so they run without an Echoes install.
 | Dual-interface concentrations / effective diffusivity | 1e-8 / 1e-5 |
 | Cracked ALV creep, PCW / SC + interface | 1e-4 / 1.4e-4 |
 | Elastic and conduction schemes on complex cells (38 cells) | 6e-13; differential 8e-8 |
-| ALV schemes on complex cells (harness, 54 cells) | 4e-11; differential 8e-8 |
+| ALV schemes on complex cells (comparison script, 54 cells) | 4e-11; differential 8e-8 |
 | Three-scale mortar ``k, \mu, E`` / ``f_c`` | 0.65 % / 0.63 % for ``\alpha > 0.1``; 3.5 % / 2.9 % at ``\alpha = 0.05``, moduli below 1 GPa |
 
 ## Deliberate divergences
@@ -99,7 +99,7 @@ python -I scripts/bench_echoes/alv_harness/make_test_references.py
 ```
 
 Echoes integrates the differential scheme by explicit Euler steps: its reference is the
-Richardson extrapolation from 400 and 800 steps, hence the looser agreement. The harness
+Richardson extrapolation from 400 and 800 steps, hence the looser agreement. The comparison script
 itself is described in `scripts/bench_echoes/alv_harness/README.md`.
 
 ## Where to go next

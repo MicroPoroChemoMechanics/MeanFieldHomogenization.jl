@@ -23,7 +23,7 @@ Contents
 - `pair_ball_iso.jl`   : closed forms for two balls (3D) or two disks (2D) in
                           an isotropic reference — exact at any separation
 - `pair_multipole.jl`  : truncated multipole expansion for general ellipsoids
-- `pair_quadrature.jl` : brute-force product quadrature, the validation oracle
+- `pair_quadrature.jl` : brute-force product quadrature, the validation reference
 - `lattice_sums.jl`    : sums over the periodic images of a source inclusion
 """
 module Interactions

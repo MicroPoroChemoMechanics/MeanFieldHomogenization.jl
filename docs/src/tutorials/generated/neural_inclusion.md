@@ -10,8 +10,8 @@ EditURL = "../../../../scripts/84_neural_inclusion_ellipsoid.jl"
     once, then `julia scripts/84_neural_inclusion_ellipsoid.jl`, runs it end to end.
 
 !!! info "Before this page"
-    The tutorial [The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract),
-    whose gates the surrogate enters through, and the theory page
+    The tutorial [The custom-inclusion interface: three entry levels, one answer](@ref tut-custom-inclusion-contract),
+    whose levels the surrogate enters through, and the theory page
     [Hill polarization tensors](@ref th-hill-tensors), whose closed form for
     the ellipsoid is the exact answer the surrogate is held to.
 
@@ -24,11 +24,11 @@ network**, which is what this script drives.
 
 The morphology here is the *ellipsoid*, whose Hill tensor is known in closed
 form. That is the point: it is the one case where a surrogate can be held to an
-exact answer, so every part of the pipeline — the sampling, the labeling, the
+exact answer, so every part of the chain — the sampling, the labeling, the
 decode, the frame conventions, the schemes, the sensitivities — can be checked
 before being pointed at something unknown.
 
-What a surrogate buys, and what it does not:
+What a surrogate gives, and what it does not:
 
 | | analytic ellipsoid | finite elements | surrogate |
 |---|---|---|---|
@@ -200,7 +200,7 @@ nn_spheroid(ω; kw...) = NeuralHillInclusion(
 )
 ````
 
-`check_inclusion_interface` reports which gate the inclusion satisfies. Gate A
+`check_inclusion_interface` reports which level the inclusion satisfies. Level A
 — the Hill tensor — is the most complete: the eight concentration tensors, the
 four contribution tensors and every scheme are derived from it.
 
@@ -216,7 +216,7 @@ of the Hill tensor are exact, and all three are enforced by construction rather
 than fitted — so they hold to machine precision no matter how badly the network
 is trained.
 
-**Zero contrast.** Gate A supplies ``\mathbb P``, and the package evaluates
+**Zero contrast.** Level A supplies ``\mathbb P``, and the package evaluates
 
 ```math
 \mathbb A_{\varepsilon\varepsilon}
@@ -407,7 +407,7 @@ plt
 
 ## §6 In every scheme
 
-Gate A means there is nothing left to implement: the surrogate is a drop-in
+Level A means there is nothing left to implement: the surrogate is a drop-in
 `Ellipsoid`, in elasticity and in transport. The inclusion is tilted, so the
 effective tensor is genuinely anisotropic and a dropped rotation cannot hide
 behind an isotropic answer.
@@ -541,7 +541,7 @@ sensitivity API finds the geometric field by reflection, with no library change.
 
 The finite-element inclusions refuse exactly this request: their solve runs in
 `Float64` and memoizes on the reference medium alone, so the derivative would
-come back as a silent zero. Refusing is the only honest option there; here
+come back as a silent zero. Refusing is the only correct option there; here
 there is nothing to refuse.
 
 ````@example neural_inclusion

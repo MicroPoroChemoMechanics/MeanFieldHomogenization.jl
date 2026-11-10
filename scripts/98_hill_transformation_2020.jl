@@ -751,7 +751,7 @@ dP_mfh = ForwardDiff.derivative(x -> hill_tensor(Ellipsoid(1.0, 1.0, 0.2), ti_fr
 #
 # The partial fractions of Table D.2 divide by ``\eta_2^2 - \eta_1^2``. A
 # matrix close to isotropy has close acoustic roots, and the general row then
-# subtracts nearly equal terms; the exact isotropic matrix lands, after the
+# subtracts nearly equal terms; the exact isotropic matrix falls, after the
 # rounding of ``\sqrt{\Delta}``, on it as well. Take an isotropic matrix of
 # moduli ``\lambda = 1``, ``\mu = 1`` and stiffen ``C_{3333}`` by a relative
 # ``\delta``:

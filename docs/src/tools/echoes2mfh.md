@@ -60,7 +60,7 @@ Three things happened that are not local rewrites:
 **The RVE was lifted into a builder.** Echoes mutates one module-level RVE;
 in MFH the fraction of the phase declared `:rest` is *derived*
 (`1 - Σ f`) rather than settable. The construction therefore becomes a function of
-whatever the script varies. Note that `ver["SOLID"].fraction = 1 - f` is
+whatever the script varies. The assignment `ver["SOLID"].fraction = 1 - f` is
 **dropped, not translated** — in MFH it is not merely redundant, it raises.
 
 **Solver options moved into the scheme.** Echoes passes `epsrel`, `maxnb` and
@@ -161,7 +161,7 @@ captured Echoes 1.0 values exactly (Mori-Tanaka at ``\varphi = 0.3``:
 `check-drift` compares the mapping tables against both live APIs: it scrapes
 the Echoes symbol list from the pybind11 sources and the MFH export list from
 `src/MeanFieldHomogenization.jl`, then reports any symbol that is neither mapped nor
-explicitly refused, and any mapping target MFH no longer exports.
+explicitly refused, and any mapping target that MFH does not export.
 
 ## Where to go next
 

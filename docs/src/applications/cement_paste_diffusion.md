@@ -202,7 +202,7 @@ end
 ```
 
 The two agree exactly. Note what the declarative form does *not* change: the
-percolation gate (`k_mu(C_foam)[1] < 1e-6 ⇒ E = 0`) is a decision taken
+percolation condition (`k_mu(C_foam)[1] < 1e-6 ⇒ E = 0`) is a decision taken
 *between* the scales, so it stays in the explicit driver — which is why the
 production model on this page keeps the explicit form. The declarative
 variant is shown here for the microstructure-description saving, which is
@@ -551,7 +551,7 @@ plot(threshold_panel(Ze, "Elastic φ_elas (%)"),
     layout = (1, 2), left_margin = 8Plots.mm, bottom_margin = 8Plots.mm, size = (1000, 450))
 ```
 
-The same two threshold maps as **interactive 3D surfaces** over
+The same two threshold maps as **interactive 3D surface plots** over
 ``(\log_{10}\omega_s, \log_{10}\omega_p)`` — rotate, zoom and hover to read
 values, exactly as the Echoes book renders them with Plotly:
 

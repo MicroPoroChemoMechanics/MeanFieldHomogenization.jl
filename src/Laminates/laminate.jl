@@ -345,7 +345,7 @@ Base.eltype(::Type{<:Laminate{T}}) where {T} = T
 """
     validate_laminate(lam)
 
-Sanity-check the cell: at least one layer, one interface per layer,
+Check the cell: at least one layer, one interface per layer,
 non-negative thicknesses and a strictly positive period.
 
 The requirement that `validate_rve` imposes and this one cannot — a

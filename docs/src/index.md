@@ -35,7 +35,7 @@ features:
     link: /manual/
   - icon: 🎓
     title: Tutorials
-    details: The API by worked example, topic by topic, each page runnable end to end.
+    details: The API by worked example, topic by topic, each page runnable in full.
     link: /tutorials/
   - icon: 🧪
     title: Applications
@@ -82,7 +82,7 @@ viscoelasticity.
 mean-field homogenization library written in C++ with a Python interface by the same
 author at Cerema, documented in its own
 [manual](https://jfbarthelemy.github.io/echoes/). The Eshelby and Hill machinery,
-the crack tensors, the ``n``-layer sphere, the schemes and the aging viscoelastic route
+the crack tensors, the ``n``-layer sphere, the schemes and the aging viscoelastic approach
 were ported from it, with the methods of the articles it implements: the compliance and
 the Hill polarization tensor of a crack in an anisotropic matrix [barthelemyIJSS2009](@cite),
 the Hill polarization tensor of an ellipsoid and of a crack in an anisotropic conductor
@@ -109,7 +109,7 @@ in [Cross-validation](@ref dev-validation), and their timings are compared in
   response comes from a finite-element solution or a trained network;
 - **interactions**: the cluster model and the equivalent inclusion method, which act on
   the positions of the inclusions instead of a one-site average;
-- **time**: beside the aging route, the non-aging route in the Laplace–Carson domain,
+- **time**: beside the aging approach, the non-aging approach in the Laplace–Carson domain,
   with numerical inversion and a catalog of rheological models;
 - **use**: homogenization as a constitutive law called by a finite-element code, the
   graphical interface MFH Studio, and [`echoes2mfh`](@ref tools-echoes2mfh), which

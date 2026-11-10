@@ -1,10 +1,10 @@
 # [Plugging a law into a computation](@id ml-plugging)
 
 A law of `MaterialLaws` is an [`AbstractMFHMaterial`](@ref): it answers the
-same Gauss-point contract as a homogenized material, so every caller of that
-contract accepts it unchanged. There are two doors, one convenient and one fast.
+same Gauss-point interface as a homogenized material, so every caller of that
+interface accepts it unchanged. There are two doors, one convenient and one fast.
 
-## The contract: TensND tensors, by name
+## The interface: TensND tensors, by name
 
 [`material_response`](@ref) takes the gradients by name, as TensND tensors in
 the global frame and numbers, and returns a [`MaterialResponse`](@ref): the
@@ -54,7 +54,7 @@ bytes(law, g, st)                                             # not at global sc
 ```
 
 An element loop that keeps its strains in Mandel form calls it directly and
-pays only for the arithmetic of the law.
+costs only the arithmetic of the law.
 
 ## Choosing the local algorithm
 

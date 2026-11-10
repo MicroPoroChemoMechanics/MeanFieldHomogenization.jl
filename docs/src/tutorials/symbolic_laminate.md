@@ -287,7 +287,7 @@ describes the same stack.
 ## Why this works at all
 
 Three implementation choices, invisible numerically, are what let the cell run
-symbolically at all — and a page like this one is how they stay honest:
+symbolically at all — and a page like this one keeps them verified:
 
 - the pseudo-inverse is the **cofactor inverse** of the ``3\times3``
   out-of-plane block, never `LinearAlgebra.pinv`: an SVD is not symbolically
@@ -309,7 +309,7 @@ SymPy and Symbolics.jl.
 ## Where to go next
 
 [Symbolic viscoelasticity: closed forms, derived](@ref tut-symbolic-viscoelasticity)
-carries the symbolic route to the rheological models, with symbolic parameters
+carries the symbolic approach to the rheological models, with symbolic parameters
 and a symbolic Laplace-Carson inversion. The numerical laminate, with its
 interfaces and its aging counterpart, is treated in
 [Periodic multilayer: the exact laminate solution](@ref tut-laminate) and

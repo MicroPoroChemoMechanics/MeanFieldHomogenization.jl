@@ -214,7 +214,7 @@ for s in sol_por
     println("    candidate: ksc = ", s[1], ",  μsc = ", s[2])
 end
 
-# Physically meaningful sanity check: the load-bearing (percolating) branch
+# Physically meaningful check: the load-bearing (percolating) branch
 # should vanish exactly at the percolation threshold f = 1/2 for spheres,
 # for ANY matrix moduli (k₀,μ₀). SymPy's simplify does not, by itself,
 # collapse the nested sqrt(perfect square) left by `solve` at a substituted

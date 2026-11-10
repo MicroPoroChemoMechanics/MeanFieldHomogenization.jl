@@ -4,7 +4,7 @@ A law is written as **plain functions and a `NamedTuple` of parameters**.
 There are two ways to write one, and both give a material that runs everywhere
 in the package:
 
-| route | you give | suits |
+| approach | you give | suits |
 |:--|:--|:--|
 | [`PotentialLaw`](@ref) | a free energy, and a dissipation potential if the law has internal variables | elasticity, viscoelasticity, any law of the generalized standard family |
 | [`ResidualLaw`](@ref) | the fluxes, and the residual of the local equations over a step | plasticity, damage, any law written as evolution equations |
@@ -39,7 +39,7 @@ using MeanFieldHomogenization, StaticArrays
 trace_mandel(ε), equivalent_strain(ε)
 ```
 
-## A first law by the potential route
+## A first law by the potential approach
 
 Linear isotropic elasticity is the free energy
 ``\psi = \tfrac{k}{2}(\operatorname{tr}\boldsymbol{\varepsilon})^2 + \mu\,\boldsymbol{e}:\boldsymbol{e}``,
@@ -101,7 +101,7 @@ The two numbers differ by the error of the implicit scheme over steps of 0.1;
 finer steps bring them together. The same law ships as
 [`MaxwellViscoelasticity`](@ref).
 
-## The residual route: plasticity and damage
+## The residual approach: plasticity and damage
 
 When a law is written as evolution equations, give the residual whose root is
 the end of the step. Here is a scalar damage law: the stiffness is degraded by
@@ -169,7 +169,7 @@ are ``\partial\boldsymbol\sigma/\partial\boldsymbol\varepsilon``,
 and ``\partial\phi/\partial p``. A thermo-hydro-mechanical law adds the
 temperature and the entropy the same way, `gradients = (ε = 6, p = 1, T = 1)`;
 a field of another size, a temperature gradient ``\nabla T`` of size 3 with the
-heat flux, is declared by its size too. The residual route takes the same
+heat flux, is declared by its size too. The residual approach takes the same
 `gradients` and `flux_names`, with `fluxes = (g, y, p) -> (σ = …, φ = …)` in
 place of `stress`.
 
@@ -203,7 +203,7 @@ point_response(thermo, heating)[:ε11]           # α ΔT along the ramp
 ## Checking a law
 
 [`check_material_interface`](@ref) exercises a law against the Gauss-point
-contract, including the tangent against a central finite difference of the
+interface, including the tangent against a central finite difference of the
 stress (a check, not a computation the law ever uses):
 
 ```@example mp_writing

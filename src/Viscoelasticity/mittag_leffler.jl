@@ -40,12 +40,5 @@ using MittagLeffler        # activates MeanFieldHomogenizationMittagLefflerExt
     Rabotnov kernel with ``\\alpha > 0`` is not, and falls back on the inversion, which
     agrees with the closed form to about ``10^{-10}`` wherever both can be
     evaluated.
-
-!!! note "This replaces a Python detour"
-    Before this extension, the Rabotnov benchmark reached ``E_{a,b}`` through
-    a Python bridge and an external Python module living outside the repository
-    (`scripts/52_rabotnov_mittag_leffler.jl`, and §11 of the viscoelasticity
-    manual).  That is no longer needed: the transform is closed-form and the
-    time-domain reference is a registered Julia package away.
 """
 _mittag_leffler(a, b, z) = nothing

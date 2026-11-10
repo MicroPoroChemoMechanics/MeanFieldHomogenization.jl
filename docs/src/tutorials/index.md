@@ -34,9 +34,9 @@ average acts on it, and inclusions that go beyond the ellipsoid. Theory:
 | [Hill polarization tensors in practice](@ref tut-hill-tensors) | `hill_tensor` on four geometries; residues vs cubature on an anisotropic matrix; the Eshelby tensor against its closed form; `P` → a dilute estimate |
 | [Hill tensors by reduction to a sphere](@ref tut-hill-reduction) | every Hill tensor is that of a sphere in a transformed medium: the same tensor computed both ways, on a spheroid in a transversely isotropic matrix, a triaxial ellipsoid in a triclinic one and an elliptically orthotropic matrix |
 | [Symmetrization](@ref tut-symmetrization) | exact rotation-group average vs best-fit projection |
-| [The custom-inclusion contract](@ref tut-custom-inclusion-contract) | plugging an arbitrary morphology into every scheme — the three entry gates, the density seam, free orientation averaging |
+| [The custom-inclusion interface](@ref tut-custom-inclusion-contract) | plugging an arbitrary morphology into every scheme — the three entry levels, the density seam, free orientation averaging |
 | [An inclusion whose response is a neural network](@ref tut-neural-inclusion) | both phases — how a surrogate is **trained** (schematics of the network and of the fitting loop, the recorded learning curve) and how a trained one is **used**: what stays exact whatever the fit, accuracy against the closed form, every scheme, and the derivative with respect to the *morphology* |
-| [Replacing a finite-element solve by a surrogate](@ref tut-neural-excentered-sphere) | the case the machinery exists for: the eccentric-core sphere, whose concentration tensors have no closed form. Gate B with the 6-component transversely isotropic pair, the contrast ratios that replace gate A's homogeneity, the accuracy against the finite elements, the speed-up, and a derivative with respect to the **eccentricity** |
+| [Replacing a finite-element solve by a surrogate](@ref tut-neural-excentered-sphere) | the case the machinery exists for: the eccentric-core sphere, whose concentration tensors have no closed form. Level B with the 6-component transversely isotropic pair, the contrast ratios that replace level A's homogeneity, the accuracy against the finite elements, the speed-up, and a derivative with respect to the **eccentricity** |
 
 ## Cracks and degenerate shapes
 
@@ -46,9 +46,9 @@ density. Theory: [Crack opening displacement and compliance](@ref th-cod-tensors
 | Page | What it shows |
 | :--- | :--- |
 | [Cracks and crack density](@ref tut-cracks) | volume fraction → crack density; the COD tensor |
-| [Two routes to a crack: the COD tensor and the flattened ellipsoid](@ref tut-crack-routes) | the identity ``\mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` checked: ``\boldsymbol{B}`` from the crack plane, ``\mathbb{H}`` from the first-order term of the Hill tensor of a flattened ellipsoid (by SymPy in an isotropic matrix, by ForwardDiff in random anisotropic ones); the three integrators of ``\boldsymbol{B}``; an analytic anchor in an elliptically orthotropic matrix |
+| [Two approaches to a crack: the COD tensor and the flattened ellipsoid](@ref tut-crack-routes) | the identity ``\mathbb{H} = \tfrac{3}{4}\,\underline{n}\stackrel{s}{\otimes}\boldsymbol{B}\stackrel{s}{\otimes}\underline{n}`` checked: ``\boldsymbol{B}`` from the crack plane, ``\mathbb{H}`` from the first-order term of the Hill tensor of a flattened ellipsoid (by SymPy in an isotropic matrix, by ForwardDiff in random anisotropic ones); the three integrators of ``\boldsymbol{B}``; an analytic anchor in an elliptically orthotropic matrix |
 | [Crack distributions: isotropic or parallel](@ref tut-crack-distributions) | the same density, two orientation rules; the two self-consistent forms and their two percolation thresholds (9/16 exactly for the compliance form, ≈ 1.158 for the stiffness one); the local-versus-global frame of a `TensRotated` result |
-| [Validating a finite-element crack](@ref tut-fe-crack) | the same crack solved by finite elements: what the corrected boundary condition buys, and convergence to the closed-form COD |
+| [Validating a finite-element crack](@ref tut-fe-crack) | the same crack solved by finite elements: what the corrected boundary condition improves, and convergence to the closed-form COD |
 
 ## The generalized Eshelby problem — morphological patterns
 
@@ -102,14 +102,14 @@ for the N-body schemes, [interaction tensors](@ref th-interaction),
 | Page | What it shows |
 | :--- | :--- |
 | [Viscoelastic composites](@ref tut-viscoelasticity) | complex moduli in the frequency domain; a first taste of aging creep |
-| [The rheological model catalog](@ref tut-rheological-models) | the classical chains, the fractional family and the bituminous models side by side; master curves, Cole-Cole and Black diagrams; the exact 2S2P1D pair in both domains; and one object driving both homogenization routes |
-| [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) | the exact conversion between the two representations: the interlacing that makes it unconditionally robust, the round trip at twenty branches, and two independent closed forms — the Zener relations and the Burgers relaxation function — as oracles |
+| [The rheological model catalog](@ref tut-rheological-models) | the classical chains, the fractional family and the bituminous models side by side; master curves, Cole-Cole and Black diagrams; the exact 2S2P1D pair in both domains; and one object driving both homogenization approaches |
+| [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) | the exact conversion between the two representations: the interlacing that makes it unconditionally robust, the round trip at twenty branches, and two independent closed forms — the Zener relations and the Burgers relaxation function — as references |
 | [Choosing a numerical Laplace inversion](@ref tut-laplace-inversion) | four algorithms measured against four exact pairs; why branch cuts are not the problem and oscillation is; the Gaver-Stehfest optimum and why more terms is worse; `ForwardDiff` straight through |
-| [Frequency or time?](@ref tut-freq-vs-time) | the complex-modulus and time-domain ALV routes, cross-checked on the same non-aging composite |
+| [Frequency or time?](@ref tut-freq-vs-time) | the complex-modulus and time-domain ALV approaches, cross-checked on the same non-aging composite |
 | [Volterra operators: interpolation and inversion](@ref tut-volterra-inversion) | histories and kernels between the instants, doubled instants for loads that jump, and the creep function by inverting the relaxation operator, checked against two closed-form pairs (Zener, aging Maxwell); convergence on uniform and logarithmic grids |
 | [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) | Dilute / Mori-Tanaka / Maxwell / PCW on one creep test; the aspect ratio; where the distribution shape decides the answer |
 | [Aging creep: loading age against inclusion shape](@ref tut-aging-ages-aspect) | aging and morphology on the same output: three loading ages × three aspect ratios, and why the shape effect is an offset independent of the age |
-| [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities) | `ForwardDiff` through the Volterra assembly: the `set_param` lens for RVE parameters, closure capture for moduli and relaxation times |
+| [Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities) | `ForwardDiff` through the Volterra assembly: the `set_param` lens for RVE parameters, closure capture for moduli and relaxation times |
 | [A creeping laminate](@ref tut-laminate-alv) | the exact multilayer in aging viscoelasticity: the same algebra with Volterra products in place of tensor products |
 
 ## Differentiation and solvers
@@ -127,4 +127,4 @@ for the N-body schemes, [interaction tensors](@ref th-interaction),
 | :--- | :--- |
 | [Symbolic spheres](@ref tut-symbolic-spheres) | the same tensor algebra on `SymPy` / `Symbolics` expressions: Eshelby/Hill tensors and the closed-form estimates |
 | [Symbolic laminates: arithmetic and harmonic averages](@ref tut-symbolic-laminate) | the one microstructure whose effective behavior is a closed form, derived symbolically |
-| [Symbolic viscoelasticity](@ref tut-symbolic-viscoelasticity) | models with symbolic parameters, and symbolic Laplace-Carson inversion: the Burgers relaxation function *derived* rather than transcribed, and precisely where the symbolic route stops |
+| [Symbolic viscoelasticity](@ref tut-symbolic-viscoelasticity) | models with symbolic parameters, and symbolic Laplace-Carson inversion: the Burgers relaxation function *derived* rather than transcribed, and precisely where the symbolic approach stops |

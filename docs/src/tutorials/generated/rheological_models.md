@@ -12,7 +12,7 @@ EditURL = "../../../../scripts/65_rheological_models.jl"
 !!! info "Before this page"
     The tutorial [Viscoelastic composites](@ref tut-viscoelasticity), where a
     rheological model first describes a phase, and the theory page
-    [The Laplace-Carson route](@ref th-laplace-carson), which relates the four
+    [The Laplace-Carson approach](@ref th-laplace-carson), which relates the four
     functions a model answers.
 
 A linear viscoelastic material can be described by any one of four
@@ -33,7 +33,7 @@ to ask which.
 
 This page walks the catalog and then shows the two things it is for:
 lifting a pair of scalar models to an isotropic tensor, and driving both
-homogenization routes from one object.
+homogenization approaches from one object.
 
 ````@example rheological_models
 using MeanFieldHomogenization
@@ -216,7 +216,7 @@ So the same model is an exact Laplace-Carson object *and* an exact Volterra
 object: [`creep_kernel`](@ref) gives ``\varphi(t)``,
 [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
 [`creep_kernel_law`](@ref) packages the former as a
-[`ViscoLaw`](@ref) for the aging pipeline. Inverting one must reproduce the
+[`ViscoLaw`](@ref) for the aging calculation. Inverting one must reproduce the
 other:
 
 ````@example rheological_models
@@ -227,7 +227,7 @@ for t in (1.0e-5, 1.0e-3, 1.0e-1, 10.0)
 end
 ````
 
-## §4 One object, two routes
+## §4 One object, two approaches
 
 [`iso_rheology`](@ref) pairs two scalar models into an isotropic fourth-order
 model — here an elastic bulk modulus and a 2S2P1D shear channel. The single
@@ -237,7 +237,7 @@ object then yields
   [`homogenize_lc`](@ref);
 * `ViscoLaw(m)`, which [`homogenize_alv`](@ref) consumes unchanged.
 
-That is the whole point of the catalog: the material is described once.
+The catalog serves this purpose: the material is described once.
 
 ````@example rheological_models
 iso = iso_rheology(Spring(2500.0), binder)

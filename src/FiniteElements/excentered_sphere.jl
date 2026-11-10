@@ -32,7 +32,7 @@ Discretization settings of an axisymmetric finite-element inclusion.
 | `tip_refine` | `16` | element size at the profile's two corners, as a divisor of `h_in` — the same pore only. |
 
 !!! warning "Grading and `nradial` compound"
-    On a concave profile the two knobs multiply rather than add: at `p = 0.20`
+    On a concave profile the two parameters multiply rather than add: at `p = 0.20`
     and `R/a = 6`, `nradial = 20` meshes 68 000 cells, `nradial = 28` 130 000
     and `nradial = 40` 267 000 — the last exceeding a 6 GB budget in elasticity.
     Refine `radius_ratio` before `nradial`: what remains after the dipole
@@ -109,8 +109,8 @@ exact Hervé-Zaoui answer — the reference this type is validated against.
 
 # What it provides
 
-The inclusion is **heterogeneous**, so it enters through gate B of the
-inclusion contract with *both* concentration tensors — the strain-side
+The inclusion is **heterogeneous**, so it enters through level B of the
+inclusion interface with *both* concentration tensors — the strain-side
 ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` and the stress-side ``\\mathbb{A}_{\\sigma\\varepsilon}`` (resp. ``\\boldsymbol{A}_{\\nabla\\nabla}`` and ``\\boldsymbol{A}_{q\\nabla}`` in transport). All
 schemes that consume those two follow: `Dilute`, `MoriTanaka`, `Maxwell`,
 `PonteCastanedaWillis`, `SelfConsistent`, `DifferentialScheme`.

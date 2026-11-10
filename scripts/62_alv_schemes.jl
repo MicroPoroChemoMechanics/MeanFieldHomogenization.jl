@@ -1,8 +1,8 @@
 # # [Aging viscoelastic schemes side by side](@id tut-alv-schemes)
 #
 # !!! info "Before this page"
-#     The tutorial [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time),
-#     which validates the time route used alone below,
+#     The tutorial [Frequency or time? Three approaches to the same viscoelastic composite](@ref tut-freq-vs-time),
+#     which validates the time approach used alone below,
 #     [Volterra operators: interpolation and inversion](@ref tut-volterra-inversion),
 #     which reads a creep function off an inverted relaxation operator on scalar examples,
 #     and the theory page
@@ -46,7 +46,7 @@ gr()  # headless backend; GKSwstype is set to "100" before Literate runs
 #
 # Because ``a`` depends on ``t'`` alone and the exponential on ``t-t'``, the
 # kernel is **not** a function of ``t-t'``: the material ages, the
-# correspondence principle does not apply, and only the time-domain route
+# correspondence principle does not apply, and only the time-domain approach
 # [`homogenize_alv`](@ref) can reach the answer.
 
 const k₀, μ₀, τ = 5.0, 2.0, 1.0

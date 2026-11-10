@@ -138,7 +138,7 @@ against_numerics(P_reduced, ellipsoid, C_eo)
 #
 # With no class left to keep, a triclinic matrix and a rotated ellipsoid of
 # three distinct semi-axes, the stretched medium is triclinic as well and the
-# sphere in it needs a numerical method too. The reduction still pays: on the
+# sphere in it needs a numerical method too. The reduction still helps: on the
 # sphere the denominator ``\|\boldsymbol{A}\cdot\underline{\xi}\|^{3}`` of the
 # ``\underline{\xi}`` form of the Hill tensor is one. Here the sphere is treated
 # by the residue algorithm.

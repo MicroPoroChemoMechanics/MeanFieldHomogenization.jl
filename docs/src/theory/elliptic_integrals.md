@@ -5,7 +5,7 @@
     integrals for a spheroid are expressed through the functions defined here.
 
 The [`MeanFieldHomogenization.Elliptic`](@ref MeanFieldHomogenization.Elliptic) submodule provides
-type-generic Legendre and Carlson integrals that flow end-to-end through
+type-generic Legendre and Carlson integrals that pass unchanged through
 automatic differentiation (`ForwardDiff.Dual`), arbitrary precision
 (`BigFloat`) and symbolic scalars (`SymPyPythonCall.Sym`, `Symbolics.Num`).
 
@@ -119,7 +119,7 @@ the integrals as unexpanded calls.
     input this builds a deeply nested symbolic tree that overflows
     SymPy's pretty-printer. The weak extension `MeanFieldHomogenizationSymPyPythonCallExt`
     (loaded automatically whenever `SymPy` is loaded alongside
-    `MeanFieldHomogenization`) routes `ell_K`, `ell_E`, `ell_F` on `Sym` arguments
+    `MeanFieldHomogenization`) approaches `ell_K`, `ell_E`, `ell_F` on `Sym` arguments
     directly to `sympy.elliptic_{k,e,f}`, returning the native closed
     form instead.
 

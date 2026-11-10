@@ -40,7 +40,7 @@ Everything is plain TensND algebra, hence type-generic (`Float64`, `BigFloat`,
     The relations above hold when the solid phase has *uniform* elastic
     properties — the case of a rock matrix with pores or fractures. A medium
     built from two distinct solid constituents needs the general
-    Levin/eigenstrain route, and `C_s` is then not defined.
+    Levin/eigenstrain approach, and `C_s` is then not defined.
 """
 module Poromechanics
 

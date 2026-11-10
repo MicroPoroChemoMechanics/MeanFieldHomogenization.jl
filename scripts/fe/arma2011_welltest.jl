@@ -86,7 +86,7 @@ end
 Fracture conductivity giving a prescribed radial permeability.
 
 Past the percolation threshold the estimate is proportional to γ = C/2a, so two
-secant steps in the logarithm are enough. This is the knob the paper leaves
+secant steps in the logarithm are enough. This is the parameter the paper leaves
 open — its § 1.3 allows C⁰ to differ from the Poiseuille value "to account for
 tortuosity due to the roughness of fracture lips or to the fracture filling".
 """

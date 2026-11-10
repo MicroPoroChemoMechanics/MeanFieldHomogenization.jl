@@ -10,7 +10,7 @@
 #  produces the expected viscoelastic effective-modulus curves.
 #
 #  For the same composite taken all the way back to the time domain — and the
-#  three-route cross-check that goes with it — see `61_freq_vs_time.jl`.
+#  three-approach cross-check that goes with it — see `61_freq_vs_time.jl`.
 # =============================================================================
 
 import Pkg
@@ -24,7 +24,7 @@ using Plots
 # One model per phase: an elastic bulk channel and a standard-solid shear
 # channel.  `carson_relaxation(m, im * ω)` is then the complex stiffness the
 # schemes consume — the same object would also give `ViscoLaw(m)` for the
-# time-domain route.
+# time-domain approach.
 const PHASE_M = iso_rheology(Spring(30.0), zener_maxwell(10.0, 5.0, 1.0))
 const PHASE_I = iso_rheology(Spring(80.0), zener_maxwell(30.0, 15.0, 1.0))
 

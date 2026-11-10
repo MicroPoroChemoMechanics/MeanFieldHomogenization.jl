@@ -95,7 +95,7 @@ const law_i = ViscoLaw(J_inclusion, :creep)
 # the first decade of the response, where the logarithmic term moves fastest. Two
 # log-spaced stretches do that: ``[t', t'+1]`` then ``[t'+1, 50]``.
 #
-# The grid is deliberately short (30 + 30 points): the ALV pipeline assembles and
+# The grid is deliberately short (30 + 30 points): the ALV calculation assembles and
 # inverts a ``6n \times 6n`` Volterra matrix per run, so the cost grows as
 # ``n^3`` and this page performs eleven runs.
 
@@ -259,13 +259,13 @@ end
 #
 # The two parameters above are swept on a coarse grid, whereas the response to a
 # small change of a parameter is better obtained as a derivative.
-# [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities)
+# [Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities)
 # differentiates such outputs with `ForwardDiff`, with respect to a volume
 # fraction, a modulus or a relaxation time, through the whole Volterra assembly.
 #
 # * [Aging viscoelastic schemes side by side](@ref tut-alv-schemes) — the same kind of
 #   test across Dilute / Mori-Tanaka / Maxwell / PCW
-# * [Frequency or time?](@ref tut-freq-vs-time) — when the non-aging frequency route
+# * [Frequency or time?](@ref tut-freq-vs-time) — when the non-aging frequency approach
 #   is enough
 # * [Aging creep of solidifying cementitious materials](@ref app-aging-creep) —
 #   an aging model where the *phase fractions* also evolve

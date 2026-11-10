@@ -2,12 +2,12 @@
     MeanFieldHomogenization.NeuralInclusions
 
 Inclusions whose response is produced by a **trained neural network** instead of
-a closed form or a finite-element solve — a fourth route into the
-[`CustomInclusions`](@ref MeanFieldHomogenization.CustomInclusions) contract, alongside the
+a closed form or a finite-element solve — a fourth approach into the
+[`CustomInclusions`](@ref MeanFieldHomogenization.CustomInclusions) interface, alongside the
 analytic families, the layered patterns and
 [`FiniteElements`](@ref MeanFieldHomogenization.FiniteElements).
 
-| Type | Entry gate | For |
+| Type | Entry level | For |
 |---|---|---|
 | [`NeuralHillInclusion`](@ref) | A — the Hill tensor | a morphology with a Hill tensor: contrast dependence and the ``\\mathbb{C}_1 = \\mathbb{C}_0 \\Rightarrow \\mathbb{A} = \\mathbb{I}`` limit stay exact |
 | [`NeuralConcentrationInclusion`](@ref) | B — both concentration tensors | an internally heterogeneous morphology, which has no Hill tensor |
@@ -15,7 +15,7 @@ analytic families, the layered patterns and
 # Why bother, when the analytic Hill tensor is exact
 
 For the ellipsoid the surrogate is *not* faster than the closed form, and it is
-less accurate. What it buys is two things the expensive routes cannot give:
+less accurate. What it provides is two things the expensive approaches cannot give:
 
 - **differentiability.** A surrogate is a smooth function of its inputs, so
   `derivative(rve, scheme, geometry(:phase, :field))` reaches a *morphology*
@@ -28,7 +28,7 @@ less accurate. What it buys is two things the expensive routes cannot give:
   on that solve answers in microseconds.
 
 The ellipsoid is therefore the *validation* case, not the application: it is the
-one morphology where the labels are exact, so every part of the pipeline can be
+one morphology where the labels are exact, so every part of the calculation can be
 checked against a closed form before being pointed at something unknown.
 
 # The pieces

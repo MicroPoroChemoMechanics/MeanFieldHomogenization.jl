@@ -55,7 +55,7 @@
 # \right).
 # ```
 #
-# This is the whole point of the method: a quantity that looks local — the
+# This is the principle of the method: a quantity that looks local — the
 # quadratic average of the strain inside one shell — is obtained from the
 # *derivative of the effective moduli*, which `ForwardDiff` supplies exactly.
 #
@@ -220,7 +220,7 @@ end
 #
 # Loading is purely hydrostatic: ``\boldsymbol{E} = \tfrac{E_v}{3}\boldsymbol{1}``,
 # so ``\boldsymbol{E}^d = 0`` and the response is read on the mean stress
-# ``\Sigma_m = k^{\mathrm{hom}} E_v``. Note that plasticity develops all the same: the
+# ``\Sigma_m = k^{\mathrm{hom}} E_v``. Plasticity nevertheless develops: the
 # void makes the *local* strain deviatoric even under a purely volumetric
 # macroscopic strain, and it is that local deviator which yields.
 #

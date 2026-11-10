@@ -6,7 +6,7 @@
 #
 #  The classical approach hand-codes an analytical `hill_derivative(ell, C,
 #  index, sym)` for each material-symmetry class (ISO, TI, ORTHO).
-#  MeanFieldHomogenization gets the SAME derivative for free by ForwardDiff through the
+#  MeanFieldHomogenization gets the SAME derivative at no extra cost by ForwardDiff through the
 #  `hill_tensor` kernel — for ANY parametrization, including fully triclinic
 #  references that a symmetry-typed routine cannot handle.
 #

@@ -20,7 +20,7 @@ Brinkman's equation
 
 Its solution depends on ``R`` through ``\\alpha_0 = R/\\sqrt{k_0}``: there is no Hill
 tensor, and the inclusions below supply their concentration tensors directly
-(gate B of the [custom-inclusion contract](@ref man-custom-inclusions)).
+(level B of the [custom-inclusion interface](@ref man-custom-inclusions)).
 
 Exports:
 

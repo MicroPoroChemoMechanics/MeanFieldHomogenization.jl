@@ -140,7 +140,7 @@ which is the Mori-Tanaka system term by term.
     elasticity and in conduction. It is the sharpest available statement that the
     assembly of ``\mathbb{M}`` is right.
 
-## 5. What the cluster buys
+## 5. What the cluster provides
 
 Since ``\bar{\mathbb{T}}`` has no isotropic part
 ([Two-inclusion interaction tensors](@ref th-interaction) §4), the correction is

@@ -9,10 +9,10 @@
 #  `scripts/85_neural_excentered_sphere.jl` loads the committed JSON.
 #
 #      julia scripts/nn/train_excentered.jl            # the shipped dataset
-#      julia scripts/nn/train_excentered.jl 40 10      # a quick smoke run
+#      julia scripts/nn/train_excentered.jl 40 10      # a quick test run
 #
-#  This is the case the whole surrogate machinery exists for. The ellipsoid
-#  pilot proves the pipeline against a closed form; here there *is* no closed
+#  This is the case the whole surrogate machinery is designed for. The ellipsoid
+#  pilot validates the chain against a closed form; here there *is* no closed
 #  form, the teacher costs ~2 s per evaluation, and an iterative scheme asks for
 #  it again at every iteration.
 # =============================================================================

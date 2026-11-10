@@ -101,7 +101,7 @@ is rank-1 along ``\underline{n}``, with
 The section above reached ``\boldsymbol{R}`` by flattening an ellipsoid. This one
 reaches ``b`` from the Fourier kernel instead — the transport twin of
 [From the Green operator to ``\boldsymbol{B}``](@ref th-cod-green)
-— and it is the route that substantiates the row *"Quadratic acoustic form →
+— and it is the approach that substantiates the row *"Quadratic acoustic form →
 analytical"* of the opening table: the order-2 problem has a closed form for
 **every** anisotropy, where elasticity needs its sextic to factorize.
 `scripts/16_cod_symbolic_thermal.jl` runs the whole chain with the six
@@ -234,12 +234,12 @@ The aligned-TI entry is the geometric mean ``\sqrt{k_tk_n}`` announced below, an
 the ribbon entry involves only the transverse 2×2 block — both structures the
 existing formulas already have.
 
-### Relation to the ``\boldsymbol{K}_0^{-1/2}`` route
+### Relation to the ``\boldsymbol{K}_0^{-1/2}`` approach
 
 The two are equivalent, but they cost differently. The square-root transform
 needs the eigendecomposition of the 3×3 ``\boldsymbol{K}_0`` *and* the singular
 values of ``\boldsymbol{A}\cdot\boldsymbol{K}_0^{-1/2}``; the adjugate form needs
-one **2×2** eigenvalue problem. That is why the adjugate route is evaluable on
+one **2×2** eigenvalue problem. That is why the adjugate approach is evaluable on
 symbolic scalars, where `eigen` and `svdvals` are not.
 
 ## 5. Closed-form COD scalar ``b``
@@ -271,7 +271,7 @@ b_{\mathrm{ell}} = \frac{4}{3\sqrt{\lambda_1}\,\mathcal{E}_{\eta'}}
 
 Being a **2×2** eigenvalue problem, this is closed form for every anisotropy —
 no symmetry assumption, and no need for the numerical
-``\boldsymbol{K}_0^{-1/2}`` route below.
+``\boldsymbol{K}_0^{-1/2}`` approach below.
 
 ### Isotropic matrix
 
@@ -318,7 +318,7 @@ b_{\mathrm{ribbon}}
 
 which reduces to ``b = \pi/(2 k_0)`` for an isotropic matrix.
 
-### The ``\boldsymbol{K}_0^{-1/2}`` route
+### The ``\boldsymbol{K}_0^{-1/2}`` approach
 
 Historically these formulas were obtained by the square-root change of variable
 ``\tilde{\underline{x}} = \boldsymbol{K}_0^{-1/2}\cdot\underline{x}``
@@ -331,14 +331,6 @@ ratio is ``\eta_t = \sigma_2/\sigma_1``. It is equivalent to the adjugate form �
 ``\boldsymbol{K}_0`` *and* a singular-value decomposition, so it is `Float64`
 only. The package uses the adjugate form, which is why the anisotropic thermal
 COD flows through automatic differentiation and symbolic scalars.
-
-!!! warning "These prefactors changed in v0.4.0"
-    Up to v0.3.2 the formulas above read ``\eta/(\pi k_0\mathcal E_\eta)`` and
-    ``2/(\pi k_0)`` — too small by ``4\pi/(3\eta)`` and ``\pi^{2}/4``. Every
-    thermal ``b``, ``\boldsymbol{R}``, ``\Delta\boldsymbol{R}`` and thermal DIF
-    therefore changes. The elastic branch is unaffected, and so is
-    `fracture_permeability`, whose conduction side does not go through these
-    formulas.
 
 ## 6. Resistivity contribution ``\boldsymbol{R}`` and dilute correction ``\Delta\boldsymbol{R}``
 

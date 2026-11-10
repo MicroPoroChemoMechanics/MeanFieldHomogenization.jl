@@ -1,4 +1,4 @@
-# # [Two routes to a crack: the COD tensor and the flattened ellipsoid](@id tut-crack-routes)
+# # [Two approaches to a crack: the COD tensor and the flattened ellipsoid](@id tut-crack-routes)
 #
 # !!! info "Before this page"
 #     The theory page [Crack opening displacement and compliance](@ref th-cod-tensors):
@@ -85,13 +85,13 @@ end
 # obvious alternative, and the theory page does it: its error decreases only
 # like ``\rho`` ([the check of ``\mathbb{H}``](@ref th-cod-H-check)), and two
 # flatnesses are combined to cancel that first-order error
-# ([every route in a triclinic matrix](@ref th-cod-every-route)). The block
+# ([every approach in a triclinic matrix](@ref th-cod-every-route)). The block
 # computation removes it at the source, with no flatness to choose.
 #
 # ## In an isotropic matrix, exactly
 #
 # With ``\mathbb{C}`` of Young's modulus ``E`` and Poisson's ratio ``\nu``, both
-# routes are closed forms, and SymPy carries them exactly. The COD tensor of a
+# approaches are closed forms, and SymPy carries them exactly. The COD tensor of a
 # penny-shaped crack of radius ``b`` is Sneddon's:
 #
 # ```math
@@ -107,7 +107,7 @@ B_sym = get_array(cod_tensor(PennyCrack(1), C_sym))
 B_sneddon = 16 * (1 - ν^2) / (3 * SymPyPythonCall.PI * E) * Diagonal([2 / (2 - ν), 2 / (2 - ν), 1])
 SymPyPythonCall.simplify.(B_sym - B_sneddon)
 
-# The flattened route takes the Hill tensor of the oblate spheroid
+# The flattened approach takes the Hill tensor of the oblate spheroid
 # ``(b, b, \rho b)``, a closed form in ``\arccos\rho``, differentiates it with
 # respect to ``\rho`` and lets ``\rho \to 0``. The block computation then gives
 #
@@ -167,7 +167,7 @@ for k in 1:4
     end
 end
 
-# The two routes agree to between ``10^{-10}`` and ``10^{-7}``, whatever the
+# The two approaches agree to between ``10^{-10}`` and ``10^{-7}``, whatever the
 # anisotropy: the residual of the ``O(\rho_0^2)`` left in ``\mathbb{P}_1``,
 # larger for the narrower cracks. On the reduced kernel, the residues meet the
 # nested cubature to rounding, and DECUHR, at the same tolerances, to
@@ -176,7 +176,7 @@ end
 #
 # ## An analytic anchor in an anisotropic matrix
 #
-# Neither route above is a closed form in an anisotropic matrix. One exists when
+# Neither approach above is a closed form in an anisotropic matrix. One exists when
 # the matrix is the image of an isotropic one by a linear map
 # ``\underline{x} = \boldsymbol{P}\cdot\tilde{\underline{x}}``,
 # ``\mathbb{C} = (\boldsymbol{P}\stackrel{s}{\boxtimes}\boldsymbol{P}):\tilde{\mathbb{C}}:(\boldsymbol{P}\stackrel{s}{\boxtimes}\boldsymbol{P})^{\!T}``
@@ -224,7 +224,7 @@ for (label, B) in (
     @printf "%-30s %.1e\n" label norm(canonical_components(B) - B_rule) / norm(B_rule)
 end
 
-# Every route meets the closed form: the reduced kernel to rounding, the
+# Every approach meets the closed form: the reduced kernel to rounding, the
 # flattened ellipsoid to the accuracy of its first-order term. The same
 # comparison, for transformed transversely isotropic matrices and ribbon-like
 # cracks, is part of the test suite.

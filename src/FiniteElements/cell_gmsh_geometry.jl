@@ -47,7 +47,7 @@ const CELL_SET_MATRIX = "matrix"
     FECellMeshOptions(; kwargs...)
 
 Geometry and resolution of the truncated cell around a supershape. Every size is
-a knob: the machine budget is a hard constraint, and the useful resolution is
+a parameter: the machine budget is a hard constraint, and the useful resolution is
 not known before a convergence study.
 
 | Keyword | Default | Meaning |
@@ -67,14 +67,14 @@ not known before a convergence study.
 
 Three of these deserve more than a line.
 
-**`outer_level` is not a free knob.** At `outer_level = 2` the outer boundary
+**`outer_level` is not a free parameter.** At `outer_level = 2` the outer boundary
 carries 128 curved triangles, which does not resolve the ``1/r^2`` dipole term
-of the corrected boundary condition: the exact spherical-pore gate then stalls
+of the corrected boundary condition: the exact spherical-pore check then stalls
 at ``-2.6\\times10^{-4}``. Level 3 takes it to ``-6.9\\times10^{-6}``.
 
 **`radius_ratio` multiplies the bounding radius, not `a`.** For an elongated
 superspheroid the two differ by the aspect ratio, and using `a` lets the outer
-boundary come within ``1.2c`` of the body — where the exact spheroid gate falls
+boundary come within ``1.2c`` of the body — where the exact spheroid check falls
 from ``10^{-5}`` to ``5.7\\times10^{-3}``. For a supersphere with ``p \\le 1``
 the bounding radius **is** ``a``, so the literature's ``R/a`` convention is
 preserved exactly where the literature uses it.
@@ -89,7 +89,7 @@ the documentation and the regression tests would move with it; and because
 `max_dofs` then counts the dofs of *this* solve, the peak being one
 factorization out of the four (three in transport) the parity classes require.
 
-**`max_dofs` and `min_free_gb` are not performance knobs.** See
+**`max_dofs` and `min_free_gb` are not performance parameters.** See
 [`fe_available_gb`](@ref): they exist because an out-of-memory kill takes the
 session with it.
 """
@@ -528,7 +528,7 @@ nodes.
 `gmsh.model.occ.getMass` is not an option: the volume lives in the `geo` kernel
 and is bounded by *discrete* surfaces, which OCC knows nothing about. Straight
 tetrahedra also mean this slightly under-reports a second-order mesh with a
-curved boundary, by the same ``O(h^3)`` that snapping buys back on the surface —
+curved boundary, by the same ``O(h^3)`` that snapping recovers on the surface —
 so use it as a check on the **topology**, not as a precision measurement.
 """
 function fe_cell_meshed_volume(gmsh, tag::Integer = CELL_TAG_MATRIX)

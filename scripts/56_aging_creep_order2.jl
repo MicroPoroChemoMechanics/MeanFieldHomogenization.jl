@@ -11,7 +11,7 @@
 #    * schemes : Mori-Tanaka, Dilute, Maxwell
 #
 #  In Julia, `homogenize_alv(rve, scheme, prop; times)` automatically
-#  routes to the order-2 pipeline when the matrix law samples to a
+#  switches to the order-2 calculation when the matrix law samples to a
 #  3×3 matrix (or `TensND.AbstractTens{2,3}`), and inverts the
 #  trapezoidal compliance matrix to the relaxation form when the law
 #  mode is `:creep` — same convention as ECHOES `homogenize_visco`.

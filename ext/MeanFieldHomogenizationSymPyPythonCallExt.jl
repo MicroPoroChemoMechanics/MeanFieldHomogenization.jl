@@ -181,7 +181,7 @@ _strip_heaviside(e, ::Sym) = e
 
 Say so when SymPy did not actually invert the transform.
 
-There are two ways it declines, and only one of them is honest:
+There are two ways it declines, and only one of them is faithful:
 
   * it returns an unevaluated `InverseLaplaceTransform(...)` — visible in the
     result, and harmless;

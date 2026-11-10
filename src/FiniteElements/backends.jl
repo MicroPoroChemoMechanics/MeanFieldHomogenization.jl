@@ -173,7 +173,7 @@ Write the Dirichlet data of one right-hand side into `u`: `u[d] = f(ρ_d, z_d)[k
 for every dof `d` of the outer boundary, `k` being its component, **then**
 `u[d] = 0` for every axis-pinned dof.
 
-Two things make this the delicate function of the contract.
+Two things make this the delicate function of the interface.
 
 *The order matters.* The poles ``(0, \\pm R)`` belong to both the `"outer"` and the
 `"axis"` sets. The axis must win, so the zeroing comes second.
@@ -221,12 +221,12 @@ projected onto the Fourier mode, with the measure ``\\rho\\,\\mathrm{d}l`` and *
 ``\\underline{n}`` is the facet normal, outward from the matrix and therefore *into* the
 cavity, so the caller supplies the sign.
 
-The tenth method of the axisymmetric contract, and the only one a cavity needs
+The tenth method of the axisymmetric interface, and the only one a cavity needs
 that a solid inclusion does not. A cavity has no interior to integrate over, so
 ``\\langle\\boldsymbol{\\varepsilon}\\rangle_D`` has to come from its boundary — exactly as `fe_cell_mean_strain` does in
 three dimensions.
 
-**Not** by the divergence identity on the matrix. That route is algebraically
+**Not** by the divergence identity on the matrix. That approach is algebraically
 exact and numerically hopeless: it computes ``V_D`` as the difference of ``V_\\Omega`` and
 ``V_M``, whose ratio is ``(R/a)^3``, so it loses two digits at ``R/a = 4`` and more as
 the cell grows. Measured: the implied cavity volume is 2.9 % off at

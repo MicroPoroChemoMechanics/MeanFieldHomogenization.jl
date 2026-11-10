@@ -74,7 +74,7 @@ Two vertical families with normals ``\underline{e}_1`` and ``\underline{e}_2`` l
 conducts most — visible in the numbers above.
 
 !!! warning "The matrix must not be exactly impermeable"
-    [`fracture_permeability`](@ref) is written out rather than routed through
+    [`fracture_permeability`](@ref) is written out rather than passed through
     [`SelfConsistent`](@ref) on `:K`, whose crack branch is built for
     *insulating* cracks: its volumetric accumulator
     ``\sum_\alpha f_\alpha\,\boldsymbol{K}_\alpha\cdot\boldsymbol{A}_\alpha``
@@ -89,7 +89,7 @@ conducts most — visible in the numbers above.
 ## Where to go next
 
 [Materials](@ref fe-materials) passes from the equations to the code, with the
-contract a material fulfills at each quadrature point. The permeability of this
+interface a material fulfills at each quadrature point. The permeability of this
 page reappears in [Building a fractured-rock material](@ref fe-fractured-rock),
 where it follows the fracture apertures. A permeability estimated from the
 Stokes flow in the pores themselves, rather than from phases of known

@@ -33,10 +33,10 @@ stiffness ([Concentration](@ref th-concentration)).
 
 ## The chain, in one picture
 
-Everything the package does is one pipeline, read top to bottom. The **gray**
+Everything the package does is one chain of computations, read top to bottom. The **gray**
 boxes are what you supply — each entering at the stage that needs it — the
 **blue** ones what the package computes, and the **green** ones on the right
-the three places where you can plug in your own physics without touching the
+the three entry levels where you can plug in your own physics without touching the
 library.
 
 ```mermaid
@@ -62,9 +62,9 @@ flowchart TB
     AMOUNT --> S
     S --> EFF
 
-    GA["gate A<br/>hill_tensor"] -.-> P
-    GB["gate B<br/>gradient_gradient_concentration<br/>flux_gradient_concentration"] -.-> A
-    GC["gate C<br/>property_contribution<br/>inverse_property_contribution"] -.-> N
+    GA["level A<br/>hill_tensor"] -.-> P
+    GB["level B<br/>gradient_gradient_concentration<br/>flux_gradient_concentration"] -.-> A
+    GC["level C<br/>property_contribution<br/>inverse_property_contribution"] -.-> N
 
     classDef ext fill:#d7f2d7,stroke:#2e7d32,color:#1b5e20
     classDef inbox fill:#eceff1,stroke:#78909c,color:#263238
@@ -74,12 +74,12 @@ flowchart TB
     class P,A,N,S,EFF comp
 ```
 
-**The three green gates are the extension mechanism.** A morphology
-`MeanFieldHomogenization` knows nothing about becomes a first-class citizen of *every*
-scheme by answering one of them — implement the lowest you can reach and the
-package derives the rest algebraically. Four routes already use them:
+The three green entry levels are the extension mechanism. A morphology
+`MeanFieldHomogenization` knows nothing about is supported by *every*
+scheme once it answers one of them: the lowest reachable level is implemented and the
+package derives the rest algebraically. Four families of inclusions already use them:
 
-| Route | Gate | Where the answer comes from |
+| Inclusions | Level | Where the answer comes from |
 | :--- | :---: | :--- |
 | ellipsoids, cylinders, cracks | A | closed forms, quadrature or residues |
 | [composite spheres and spheroids](@ref MeanFieldHomogenization.LayeredSpheres) | B | the Hervé–Zaoui recurrences — a layered pattern has no Hill tensor |
@@ -90,7 +90,7 @@ package derives the rest algebraically. Four routes already use them:
 Cracks and flat objects follow the same chain with ``\mathbb H`` in place of
 ``\mathbb N`` and a density in place of a volume fraction; transport is the same
 picture at tensor order 2, and aging viscoelasticity the same picture with
-Volterra products in place of tensor products. The contract is written up in
+Volterra products in place of tensor products. The interface is written up in
 [Adding a new inclusion](@ref dev-adding-inclusion).
 
 ## The Eshelby problem
@@ -171,7 +171,7 @@ problem itself that must be generalized.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [The Laplace-Carson route](@ref th-laplace-carson) | the correspondence principle: a non-aging problem solved as an elastic one, transform by transform |
+| [The Laplace-Carson approach](@ref th-laplace-carson) | the correspondence principle: a non-aging problem solved as an elastic one, transform by transform |
 | [Aging linear Volterra behavior](@ref th-viscoelasticity) | moduli and conductivities become Volterra operators; the algebra of the chain is unchanged, the order of its factors is not free, and every scheme is restated in that algebra |
 
 ## Appendices
@@ -212,8 +212,8 @@ Hill-tensor pages follow its appendix closely — same expressions, same
 conventions, same bibliography. Two families of difference are flagged
 explicitly wherever they occur:
 
-- **extensions**: infinite cylinders and 2-D plane strain as first-class
-  inclusion types, an analytical transversely isotropic path, automatic
+- **extensions**: infinite cylinders and 2-D plane strain as inclusion
+  types of their own, an analytical transversely isotropic path, automatic
   differentiation and symbolic number types throughout;
 - **conventions that genuinely differ**: the crack opening displacement tensor
   ``\boldsymbol{B}`` and the compliance ``\mathbb{H}`` are the notable case.

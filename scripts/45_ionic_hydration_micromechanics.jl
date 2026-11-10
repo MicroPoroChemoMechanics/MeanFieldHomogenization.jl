@@ -21,7 +21,7 @@
 #    - the pore-solution pH and composition over time;
 #    - the aluminate sequence as a RESULT, where model 44 has to encode it by
 #      hand as a priority cascade. And the result depends on the mix, which is
-#      the whole point: WITHOUT limestone the ettringite peaks early and
+#      the purpose of the model: WITHOUT limestone the ettringite peaks early and
 #      converts to monosulphate once the sulfate is spent, the AFm settling at
 #      exactly the sulfate budget; WITH the 3.5 % calcite of this formulation
 #      the carbonate stabilizes the AFt instead, forming monocarboaluminate, and
@@ -39,9 +39,7 @@
 #      → four-scale SC/SC/MT/MT homogenization              [MeanFieldHomogenization]
 #      → E(t)
 #
-#  Requires ChemistryLab ≥ 0.7.1: before it, a re-speciation could start outside
-#  the feasible set of its own equality constraint, and the full OPC returned an
-#  assemblage demanding 174 % of the sulfate present.
+#  Requires ChemistryLab ≥ 0.40.
 #
 #  ENVIRONMENT — like script 44, this activates `docs/` rather than the
 #  repository root: it needs ChemistryLab and OrdinaryDiffEq, which are not

@@ -28,7 +28,7 @@ MeanFieldHomogenization.LayeredSpheres) — couple different harmonic degrees, u
 the sphere, requiring the truncated series machinery of
 `legendre.jl` / `coupling.jl`.
 
-That path into the schemes now works in **elasticity** too, prolate and oblate
+That path into the schemes works in **elasticity** too, prolate and oblate
 alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
 isotropic concentration tensor from the three elementary problems, and
 `gradient_gradient_concentration` / `property_contribution` hand it to the schemes. Only

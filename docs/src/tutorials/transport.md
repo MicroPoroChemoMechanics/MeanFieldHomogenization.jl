@@ -250,7 +250,7 @@ In the limit ``e_{\mathrm{ITZ}}\to 0`` the thin, highly-conductive ITZ shell can
 collapsed onto a **zero-thickness surface-conductive interface** carrying a
 tangential surface current ``\underline{q}^{\mathrm s} = k^{\mathrm s}\,\nabla_{\!s}T`` with
 transmissivity ``k^{\mathrm s} = \alpha = D_s\,e_{\mathrm{ITZ}}`` — the Echoes book's `DUALDISC`
-model. This is exactly a [`SurfaceConductiveInterface`](@ref) on a *bare*
+model. This is a [`SurfaceConductiveInterface`](@ref) on a *bare*
 aggregate (a one-layer [`LayeredSphere`](@ref)); it avoids the explicit shell and
 its volume-fraction correction ``f\,(1+e_{\mathrm{ITZ}}/R_{\mathrm{agg}})^3``:
 
@@ -322,7 +322,7 @@ viscoelasticity, with complex moduli in the frequency domain and a first aging
 creep calculation. The order-2 calls of the library
 are collected in [Conductivity](@ref man-conductivity) of the manual, and
 [Cement paste: chloride diffusivity and elasticity](@ref app-cement-paste-diffusion)
-applies the cross-property route of the last section to a hydrating cement
+applies the cross-property approach of the last section to a hydrating cement
 paste. When the permeability is to be estimated from the Stokes flow in the
 pores rather than from phases of known permeability, the same schemes take
 Brinkman inclusions, as in

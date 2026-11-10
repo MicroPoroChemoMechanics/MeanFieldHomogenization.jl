@@ -223,7 +223,7 @@ and not a fitting error — see the note below.
     amplitudes, degree `0` of ``\\varphi_0`` being a constant potential that moves
     nothing. The assembled system is therefore over-determined by one row per
     interface, and those rows are **redundant, not conflicting**: the residual
-    comes out at machine precision. Solving in least squares is the honest way
+    comes out at machine precision. Solving in least squares is the faithful way
     to use that, and a residual that stops being negligible is a signal that
     something upstream is wrong.
 

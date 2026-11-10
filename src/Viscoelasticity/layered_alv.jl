@@ -381,13 +381,13 @@ end
     bulk_state_seq_alv(sphere, C0_law, times)
         -> (inside_states::NTuple{N, Matrix}, s_matrix::Matrix)
 
-Backwards-compatible wrapper that exposes the σ-state form of the
+Wrapper that exposes the σ-state form of the
 bulk recurrence: at each layer ``k``, reconstruct the ``2n\\times n`` block
 ``(u_r; \\sigma_{rr})`` from the per-layer amplitudes via
 ``u_r = A_k r_k + B_k/r_k^2`` and ``\\sigma_{rr} = 3k_k A_k - 4\\mu_k B_k/r_k^3``.
 
 Most users should rely on [`bulk_concentration_alv`](@ref) directly.
-This helper is retained for the existing test that asserts the
+This helper serves the test that asserts the
 matrix-side state matches the analytical Hervé-Zaoui boundary
 condition.
 """

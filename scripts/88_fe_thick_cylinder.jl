@@ -9,7 +9,7 @@
 #
 # 1. a **linear** composite (Mori-Tanaka, spherical inclusions), checked against
 #    the closed-form Lamé solution — this validates the coupling itself, since
-#    any discrepancy can only come from the plumbing;
+#    any discrepancy can only come from the coupling implementation;
 # 2. a **microcracked** solid whose cracks close under compression, which has no
 #    closed form and is what the coupling is actually for.
 #

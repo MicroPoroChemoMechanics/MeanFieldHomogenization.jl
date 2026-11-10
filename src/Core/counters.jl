@@ -102,7 +102,7 @@ A `struct` rather than a closure, so that the integrand passed to `quadgk` is
 concrete. Every call of [`_counted_quadgk`](@ref) wraps its integrand, counting
 or not: QuadGK is then compiled once per integrand, where a branch between the
 plain integrand and the counting one compiled it twice, for a counting only the
-benchmark harness turns on. The price is one test of a flag per node.
+benchmark script turns on. The cost is one test of a flag per node.
 """
 struct _CountingFn{F}
     f::F

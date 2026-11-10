@@ -13,7 +13,7 @@ problem) and needs `FerriteGmsh` and `Gmsh` as well: a structural computation
 that merely wants a homogenized material law has no reason to pull a ~100 MB
 gmsh artifact into its environment, nor into a documentation build.
 
-The file is deliberately thin — the contract in `src/Constitutive/` is
+The file is deliberately thin — the interface in `src/Constitutive/` is
 finite-element-agnostic, so all that is needed here is the per-quadrature-point
 state bookkeeping Ferrite leaves to the user, and an element routine.
 """

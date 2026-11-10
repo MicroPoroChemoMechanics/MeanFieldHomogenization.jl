@@ -45,11 +45,11 @@ test/
 
 ## What a good test looks like here
 
-Every new public function ships with at least a smoke test — but a smoke test is
+Every new public function ships with at least a quick test — but a quick test is
 a floor, not a target. The tests that actually catch bugs in this package are of
 three kinds:
 
-1. **Closed-form oracles.** Where an analytical result exists, assert against it
+1. **Closed-form reference solutions.** Where an analytical result exists, assert against it
    at tight tolerance; `rtol = 1e-13` is routinely achievable. Example: the
    penny-crack conduction COD ``b = 2/(\pi^{2}K)`` in
    `test/Cracks/test_thermal.jl`.
@@ -73,12 +73,12 @@ three kinds:
     wrong ``\eta``-dependence.
 
     This is not hypothetical. As of 2026-07 the elastic ``\mathbb{H}`` is
-    covered by a smoke test plus penny and ribbon cases only, so the elliptic
+    covered by a quick test plus penny and ribbon cases only, so the elliptic
     ``\eta \ne 1`` behavior of the ``\boldsymbol{B} \to \mathbb{H}`` factor is
     pinned by no test at all. The same trap applies to spheres among spheroids
     and to isotropy among symmetry classes: **always add one asymmetric case**.
 
-## Number types are part of the contract
+## Number types are part of the interface
 
 The package is generic over the scalar type, and that genericity is advertised
 in the dispatch tables of the theory pages — so it is tested explicitly:
@@ -87,7 +87,7 @@ in the dispatch tables of the theory pages — so it is tested explicitly:
 | :--- | :--- |
 | `Float64` | the default path |
 | `ForwardDiff.Dual` | every algorithm advertised as AD-safe must be exercised *through* [`derivative`](@ref), not merely called with a `Dual` |
-| `BigFloat` | precision oracle, notably for the spheroid coupling matrices |
+| `BigFloat` | precision reference, notably for the spheroid coupling matrices |
 | symbolic (`SymPy`, `Symbolics`) | closed-form paths only |
 
 When adding an algorithm, state its AD compatibility in the docstring **and**

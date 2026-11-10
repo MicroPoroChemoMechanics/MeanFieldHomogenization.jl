@@ -72,7 +72,7 @@ than by calling the constructor.
 It answers the same generics as a scalar model — [`carson_relaxation`](@ref),
 [`carson_creep`](@ref), [`relaxation`](@ref), [`creep`](@ref),
 [`complex_modulus`](@ref) — with `TensISO{4,3}` values, and converts to a
-[`ViscoLaw`](@ref) for the aging pipeline.
+[`ViscoLaw`](@ref) for the aging calculation.
 """
 struct IsoRheology{P <: AbstractIsoPairing, A, B} <: AbstractTensorRheology
     a::A
@@ -215,7 +215,7 @@ that the **aging** machinery — [`trapezoidal_matrix`](@ref),
 was written in the Laplace-Carson domain.
 
 The kernel produced is of course non-aging: it depends on ``t - t'`` only.  That
-is the point.  It lets the same material be pushed through both routes and the
+is the point.  It lets the same material be pushed through both approaches and the
 answers compared, which is what
 [`tutorials/generated/freq_vs_time`](@ref tut-freq-vs-time) does.
 
@@ -299,12 +299,12 @@ homogenizations, so the choice is a real one:
     arithmetic is roughly twice as cheap per evaluation, and it is the only way
     to use `SelfConsistent(algorithm = NewtonDefault())` here, whose
     `ForwardDiff` Jacobian cannot carry a `Dual` over a complex scalar.  The
-    price is about five significant digits instead of twelve;
+    cost is about five significant digits instead of twelve;
   * [`DeHoog`](@ref) — one node set serves a whole block of times, so a
     multi-decade grid costs far fewer homogenizations than any per-point
     method.  This is usually the right answer for a master curve.
 
-# Relation to the time-domain route
+# Relation to the time-domain approach
 
 For a non-aging material this and [`homogenize_alv`](@ref) compute the same
 thing by disjoint means — no shared code — so agreement between them is a real

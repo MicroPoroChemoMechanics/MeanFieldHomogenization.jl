@@ -131,14 +131,14 @@ Whether the three coordinate planes are mirror planes of `s`.
 
 This is **the** condition that licenses meshing one octant of a cell built
 around `s`, and it is weaker than cubic symmetry: it asks for the group
-``\\{\\mathrm{diag}(\\pm1,\\pm1,\\pm1)\\}`` of order 8 and nothing more. A [`Superspheroid`](@ref) has
+``\\{\\mathrm{diag}(\\pm1,\\pm1,\\pm1)\\}`` of order 8, no more. A [`Superspheroid`](@ref) has
 it — its level set depends only on ``\\sqrt{x^2+y^2}`` and ``|z|`` — without having
 octahedral symmetry at all. What ``O_h`` adds is the symmetry *class of the
 measured tensor*, not the validity of the subdivision.
 
 The default is `false`, deliberately. A new shape has to opt in by adding a
 method, because a default of `true` would turn an oversight into an answer that
-is wrong and plausible. [`check_coordinate_mirrors`](@ref) audits a candidate
+is wrong and plausible. [`check_coordinate_mirrors`](@ref) checks a candidate
 numerically before its method is written; it is not a substitute for the trait.
 
 Two prerequisites go with it, and they are the caller's to keep: the shape is
@@ -154,11 +154,11 @@ has_coordinate_mirrors(::Superspheroid) = true
 """
     check_coordinate_mirrors(s; ndirs = 2000, atol = 1.0e-13) -> Bool
 
-Numerical audit of [`has_coordinate_mirrors`](@ref): `radial_distance` must be
+Numerical check of [`has_coordinate_mirrors`](@ref): `radial_distance` must be
 invariant under each of the three reflections, over a deterministic sweep of
 directions.
 
-An **audit, not a guard**. A finite sample can miss a defect confined to a small region, and
+A **check, not a guard**. A finite sample can miss a defect confined to a small region, and
 letting this function decide would do exactly what the trait exists to prevent:
 correct silently. Use it when writing a `has_coordinate_mirrors` method for a
 new shape, and as a test on the shapes already shipped.
@@ -190,7 +190,7 @@ Shape classification, from ``p`` alone: concave below ``p = 1/2``, convex at or
 above it, and a sphere exactly at ``p = 1``.
 
 These are comparisons, so they need an element type on which a comparison
-returns an honest `Bool` — every floating-point type and `ForwardDiff.Dual`, but
+returns an faithful `Bool` — every floating-point type and `ForwardDiff.Dual`, but
 not a symbolic one, where they throw rather than answer wrongly.
 """
 function is_concave(s::AbstractSuperShape{T}) where {T}
@@ -507,7 +507,7 @@ V_{\\mathrm{superspheroid}} = \\frac{2\\pi a^2 c}{2p}\\,
 ```
 
 Both give ``4\\pi a^3/3`` at ``p = 1``, and at ``p = 1/2`` they give ``4a^3/3``
-(the octahedron) and ``2\\pi a^2c/3`` (the double cone). This is the oracle a
+(the octahedron) and ``2\\pi a^2c/3`` (the double cone). This is the reference a
 meshed volume is compared against — the mesh is what is approximate here, not
 this.
 

@@ -134,7 +134,7 @@ convex one 600 times. It also **changes sign at the control**, which no
 numerical artifact would do: a concave supersphere and a cube-like one are
 anisotropic in opposite senses.
 
-**The cost, and what the octant buys.** Same spherical pore, same corrected
+**The cost, and what the octant gives.** Same spherical pore, same corrected
 condition, both modes:
 
 | level | mode | vector dofs | conduction error | time |
@@ -328,7 +328,7 @@ finite-element resolution their own Table B.3 reports, and far too small to
 account for the 37 %.
 
 What does bear on the question is that the package can solve the same shape
-**twice, by two routes with nothing in common**: the Fourier cell on a
+**twice, by two approaches with nothing in common**: the Fourier cell on a
 meridian mesh, and the three-dimensional octant cell of the supersphere
 section, on tetrahedra. At ``p = 0.30``:
 
@@ -346,7 +346,7 @@ octant is not a variant of the Fourier cell: different mesher, different element
 assembly, and no azimuthal modes anywhere — so a fault in the mode-1 transport
 operator, the one place a ``k_0R_{11}``-only error could hide, would have to be
 reproduced by a code that has no modes. That same operator is what the exact
-oblate and prolate spheroid gates exercise, since ``R_{11} \ne R_{33}`` there
+oblate and prolate spheroid checks exercise, since ``R_{11} \ne R_{33}`` there
 and both are closed-form.
 
 ### The transverse resistivity, and what we make of it
@@ -356,8 +356,8 @@ Their ``k_0R_{11}`` column has a property worth noting: over
 1.5091, 1.5099, 1.5099, 1.5089, 1.5070, 1.5073 — while over the very same rows
 their own ``k_0R_{33}`` falls by 14 % and their ``H_{3333}`` by 22 %. It also
 sits *above* their sphere value throughout, and wiggles non-monotonically inside
-that band. Ours rises smoothly over the same interval, 1.452 to 1.497, and lands
-on 1.500000 at the sphere.
+that band. Ours rises smoothly over the same interval, 1.452 to 1.497, and reaches
+1.500000 at the sphere.
 
 We have no established explanation for the difference. The most economical one
 we can think of is that the transverse resistivity is the most demanding of the
@@ -391,7 +391,7 @@ aside rather than read a deviation from it. Table B.3 marks the same row with
 0.91 %, the largest change in that column, and ``p = 0.30``, where the two
 differ by 11.6 %, carries its second largest at 0.83 % — their own mesh study had
 already identified both as the least settled, which is exactly the information
-one needs to read a comparison honestly.
+one needs to read a comparison fairly.
 
 ## One limitation, and it belongs to one of the two families
 

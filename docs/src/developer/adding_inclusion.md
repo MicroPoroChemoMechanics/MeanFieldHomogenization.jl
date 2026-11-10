@@ -2,10 +2,10 @@
 
 !!! info "Before this page"
     [Custom inclusions](@ref man-custom-inclusions), the user-facing side of the
-    contract below, and [Architecture](@ref dev-architecture) for where its
+    interface below, and [Architecture](@ref dev-architecture) for where its
     generics are declared.
 
-This page is the **contract**: everything an inclusion must provide for the
+This page states the interface: everything an inclusion must provide for the
 homogenization schemes to accept it, in elasticity and in transport. It applies
 equally to a new built-in family and to a user-defined morphology living
 outside the package — there is no privileged path.
@@ -14,26 +14,25 @@ For the user-facing tutorial (including the ready-made
 [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion) callback type), see
 [Custom inclusions](@ref man-custom-inclusions).
 
-Where the answer comes from is free. Four routes already use this contract: the
-analytic families (gate A), the layered patterns and the
-[finite-element inclusions](@ref man-fe-inclusions) (gate B — neither has a Hill
-tensor), and the [neural surrogates](@ref man-neural-inclusions) (gate A or B,
-from a trained network). A surrogate is worth knowing about while reading this
-page for one reason: it is the only route that is **differentiable in the
-morphology**, so it is how an expensive gate-B solver becomes usable inside an
+The source of the answer is unconstrained. Four methods already use this interface: the
+analytic families (level A), the layered patterns and the
+[finite-element inclusions](@ref man-fe-inclusions) (level B — neither has a Hill
+tensor), and the [neural surrogates](@ref man-neural-inclusions) (level A or B,
+from a trained network). A surrogate is the only one of them that is differentiable in the
+morphology, so it makes an expensive level-B solver usable inside an
 iterative scheme and inside the sensitivity API.
 
-The contract has **four levels**. Implement the lowest one you can reach:
+The interface has four levels. Implement the lowest one you can reach:
 everything above it is derived algebraically by the package.
 
-Before wiring anything into an `RVE`, run
+Before an inclusion is put into an `RVE`, run
 
 ```julia
 check_inclusion_interface(my_inclusion; physics = :elasticity, amount = :fraction)
 ```
 
-It reports which level-0 methods are missing, which entry gate it found, and
-what that gate does *not* unlock.
+It reports which level-0 methods are missing, which entry level it found, and
+what that entry level does *not* unlock.
 
 ---
 
@@ -67,10 +66,10 @@ descriptive, not structural.
 
 ## Level 1 — the mechanical / transport response
 
-Three entry gates. Implement **one**, per physics (4th order = elasticity,
+Three entry levels. Implement **one**, per physics (4th order = elasticity,
 2nd order = transport).
 
-### Gate A — the Hill tensor
+### Level A — the Hill tensor
 
 ```julia
 hill_tensor(incl, C₀::AbstractTens{4,3}; kw...) -> Tens{4,3}
@@ -89,7 +88,7 @@ Two ways to supply it:
    inclusion needs a specialized rule — a `_resolve_algo` method (see
    [Adding a new algorithm](@ref dev-adding-algorithm)). This works for
    `AbstractEllipsoidalInclusion` and `AbstractCustomInclusion`, whose
-   `hill_tensor` entry points both route into the `_kernel` table.
+   `hill_tensor` entry points both approach into the `_kernel` table.
 2. **Override `hill_tensor` directly** on your concrete type. Simplest when
    you delegate to an equivalent built-in geometry or to an external solver.
 
@@ -99,7 +98,7 @@ Two ways to supply it:
     typed on the union supertype `AbstractTens` is ambiguous with both. Write
     one method per order.
 
-### Gate B — the concentration tensors
+### Level B — the concentration tensors
 
 ```julia
 gradient_gradient_concentration(incl, C₁, C₀; kw...)      -> Tens{4,3}   # 𝔸_εε
@@ -127,11 +126,11 @@ which presupposes a *single uniform* ``\mathbb C_1``. So:
   no such ``\mathbb C_1``. The average stress has to be assembled from the
   local fields, so you **must** supply `flux_gradient_concentration` as well, in
   elasticity and in transport alike. `LayeredSphere` and
-  [`FEExcenteredSphere`](@ref) both take that route; the finite-element one
+  [`FEExcenteredSphere`](@ref) both take that approach; the finite-element one
   gets the two tensors out of a single solve, which is the usual situation and
   the reason [`fe_axi_concentration`](@ref) returns them as a pair.
 
-Supplying that second tensor buys the **contribution tensors** as well: the
+Supplying that second tensor gives the contribution tensors as well: the
 generic `property_contribution` and friends switch, when
 `is_homogeneous_inclusion` is `false`, to the identities
 
@@ -143,7 +142,7 @@ generic `property_contribution` and friends switch, when
 ```
 
 which need no ``\mathbb C_1`` at all and reduce to `(C₁ - C₀) : A` whenever a
-uniform ``\mathbb C_1`` does exist. So gate B really is a complete entry point
+uniform ``\mathbb C_1`` does exist. So level B really is a complete entry point
 for a heterogeneous morphology — two tensors in, everything else derived. (A
 type may still override the contributions for speed or for an extra physical
 term, as `LayeredSphere` does to add its interface contributions.)
@@ -170,7 +169,7 @@ change of driving variable (valid regardless of homogeneity), while
 `flux_flux_concentration` is expressed in terms of the flux-side tensor, so
 overriding that one fixes it too.
 
-### Gate C — the contribution tensors
+### Level C — the contribution tensors
 
 ```julia
 # solid inclusion (volume-fraction amount)
@@ -186,9 +185,9 @@ property_contribution(incl, K₀; kw...)   # 𝐍_K
 inverse_property_contribution(incl, K₀; kw...)     # 𝐑 (transport flavour of ℍ)
 ```
 
-!!! warning "Gate C does not provide the concentration tensor"
+!!! warning "Level C does not provide the concentration tensor"
     Contribution tensors alone do not determine ``\mathbb A``. A
-    **volume-fraction** phase entered through gate C works with `Voigt`,
+    **volume-fraction** phase entered through level C works with `Voigt`,
     `Reuss`, `Dilute`, `DiluteDual`, `Maxwell`, `PonteCastanedaWillis` and
     `DifferentialScheme`, but **not** with `MoriTanaka`, `SelfConsistent` or
     `AsymmetricSelfConsistent`. Density-based (flat) phases are unaffected:
@@ -265,7 +264,7 @@ well — it then owns the four `delta_*` methods itself.
   requires the whole level-1 path to be type-generic — which rules out
   algorithms hard-wired to `Float64` (the `Residue` backend) and external
   solvers that factorize numerically.
-- **Aging viscoelasticity.** The ALV pipeline has its own per-geometry seam:
+- **Aging viscoelasticity.** The ALV chain of computations has its own per-geometry seam:
   either `tens_UA` / `tens_VA`, or a `Viscoelasticity._inclusion_alv_quantities`
   method.
 - **Crack API.** Implement `cod_tensor` if you want `sif` and `dif` too. For
@@ -274,7 +273,7 @@ well — it then owns the four `delta_*` methods itself.
 
 ---
 
-## What you get for free
+## What the schemes provide
 
 **Orientation averaging.** `IsoSymmetrize` and `TISymmetrize` are applied by
 the scheme, *after* your method returns
@@ -286,7 +285,7 @@ the scheme, *after* your method returns
   an inclusion family at many orientations may see the same reference medium
   many times — worth exploiting if your solve is expensive.
 
-Note that `_apply_symmetrize` does **not** commute with the tensor product:
+`_apply_symmetrize` does **not** commute with the tensor product:
 ``\langle R(C_r : A_r)\rangle \neq C_r : \langle R(A_r)\rangle`` unless `C_r`
 is isotropic. The scheme handles this; do not attempt to average inside your
 kernel.
@@ -298,7 +297,7 @@ kernel.
 1. Choose the supertype; implement `shape_trait`, plus
    `is_homogeneous_inclusion` if the inclusion is not uniform, plus the
    accessors that make sense for it.
-2. Implement one level-1 gate, per physics — remembering that gate B costs
+2. Implement one level-1 entry level (A, B or C), per physics — remembering that level B costs
    *two* tensors when the inclusion is heterogeneous.
 3. If the phase is measured by a density, provide the level-2 prefactor
    (or `crack_density_factor` for an `AbstractCrack`).

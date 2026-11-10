@@ -74,7 +74,7 @@ with ``\chi_a`` the indicator function of ``\Omega_a``. This is their discrete p
   = \mathbb{C}_0 : \boldsymbol{E} + \sum_a f_a\, \boldsymbol{\tau}_a .
 ```
 
-Local fields come out for free:
+Local fields follow at no extra cost:
 ``\boldsymbol{\varepsilon}_a = (\mathbb{C}_a-\mathbb{C}_0)^{-1}:\boldsymbol{\tau}_a``
 and
 ``\boldsymbol{\sigma}_a = \mathbb{C}_0 : \boldsymbol{\varepsilon}_a +
@@ -107,7 +107,7 @@ closed:
 | [`ClusterModel`](@ref) | ``\mathbb{P}_0``, Hill tensor of the inclusion shape | [`PeriodicBox`](@ref) — cluster cutoff |
 
 Under a `PeriodicBox` the first reduces to the second, and the two agree to machine
-precision — the acceptance gate of the implementation.
+precision — the acceptance criterion of the implementation.
 
 Two further exact degeneracies:
 

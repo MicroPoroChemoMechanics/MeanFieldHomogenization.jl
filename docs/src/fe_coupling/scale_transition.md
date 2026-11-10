@@ -70,7 +70,7 @@ stress **and** a variation of fluid content:
 \end{aligned}
 ```
 
-The contract is therefore written with **named gradients and fluxes**, and the
+The interface is therefore written with **named gradients and fluxes**, and the
 tangent as a set of blocks keyed *flux then gradient*:
 
 | block | value | key |
@@ -116,4 +116,4 @@ global one.
 
 [The coupled poroelastic problem](@ref fe-poro-coupling) writes the balance
 equations that consume the four tangent blocks above, and
-[Materials](@ref fe-materials) turns the contract of this page into code.
+[Materials](@ref fe-materials) turns the interface of this page into code.

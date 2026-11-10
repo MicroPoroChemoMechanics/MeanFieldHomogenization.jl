@@ -253,7 +253,7 @@ shortcut: neither pores nor cracks carry stress, so that
 = \mathbb I - \mathbb S_s:\mathbb C^{\mathrm{hom}}``, whence the classical
 ``\boldsymbol B = \boldsymbol 1:(\mathbb I - \mathbb S_s:\mathbb C^{\mathrm{hom}})``
 evaluated by [`biot_tensor`](@ref). With several solid phases the shortcut is
-lost, and the theorem in the form above is the general route.
+lost, and the theorem in the form above is the general approach.
 
 ## 6. Conduction
 

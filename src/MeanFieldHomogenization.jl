@@ -38,12 +38,12 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   medium with a homogeneous solid phase: Biot tensor and modulus, drained ↔
   undrained conversion, Skempton tensor, effective stresses. A post-processor
   of a homogenized stiffness, not a scheme.
-- `MeanFieldHomogenization.Viscoelasticity`  — linear viscoelasticity by two routes:
+- `MeanFieldHomogenization.Viscoelasticity`  — linear viscoelasticity by two approaches:
   the aging time-domain one through Volterra operators (`homogenize_alv`), and
   the non-aging Laplace-Carson one (`homogenize_lc`), with a catalog of
   rheological models, numerical Laplace inversion, and the exact Kelvin ↔
   Maxwell conversion joining them.
-- `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion contract:
+- `MeanFieldHomogenization.CustomInclusions` — the user-defined inclusion interface:
   `CustomInclusion` and `check_inclusion_interface`.
 - `MeanFieldHomogenization.Brinkman` — Brinkman inhomogeneities (sphere, cylinder,
   layer, coated sphere) for the Stokes-to-Darcy homogenization of the permeability.

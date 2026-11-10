@@ -13,14 +13,14 @@
 """
     material_response(law::AbstractPointLaw, gradients, prev, Δt; algorithm = LocalNewton(), external = (;), cache = nothing)
 
-The Gauss-point contract for a law of
+The Gauss-point interface for a law of
 [`MaterialLaws`](@ref MeanFieldHomogenization.MaterialLaws):
 [`point_update`](@ref) with the gradients given and the fluxes returned by name,
 tensors as TensND tensors in the canonical frame and scalars as numbers, and
 the tangent as the blocks `σε`, `σp`, `φε`, … (flux then gradient). `external`
 gives the variables the law reads without returning their flux, as for
 [`point_update`](@ref). `cache` is
-accepted for the contract and unused: a law has nothing to memoize across
+accepted for the interface and unused: a law has nothing to memoize across
 points.
 """
 function Constitutive.material_response(

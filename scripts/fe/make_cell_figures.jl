@@ -179,7 +179,7 @@ want("mesh") && let
 end
 
 want("cost") && let
-    println("── the cost, and what it buys ─────────────────────────────────")
+    println("── the cost, and what it gives ─────────────────────────────────")
     println(report, "### Cost and accuracy, spherical pore (p = 1)\n")
     println(report, "| level | mode | vector dofs | conduction error | time |")
     println(report, "|---|---|---|---|---|")
@@ -347,7 +347,7 @@ want("sevostianov") && let
 
     # The inferred material, and the cell. `R/a = 6` and `nradial = 28`: what
     # remains after the dipole correction is truncation, so the cell radius is
-    # the knob that matters and the mesh density is already past its plateau.
+    # the parameter that matters and the mesh density is already past its plateau.
     νs, Es, ks = 1 / 3, 1.0, 1.0
     Cs = iso_stiffness(Es / (3 * (1 - 2νs)), Es / (2 * (1 + νs)))
     Ks = TensISO{3}(ks)

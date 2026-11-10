@@ -75,7 +75,7 @@ _from_local33(M::AbstractMatrix{Float64}, R) = TensND.TensCanonical(R * M * R')
 
 Refuse a constituent whose local-frame components are not transversely
 isotropic about the symmetry axis: any other anisotropy couples the Fourier
-modes, and the whole point of the axisymmetric formulation is that they do not.
+modes, and the purpose of the axisymmetric formulation is that they do not.
 """
 function _axi_check_ti(M66::AbstractMatrix{Float64}, what::AbstractString; rtol = 1.0e-8)
     ref = M66

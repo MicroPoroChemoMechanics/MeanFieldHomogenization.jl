@@ -292,7 +292,7 @@ Inspect the sample returned by `visco_eval(law, t, t)` and report the
 tensor order (`2` for vector-tensor / ``3\\times 3``, `4` for 4-tensor / ``6\\times 6``
 Mandel).  Used by [`homogenize_alv`](@ref) to dispatch between the
 order-4 (stiffness / relaxation) and order-2 (conductivity / creep
-admittance) pipelines.
+admittance) calculations.
 """
 _alv_property_order(law::AbstractViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
 
@@ -336,7 +336,7 @@ multiplies and inverts like the full matrix, which `Matrix(R)` writes out, and c
 the elastic tensors do (`⊡`, `inv`, `+`); see
 [Aging viscoelastic operators and histories](@ref man-volterra-operators).
 
-The ALV pipeline builds the discrete block matrices of every phase, computes the ALV Hill
+The ALV calculation builds the discrete block matrices of every phase, computes the ALV Hill
 kernel and dilute concentration tensors, and dispatches on `scheme` to the corresponding
 `_alv` scheme function.
 
@@ -344,14 +344,14 @@ The function dispatches on the **order of the matrix property** (read
 once from the matrix `ViscoLaw` sample type):
   * order-4 (4-tensor / ``6\\times 6`` Mandel kernel) → returns ``6n\\times 6n``
     relaxation matrix following the standard Hill-kernel +
-    dilute-concentration pipeline.
+    dilute-concentration calculation.
   * order-2 (2-tensor / ``3\\times 3`` kernel; conductivity / diffusion /
     permittivity) → returns ``3n\\times 3n`` matrix via the order-2 ALV
-    pipeline (`hill_kernel_order2`, time-space decoupling).
+    calculation (`hill_kernel_order2`, time-space decoupling).
 
 Supports two inclusion-geometry families, in both orders:
   * Single-shape ellipsoidal (`Ellipsoid`, `Spheroid`): the standard
-    Hill-kernel + dilute-concentration pipeline.
+    Hill-kernel + dilute-concentration calculation.
   * `LayeredSphere`: the ALV recurrences feed its concentration and
     contribution directly — no Hill kernel is needed. At order 4 these are
     [`gradient_gradient_concentration_alv`](@ref) and [`property_contribution_alv`](@ref)
@@ -384,7 +384,7 @@ Volterra inverses (Reuss) directly, each over its orientation distribution
     An RVE satisfying neither raises an `ArgumentError` naming the phase,
     rather than reading iso parameters off a matrix that is not isotropic.
     A non-isotropic ALV matrix is refused for the same reason.  The elastic
-    pipeline has no such restriction — its Hill tensor is available for
+    calculation has no such restriction — its Hill tensor is available for
     anisotropic references.
 """
 function homogenize_alv(

@@ -1,20 +1,20 @@
 # [Neural-surrogate inclusions](@id man-neural-inclusions)
 
 !!! info "Before this page"
-    [Custom inclusions](@ref man-custom-inclusions), whose gates A and B a
+    [Custom inclusions](@ref man-custom-inclusions), whose levels A and B a
     surrogate enters through, [Finite-element inclusions](@ref man-fe-inclusions),
     the expensive teacher a surrogate replaces, and
     [Hill polarization tensors](@ref th-hill-tensors) for the shape/moduli
     factorization exploited below.
 
 A trained network is a fourth way into the
-[custom-inclusion contract](@ref man-custom-inclusions), alongside the analytic
+[custom-inclusion interface](@ref man-custom-inclusions), alongside the analytic
 families, the layered patterns and the
 [finite-element inclusions](@ref man-fe-inclusions).
 
 ![A network that maps the parameters of a shape to the tensors of its response](../assets/nn/network_sketch.svg)
 
-| Type | Entry gate | For |
+| Type | Entry level | For |
 |:--|:--|:--|
 | [`NeuralHillInclusion`](@ref MeanFieldHomogenization.NeuralHillInclusion) | A — the Hill tensor | a morphology that has a Hill tensor |
 | [`NeuralConcentrationInclusion`](@ref MeanFieldHomogenization.NeuralConcentrationInclusion) | B — both concentration tensors | an internally heterogeneous morphology, which has none |
@@ -27,10 +27,10 @@ using MeanFieldHomogenization
 import Lux, Optimisers, Zygote        # activates MeanFieldHomogenizationLuxExt
 ```
 
-## What it buys
+## What it provides
 
 For an ellipsoid a surrogate is neither faster nor more accurate than the closed
-form. It buys two things the closed form does not need and the expensive routes
+form. It provides two things the closed form does not need and the expensive approaches
 cannot give:
 
 - **A derivative with respect to the morphology.** A surrogate is a smooth
@@ -45,7 +45,7 @@ cannot give:
   on that solve answers in microseconds.
 
 The ellipsoid is therefore the *validation* case: the one morphology whose labels
-are exact, so the pipeline can be held to a closed form before being pointed at
+are exact, so the whole chain can be held to a closed form before being pointed at
 something unknown. `scripts/84_neural_inclusion_ellipsoid.jl` is that check,
 [published as a tutorial](@ref tut-neural-inclusion).
 
@@ -65,7 +65,7 @@ add_phase!(rve, :i, incl, Dict(:C => iso_stiffness(60.0, 20.0)); fraction = 0.2)
 homogenize(rve, MoriTanaka(), :C)
 ```
 
-Gate A means every scheme works, in elasticity and in transport, and so do
+Level A means every scheme works, in elasticity and in transport, and so do
 orientation averaging and the sensitivity API. That is the whole surface: a
 surrogate is an ordinary inclusion whose response happens to be a network.
 
@@ -91,7 +91,7 @@ Only what is genuinely unknown is learned. Three properties are enforced by
 construction and hold to machine precision *however badly* the network is
 trained:
 
-- **Zero contrast.** Gate A supplies ``\mathbb P``, and the package evaluates
+- **Zero contrast.** Level A supplies ``\mathbb P``, and the package evaluates
   ``\mathbb A_{\varepsilon\varepsilon} =
   [\mathbb I + \mathbb P:(\mathbb C_1-\mathbb C_0)]^{-1}`` exactly, so
   ``\mathbb C_1 = \mathbb C_0 \Rightarrow \mathbb A = \mathbb I``. The eight
@@ -144,7 +144,7 @@ exact with no material input at all.
 Prefer `AffineHill` whenever the reference medium is isotropic: same cost, one
 input fewer, an order of magnitude more accurate. Prefer
 [`DimensionlessHill`](@ref MeanFieldHomogenization.DimensionlessHill) when you will need to
-transfer the recipe to an anisotropic matrix or to a concentration pair, where no
+transfer the procedure to an anisotropic matrix or to a concentration pair, where no
 affine structure exists.
 
 ## The general syntax: training your own
@@ -153,10 +153,10 @@ Four decisions, then one call. The
 [tutorial](@ref tut-neural-inclusion) walks the same ground with a schematic of the network
 and of the fitting loop, and shows the recorded learning curve.
 
-**1. Which tensor, and therefore which gate.** ``\mathbb P`` (gate A) whenever
+**1. Which tensor, and therefore which level.** ``\mathbb P`` (level A) whenever
 the morphology has one: the contrast dependence and the ``\mathbb C_1 = \mathbb
 C_0 \Rightarrow \mathbb A = \mathbb I`` limit then stay exact and the fit error
-is confined to a single tensor. The concentration pair (gate B) only for a
+is confined to a single tensor. The concentration pair (level B) only for a
 heterogeneous morphology, which has no ``\mathbb P``.
 
 **2. Which symmetry class**, from the shape: `HillISO` for a sphere (2
@@ -213,7 +213,7 @@ teacher's tensor really lies in the declared symmetry class (the projection
 residual must vanish). A wrong axis, a wrong class or a wrong frame is an error
 at dataset time, not a quietly bad model.
 
-### The knobs
+### The parameters
 
 [`TrainingOptions`](@ref MeanFieldHomogenization.TrainingOptions) — the defaults are sized
 for a few thousand samples and a few thousand parameters, which is seconds of
@@ -284,12 +284,12 @@ Then the fit, where two defaults had to be stated rather than inherited.
 near-diverging as the body tends to a crack pierced by a needle, so
 `log_threshold = 5` is needed for the output to be fitted in ``\log`` at all, and
 the features are `log_p` and `log_aspect` because a `SampleBox` is linear and the
-feature therefore *is* the sampling law. Measured, one lever at a time:
+feature therefore *is* the sampling law. Measured, one change at a time:
 ``2.3\times10^{-2}`` → ``7.1\times10^{-3}`` → ``3.7\times10^{-3}``.
 
 For the **heterogeneous** pairs — the sphere with an off-center core, and the
 layered spheroid — the error is the fit's again, transverse isotropy being
-structural there too, and each *pair* is the two sides of gate B rather than two
+structural there too, and each *pair* is the two sides of level B rather than two
 physics. ``\mathbb A_{\sigma\varepsilon}`` is not derivable from
 ``\mathbb A_{\varepsilon\varepsilon}``: the inclusion has more than one
 constituent, so ``\mathbb A_{\sigma\varepsilon} \neq \mathbb C_1 :
@@ -302,7 +302,7 @@ measure nothing there and the block error is the number to read: rms
 ``4.0\times10^{-4}``, median ``2.7\times10^{-4}``, p90 ``5.4\times10^{-4}``,
 against the ``1.6\times10^{-3}`` worst case in the table.
 
-**The sample count was measured, not guessed**, and it is the lever that worked:
+The sample count was measured, and it is the parameter that matters:
 
 | training solves | block rms, ``\mathbb A_{\varepsilon\varepsilon}`` | block rms, ``\mathbb A_{\sigma\varepsilon}`` |
 |--:|--:|--:|
@@ -312,12 +312,12 @@ against the ``1.6\times10^{-3}`` worst case in the table.
 | 2000 | ``4.8\times10^{-4}`` | ``3.3\times10^{-4}`` |
 | 2800 | ``4.0\times10^{-4}`` | ``2.8\times10^{-4}`` |
 
-Up to 1200 solves every factor of 1.7 bought a factor of three — the signature of
+Up to 1200 solves every factor of 1.7 gave a factor of three — the signature of
 four features genuinely under-sampled. Then it stops: the exponent of
 ``\mathrm{rms} \propto N^{-\alpha}`` falls ``2.10 \to 0.95 \to 0.59``, because
 the bulk of the box reaches the **teacher's** own floor, the cell reproducing the
 closed form only to about ``10^{-4}`` itself. Past roughly 2000 solves more
-samples no longer buy anything reliable.
+samples no longer improve the result reliably.
 
 **But the block error is not where the extra solves went**, and reading it alone
 would have said, wrongly, that they were wasted. Judged against the closed form
@@ -364,7 +364,7 @@ capacity fitting a dependence that is exactly known, as
 ## Heterogeneous morphologies
 
 [`NeuralConcentrationInclusion`](@ref MeanFieldHomogenization.NeuralConcentrationInclusion)
-takes gate B, the only way in for a morphology with no Hill tensor. Since
+takes level B, the only way in for a morphology with no Hill tensor. Since
 [`is_homogeneous_inclusion`](@ref) is `false`, it costs **two** surrogates per
 physics — the strain side and the stress side — because
 ``\mathbb A_{\sigma\varepsilon} = \mathbb C_1:\mathbb A_{\varepsilon\varepsilon}``
@@ -381,7 +381,7 @@ on [`fe_axi_concentration`](@ref MeanFieldHomogenization.fe_axi_concentration).
 
 ## A surrogate in place of a finite-element cell
 
-A **cavity** is the easy case for gate B — its stress-side concentration is
+A **cavity** is the easy case for level B — its stress-side concentration is
 identically zero, so *one* surrogate per physics suffices rather than a pair —
 and it is the case where a surrogate is worth most. So it does not go through
 `NeuralConcentrationInclusion` at all: it is handed to the very type that would
@@ -392,16 +392,16 @@ pore = FESupershapePore(Supersphere(1.0, 0.6); elastic = s)
 fe_cell_concentration(pore, C₀)      # microseconds, no mesh, no backend loaded
 ```
 
-Everything else is unchanged: the same type, the same contract, the same
+Everything else is unchanged: the same type, the same interface, the same
 schemes, the same exactly-zero stress side.
-[`has_surrogate`](@ref MeanFieldHomogenization.has_surrogate) says which route a
+[`has_surrogate`](@ref MeanFieldHomogenization.has_surrogate) says which approach a
 given object takes, and
 [`pore_shape_params`](@ref MeanFieldHomogenization.pore_shape_params) lists the
 names a surrogate may use as features — `:a`, `:p`, and `:c` for a
 superspheroid.
 
 **And it becomes differentiable in its own morphology**, which is most of the
-reason to train one. The finite-element route refuses that request outright: its
+reason to train one. The finite-element approach refuses that request outright: its
 solve runs in `Float64` and memoizes on the reference medium alone, so the
 derivative would come back a silent zero. A surrogate has neither problem, and
 for a shape family indexed by a single exponent it is exactly the derivative one
@@ -414,7 +414,7 @@ derivative(rve, Dilute(), geometry(:pores, :p))
 The same call on a meshed pore raises, and the suite pins both halves of that
 contrast.
 
-**Four models ship for this route**, all trained by
+**Four models ship for this approach**, all trained by
 `scripts/nn/train_supershape.jl`: two for the **cubic** supersphere against the
 octant cell, and two for the **axisymmetric** superspheroid against the
 [Fourier cell](@ref man-fe-inclusions). Reducing the teacher is what makes a
@@ -434,7 +434,7 @@ the fit's own.
 The suite additionally checks the whole path against a *synthetic* closed-form
 cubic teacher — dataset, fit, decode, inclusion, schemes, and the derivative
 against a central difference — because that is the one teacher whose labels are
-exact, so a failure there is unambiguously the pipeline's.
+exact, so a failure there is unambiguously the surrogate's.
 
 ## Limitations
 
@@ -478,9 +478,9 @@ curve, validated against the closed form — and
 [Replacing a finite-element solve by a neural surrogate](@ref tut-neural-excentered-sphere)
 trains a surrogate on the off-center core of the finite-element page.
 
-- [Custom inclusions](@ref man-custom-inclusions) — the contract and its three
-  entry gates
+- [Custom inclusions](@ref man-custom-inclusions) — the interface and its three
+  entry levels
 - [Finite-element inclusions](@ref man-fe-inclusions) — the expensive teacher a
   surrogate is meant to replace
 - [Adding a new inclusion](@ref dev-adding-inclusion) — the leveled developer
-  contract
+  interface

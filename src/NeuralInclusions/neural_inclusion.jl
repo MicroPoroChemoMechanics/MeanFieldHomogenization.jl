@@ -34,7 +34,7 @@
 
 Neutral [`shape_trait`](@ref MeanFieldHomogenization.Core.shape_trait) of the neural
 inclusions. No kernel dispatches on it — a surrogate supplies its own response —
-but the contract requires *some* shape trait.
+but the interface requires *some* shape trait.
 """
 struct NeuralShape end
 
@@ -139,7 +139,7 @@ _feature(::Val{:nu0}, _incl, P₀::TensND.AbstractTens) = throw(
 # constituents inside itself, so `𝔸` depends on `ℂ₀` only through the *contrast*:
 # scaling the reference medium and every constituent together leaves `𝔸_εε`
 # unchanged and multiplies `𝔸_σε` by the factor. Ratios are therefore the complete
-# and minimal material parametrization — and the reason a gate-B surrogate cannot
+# and minimal material parametrization — and the reason a level-B surrogate cannot
 # reuse the `ℙ(λℂ₀) = ℙ(ℂ₀)/λ` homogeneity of gate A.
 for k in 1:4
     @eval function _feature(::Val{$(QuoteNode(Symbol(:log_mu_ratio_, k)))}, incl, P₀)
@@ -214,7 +214,7 @@ end
                         basis = nothing, euler_angles = (), guard = :warn)
 
 Inclusion whose **Hill tensor** is produced by a trained
-[`NeuralSurrogate`](@ref) — entry gate A of the inclusion contract, so all eight
+[`NeuralSurrogate`](@ref) — entry level A of the inclusion interface, so all eight
 concentration tensors, all four contribution tensors and every homogenization
 scheme follow.
 
@@ -406,17 +406,17 @@ _neural_hill(_incl, ::Nothing, _P₀, which) = throw(
                                 basis = nothing, euler_angles = (), guard = :warn)
 
 Inclusion whose **concentration tensors** are produced by trained surrogates —
-entry gate B, the only way in for an internally heterogeneous morphology, which
+entry level B, the only way in for an internally heterogeneous morphology, which
 has no Hill tensor at all. This is the shape a surrogate trained on
 [`fe_axi_concentration`](@ref MeanFieldHomogenization.FiniteElements.fe_axi_concentration)
 takes.
 
-Because [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`, gate B costs **two**
+Because [`is_homogeneous_inclusion`](@ref MeanFieldHomogenization.Core.is_homogeneous_inclusion) is `false`, level B costs **two**
 tensors per physics: the strain side *and* the stress side, since
 ``\\mathbb{A}_{\\sigma\\varepsilon} = \\mathbb{C}_1:\\mathbb{A}_{\\varepsilon\\varepsilon}`` presupposes a single uniform ``\\mathbb{C}_1`` that a heterogeneous
 inclusion does not have. Given both, the generic contributions switch to the
 exact ``\\mathbb{N} = \\mathbb{A}_{\\sigma\\varepsilon} - \\mathbb{C}_0:\\mathbb{A}_{\\varepsilon\\varepsilon}`` and
-``\\mathbb{H} = (\\mathbb{A}_{\\varepsilon\\varepsilon} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\varepsilon}):\\mathbb{S}_0``, so gate B is a
+``\\mathbb{H} = (\\mathbb{A}_{\\varepsilon\\varepsilon} - \\mathbb{S}_0:\\mathbb{A}_{\\sigma\\varepsilon}):\\mathbb{S}_0``, so level B is a
 complete entry point.
 
 | Option | Meaning |
@@ -426,12 +426,12 @@ complete entry point.
 | `shape_params` | named morphology parameters, e.g. `(; eccentricity = 0.4, core_fraction = 0.5)`. They are the surrogate's features *and* the fields the sensitivity API differentiates, so every value must be a `Number` |
 | `fractions` / `properties` | internal volume fractions and constituent properties; supplying them unlocks the `Voigt` and `Reuss` bounds, which a heterogeneous inclusion cannot otherwise serve. `properties` also backs the `:log_mu_ratio_k` contrast features |
 
-A gate-B surrogate's features are the morphology parameters and the **contrast
+A level-B surrogate's features are the morphology parameters and the **contrast
 ratios** — never absolute moduli. The reason is that the constituents live inside
 the inclusion, so scaling ``\\mathbb{C}_0`` alone changes the contrast: the exact invariance is
 under a *simultaneous* scaling of the reference medium and of every constituent,
 which leaves ``\\mathbb{A}_{\\varepsilon\\varepsilon}`` unchanged and multiplies ``\\mathbb{A}_{\\sigma\\varepsilon}`` by the factor. The
-``\\mathbb{P}(\\lambda\\mathbb{C}_0) = \\mathbb{P}(\\mathbb{C}_0)/\\lambda`` homogeneity that gate A exploits does not transfer.
+``\\mathbb{P}(\\lambda\\mathbb{C}_0) = \\mathbb{P}(\\mathbb{C}_0)/\\lambda`` homogeneity that level A exploits does not transfer.
 
 Supplying only one tensor of a pair is refused at construction: the omission is
 silent otherwise — `Dilute` and `MoriTanaka` stay right while `SelfConsistent`
@@ -439,9 +439,9 @@ and `AsymmetricSelfConsistent`, the schemes that consume the stress average,
 drift by several percent.
 
 !!! note "Not exercised by the shipped models"
-    The pilot trains gate-A surrogates, where the contrast dependence is exact.
+    The pilot trains level-A surrogates, where the contrast dependence is exact.
     This type is the seam for the heterogeneous morphologies, and it is tested
-    against an equivalent gate-A inclusion; no trained model ships for it yet.
+    against an equivalent level-A inclusion; no trained model ships for it yet.
 """
 struct NeuralConcentrationInclusion{
         dim, T <: Number, TS <: Number, B <: TensND.AbstractBasis, S4, S2, NS, F, P,
@@ -591,7 +591,7 @@ function _check_pair(a, b, na::Symbol, nb::Symbol, order::Int)
         missing_, present = a === nothing ? (na, nb) : (nb, na)
         throw(
             ArgumentError(
-                "gate B costs two tensors for a heterogeneous inclusion: `$present` " *
+                "entry level B costs two tensors for a heterogeneous inclusion: `$present` " *
                     "was given but `$missing_` was not. The strain side fixes the " *
                     "stress side only through `𝔸_σε = ℂ₁:𝔸_εε`, which needs a single " *
                     "uniform property this inclusion does not have — so omitting it " *

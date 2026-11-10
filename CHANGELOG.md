@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.26.5 — the documentation describes the current version only
+
+A patch release. The documentation, the docstrings and the tutorials no longer
+narrate the history of earlier versions, and their vocabulary is made plain.
+
+### Changed
+
+- **`check_inclusion_interface` names the entry levels.** The three ways a
+  custom inclusion enters the schemes (the Hill tensor, the concentration
+  tensors, the contribution tensors) are called *entry levels A, B and C*
+  throughout the documentation, and the report printed by
+  `check_inclusion_interface` now uses the same words ("level 1, entry level
+  A: …", "satisfies the inclusion interface"). Only the printed text changes:
+  the checks, their order and the returned flag are those of 0.26.4. Code that
+  parses this report must match the new wording.
+
+### Documentation
+
+- **No version history in the pages.** Passages that compared the current code
+  with earlier releases (bug-fix stories, "until 0.x" tables of the
+  performance notes, the warnings on prefactors changed in 0.4.0, rename notes)
+  are removed; where such a passage carried a fact about the current
+  algorithm, the fact is kept and stated in the present tense. The history
+  stays in this changelog.
+- **Plain vocabulary.** Words borrowed from software jargon (oracle, harness,
+  route, contract, gate, knob…) are replaced in the pages, the docstrings and the
+  Literate scripts by the terms of the mechanics literature; no anchor, page
+  address or identifier changes, so existing links keep working.
+- The two figures of the layered-spheroid tutorials whose titles named "gate B"
+  are regenerated.
+
 ## v0.26.4 — the permeability from the Stokes flow in the pores
 
 A patch release: Brinkman inclusions bring the Stokes-to-Darcy upscaling of the

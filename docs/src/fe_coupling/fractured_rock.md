@@ -1,7 +1,7 @@
 # [Building a fractured-rock material](@id fe-fractured-rock)
 
 !!! info "Before this page"
-    [Materials](@ref fe-materials), for the contract the material below
+    [Materials](@ref fe-materials), for the interface the material below
     fulfills, and [Fractured permeability](@ref fe-permeability), for the
     conductive cracks it is built from.
 

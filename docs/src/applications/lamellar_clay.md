@@ -153,7 +153,7 @@ one already made.
 
 Written as it stands, though, ``\mathbb{C}_f`` is *singular*: its out-of-plane
 block cannot be inverted, and the laminate kernel needs that inverse. The fix
-is the honest one — regularize with an isotropic ``(\kappa_w, \mu_w)``, then
+is to regularize with an isotropic ``(\kappa_w, \mu_w)``, then
 send it to zero. The platelets being incompressible adds a second limit,
 ``k_s \to \infty``. Both are genuine limit passages, taken with `tlimit`,
 which acts on the few canonical coefficients of a structured tensor and gives
@@ -415,7 +415,7 @@ Three things are worth stating plainly.
 The poroelastic law that the library closes for a homogeneous solid phase is
 given in [Poromechanics](@ref manual-poromechanics); the swelling term
 ``g\,\pi^g_o`` is a departure from it, and a prestressed phase such as the
-interfoliar layer requires the Levin route followed on this page. The next
+interfoliar layer requires the Levin approach followed on this page. The next
 application, [Friction of a granular medium from its contacts](@ref app-granular-friction),
 keeps interfaces between solid particles but lets them carry a friction law,
 and derives the strength of a sand.

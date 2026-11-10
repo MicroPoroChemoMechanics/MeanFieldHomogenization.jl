@@ -120,7 +120,7 @@ stress increment, ``p = -\boldsymbol{B}^{\mathrm{sk}} : \boldsymbol{\Sigma}``.
 !!! note "Homogeneous solid phase only"
     These relations need a solid phase with *uniform* elastic properties — a
     rock matrix with pores or fractures. A medium built from two distinct solid
-    constituents needs the general Levin/eigenstrain route, and ``\mathbb{C}_{\mathrm{s}}``
+    constituents needs the general Levin/eigenstrain approach, and ``\mathbb{C}_{\mathrm{s}}``
     is then not defined.
 
 ## Where to go next

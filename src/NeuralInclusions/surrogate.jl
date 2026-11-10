@@ -79,7 +79,7 @@ worst_error(p::Provenance) = p.max_block_error
 """
     NeuralSurrogate
 
-A trained network plus its physical contract: which features it consumes, how
+A trained network plus its physical interface: which features it consumes, how
 both ends are standardized, which tensor it produces, and over what box it is
 entitled to be believed.
 

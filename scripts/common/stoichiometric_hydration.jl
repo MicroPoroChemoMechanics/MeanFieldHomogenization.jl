@@ -126,7 +126,7 @@ what its scarcest co-reactant allows and passes the rest on. Depletion is never
 tested for explicitly; it is absorbed by that clipping.
 
 The continuous analog used here is a **partition of unity** over the routes.
-With `gᵢ = xᵢ/(xᵢ+ε)` a smooth availability gate on the co-reactant of route `i`,
+With `gᵢ = xᵢ/(xᵢ+ε)` a smooth availability factor on the co-reactant of route `i`,
 expressed in moles of anhydrous phase that co-reactant can support,
 
     w₁ = g₁,   w₂ = (1-w₁)g₂,   w₃ = (1-w₁-w₂)g₃,   …,   w_last = 1 - Σ wᵢ
@@ -166,16 +166,16 @@ deduction of the C₃S/C₂S eaten there, which the reference performs by hand o
 silicate targets, is automatic here: C₃S is a kinetic species, so that
 consumption enters its own degree of reaction and hence its own rate.
 
-The gates read amounts of species that are not themselves kinetic (`Gp`, `Cal`,
+These factors read amounts of species that are not themselves kinetic (`Gp`, `Cal`,
 `ettringite`). That is correct because the ODE state carries the reaction
 extents, from which the residual reconstructs every species before evaluating the
-rates (ChemistryLab ≥ 0.5).
+rates (ChemistryLab ≥ 0.40).
 
-### Why smooth gates and not callbacks
+### Why smooth factors and not callbacks
 
 The `x/(x+ε)` form makes each consumer's rate proportional to `x` as the
 co-reactant runs out, so the stock decays **exponentially towards zero and cannot
-cross it**. That is a structural property of the gate, not luck: measured over a
+cross it**. That is a structural property of the factor, not luck: measured over a
 90-day run refined around depletion, the most negative value reached by any
 species is −1.7e-16 mol, i.e. rounding.
 
@@ -216,7 +216,7 @@ function hydration_reactions(
             wrap((T, P, t, nn, lna, n0) -> g(t) * base(T, P, t, nn, lna, n0))
     end
 
-    # Mole scale of the availability gates, not a tolerance: it sets how sharply
+    # Mole scale of the availability factors, not a tolerance: it sets how sharply
     # a route closes as its co-reactant runs out.
     ε_av = 1.0e-3
 
@@ -232,7 +232,7 @@ function hydration_reactions(
     θ48(T) = one(T) / (one(T) + exp((T - oftype(T, 321.15)) / oftype(T, 1.0)))
 
     # Build the rate of route `k` of a cascade: base rate × its weight in the
-    # partition of unity. `gates` returns the availability gate of each route
+    # partition of unity. `gates` returns the availability factor of each route
     # except the last, which takes the remainder.
     function cascade_rate(base, gates, k, nroutes)
         return wrap(
@@ -281,7 +281,7 @@ function hydration_reactions(
     pk_c4af = pk(PK84_PARAMS_C4AF, "C4AF")
     hg = s("C3AFS0.84H4.32")
 
-    # (gate specification, reaction) pairs, listed in the order of priority.
+    # (availability specification, reaction) pairs, listed in the order of priority.
     r_si3 = (
         "C4AF + C3S -> Fe hydrogarnet", ("C3S", 1.68),
         [s("C4AF"), s("C3S"), s("H2O@")], [hg, s("Portlandite")],
@@ -343,7 +343,7 @@ function hydration_reactions(
         [s("Amor-Sl"), s("Portlandite"), s("H2O@")], [s("Jennite")];
         symbol = "pozzolanic reaction"
     )
-    # Its rate reads the silica only: gated on the portlandite, as the routes of C₃A
+    # Its rate reads the silica only: weighted by the availability of portlandite, as the routes of C₃A
     # and C₄AF are on their co-reactants, so that it stops when the portlandite runs
     # out instead of consuming portlandite that is not there (a low w/c with silica
     # fume exhausts it). The portlandite consumed per mole of silica is read on the

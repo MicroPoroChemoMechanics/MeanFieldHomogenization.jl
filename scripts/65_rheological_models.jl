@@ -3,7 +3,7 @@
 # !!! info "Before this page"
 #     The tutorial [Viscoelastic composites](@ref tut-viscoelasticity), where a
 #     rheological model first describes a phase, and the theory page
-#     [The Laplace-Carson route](@ref th-laplace-carson), which relates the four
+#     [The Laplace-Carson approach](@ref th-laplace-carson), which relates the four
 #     functions a model answers.
 #
 # A linear viscoelastic material can be described by any one of four
@@ -24,7 +24,7 @@
 #
 # This page walks the catalog and then shows the two things it is for:
 # lifting a pair of scalar models to an isotropic tensor, and driving both
-# homogenization routes from one object.
+# homogenization approaches from one object.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)         #jl
@@ -198,7 +198,7 @@ end
 # object: [`creep_kernel`](@ref) gives ``\varphi(t)``,
 # [`carson_creep_kernel`](@ref) gives ``\varphi^{*}(p)``, and
 # [`creep_kernel_law`](@ref) packages the former as a
-# [`ViscoLaw`](@ref) for the aging pipeline. Inverting one must reproduce the
+# [`ViscoLaw`](@ref) for the aging calculation. Inverting one must reproduce the
 # other:
 
 for t in (1.0e-5, 1.0e-3, 1.0e-1, 10.0)
@@ -207,7 +207,7 @@ for t in (1.0e-5, 1.0e-3, 1.0e-1, 10.0)
     @printf "φ(%8.1e) : closed form %.10f   by inversion %.10f   (rel %.1e)\n" t exact inverted (abs(inverted - exact) / exact)
 end
 
-# ## §4 One object, two routes
+# ## §4 One object, two approaches
 #
 # [`iso_rheology`](@ref) pairs two scalar models into an isotropic fourth-order
 # model — here an elastic bulk modulus and a 2S2P1D shear channel. The single
@@ -217,7 +217,7 @@ end
 #   [`homogenize_lc`](@ref);
 # * `ViscoLaw(m)`, which [`homogenize_alv`](@ref) consumes unchanged.
 #
-# That is the whole point of the catalog: the material is described once.
+# The catalog serves this purpose: the material is described once.
 
 iso = iso_rheology(Spring(2500.0), binder)
 @printf "C*(iω) at 10 Hz : %s\n" string(carson_relaxation(iso, im * 2π * 10))

@@ -2,9 +2,9 @@
 
 !!! info "Before this page"
     [Concentration and contribution tensors](@ref th-concentration), which defines
-    the concentration and contribution tensors that the three entry gates below
+    the concentration and contribution tensors that the three entry levels below
     supply or derive, and [Layered inclusions](@ref man-layered), the built-in
-    family that enters through gate B.
+    family that enters through level B.
 
 `MeanFieldHomogenization` ships ellipsoids, cylinders, elliptical and ribbon cracks and
 multi-layer patterns. When your morphology is none of those — a non-ellipsoidal
@@ -14,14 +14,14 @@ homogenization scheme, in elasticity and in transport, without touching the
 package.
 
 This is the counterpart of the `user_inclusion` mechanism of the C++/Python
-*echoes* codebase. Two routes are available:
+*echoes* codebase. Two options are available:
 
 - **subtype** [`AbstractCustomInclusion`](@ref) and add methods — the durable
   option for a morphology you will reuse;
 - instantiate [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion) with
   **callbacks** — the quick option for prototyping.
 
-Both go through the same contract, spelled out in full on the developer page
+Both go through the same interface, spelled out in full on the developer page
 [Adding a new inclusion](@ref dev-adding-inclusion). This page shows how to use it.
 
 ## The idea in one line
@@ -38,11 +38,11 @@ size-independent contribution**:
 Your job is to supply the contribution — or anything upstream of it that the
 package can turn into one. The amount lives on the RVE, not on the geometry.
 
-## Three entry gates
+## Three entry levels
 
 Implement the lowest level you can reach; everything above is derived.
 
-| Gate | What you supply | What you get |
+| Level | What you supply | What you get |
 |:--|:--|:--|
 | **A** | `hill_tensor(incl, P₀)` | the 4 concentration tensors and the 2 contribution tensors of each physics, every scheme |
 | **B** | `gradient_gradient_concentration(incl, P₁, P₀)` — plus `flux_gradient_concentration` if the inclusion is heterogeneous | the derived concentrations, the contributions, every scheme |
@@ -52,7 +52,7 @@ Implement the lowest level you can reach; everything above is derived.
 conductivity in transport. Dispatch on it and one implementation serves both,
 under the same function names.
 
-## Quick route — `CustomInclusion`
+## Quick approach — `CustomInclusion`
 
 Callbacks are keyword arguments named after the generic they implement.
 
@@ -109,7 +109,7 @@ pass `homogeneous = false`. The scheme kernels then use the exact identities
 instead of ``\langle\mathbb C:\boldsymbol\varepsilon\rangle_i = \mathbb C_i:\mathbb A_i``,
 which would otherwise give a wrong answer — occasionally with the wrong sign.
 
-The same caveat applies *inside* gate B. The strain concentration fixes the
+The same caveat applies *inside* level B. The strain concentration fixes the
 stress one only through ``\mathbb A_{\sigma\varepsilon} = \mathbb C_1 :
 \mathbb A_{\varepsilon\varepsilon}``, so a heterogeneous inclusion must supply
 both:
@@ -125,7 +125,7 @@ Each callback serves both physics: `P₁` and `P₀` are fourth-order stiffnesse
 in elasticity and second-order conductivities in conduction, as for
 `hill_tensor`.
 
-This is exactly what the built-in `LayeredSphere` does. Omitting the
+The built-in `LayeredSphere` does so. Omitting the
 stress-side callback fails *silently*, and in the most misleading way:
 `Dilute` and `MoriTanaka` need only ``(\mathbb A, \mathbb N)`` and stay exactly
 right, while `SelfConsistent` and `AsymmetricSelfConsistent` drift by several
@@ -142,7 +142,7 @@ no such envelope simply omits it:
 blob = CustomInclusion(; hill_tensor = (P₀; kw...) -> my_solver(P₀))
 ```
 
-## Durable route — subtyping
+## Durable approach — subtyping
 
 ```julia
 struct MyBlob{T, B <: TensND.AbstractBasis} <: MeanFieldHomogenization.AbstractCustomInclusion{T}
@@ -163,7 +163,7 @@ MeanFieldHomogenization.Elasticity.hill_tensor(b::MyBlob, P₀::TensND.AbstractT
     hill_tensor(_equivalent(b), P₀; kw...)
 ```
 
-Subtyping buys **sensitivities**: because `radius` and `eccentricity` are
+Subtyping gives access to sensitivities: because `radius` and `eccentricity` are
 plain `<:Number` fields, `derivative`, `gradient` and `jacobian` reach them
 with no extra code.
 
@@ -209,18 +209,18 @@ check_inclusion_interface(flat; amount = :density)        # elasticity, density
 check_inclusion_interface(blob; physics = :conduction)    # transport
 ```
 
-It names the missing level-0 methods, the entry gate it found, and what that
-gate leaves unavailable.
+It names the missing level-0 methods, the entry level it found, and what that
+level leaves unavailable.
 
-## Two things worth knowing
+## Two points to keep in mind
 
-**Gate C does not provide the concentration tensor.** Contribution tensors
+**Level C does not provide the concentration tensor.** Contribution tensors
 alone do not determine ``\mathbb A``, so a *volume-fraction* phase entered
-through gate C works with `Voigt`, `Reuss`, `Dilute`, `DiluteDual`, `Maxwell`,
+through level C works with `Voigt`, `Reuss`, `Dilute`, `DiluteDual`, `Maxwell`,
 `PonteCastanedaWillis` and `DifferentialScheme`, but not with `MoriTanaka` or
 the self-consistent schemes. Density-based phases are unaffected.
 
-**Orientation averaging is free — and applied after you.** `IsoSymmetrize` and
+**Orientation averaging is applied after the inclusion's own method.** `IsoSymmetrize` and
 `TISymmetrize` are applied by the scheme to the tensor you returned, so:
 
 - return tensors in the **global** frame;
@@ -236,7 +236,7 @@ for (i, bin) in enumerate(polar_orientation_bins(12))
 end
 ```
 
-**Gate B is complete for a heterogeneous inclusion too.** Supply *both*
+**Level B is complete for a heterogeneous inclusion too.** Supply *both*
 concentration tensors (`gradient_gradient_concentration` and `flux_gradient_concentration`,
 in either physics) and the contribution tensors are derived from
 ``\mathbb N = \mathbb A_{\sigma\varepsilon} - \mathbb C_0 :
@@ -248,37 +248,37 @@ wrong — `check_inclusion_interface` is there to catch that.
 ## Worked examples in the package
 
 The first two live in [`MeanFieldHomogenization.FiniteElements`](@ref) and take
-the same route: a finite-element resolution of the Eshelby problem, plugged in
-through the contract, with nothing downstream aware of it. The third shows that
+the same approach: a finite-element resolution of the Eshelby problem, plugged in
+through the interface, with nothing downstream aware of it. The third shows that
 the contribution need not be independent of the size: the Brinkman inclusions
 of the Stokes-to-Darcy upscaling depend on it through the reference medium,
-and enter through gate B all the same.
+and enter through level B all the same.
 
-| Page | Covers | Gate |
+| Page | Covers | Level |
 | :--- | :--- | :--- |
 | [Finite-element inclusions](@ref man-fe-inclusions) | the principle, the shared syntax, and the five shipped morphologies | the crack algebra from `cod_tensor` alone, or B |
-| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked end to end | B, both concentration tensors |
+| [A recycled-concrete aggregate](@ref app-recycled-aggregate) | the off-center core, worked through the whole calculation | B, both concentration tensors |
 | [Brinkman inclusions](@ref man-brinkman) | size-dependent inclusions of the Stokes flow in the pores | B, both concentration tensors |
 
-A cavity is the case where gate B is at its simplest and most exact: its
+A cavity is the case where level B is at its simplest and most exact: its
 stress-side concentration is **identically zero**, so the package's own
 contribution identities collapse to ``\mathbb N = -\mathbb C_0:\mathbb A``
 and ``\mathbb H = \mathbb A:\mathbb S_0`` with no ``\mathbb C_1`` in them at
-all. Declaring `is_homogeneous_inclusion` **false** is what reaches that route —
+all. Declaring `is_homogeneous_inclusion` **false** is what reaches that approach —
 the flag asks whether a single ``\mathbb C_1`` describes the interior, and
 `inv(0)` is meaningless. See
 [`FESupershapePore`](@ref MeanFieldHomogenization.FESupershapePore).
 
 ## Where to go next
 
-The two pages that follow apply the contract to morphologies with no closed
+The two pages that follow apply the interface to morphologies with no closed
 form: [Finite-element inclusions](@ref man-fe-inclusions) obtains the response
 from a mesh, [Neural-surrogate inclusions](@ref man-neural-inclusions) from a
 trained network. The tutorial
-[The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract)
-enters one morphology through each gate and compares the three answers.
+[The custom-inclusion interface: three entry levels, one answer](@ref tut-custom-inclusion-contract)
+enters one morphology through each level and compares the three answers.
 
-- [Adding a new inclusion](@ref dev-adding-inclusion) — the complete contract,
+- [Adding a new inclusion](@ref dev-adding-inclusion) — the complete interface,
   level by level
 - [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion),
   [`check_inclusion_interface`](@ref MeanFieldHomogenization.check_inclusion_interface)

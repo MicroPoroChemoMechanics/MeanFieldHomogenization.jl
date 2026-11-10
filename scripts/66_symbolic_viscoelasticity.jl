@@ -114,14 +114,14 @@ println(
 
 # The relaxation function of Burgers is the messy `cosh`/`sinh` expression that
 # had to be derived in a computer-algebra system to serve as this package's
-# oracle.  SymPy derives it here from the transform, in one line.
+# reference.  SymPy derives it here from the transform, in one line.
 Rb = inverse_carson(p -> carson_relaxation(b, p), ts)
 println("\nBurgers R(t), derived rather than transcribed:")
 println("  ", Rb)
 
 # ─── §4 Where SymPy stops, and why the quadratures exist ─────────────────────
 
-banner("§4  How far the symbolic route goes")
+banner("§4  How far the symbolic approach goes")
 
 SymPyPythonCall.@syms Vsb::positive ps::positive αsym::positive E0::positive δs::positive
 
@@ -148,7 +148,7 @@ println("\n(c) springpot with a symbolic exponent α")
 println("    R(t) = ", inverse_carson(q -> carson_creep(ScottBlair(Vsb, αsym), q), ts))
 
 # (d) A sum of several fractional powers — Huet-Sayegh, 2S2P1D — is left
-#     unevaluated, which is at least honest.
+#     unevaluated, which is at least accurate.
 hs2 = HuetSayegh(Einf, E0, δs, τ, Sym(1) // 5, Sym(2) // 3)
 println("\n(d) Huet-Sayegh with rational exponents")
 r_hs = inverse_carson(q -> carson_relaxation(hs2, q), ts)
@@ -157,7 +157,7 @@ println("    R(t) = ", first(string(r_hs), 150), "…")
 println(
     """
 
-    So the symbolic route reaches: rational powers, and the α = 1/2 Cole-Cole
+    So the symbolic approach reaches: rational powers, and the α = 1/2 Cole-Cole
     special case. It does **not** reach a symbolic exponent, nor a sum of several
     fractional powers — those inverses are Mittag-Leffler functions or worse.
 
@@ -166,7 +166,7 @@ println(
     every one of these transforms to about 1e-12."""
 )
 
-# ─── §5 A cross-check the numerical route cannot give itself ─────────────────
+# ─── §5 A cross-check the numerical approach cannot give itself ─────────────────
 
 banner("§5  Symbolic and numerical inversion, on the same model")
 

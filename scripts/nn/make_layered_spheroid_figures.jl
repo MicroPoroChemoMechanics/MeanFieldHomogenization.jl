@@ -1,6 +1,6 @@
 # =============================================================================
-#  make_layered_spheroid_figures.jl — the three routes to a layered spheroid,
-#  and the honest price of differentiating a fit.
+#  make_layered_spheroid_figures.jl — the three approaches to a layered spheroid,
+#  and the cost of differentiating a fit.
 #
 #  On the **confocal** slice `𝔸_εε` has a closed form, so a derivative has an
 #  exact reference instead of being judged against a discretized cell. That is
@@ -72,13 +72,13 @@ nn_incl(ω, w) = NeuralConcentrationInclusion(
     fractions = (w, 1 - w), properties = CS, guard = :error,
 )
 
-# `(𝔸_εε)₁₁₁₁` by each of the three routes.
+# `(𝔸_εε)₁₁₁₁` by each of the three approaches.
 A_an(ω, w) = a1111(gradient_gradient_concentration(an_incl(ω, w), C0, C0))
 A_fe(ω, w) = a1111(fe_axi_concentration(fe_incl(ω, w), C0)[1])
 A_nn(ω, w) = a1111(gradient_gradient_concentration(nn_incl(ω, w), C0, C0))
 
 # The effective stiffness, which has **no** closed form: it needs both sides of
-# gate B, and the analytic type supplies no stress side.
+# level B, and the analytic type supplies no stress side.
 idx = C -> Array(get_array(C))[1, 1, 1, 1]
 function rve_of(incl)
     r = RVE()
@@ -88,7 +88,7 @@ function rve_of(incl)
 end
 c1111(incl) = idx(homogenize(rve_of(incl), MoriTanaka(), :C))
 
-# Step sizes chosen per route, and each for a reason. The closed form is smooth
+# Step sizes chosen per approach, and each for a reason. The closed form is smooth
 # and exact, so 1e-4 is converged to 1e-9 — measured, not assumed. The cell
 # remeshes at every `w`, but its `ncells` grows smoothly and a step study showed
 # the quotient flat from 5e-3 to 1e-1, so 2e-2 is safely inside that plateau.
@@ -104,7 +104,7 @@ const OMEGAS = (1.4, 2.0, 2.6)
 const EDGE_OMEGA = 3.0
 const WS = collect(range(0.24, 0.66, length = 7))
 
-println("the three routes, values and derivatives …")
+println("the three approaches, values and derivatives …")
 const _D() = Dict{Float64, Vector{Float64}}()
 V_an, V_fe, V_nn = _D(), _D(), _D()
 D_an, D_fe, D_nn = _D(), _D(), _D()
@@ -204,7 +204,7 @@ end
 p4 = plot(;
     xlabel = "w   (core's share of the inclusion)", ylabel = "C₁₁₁₁ of the estimate",
     legend = :topleft, titlefontsize = 9,
-    title = "what has no closed form at all: both sides of gate B",
+    title = "what has no closed form at all: both sides of level B",
 )
 for (ω, col) in zip(OMEGAS, COLS)
     plot!(p4, WS, E_fe[ω]; lc = col, lw = 2, label = "finite elements, c/a = $ω")

@@ -107,7 +107,7 @@ layer_volume_fraction(s3, 1), layer_volume_fraction(s3, 2)
 
 # ### In an RVE
 #
-# `LayeredSpheroid` is a first-class phase geometry. It carries **no** Hill
+# `LayeredSpheroid` is a phase geometry in its own right. It carries **no** Hill
 # tensor (`is_homogeneous_inclusion(s) == false`), so it plugs into the schemes
 # through its own volume-averaged concentration tensors instead. The declared
 # phase property is accepted for signature compatibility but ignored — the real

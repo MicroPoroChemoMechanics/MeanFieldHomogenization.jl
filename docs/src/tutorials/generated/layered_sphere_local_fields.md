@@ -239,7 +239,7 @@ end
 Averaging ``\mathbb{A}(\underline x)`` over a layer must return the
 ``(\alpha_k, \beta_k)`` the averaged API reports —
 [`shell_concentration`](@ref) exposes that identity from the same cached
-amplitudes, so the two routes cannot drift apart.
+amplitudes, so the two approaches cannot drift apart.
 
 ````@example layered_sphere_local_fields
 println("\nlayer   α_k (pointwise)   α_k (averaged)   β_k (pointwise)   β_k (averaged)")

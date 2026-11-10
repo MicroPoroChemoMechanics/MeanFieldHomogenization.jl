@@ -237,7 +237,7 @@ those of the plain truncated cell, ``\\underline{u}|_{\\partial\\Omega} = \\bold
 `(A_E, B_E, A_p, B_p, A, B, X)`, plus the measured inclusion volume.
 
 `A_uncorrected` drifts with `radius_ratio` like ``(a/R)^3`` while `A` does not:
-that contrast is the practical proof that the correction is wired correctly.
+that contrast is the practical proof that the correction is implemented correctly.
 Bypasses the cache.
 """
 fe_axi_breakdown(incl::FEExcenteredSphere, P₀::TensND.AbstractTens) = _axi_run(incl, P₀)

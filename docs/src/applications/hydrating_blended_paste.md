@@ -201,7 +201,7 @@ degree of reaction and hence its own rate.
 The reference realizes the cascade by calling every reaction at each step with the
 *remainder* of the phase's increment, each taking what its scarcest co-reactant
 allows. The continuous analog is a partition of unity, `wᵢ` built from smooth
-availability gates `gᵢ = xᵢ/(xᵢ+ε)`, with `Σ wᵢ = 1` so the phase's total rate is
+availability factors `gᵢ = xᵢ/(xᵢ+ε)`, with `Σ wᵢ = 1` so the phase's total rate is
 conserved whichever routes are open.
 
 !!! note "No callbacks, and that is deliberate"
@@ -220,14 +220,13 @@ conserved whichever routes are open.
     *emerges from the kinetics*. Worth re-checking for a clinker in which C₄AF
     outpaces C₃A.
 
-The gates read amounts of species that are not themselves *kinetic* — gypsum,
+The availability factors read amounts of species that are not themselves *kinetic* — gypsum,
 calcite, ettringite. That works because the ODE state holds the reaction extents
 ξ, from which the residual reconstructs every species before evaluating the rates,
 and it is what makes reaction sequencing expressible at all: this chapter is the
-reason ChemistryLab acquired it. Without it the gates never close, and an earlier
-draft formed 0.44 mol of ettringite out of 0.27 mol of gypsum — expanding the
-paste and driving the chemical shrinkage negative, with the solver reporting
-success throughout.
+reason ChemistryLab acquired it. Without it the factors could not close, more ettringite than the gypsum allows
+would form, expanding the paste and driving the chemical shrinkage negative, with
+the solver reporting success throughout.
 
 One substitution to declare: the paper's Fe-siliceous hydrogarnet C₆AFS₂.₁₈H₁₉ is
 not in CEMDATA18. `C3AFS0.84H4.32` is the available analog, of different

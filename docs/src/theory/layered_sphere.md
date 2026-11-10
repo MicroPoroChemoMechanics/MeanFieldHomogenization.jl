@@ -397,7 +397,7 @@ the ``(\alpha_k, \beta_k)`` above — mode 1 contributes ``a_k``, modes 3 and 4
 contribute nothing pointwise, and mode 2 contributes
 ``7 b_k r^2 (3k_k+\mu_k)/\mu_k``, whose shell average is the ``21/5`` factor.
 [`shell_concentration`](@ref) exposes that identity from the same cached
-amplitudes, so the pointwise and averaged routes cannot drift apart.
+amplitudes, so the pointwise and averaged approaches cannot drift apart.
 
 The transport problem is the ``Y_1`` analog: ``T = f(r)\,(\underline
 n\cdot\nabla T^\infty)`` and

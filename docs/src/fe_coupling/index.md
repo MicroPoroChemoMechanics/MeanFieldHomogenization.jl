@@ -55,12 +55,12 @@ them, then worked models.
 | [The coupled poroelastic problem](@ref fe-poro-coupling) | the same, with a fluid: two balances, the Biot blocks, the four tangents |
 | [Fractured permeability](@ref fe-permeability) | flowing cracks and the effective conductivity of a fracture network |
 | **Manual** | |
-| [Materials](@ref fe-materials) | the Gauss-point contract, in code |
+| [Materials](@ref fe-materials) | the Gauss-point interface, in code |
 | [Building a fractured-rock material](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
 | [Ferrite backend](@ref fe-backends) | what the package and the Ferrite adapter each provide, and how to couple another code |
 | **Examples** | |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
-| [A fractured-reservoir well test](@ref fe-arma2011) | the ARMA 2011 well test, end to end |
+| [A fractured-reservoir well test](@ref fe-arma2011) | the ARMA 2011 well test, in full |
 
 The Biot machinery the poroelastic coupling builds on is a property of a
 microstructure rather than of the coupling, so it lives on its own page:

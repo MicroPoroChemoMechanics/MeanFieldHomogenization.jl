@@ -97,7 +97,7 @@ plot!(p_alpha, TIMES ./ 86400, ᾱ; lw = 3, color = :black, ls = :dash, label = 
 _, fs = fraction_history(run0, TIMES)
 
 # Explicit palette: the default cycle repeats after nine series, which put FH3
-# and water in the same teal on a chart whose whole point is telling phases apart.
+# and water in the same teal on a chart meant to tell phases apart.
 const PHASE_COLOR = [
     "anhydrous" => :grey35, "C-S-H" => :steelblue, "CH" => :indianred,
     "AFt" => :mediumpurple, "AFm" => :orchid, "hydrogarnet" => :darkorange,

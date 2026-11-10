@@ -141,7 +141,7 @@ for (name, scheme) in (("MT", MoriTanaka()), ("SC", SC))
     @printf "%s : Δk = %.2e   Δμ = %.2e\n" name abs(k - ref.k) abs(μ - ref.μ)
 end
 
-# Both agree to the last captured digit. Note that it is the **symmetric**
+# Both agree to the last captured digit. It is the **symmetric**
 # `SelfConsistent` that matches Echoes' `SC` on cracks, not
 # `AsymmetricSelfConsistent`: the two solve different fixed points, and the next
 # section is where that becomes visible.
@@ -173,7 +173,7 @@ curves = Dict(
 #
 # The tolerance has to be asked for correctly, and this is the place where it
 # shows. The stopping test is `‖Δx‖ ≤ abstol + reltol · ‖x‖`, so an `abstol`
-# alone buys nothing while `reltol` sits at its `1e-8` default: the relative
+# alone changes nothing while `reltol` sits at its `1e-8` default: the relative
 # term still decides. Here the requirement really is relative — the stiffness
 # collapses by orders of magnitude across the threshold — so `abstol` goes to
 # zero and `reltol` carries the request.
@@ -282,7 +282,7 @@ echoes_parallel = [0.251762, 1.28147, 0.0890113, 0.833333, 0.344036]
 
 # The fourth coefficient is exactly ``2\mu_0 = 0.8333``: the shear that acts in
 # the crack plane is not relaxed by an opening at all, whatever the density. That
-# is a useful check that the orientation survived the whole pipeline.
+# is a useful check that the orientation survived the whole calculation.
 #
 # !!! warning "One scheme is unavailable here"
 #     `SelfConsistent` on a **single-orientation** crack phase raises a

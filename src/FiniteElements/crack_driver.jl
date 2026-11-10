@@ -196,7 +196,7 @@ frame, plus `B_s` and `B_inf` rotated back to the global frame.
 `norm(B_u)` measures how much work the boundary correction is doing; it should
 fall like ``(a/R)^3``, and `B_inf` — unlike `B_s` — should be insensitive to
 `radius_ratio`. That contrast is the practical proof that the correction is
-wired correctly.
+implemented correctly.
 
 Bypasses the cache.
 """

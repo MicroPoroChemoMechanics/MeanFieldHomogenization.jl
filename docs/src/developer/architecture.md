@@ -17,7 +17,7 @@ Sub-modules may *extend* (but not redefine) both `_resolve_algo` and
 
 ## Cells: what `homogenize` accepts
 
-`RVE` is no longer the only container. Everything `homogenize` accepts is an
+`RVE` is one container among several. Everything `homogenize` accepts is an
 [`AbstractHomogenizationCell`](@ref MeanFieldHomogenization.Core.AbstractHomogenizationCell),
 declared in `src/Core/cells.jl` alongside the rest of the package's generics:
 
@@ -71,12 +71,12 @@ when touching it:
 | [`MeanFieldHomogenization.Interactions`](@ref) | Two-inclusion interaction tensor ``\mathbb{T}^{ab}`` and the Green operator of the reference — closed forms for balls and disks, cubature for the anisotropic case. |
 | [`MeanFieldHomogenization.Assemblies`](@ref) | `ParticleAssembly`: the cell that carries positions, its generators and boundary treatments — what the two N-body schemes act on. |
 | [`MeanFieldHomogenization.Poromechanics`](@ref) | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure, for saturated and drained responses. |
-| [`MeanFieldHomogenization.Constitutive`](@ref) | The Gauss-point contract: a microstructure exposed to a finite-element code as a material law returning stress, tangent and updated state. |
+| [`MeanFieldHomogenization.Constitutive`](@ref) | The Gauss-point interface: a microstructure exposed to a finite-element code as a material law returning stress, tangent and updated state. |
 | [`MeanFieldHomogenization.Viscoelasticity`](@ref) | Aging linear Volterra (ALV) homogenization: viscoelasticity (order 4) and hereditary conduction (order 2) via Volterra operators — every scheme, cracks and layered spheres included. |
-| [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion contract: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
-| [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend contract (`Ferrite` or `Gridap`). |
+| [`MeanFieldHomogenization.CustomInclusions`](@ref) | The user-defined inclusion interface: `CustomInclusion` (callback-driven) and `check_inclusion_interface`. |
+| [`MeanFieldHomogenization.FiniteElements`](@ref) | Inclusions whose response comes out of a finite-element solve of the Eshelby problem, behind a backend interface (`Ferrite` or `Gridap`). |
 | [`MeanFieldHomogenization.NeuralInclusions`](@ref) | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology. |
-| [`MeanFieldHomogenization.Superspheres`](@ref) | The geometry of superspherical and superspheroidal shapes, from the octahedron to the cube: level set, volume, surface meshes; their tensors come from the finite-element and neural routes. |
+| [`MeanFieldHomogenization.Superspheres`](@ref) | The geometry of superspherical and superspheroidal shapes, from the octahedron to the cube: level set, volume, surface meshes; their tensors come from the finite-element and neural approaches. |
 | [`MeanFieldHomogenization.MaterialLaws`](@ref) | Constitutive laws at a material point: writing a law, integrating it with its consistent tangent, driving it along a loading path, and the nonlinear laws derived from a microstructure. |
 | `MeanFieldHomogenization.Studio` | MFH Studio, the browser interface that writes the script of a model ([MFH Studio](@ref tools-mfhstudio)). |
 
@@ -100,10 +100,10 @@ sub-module is for, but what it puts in the namespace.
 | `Schemes`          | `RVE`/`Phase`, `homogenize`, every scheme type, exact symmetrization, ForwardDiff sensitivities     |
 | `Poromechanics`    | Biot coefficient tensor and skeleton modulus of a porous or cracked cell                            |
 | `Viscoelasticity`  | aging linear Volterra behavior (viscoelasticity and conduction, ALV variant of every scheme)         |
-| `CustomInclusions` | the user-defined inclusion contract: `CustomInclusion`, `check_inclusion_interface`                 |
+| `CustomInclusions` | the user-defined inclusion interface: `CustomInclusion`, `check_inclusion_interface`                 |
 | `FiniteElements`   | inclusions solved by finite elements (`FEEllipticCrack`, `FEExcenteredSphere`, `FESupershapePore`, `FEAxiSupershapePore`, `FEAxiLayeredSpheroid`); the physics lives here, the discretization in a backend extension (`MeanFieldHomogenizationFerriteExt`, `MeanFieldHomogenizationGridapExt`) |
 | `NeuralInclusions` | inclusions answered by a trained network, with the sampling/fitting machinery; the training optimizer lives in `MeanFieldHomogenizationLuxExt` |
-| `Constitutive`     | the Gauss-point contract of the [finite-element coupling](@ref fe-coupling): `material_response`, the shipped materials, the state types; the Ferrite glue in `MeanFieldHomogenizationFerriteMaterialExt` |
+| `Constitutive`     | the Gauss-point interface of the [finite-element coupling](@ref fe-coupling): `material_response`, the shipped materials, the state types; the Ferrite glue in `MeanFieldHomogenizationFerriteMaterialExt` |
 
 Two files sit at the **top level** rather than in a sub-module, and are loaded
 after every geometry sub-module on purpose: `concentration.jl` and

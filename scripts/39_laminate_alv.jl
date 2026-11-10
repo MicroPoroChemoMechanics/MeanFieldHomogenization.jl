@@ -163,6 +163,6 @@ C33i = [blk(Mi, i)[3, 3] for i in eachindex(ts)]
 # The derivatives used throughout these tutorials have their own group, from
 # [Derivatives and sensitivities](@ref tut-sensitivities); the Volterra assembly
 # is differentiated in
-# [Derivatives through the aging-viscoelastic pipeline](@ref tut-alv-sensitivities),
+# [Derivatives through the aging-viscoelastic calculation](@ref tut-alv-sensitivities),
 # and the calls of the laminate cell are documented in
 # [Laminates — periodic multilayer cells](@ref man-laminates).

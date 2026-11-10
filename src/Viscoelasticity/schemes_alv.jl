@@ -113,7 +113,7 @@ contributions ``\\widetilde{\\mathbb{N}}_i`` of each inclusion phase are pre-com
 `dilute_contribution_alv` (each ``6n\\times 6n``), ``f_i`` is the volume
 fraction of phase ``i``, and the matrix ``\\widetilde{\\mathbb{C}}_0`` is the reference.
 
-Note that for the dilute scheme the matrix volume fraction ``f_0``
+For the dilute scheme the matrix volume fraction ``f_0``
 does *not* appear: the inclusions are treated as if they were
 embedded in an infinite matrix.
 """

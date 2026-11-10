@@ -117,7 +117,7 @@ its inclination.
 
 The averages above act on whatever concentration tensor an inclusion
 supplies, including one the library knows nothing about.
-[The custom-inclusion contract: three entry gates, one answer](@ref tut-custom-inclusion-contract)
+[The custom-inclusion interface: three entry levels, one answer](@ref tut-custom-inclusion-contract)
 plugs an arbitrary morphology into every scheme and obtains the orientation
 average without further code. The symmetrization types and the projection
 functions are listed in [Symmetry projections](@ref api-schemes-symmetry).

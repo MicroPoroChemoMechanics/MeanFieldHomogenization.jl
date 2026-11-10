@@ -121,7 +121,7 @@ Two coaxial concentric ellipses are nested **if and only if** both semi-axes of
 the inner one are no larger than the outer's, so the whole condition is two
 comparisons per layer. It is worth checking rather than trusting: a violation
 does not produce a wrong answer, it produces a self-intersecting geometry that
-gmsh rejects from deep inside its own meshing pipeline, with a message that
+gmsh rejects from deep inside its own meshing sequence, with a message that
 names neither the layer nor the semi-axis.
 
 `disk_radii` are the transverse semi-axes and `axis_radii` those along the

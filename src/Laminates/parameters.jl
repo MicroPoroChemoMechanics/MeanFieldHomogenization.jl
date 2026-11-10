@@ -118,7 +118,7 @@ end
     _replace_interface_field(itf, field::Symbol, value) -> AbstractInterface
 
 Rebuild an interface with one scalar field replaced, promoting the element
-type to absorb `typeof(value)` — the route by which a `ForwardDiff.Dual`
+type to absorb `typeof(value)` — the approach by which a `ForwardDiff.Dual`
 reaches an interface compliance.
 """
 function _replace_interface_field(itf::AbstractInterface, field::Symbol, value)

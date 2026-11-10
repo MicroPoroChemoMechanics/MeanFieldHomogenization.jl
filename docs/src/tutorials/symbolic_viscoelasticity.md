@@ -3,7 +3,7 @@
 !!! info "Before this page"
     The tutorial [The rheological model catalog](@ref tut-rheological-models),
     whose models receive symbolic parameters below, and the theory page
-    [The Laplace-Carson route](@ref th-laplace-carson), where the transform and
+    [The Laplace-Carson approach](@ref th-laplace-carson), where the transform and
     its inversion are defined.
 
 The [rheology catalog](@ref man-rheological-models) is generic in its scalar
@@ -18,7 +18,7 @@ another:
 
 Together they let the closed forms be *derived* rather than transcribed — which
 is how the Burgers relaxation function, this package's sharpest numerical
-oracle, is checked below.
+reference, is checked below.
 
 Terser script:
 [`scripts/66_symbolic_viscoelasticity.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/66_symbolic_viscoelasticity.jl).
@@ -119,11 +119,11 @@ The creep function of the same standard solid, recovered from `R*(p)` alone:
 SymPyPythonCall.simplify(inverse_carson(p -> carson_creep(z, p), ts))
 ```
 
-### Burgers: the oracle, derived
+### Burgers: the reference solution, derived
 
 The relaxation function of the Burgers model is the `cosh`/`sinh` expression
 that had to be produced in a computer-algebra system to serve as the numerical
-oracle in `test/Viscoelasticity/test_prony.jl`. Here it is derived from the
+reference in `test/Viscoelasticity/test_prony.jl`. Here it is derived from the
 transform in one line:
 
 ```@example tutsymvisco
@@ -148,7 +148,7 @@ SymPyPythonCall.simplify(inverse_carson(p -> carson_creep(b, p), ts) - creep(b, 
     [`inverse_carson`](@ref), the one to use for anything in the catalog, is
     not affected.
 
-## 3. How far the symbolic route reaches
+## 3. How far the symbolic approach reaches
 
 This is worth stating precisely, because the boundary is not where one would
 guess.
@@ -181,8 +181,7 @@ inverse_carson(q -> carson_creep(ScottBlair(V, α), q), ts)
 ```
 
 **A sum of several fractional powers** — [`HuetSayegh`](@ref),
-[`Model2S2P1D`](@ref) — is left unevaluated, which is at least honest, and is
-also warned about.
+[`Model2S2P1D`](@ref) — is left unevaluated, and a warning says so.
 
 None of this is a gap in the package: those inverses are Mittag-Leffler
 functions or worse. It is precisely why [`inverse_carson`](@ref) with a
@@ -190,7 +189,7 @@ functions or worse. It is precisely why [`inverse_carson`](@ref) with a
 [`FixedTalbot`](@ref)`(24)` inverts every one of these transforms to about
 `1e-12`, as [the inversion tutorial](@ref tut-laplace-inversion) measures.
 
-## 4. The two routes, on the same model
+## 4. The two approaches, on the same model
 
 The symbolic and numerical inversions are entirely disjoint implementations, so
 their agreement is a real cross-check:
@@ -216,5 +215,5 @@ applications take these tools to real materials, from
 [Multiscale elasticity of a hydrating cement paste](@ref app-cement-paste).
 
 - [The rheological model library](@ref man-rheological-models) — the models and their parameters
-- [Numerical Laplace inversion](@ref man-laplace-inversion) — the numerical route
+- [Numerical Laplace inversion](@ref man-laplace-inversion) — the numerical approach
 - [Symbolic spheres: closed forms with SymPy and Symbolics.jl](@ref tut-symbolic-spheres) — the elastic counterpart

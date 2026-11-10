@@ -96,7 +96,7 @@ visco_eval(law::ViscoLaw, t, t_p) = law.eval_fun(t, t_p)
 
 Return a `ViscoLaw` corresponding to a purely elastic kernel
 ``R(t,t') = C\\,H(t-t')``.  Useful for testing the elastic limit of the
-ALV pipeline.
+ALV calculation.
 """
 function heaviside_law(C; mode::Symbol = :relaxation)
     eval_fun = (t, t_p) -> (t ≥ t_p) ? C : zero(C)

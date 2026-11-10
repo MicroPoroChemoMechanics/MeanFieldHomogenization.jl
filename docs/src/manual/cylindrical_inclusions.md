@@ -86,7 +86,7 @@ zero — reflecting the fact that an infinite cylinder cannot sustain a
 non-uniform axial strain.
 
 For a general anisotropic matrix the call
-`hill_tensor(cyl, C_aniso)` transparently routes to a dedicated 1D
+`hill_tensor(cyl, C_aniso)` transparently approaches to a dedicated 1D
 QuadGK quadrature over the transverse plane.  The `method=:residues`
 option is remapped to the same routine (the residue algorithm is not
 applicable to a cylinder — see

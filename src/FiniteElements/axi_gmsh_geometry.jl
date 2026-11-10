@@ -45,7 +45,7 @@ Element size is `h_in` on the inclusion and its core and `h_out` on the outer
 boundary, gmsh interpolating in between.
 
 The gmsh **module** is passed in rather than imported: gmsh is a weak
-dependency, and the two finite-element backends reach it by different routes —
+dependency, and the two finite-element backends reach it by different approaches —
 `Gmsh.gmsh` for Ferrite, `GridapGmsh.gmsh` for Gridap, both over the same
 `gmsh_jll`. Taking it as an argument keeps this geometry here in `src/`,
 shared, instead of duplicating it in each extension.

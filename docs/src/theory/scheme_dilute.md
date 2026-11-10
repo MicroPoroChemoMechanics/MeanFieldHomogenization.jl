@@ -30,7 +30,7 @@ The assumption is consistent to first order only. With
 ``\boldsymbol E^0 = \boldsymbol E`` the matrix keeps the macroscopic strain, and
 the strain average ``f_0\,\boldsymbol E + \sum_i f_i\,\mathbb A_i^{\mathrm{dil}}:\boldsymbol E``
 differs from ``\boldsymbol E`` at order ``f``. The estimate is therefore exact as
-``f \to 0`` and nothing more: it is linear in the fractions and in the crack
+``f \to 0`` only: it is linear in the fractions and in the crack
 densities, and for soft phases it loses positive definiteness at a finite
 amount. Spherical voids in an isotropic matrix, whose contribution has the
 spherical part ``-\,3k_0\,(3k_0+4\mu_0)/(4\mu_0)\,\mathbb J``, bring the bulk

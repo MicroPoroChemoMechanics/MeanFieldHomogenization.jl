@@ -143,7 +143,7 @@ moment ``M_{4,0,2}`` divided by ``R^2``.
 ```
 
 Against the nested cubature at tight tolerances, the Hill tensor of a
-spheroid in an isotropic matrix is now within ``5\times10^{-16}`` at every
+spheroid in an isotropic matrix is within ``5\times10^{-16}`` at every
 distance from the sphere tried, from ``10^{-9}`` to ``10^{-1}``.
 
 ## Triaxial ellipsoid close to a spheroid

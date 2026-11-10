@@ -74,8 +74,8 @@ in-plane unit direction written ``\\underline{u}`` below:
 
 `Ks` is built on its upper triangle only and `Kns` is obtained as
 `Vs + transpose(Vs)` — both follow from the major symmetry of `C` (see the
-comments in the body).  `n̂` is consequently no longer read here; it is kept
-in the signature because it is part of this seam's documented contract and
+comments in the body).  `n̂` is consequently not read here; it is kept
+in the signature because it is part of this seam's documented interface and
 every caller already has it to hand.
 """
 function _phi_cache(
@@ -127,11 +127,8 @@ multiplied by `scale`, from the pre-computed ``\\varphi``-only quantities
 `sa` ``= \\sin\\alpha``), with a caller-supplied `scale` bundling the residual
 ``\\rho/\\sin^2\\alpha`` prefactor.
 
-This is the innermost loop of every crack COD back-end.  It used to write into
-a caller-owned `Matrix{T}` buffer and build ~10 heap `Matrix{T}` temporaries
-per call (`Vp, Vm, Kp, Km` by broadcast, `iKp, iKm` from TensND's `inv3`, then two
-chained `*` products).  Everything is `SMatrix` now, so the whole body is
-stack-resident and the function is pure.
+This is the innermost loop of every crack COD back-end.  Everything is
+`SMatrix`, so the whole body is stack-resident and the function is pure.
 """
 @inline function _qnn_pair_components(
         A::StaticMatrix{3, 3, T},

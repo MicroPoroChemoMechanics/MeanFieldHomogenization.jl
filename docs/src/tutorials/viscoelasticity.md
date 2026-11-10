@@ -3,13 +3,13 @@
 !!! info "Before this page"
     The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE
     and schemes are reused below with complex moduli, and the theory pages
-    [The Laplace-Carson route](@ref th-laplace-carson), for the correspondence
+    [The Laplace-Carson approach](@ref th-laplace-carson), for the correspondence
     principle, and [Aging linear Volterra behavior (ALV)](@ref th-viscoelasticity),
     for the time-domain calculation of the second section.
 
 Every scheme seen so far takes an elastic stiffness tensor and returns
 an elastic stiffness tensor. The **correspondence principle** extends
-this, almost for free, to linear viscoelasticity: replace real moduli
+this, at almost no extra cost, to linear viscoelasticity: replace real moduli
 by their complex, frequency-dependent counterparts, and the exact same
 schemes carry through.
 
@@ -87,7 +87,7 @@ interaction.
     `SelfConsistent(algorithm = NewtonDefault())` builds its Jacobian
     with `ForwardDiff`, which cannot carry a `Dual` over a complex
     scalar. The default Anderson solver is the complex-capable path — and
-    so is the [Laplace-Carson route](@ref man-laplace-inversion) with
+    so is the [Laplace-Carson approach](@ref man-laplace-inversion) with
     [`GaverStehfest`](@ref), whose Carson variables are all **real**, so the
     Newton solver never meets a complex number in the first place.
 
@@ -96,7 +96,7 @@ interaction.
 The frequency-domain view above assumes properties that do not evolve
 with the material's age. For **aging** viscoelasticity — a material
 whose relaxation spectrum itself changes with time, as in curing cement
-paste — `MeanFieldHomogenization` provides a full time-domain (ALV) pipeline built
+paste — `MeanFieldHomogenization` provides a full time-domain (ALV) calculation built
 on discretized Volterra operators. A [`ViscoLaw`](@ref) wraps a
 two-argument relaxation kernel `R(t, t')`, and
 [`homogenize_alv`](@ref) takes the place of `homogenize`:
@@ -121,13 +121,13 @@ size(C_eff)
 The result is a discretized Volterra operator (a dense block matrix,
 here `40×40` since each of the 20 time steps carries a `2×2` iso
 block), not a single tensor — reading effective moduli back out of it,
-handling cracks in ALV, and differentiating through the whole pipeline
+handling cracks in ALV, and differentiating through the whole calculation
 are covered in full in the
 [Viscoelasticity manual](@ref man-viscoelasticity).
 
 ## …and back to the time domain
 
-The frequency route above stops at ``E^*(\omega)``. For a **non-aging**
+The frequency approach above stops at ``E^*(\omega)``. For a **non-aging**
 material the answer can be brought back into the time domain without the
 Volterra machinery at all, by inverting the transform numerically:
 
@@ -147,15 +147,15 @@ times requested, returned by [`homogenize_lc`](@ref).
 
 ## Where to go next
 
-The time-domain route of the last section is the subject of three further
+The time-domain approach of the last section is the subject of three further
 tutorials: the [model catalog](@ref tut-rheological-models), which comes next
 and describes the phases by rheological models, the
 [exact Kelvin ⇄ Maxwell conversion](@ref tut-kelvin-maxwell), and
 [how to choose an inversion algorithm](@ref tut-laplace-inversion). The
-[three-route comparison](@ref tut-freq-vs-time) then checks this route, the
+[three-method comparison](@ref tut-freq-vs-time) then checks this approach, the
 frequency one and the aging one against each other on the same composite.
 [Volterra operators: interpolation and inversion](@ref tut-volterra-inversion)
-opens the objects of the aging route on scalar examples, a history, a kernel and its
+opens the objects of the aging approach on scalar examples, a history, a kernel and its
 inverse, checked against closed-form creep and relaxation functions. The
-calls of the aging route, its output and its handling of cracks are described
+calls of the aging approach, its output and its handling of cracks are described
 in the [Viscoelasticity manual](@ref man-viscoelasticity).

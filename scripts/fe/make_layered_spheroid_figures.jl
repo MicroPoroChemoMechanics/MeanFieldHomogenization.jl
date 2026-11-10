@@ -161,10 +161,9 @@ want("validation") && let
     #     through the sphere. The sphere is not in the confocal family, so it is
     #     approached rather than reached, and both branches of the analytic
     #     solution are exercised on one curve.
-    # One sweep for both physics now. The elastic branch used to be excluded
-    # near the sphere, where the confocal chart degenerates and its system's
-    # columns spanned `q^{2n+1}`; equilibrating them moved the usable range from
-    # `|1 - ω| ≥ 0.3` to `1e-3`, so the same abscissae serve both.
+    # One sweep for both physics. Near the sphere the confocal chart degenerates
+    # and the columns of the elastic system span `q^{2n+1}`; equilibrating them
+    # gives a usable range down to `|1 - ω| = 1e-3`, so the same abscissae serve both.
     ωs = [0.3, 0.4, 0.5, 0.65, 0.8, 0.9, 1.1, 1.25, 1.5, 2.0, 2.5, 3.0]
     ωs_el = ωs
     fe11, fe33, an11, an33 = Float64[], Float64[], Float64[], Float64[]
@@ -242,7 +241,7 @@ want("validation") && let
     #  Five constants instead of two. The *stress* side is compared on the
     #  sphere slice only: it is not derivable from the strain side for a
     #  heterogeneous inclusion, and `LayeredSpheroid` supplies none in
-    #  elasticity — the generic that used to answer was wrong by 110 %.
+    #  elasticity — the generic fallback would be wrong by 110 %.
     C₀ = Ciso(1.0, 0.25)
     Cs = (Ciso(4.0, 0.2), Ciso(1.5, 0.3))
     labels4 = ("𝔸₁₁₁₁", "𝔸₃₃₃₃", "𝔸₁₃₁₃")
@@ -260,13 +259,11 @@ want("validation") && let
         for (k, (i, j)) in enumerate(idx4)
             push!(feE[k], A[i, j]); push!(anE[k], E[i, j])
         end
-        # No stress-side curve here, and that is a finding rather than an
-        # omission: `LayeredSpheroid` implements no elastic `flux_gradient_concentration`,
-        # so the call used to fall through to the generic `ℂ₁ : 𝔸_εε` — which
-        # presupposes a uniform stiffness a multilayer does not have, and was
-        # wrong by 110 % at every aspect ratio. The generic now refuses instead,
-        # so the stress side is compared on the sphere slice below, where
-        # `LayeredSphere` supplies a real one.
+        # No stress-side curve here: `LayeredSpheroid` implements no elastic
+        # `flux_gradient_concentration`, and the generic `ℂ₁ : 𝔸_εε` presupposes a
+        # uniform stiffness that a multilayer does not have (it would be wrong by
+        # 110 % at every aspect ratio). The generic refuses, so the stress side is
+        # compared on the sphere slice below, where `LayeredSphere` supplies a real one.
         @printf "  elastic ω = %.2f   A1111 %.6f / %.6f\n" ω A[1, 1] E[1, 1]
         flush(stdout)
     end
@@ -283,7 +280,7 @@ want("validation") && let
         )
     end
 
-    # Spheres, elasticity, both sides of gate B.
+    # Spheres, elasticity, both sides of level B.
     feA, anA, feB, anB = Float64[], Float64[], Float64[], Float64[]
     for r in fr
         fe = FEAxiLayeredSpheroid(
@@ -299,7 +296,7 @@ want("validation") && let
         flush(stdout)
     end
     p5 = plot(;
-        title = "spheres, free radii: both sides of gate B",
+        title = "spheres, free radii: both sides of level B",
         xlabel = "core radius / outer radius", ylabel = "Kelvin-Mandel component (1,1)",
         titlefontsize = 9, legend = :bottomleft, legendfontsize = 7,
     )
@@ -339,9 +336,8 @@ want("validation") && let
     #
     #  A one-layer confocal spheroid *is* a homogeneous spheroid, so its answer
     #  is the closed-form Eshelby result and the confocal machinery has to
-    #  reproduce it exactly. This panel is where the elastic branch's near-sphere
-    #  defect was measured, and it is now the record that column equilibration
-    #  removed it: from a total loss at `|1 - ω| = 1e-3` to `4e-9`, machine
+    #  reproduce it exactly. This panel records the effect of column equilibration
+    #  near the sphere: from a total loss at `|1 - ω| = 1e-3` to `4e-9`, machine
     #  precision down to `1e-2`, and a residual limit only at `1e-4` where the
     #  spread reaches `q^{19} ≈ 10³⁵` and even transport is at `8e-10`.
     println("── figure: the analytic elastic branch near the sphere ────────")

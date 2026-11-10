@@ -17,7 +17,7 @@ package already does is described in the [manual](@ref man-index) and the
   (linear-spring analog) **and** conductive cracks (elastic-membrane analog) of any
   shape and anisotropy, via a tensorial conduction COD.
 - Multi-layer extensions: coated cylinders, anisotropic per-layer moduli, and
-  an *analytic* excentered sphere (only the finite-element route reaches that
+  an *analytic* excentered sphere (only the finite-element approach reaches that
   morphology).
 - Laminate extensions: viscoelastic *interface* laws (the interface types
   carry `Number` fields today, so an aging interface needs a different
@@ -44,7 +44,7 @@ package already does is described in the [manual](@ref man-index) and the
     `fracture_permeability` omits. It is worth ≈ 55× on the ARMA microstructure
     — the [well test](@ref fe-arma2011-scope) quantifies exactly what it costs.
   - drivers for Gridap, FEniCSx and an Abaqus-shaped UMAT.
-- **Finite-element inclusions**, behind the `FEBackend` contract (see
+- **Finite-element inclusions**, behind the `FEBackend` interface (see
   [FE inclusions](@ref man-fe-inclusions)):
   - an **anisotropic reference medium**. The corrected boundary data needs
     ``\nabla\mathbb G``, which `green_function_aniso` does not expose — the
@@ -54,7 +54,7 @@ package already does is described in the [manual](@ref man-index) and the
     axisymmetric cell.
   - **transport for the crack**, the 3 + 3 declination being elastic only.
   - **solid** supershape inclusions, which would need the inclusion meshed too
-    and would enter gate B with two measured tensors.
+    and would enter level B with two measured tensors.
 - **Neural-surrogate inclusions** (see
   [Neural-surrogate inclusions](@ref man-neural-inclusions)):
   - a `_reference_medium` for `GradientConcentrationTI` / `FluxConcentrationTI`, deliberately
@@ -166,7 +166,7 @@ and of the cluster model contain and the implementation does not. See
 - **The cost of the anisotropic operator.** It is a quadrature differentiated
   twice with forward-mode AD: ~1.5 ms per interaction tensor against ~0.6 µs for
   the isotropic closed form. Deriving the second gradient of the line integral
-  analytically (the classical route) would recover most of that, and would
+  analytically (the classical approach) would recover most of that, and would
   matter for assemblies of more than a few dozen particles in an anisotropic
   reference.
 - **Polarization orders `p ≥ 1`** [brisard2014](@cite), which need the

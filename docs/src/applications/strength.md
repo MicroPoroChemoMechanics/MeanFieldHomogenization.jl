@@ -26,7 +26,7 @@ explicit chain rule over the five transversely-isotropic parameters of every
 intermediate tensor; here it is a single
 [ForwardDiff](https://github.com/JuliaDiff/ForwardDiff.jl) pass through the
 whole nested chain — make the ``\theta = 0`` family's shear modulus a `Dual`,
-read the partial of the final `C_mo`. Both routes agree to the tolerances of
+read the partial of the final `C_mo`. Both approaches agree to the tolerances of
 [Cross-validation](@ref dev-validation).
 
 The code below is the model of
@@ -93,13 +93,13 @@ are offered, which reach the same fixed point.
     discrete families start from that estimate, which their own fixed point
     differs from by the discretization alone: a few iterations remain, each of
     which evaluates the Hill tensors of twenty tilted needles in a transversely
-    isotropic medium by quadrature. This is the route of the Echoes chapter.
+    isotropic medium by quadrature. This is the approach of the Echoes chapter.
 
 !!! note "One stage: the discrete families from the hydrate stiffness"
     With `start = :direct`, the discrete families start from the stiffness of
     the hydrates. The iteration is longer, and its early iterates are far from
     isotropic, which makes their quadratures more expensive; it is kept to check
-    the first route, as the section
+    the first approach, as the section
     [Validating the angular discretization](@ref app-strength-validation) does.
 
 ```@example strength
@@ -279,7 +279,7 @@ let wc = 0.5, α_p = αmax(0.5) * (1 - 1e-12)
 end
 ```
 
-The two routes agree to a few parts in ``10^{9}`` on the modulus and in
+The two approaches agree to a few parts in ``10^{9}`` on the modulus and in
 ``10^{8}`` on the strength, which involves the derivative and is converged to
 the tolerance of its partials; and twenty bins reproduce the isotropic limit of
 the foam to a few parts in ``10^{9}``.
@@ -292,7 +292,7 @@ run the model.
 
 ## Under the hood: the multi-scale chain rule made explicit
 
-!!! note "Two routes to the same derivative"
+!!! note "Two approaches to the same derivative"
     The sensitivity ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}`` spans three
     homogenization scales. There are two ways to obtain it, and they are
     mathematically identical:
@@ -307,7 +307,7 @@ run the model.
       `homogenize_derivative` call per transversely-isotropic (TI) parameter, per
       scale.
 
-    The explicit route is more work, but it makes the structure visible — and it
+    The explicit approach is more work, but it makes the structure visible — and it
     reveals a key fact: because every intermediate stiffness is **transversely
     isotropic** (aligned needles in an isotropic matrix, then spherical clinker
     and sand), only **five numbers** — the TI parameters — flow between scales.
@@ -476,13 +476,13 @@ to happen outside it.
 That is the general rule stated in [Multiscale models](@ref man-multiscale):
 the declarative style is for chains whose scales hand results straight to one
 another; a scale that needs a projection, a criterion or a change of variables
-in between keeps its explicit form. Both styles are first-class, and mixing
+in between keeps its explicit form. Both styles are supported in their own right, and mixing
 them — as here, explicit at the foam seam and declarative afterwards — is
 normal.
 
-### What the declarative form would buy
+### What the declarative form would provide
 
-Where a chain *is* fully declarative, the sensitivity plumbing disappears: the
+Where a chain *is* fully declarative, the sensitivity bookkeeping disappears: the
 `ForwardDiff.Tag` seeding above is replaced by a lens naming the parameter,
 wherever it lives in the chain,
 

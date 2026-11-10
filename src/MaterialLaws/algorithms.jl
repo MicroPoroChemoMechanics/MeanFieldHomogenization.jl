@@ -109,7 +109,7 @@ tangent `𝕂 = dF/dg` and the new state.
 the fields one after the other and `𝕂` with every coupling block.
 
 This is the function every caller ends up in: [`material_response`](@ref) wraps
-it for the TensND contract, [`point_response`](@ref) drives it along a loading
+it for the TensND interface, [`point_response`](@ref) drives it along a loading
 path, an element loop calls it at each quadrature point. Its inputs and outputs
 are static arrays and it allocates nothing.
 

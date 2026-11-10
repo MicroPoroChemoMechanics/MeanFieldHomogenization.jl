@@ -10,7 +10,7 @@
 #  The Python benchmark uses cracks **with interface stiffness**
 #  `(Rn(t,t'), Rt(t,t'))` and schemes MT / SC / PCW.  This first
 #  Julia version covers the **pure traction-free penny limit** —
-#  the interface-stiffness extension is scheduled for v0.6.2.
+#  the interface-stiffness extension is not yet supported.
 #
 #  Setup
 #    * iso ALV matrix R(t,t') = C∞ + (C₀(1+0.2 √t') − C∞) exp(-(t-t')/τ)
@@ -148,4 +148,4 @@ println("  MT, Maxwell, PCW → cracks added to numerator (zero volume in den)")
 println("  SC, ASC    → cracks iterated against running estimate (Bristow-O'Connell)")
 println("  Differential → cracks contribute via dilute correction at each step")
 println()
-println("Note : interface-stiffness ALV cracks (`Rn`, `Rt`) are scheduled for v0.6.2.")
+println("Note : interface-stiffness ALV cracks (`Rn`, `Rt`) are not yet supported.")

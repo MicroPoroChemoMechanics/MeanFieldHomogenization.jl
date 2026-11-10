@@ -29,7 +29,7 @@ Direct product-quadrature evaluation of the two-inclusion interaction
 integral. `nodes` gives the number of radial, polar and azimuthal points per
 region (the polar entry is ignored in 2D).
 
-Geometry-agnostic and used as the cross-validation oracle for the closed-form
+Geometry-agnostic and used as the cross-validation reference for the closed-form
 and multipole back-ends; it is far too slow to assemble an N-body system.
 """
 function _pair_quadrature(

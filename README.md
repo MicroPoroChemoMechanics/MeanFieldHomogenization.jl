@@ -53,7 +53,7 @@ Everything else is that chain generalized in one direction at a time:
 
 The package is geared toward prototyping: forward-mode automatic
 differentiation (`ForwardDiff`) and symbolic simplification (`SymPyPythonCall`,
-`Symbolics`) are first-class, and every scheme carries sensitivities with
+`Symbolics`) are supported throughout, and every scheme carries sensitivities with
 respect to fractions, moduli and inclusion geometry.
 
 A gallery of full micromechanical models built on the package —
@@ -71,7 +71,7 @@ homogenization library written in C++ with a Python interface by the same author
 Cerema ([manual](https://jfbarthelemy.github.io/echoes/),
 [DOI 10.5281/zenodo.7348758](https://doi.org/10.5281/zenodo.7348758)). The Eshelby
 and Hill machinery, the crack tensors, the `n`-layer sphere, the schemes and the aging
-viscoelastic route were ported from it, with the methods of the articles it implements:
+viscoelastic approach were ported from it, with the methods of the articles it implements:
 
 - the compliance and the Hill polarization tensor of a crack in an anisotropic matrix:
   Barthélémy (2009),
@@ -110,8 +110,8 @@ page runs the same problems with both libraries. The port extends it in six dire
   periodic laminates, and inclusions computed by finite elements or by a trained network;
 - **interactions**: the cluster model and the equivalent inclusion method, which act on
   the positions of the inclusions;
-- **time**: the non-aging route in the Laplace–Carson domain, with numerical inversion
-  and a catalog of rheological models, beside the aging route;
+- **time**: the non-aging approach in the Laplace–Carson domain, with numerical inversion
+  and a catalog of rheological models, beside the aging approach;
 - **use**: homogenization as a constitutive law for finite-element codes, MFH Studio,
   and the `echoes2mfh` translator of Echoes scripts.
 
@@ -130,12 +130,12 @@ page runs the same problems with both libraries. The port extends it in six dire
 | `MeanFieldHomogenization.Interactions` | Two-inclusion interaction tensor and Green operator of the reference medium — exact closed forms for balls and disks, cubature for an anisotropic reference, periodic image sums. |
 | `MeanFieldHomogenization.Assemblies` | `ParticleAssembly`: the cell that carries **positions**, its lattice / random generators and boundary treatments — what the N-body schemes act on. |
 | `MeanFieldHomogenization.Poromechanics` | Biot coefficient tensor and skeleton modulus of a porous or cracked microstructure; drained and undrained responses. |
-| `MeanFieldHomogenization.Constitutive` | Homogenization *as a material law*: the Gauss-point contract (stress, consistent tangent, state update) that a structural FE code calls, with poroelastic and microcracked models. |
-| `MeanFieldHomogenization.CustomInclusions` | The user-defined inclusion contract: `CustomInclusion` and `check_inclusion_interface`. |
-| `MeanFieldHomogenization.FiniteElements` | Inclusions whose response comes out of a finite-element resolution of the Eshelby problem — elliptical crack (3-D) and sphere with an off-center core (axisymmetric Fourier) — behind a two-backend contract. |
+| `MeanFieldHomogenization.Constitutive` | Homogenization *as a material law*: the Gauss-point interface (stress, consistent tangent, state update) that a structural FE code calls, with poroelastic and microcracked models. |
+| `MeanFieldHomogenization.CustomInclusions` | The user-defined inclusion interface: `CustomInclusion` and `check_inclusion_interface`. |
+| `MeanFieldHomogenization.FiniteElements` | Inclusions whose response comes out of a finite-element resolution of the Eshelby problem — elliptical crack (3-D) and sphere with an off-center core (axisymmetric Fourier) — behind a two-backend interface. |
 | `MeanFieldHomogenization.NeuralInclusions` | Inclusions whose response comes out of a trained network, with the sampling and fitting machinery; differentiable in the morphology, where a finite-element solve is not. |
 | `MeanFieldHomogenization.Schemes` | The cell abstraction (`RVE`, `Laminate` and `ParticleAssembly` beside it) and `homogenize`; declarative multiscale chaining (`Homogenized`, `NestedParameter`); bounds, dilute, Mori–Tanaka, self-consistent (+ asymmetric), PCW, Maxwell, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
-| `MeanFieldHomogenization.Viscoelasticity` | Linear viscoelasticity by two independent routes: **aging** in the time domain via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included — and **non-aging** in the **Laplace-Carson** domain, with four autodiff-capable inverse-Laplace algorithms, a catalog of rheological models (Prony chains, Burgers, springpots, Huet-Sayegh, 2S2P1D…) and the exact generalized-Kelvin ⇄ generalized-Maxwell conversion. |
+| `MeanFieldHomogenization.Viscoelasticity` | Linear viscoelasticity by two independent approaches: **aging** in the time domain via Volterra operators, with structured ISO/TI/orthotropic kernel storage — every scheme, cracks and layered spheres included — and **non-aging** in the **Laplace-Carson** domain, with four autodiff-capable inverse-Laplace algorithms, a catalog of rheological models (Prony chains, Burgers, springpots, Huet-Sayegh, 2S2P1D…) and the exact generalized-Kelvin ⇄ generalized-Maxwell conversion. |
 
 ## Installation
 

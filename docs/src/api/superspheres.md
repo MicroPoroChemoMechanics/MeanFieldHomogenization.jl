@@ -39,8 +39,8 @@ once: its face edges lie exactly in the coordinate planes, so an octant is
 native and cubic symmetry is exploitable with no tolerance offset; for a concave
 ``p < 1/2`` those same planes are where the surface creases, so mesh edges land
 on the creases rather than straddling them; and there is no polar degeneracy.
-And the octahedron *is* the ``p = 1/2`` supersphere, which makes that value a
-bit-exact oracle rather than a converging one.
+And the octahedron *is* the ``p = 1/2`` supersphere, which makes that value an
+exact reference rather than a converging one.
 
 Unlike the geometry above, this part is deliberately **not** type-generic: a
 mesh exists to be handed to a mesher, which wants floating point.

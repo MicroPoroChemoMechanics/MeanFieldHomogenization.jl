@@ -15,7 +15,7 @@
 #  The micromechanics (`paste_micromechanics.jl`) is reused unchanged: only the
 #  chemistry differs.
 #
-#  Requires ChemistryLab ≥ 0.9, whose `speciated_states` certifies every instant
+#  Requires ChemistryLab ≥ 0.40, whose `speciated_states` certifies every instant
 #  against the KKT conditions, and an equilibrium back-end, here OptimaSolver.
 # =============================================================================
 
@@ -33,7 +33,7 @@ const IONIC_CEMDATA = datapath("cemdata18-thermofun.json")
 # was used to isolate what made it hard, and they are kept because reproducing an
 # intermediate is the fastest way to pinpoint a regression.
 #
-# All four run with ChemistryLab >= 0.9. `:opc` over 28 days: 202 accepted steps,
+# All four run with ChemistryLab >= 0.40. `:opc` over 28 days: 202 accepted steps,
 # retcode Success, pore solution at pH 12.52-12.58, every replayed instant
 # CERTIFIED optimal with an element balance between 1e-11 and 1e-13 mol.
 const IONIC_SYSTEMS = Dict(
@@ -70,16 +70,13 @@ Measured over 28 days: 202 accepted steps, `retcode = Success`, pore solution
 holding at pH 12.58. The aluminate sequence comes out of the free-energy
 minimization with no sequencing rule written anywhere — ettringite forms early,
 peaks around 6 hours and converts to monosulphate once the sulfate is spent, the
-AFm settling at exactly the sulfate budget. That is the whole point of this
+AFm settling at exactly the sulfate budget. That is the purpose of this
 second model, and what `stoichiometric_hydration.jl` has to encode by hand.
 
-This needs ChemistryLab ≥ 0.9, which certifies each replayed speciation. Before
-0.7.1 a re-speciation could start outside the feasible set of its own equality
-constraint, and the full OPC returned an assemblage demanding 174 % of the
-sulfate present.
+This needs ChemistryLab ≥ 0.40, which certifies each replayed speciation.
 
 !!! note "The reported compositions are certified"
-    From ChemistryLab 0.9, `speciated_states` passes each instant to
+    `speciated_states` passes each instant to
     `DualEquilibriumSolver`, which solves the KKT system and returns a proof: the
     Gibbs problem is convex, so stationarity of the interior species, the
     component balance, and undersaturation of every absent phase are together
@@ -113,7 +110,7 @@ const IONIC_GROUPS = [
     # EVERY aqueous species, not just H2O@. The RVE's water phase is the pore
     # solution, and at cement ionic strength the solutes are not negligible —
     # their negative partial molar volumes sum to -3e-4 of the paste volume,
-    # which left as an unassigned remainder trips the RVE's own sanity check.
+    # which left as an unassigned remainder trips the RVE's own check.
 ]
 
 """
@@ -226,7 +223,7 @@ reports setting as a genuine zero of the self-consistent fixed point, so the
 **setting time** this chapter prints moves when the dormant period is added. It is
 a reported result, not an input.
 
-`τ = 5 h` and `m = 2.5` are round on purpose: three independent routes in that
+`τ = 5 h` and `m = 2.5` are round on purpose: three independent approaches in that
 calibration put the dormancy at 5 to 5.6 h, while its own identifiability analysis
 shows `τ` correlated with the alite rate constant at 0.994 — so the timescale is
 well determined and its precision is not. Applied to the **silicates only**: the
@@ -415,9 +412,8 @@ end
 
 The **speciated** compositions at `times`, delegated to ChemistryLab.
 
-This used to be reimplemented here against three private internals of that
-package. It is now [`ChemistryLab.speciated_states`](@ref), public since 0.8.0,
-which is where it belongs: the guards it needs — a warm start capped at the
+This is [`ChemistryLab.speciated_states`](@ref), a public function of that
+package. The guards it needs — a warm start capped at the
 element budget and projected back into `{Aₑn = bₑ, n ≥ 0}`, and a back-end
 instance that has not been used by the integration — are properties of the
 coupling, not of this chapter.

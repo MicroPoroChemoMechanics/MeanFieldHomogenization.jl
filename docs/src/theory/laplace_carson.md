@@ -1,4 +1,4 @@
-# [The Laplace-Carson route](@id th-laplace-carson)
+# [The Laplace-Carson approach](@id th-laplace-carson)
 
 !!! info "Before this page"
     [Homogenization schemes](@ref th-homogenization), whose elastic estimates
@@ -9,7 +9,7 @@ implements both by entirely separate means.
 
 When the material's properties do not depend on the *age* of the specimen —
 only on the elapsed time since loading — the constitutive law is a convolution,
-and a transform turns it into a product. That is the **Laplace-Carson route**
+and a transform turns it into a product. That is the **Laplace-Carson approach**
 of this page: the correspondence principle reduces the whole viscoelastic
 homogenization problem to an elastic one at each value of a transform variable,
 solved by the ordinary [`homogenize`](@ref) machinery, with a numerical
@@ -18,13 +18,13 @@ inversion to come back to the time domain.
 When the properties *do* depend on age — concrete that is still hydrating, a
 gel whose volume fraction grows — no transform helps, and the Volterra
 operators have to be discretized directly. That is the
-[aging route](@ref th-viscoelasticity), which is strictly more general and
+[aging approach](@ref th-viscoelasticity), which is strictly more general and
 correspondingly more expensive.
 
 The two are related the way a Fourier method is related to a time-stepping
-scheme: the transform route is cheaper and more accurate where it applies, the
-direct route applies always. For a non-aging material they must agree, and
-[the three-route comparison](@ref tut-freq-vs-time) checks that they do.
+scheme: the transform approach is cheaper and more accurate where it applies, the
+direct approach applies always. For a non-aging material they must agree, and
+[the three-method comparison](@ref tut-freq-vs-time) checks that they do.
 
 ## 1. The transform, and why Carson rather than Laplace
 
@@ -62,8 +62,8 @@ Two elementary pairs generate most of what the
 
 The fifth line is the one that does the most work: it is why
 [`ScottBlair`](@ref), [`HuetSayegh`](@ref) and [`Model2S2P1D`](@ref) are
-elementary in *both* domains, and hence why 2S2P1D can drive the Volterra route
-and the transform route with no approximation on either side.
+elementary in *both* domains, and hence why 2S2P1D can drive the Volterra approach
+and the transform approach with no approximation on either side.
 
 ## 2. The correspondence principle
 
@@ -90,7 +90,7 @@ Therefore
 
 In practice this means the viscoelastic problem is solved by code that knows
 nothing about viscoelasticity. `MeanFieldHomogenization` needs no separate
-scheme implementations for the Laplace-Carson route: the elastic ones are used
+scheme implementations for the Laplace-Carson approach: the elastic ones are used
 unchanged, and the only requirement is that they be generic in the scalar type
 — which they are, and which
 `test/Schemes/test_complex_moduli.jl` pins down.
@@ -248,7 +248,7 @@ accept complex arguments. [`GaverStehfest`](@ref) does not: its nodes are real
 and positive. That is a genuine architectural property rather than a detail —
 it means a whole [`homogenize_lc`](@ref) sweep runs in *real* arithmetic, which
 halves the cost of each scheme evaluation and is the only way to use
-`SelfConsistent(algorithm = NewtonDefault())` on this route, since its
+`SelfConsistent(algorithm = NewtonDefault())` on this approach, since its
 `ForwardDiff` Jacobian cannot carry a `Dual` over a complex scalar.
 
 **Branch cuts are not the obstacle one expects.** The Talbot contours are
@@ -260,12 +260,12 @@ invisible to a method whose nodes are all real.
 
 ### Collocation: inversion by fitting
 
-There is a fifth route that is not a quadrature at all. Given any transform,
+There is a fifth approach that is not a quadrature at all. Given any transform,
 [`prony_fit_relaxation`](@ref) fits a Prony series to it by least squares on a
 set of collocation points — the Schapery method. The result is not an
 approximation of `f(t)` at one point but a **model**: it has a closed-form time
 function, an exact dual chain through the conversion above, a
-[`ViscoLaw`](@ref) for the aging pipeline, and derivatives.
+[`ViscoLaw`](@ref) for the aging calculation, and derivatives.
 
 Fitting with a non-negativity constraint on the spectrum is what keeps the
 result completely monotone, hence passive. It is also, empirically, the better
@@ -281,18 +281,18 @@ moduli below zero.
 | back to the time domain | [`inverse_carson`](@ref) — [manual](@ref man-laplace-inversion) |
 | the exact chain conversion | [`maxwell_to_kelvin`](@ref), [`kelvin_to_maxwell`](@ref) |
 | fitting a chain to a transform | [`prony_fit_relaxation`](@ref), [`prony_fit_creep`](@ref) |
-| homogenizing on this route | [`homogenize_lc`](@ref) |
+| homogenizing on this approach | [`homogenize_lc`](@ref) |
 | the aging alternative | [`homogenize_alv`](@ref) — [theory](@ref th-viscoelasticity) |
 
 ## Where to go next
 
 The next page, [Aging linear Volterra behavior](@ref th-viscoelasticity), treats
-the materials this route cannot, those whose kernel depends on the age at
+the materials this approach cannot, those whose kernel depends on the age at
 loading, by discretizing the Volterra operators directly. The rheological models
 whose transforms are used here are listed in
 [The rheological model library](@ref man-rheological-models).
 
 - [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell) — the
   exact conversion of §4 carried out on a chain.
-- [Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-  — this route checked against the aging one on a non-aging material.
+- [Frequency or time? Three approaches to the same viscoelastic composite](@ref tut-freq-vs-time)
+  — this approach checked against the aging one on a non-aging material.

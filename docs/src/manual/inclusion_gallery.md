@@ -22,9 +22,9 @@ The zoo splits in three, along the line that matters for the theory:
 
 | Family | Why it belongs here | Enters a scheme through |
 | :--- | :--- | :--- |
-| ellipsoids and their degenerate limits | Eshelby's uniformity result holds — a Hill tensor exists | gate A, [`hill_tensor`](@ref) |
-| composite inclusions (layered spheres and spheroids) | a *pattern* has no Hill tensor; its concentration tensors do exist | gate B |
-| everything else (superspheres, meshes, surrogates) | no closed form at all | gate A, B or C — see [custom inclusions](@ref man-custom-inclusions) |
+| ellipsoids and their degenerate limits | Eshelby's uniformity result holds — a Hill tensor exists | level A, [`hill_tensor`](@ref) |
+| composite inclusions (layered spheres and spheroids) | a *pattern* has no Hill tensor; its concentration tensors do exist | level B |
+| everything else (superspheres, meshes, surrogates) | no closed form at all | level A, B or C — see [custom inclusions](@ref man-custom-inclusions) |
 
 ## Ellipsoids
 
@@ -66,7 +66,7 @@ plotly_scene(shape_traces(prolate); uid = "zoo-prolate", height = 420,
 
 ## Degenerate limits
 
-Sending a semi-axis to `Inf` or `0` leaves the ellipsoid family and lands on a
+Sending a semi-axis to `Inf` or `0` leaves the ellipsoid family and becomes a
 dedicated type — the redirection table is in
 [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions). The three shapes it
 produces are the ones below.
@@ -145,14 +145,14 @@ plotly_scene(shape_traces(sp); uid = "zoo-layered-spheroid", height = 460,
 ## Beyond the catalog
 
 Nothing in the schemes requires an ellipsoid. A morphology answers one of the
-three gates and becomes a first-class citizen — the
-[custom-inclusion contract](@ref man-custom-inclusions). The **supersphere**
+three entry levels and is supported in its own right through the
+[custom-inclusion interface](@ref man-custom-inclusions). The **supersphere**
 
 ```math
 |x/a|^{2p} + |y/a|^{2p} + |z/a|^{2p} \le 1
 ```
 
-is the family the package's non-ellipsoidal routes were built for. It has no
+is the family the package's non-ellipsoidal approaches were built for. It has no
 closed-form Hill tensor at any ``p`` but the sphere, and it spans a wide range
 of morphologies from one parameter: ``p = 1`` is the sphere, ``p = 1/2`` the
 regular octahedron, ``p < 1/2`` a **concave** body with conical points on the

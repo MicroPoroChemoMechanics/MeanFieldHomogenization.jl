@@ -1,19 +1,19 @@
 # [Aging linear Volterra behavior (ALV)](@id th-viscoelasticity)
 
 !!! info "Before this page"
-    [The Laplace-Carson route](@ref th-laplace-carson), which treats the
+    [The Laplace-Carson approach](@ref th-laplace-carson), which treats the
     non-aging case contrasted below, and the elastic chain transposed on this
     page: [The Eshelby inclusion problem](@ref th-eshelby-problem),
     [Concentration and contribution tensors](@ref th-concentration) and
     [Homogenization schemes](@ref th-homogenization).
 
-!!! tip "If the material does not age, there is a cheaper route"
+!!! tip "If the material does not age, there is a cheaper approach"
     Everything on this page treats a kernel ``\mathbb{C}(t, t')`` in which ``t``
     and ``t'`` enter **independently**, which is what forces the Volterra
     operators to be discretized directly. When the kernel depends on ``t - t'``
     alone the constitutive law is a convolution, a transform turns it into a
     product, and the whole problem reduces to an elastic one at each Carson
-    variable — see [the Laplace-Carson route](@ref th-laplace-carson).
+    variable — see [the Laplace-Carson approach](@ref th-laplace-carson).
 
     The two algebras are worth contrasting explicitly. Creep and relaxation are
     related by ``\int_0^t \mathbb{C}(t-s):\mathrm{d}\mathbb{L}(s) =
@@ -21,7 +21,7 @@
     ``\mathbb{L}`` the creep kernel — a convolution, discretized below into the inverse of a
     block-triangular matrix — and by the pointwise reciprocal
     ``\mathbb{L}^{*}(p) : \mathbb{C}^{*}(p) = \mathbb{I}`` there. That single
-    difference is the whole cost and the whole benefit of each route.
+    difference is the whole cost and the whole benefit of each approach.
 
 ALV stands for **aging linear Volterra**: a linear behavior whose response at
 time ``t`` depends on the whole history through a two-time kernel, the kernel
@@ -82,13 +82,13 @@ relaxation kernel. Causality imposes ``\mathbb{C}(t,t') = 0`` for ``t < t'``.
 The **non-aging** case is the special one where the kernels depend on ``t`` and
 ``t'`` only through their difference ``t-t'``. There, and only there, the
 Laplace–Carson correspondence principle applies and the problem reduces to an
-elastic one with complex moduli — the route taken in
+elastic one with complex moduli — the approach taken in
 [Viscoelastic composites](@ref tut-viscoelasticity) and cross-checked
 against the present one in
 [Frequency or time?](@ref tut-freq-vs-time). When a phase
 *ages* — its properties evolve with its own maturity, as a hydrating cement
 paste does — ``t`` and ``t'`` enter independently, there is no convolution to
-transform, and the time domain is the only available route.
+transform, and the time domain is the only available approach.
 
 ### Volterra algebra
 
@@ -145,7 +145,7 @@ block-triangular** matrix ``\widetilde{\mathbb{C}}`` of size
     step, which for a step at ``t_0`` amounts to summing each block row. The
     lower-triangular structure encodes causality.
 
-The pay-off of this representation is that the Volterra product becomes an
+This representation has the advantage that the Volterra product becomes an
 ordinary matrix product and the Volterra inverse an ordinary matrix inverse
 [sanahuja2013](@cite), as in the appendix of [barthelemyIJES2019](@citet). In
 `MeanFieldHomogenization` the discretization is [`trapezoidal_matrix`](@ref) and the

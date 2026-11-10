@@ -253,7 +253,7 @@ strain_gap = maximum(abs(a ⋅ (ε_I - ε_a) ⋅ b) for (a, b) in ((t, t), (s, s
 (traction_gap, strain_gap)
 
 # The same stress is also the limit of a coated sphere whose ITZ shell gets thin,
-# an independent route through the exact fields of
+# an independent approach through the exact fields of
 # [Layered sphere — pointwise fields](@ref th-layered-sphere-pointwise). With a
 # shell of relative thickness ``10^{-6}``, read on the outer side of the
 # aggregate:

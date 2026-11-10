@@ -1,7 +1,7 @@
 # # A finite-element crack inside the homogenization schemes
 #
 # Script 81 checked the finite-element crack-opening-displacement tensor against
-# its closed form. This one makes the point that matters for the contract: once
+# its closed form. This one makes the point that matters for the interface: once
 # `cod_tensor` exists, **nothing downstream knows or cares** how it was
 # obtained. The finite-element crack is a drop-in replacement for
 # `EllipticCrack` in every scheme, orientation averaging included.
@@ -148,7 +148,7 @@ println("  analytical : ", typeof(iso_an).name.name, "   C₁₁₁₁ = ", roun
 # ## The cost of an iterative scheme
 #
 # A self-consistent iteration *does* change the reference medium at every step,
-# so each distinct `C₀` costs one assembly plus six solves. This is the price
+# so each distinct `C₀` costs one assembly plus six solves. This is the cost
 # of a finite-element inclusion, and the reason the one-shot schemes are the
 # natural home for it.
 

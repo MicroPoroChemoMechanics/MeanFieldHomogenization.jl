@@ -3,7 +3,7 @@
 !!! info "Before this page"
     [Permeability from Stokes flow](@ref th-brinkman) for the problem these
     inclusions solve, and [Custom inclusions](@ref man-custom-inclusions) for the
-    contract through which they enter the schemes.
+    interface through which they enter the schemes.
 
 A Brinkman inclusion is a pattern of a porous medium (a grain, a pore, a fiber,
 a slit) embedded in an unbounded medium in which the flow obeys Brinkman's
@@ -60,7 +60,7 @@ finite. Maxwell's scheme uses the Hill tensor of the distribution shape, which
 is that of conduction only in the permeability form.
 
 The concentration tensors are those of the
-[custom-inclusion contract](@ref man-custom-inclusions):
+[custom-inclusion interface](@ref man-custom-inclusions):
 
 ```@example brinkman
 r0 = iso(4.0)                                          # reference resistance

@@ -90,7 +90,7 @@ the crack plane of the reduced kernel
 line integral along the normal [kanaunlevin2009](@cite), computed numerically: by
 nested adaptive quadrature (`:nestedquadgk`, the `:auto` choice), by the DECUHR
 cubature (`:decuhr`), or with the inner integral by residues (`:residues`). The
-flattening route of [barthelemyIJSS2009](@citet), the first-order term of the
+flattening approach of [barthelemyIJSS2009](@citet), the first-order term of the
 Hill tensor of a flat ellipsoid in its aspect ratio, gives the same tensor.
 
 Alias: [`B_tensor`](@ref).
@@ -198,10 +198,6 @@ half-width — so ``b = \\chi/(b\\Lambda)`` with ``\\chi^{\\mathcal{E}} = 2/3`` 
 eigenvalue problem on ``\\mathrm{adj}\\,\\boldsymbol{K}_0``; see the theory page
 `docs/src/theory/thermal_cracks.md` and its derivation script
 `scripts/16_cod_symbolic_thermal.jl`.
-
-!!! warning "These values changed in v0.4.0"
-    The thermal closed forms up to v0.3.2 were too small by ``4\\pi/(3\\eta)``
-    (elliptic) and ``\\pi^{2}/4`` (ribbon).
 """
 function cod_tensor(
         crack::MFH_Core.AbstractCrack,

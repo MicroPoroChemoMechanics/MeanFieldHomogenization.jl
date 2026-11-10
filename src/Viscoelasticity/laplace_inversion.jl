@@ -278,7 +278,7 @@ Reasons to override it:
     ``p`` only — that keeps a whole [`homogenize_lc`](@ref) sweep in real
     arithmetic, costs a third fewer evaluations per point, and is the one way
     to use `SelfConsistent(algorithm = NewtonDefault())` in the Laplace-Carson
-    route;
+    approach;
   * [`DeHoog`](@ref) when inverting on a grid whose every point costs a
     homogenization, since one node set serves a whole block of times;
   * [`TalbotTrefethen`](@ref) to cross-check against the ECHOES reference, or
@@ -618,11 +618,11 @@ model in the catalog via [`glassy_modulus`](@ref).
 
 !!! note "Relation to `ForwardDiff.derivative(t -> ..., t)`"
     Differentiating the inversion with respect to `t` also works — every method
-    here accepts a `Dual` time — and on the kernels tested the two routes are of
+    here accepts a `Dual` time — and on the kernels tested the two approaches are of
     comparable accuracy.  The identity is worth having anyway because it asks
     nothing of the transform beyond what it already provides: no `Dual` is
     pushed into the nodes, so it applies when `F` is not differentiable, and it
-    is the cheaper route when the rate is wanted alongside the value.
+    is the cheaper approach when the rate is wanted alongside the value.
 """
 inverse_carson_rate(
     Fstar, t::Real,

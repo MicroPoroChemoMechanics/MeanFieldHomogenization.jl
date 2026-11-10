@@ -170,7 +170,7 @@ println("""
 \nAnd the stress side, which is not derivable from the strain side: the inclusion
 is heterogeneous, so 𝔸_σε ≠ ℂ₁ : 𝔸_εε for any single ℂ₁. It comes out of the
 same solve. Only `LayeredSphere` supplies a counterpart — the analytic spheroid
-does not, and its generic is now refused rather than silently answered.""")
+does not, and its generic is refused rather than silently answered.""")
 let radii = (0.6, 1.0), cs = (ce(3.0, NU), ce(1.5, NU))
     opts = FEAxiMeshOptions(; nradial = 16, radius_ratio = 6.0)
     @printf(
@@ -222,7 +222,7 @@ near-sphere is a sphere: `LayeredSphere` is the answer there, and it is exact.""
 
 # ─── §5 The surrogate ────────────────────────────────────────────────────────
 
-banner("§5  The surrogate: both sides of gate B, one solve feeding each")
+banner("§5  The surrogate: both sides of level B, one solve feeding each")
 
 const MODELS = ("layered_spheroid_strain", "layered_spheroid_stress")
 
@@ -252,7 +252,7 @@ on the reference medium only through the contrasts — which is also why the sam
 pair of models serves any ℂ₀ of the trained aspect range.
 
 The teacher is the finite-element cell, not the closed form: `LayeredSpheroid`
-supplies no stress side, so half of gate B exists only through the cell.""")
+supplies no stress side, so half of level B exists only through the cell.""")
 
     # The surrogate-backed inclusion. `shape_params` are the features the
     # sensitivity API differentiates; `properties` back both the contrast
@@ -347,7 +347,7 @@ supplies no stress side, so half of gate B exists only through the cell.""")
         end
         println("""
   The self-consistent row is the one that matters: it changes its reference
-  medium at every iteration, so the cell never hits its cache and pays a full
+  medium at every iteration, so the cell never hits its cache and costs a full
   mesh and factorization per iteration, while the surrogate is unaffected.""")
 
         println("""

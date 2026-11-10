@@ -13,7 +13,7 @@ EditURL = "../../../../scripts/64_laplace_inversion.jl"
     The tutorial [Generalized Kelvin ⇄ generalized Maxwell](@ref tut-kelvin-maxwell),
     which inverts the rational transforms exactly and so marks where a
     numerical inversion becomes necessary, and the theory page
-    [The Laplace-Carson route](@ref th-laplace-carson), where the inversion is
+    [The Laplace-Carson approach](@ref th-laplace-carson), where the inversion is
     discussed as the ill-posed direction of the transform.
 
 Going from a relaxation function to its Laplace-Carson transform is a
@@ -28,7 +28,7 @@ magnitude on the same problem — so this page measures rather than asserts.
 
 All four are written to be generic in the number type, which is why
 `ForwardDiff` traverses them (§4) and why working in `BigFloat` actually
-buys precision (§2).
+gives precision (§2).
 
 ````@example laplace_inversion
 using MeanFieldHomogenization
@@ -258,10 +258,10 @@ the panels of §2 to §4.
 
 ## Where to go next
 
-An inversion is one of three routes to the time response of a composite.
-[Frequency or time? Three routes to the same viscoelastic composite](@ref tut-freq-vs-time)
-runs the frequency route, the inverted Laplace-Carson route and the aging
-time-domain route on the same non-aging composite and checks them against one
+An inversion is one of three approaches to the time response of a composite.
+[Frequency or time? Three approaches to the same viscoelastic composite](@ref tut-freq-vs-time)
+runs the frequency approach, the inverted Laplace-Carson approach and the aging
+time-domain approach on the same non-aging composite and checks them against one
 another. The keywords of each algorithm are documented in
 [Numerical Laplace inversion](@ref man-laplace-inversion).
 

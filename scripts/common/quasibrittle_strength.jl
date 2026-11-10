@@ -69,7 +69,7 @@ fh_san(wc, sc) = sc / d_san / (1 / d_clin + wc + sc / d_san)
 # families. `start = :iso` (the default) first solves the foam with ONE
 # isotropically averaged needle family, whose Hill tensor in the isotropic
 # running estimate is a closed form, and starts the discrete families from that
-# estimate: echoes' route, and a few iterations instead of some twenty.
+# estimate: echoes' approach, and a few iterations instead of some twenty.
 # `start = :direct` starts them from the hydrate stiffness itself. Both converge
 # to the same fixed point; their agreement, and that of the isotropic estimate,
 # validates the angular discretization.

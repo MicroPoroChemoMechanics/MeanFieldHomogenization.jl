@@ -110,7 +110,7 @@ N = mand(A_fe)
     abs(N[1, 1] - N[3, 3]) / N[1, 1], abs(N[4, 4] - N[6, 6]) / N[4, 4]
 )
 
-# ## §3 What the boundary correction buys
+# ## §3 What the boundary correction gives
 #
 # The truncated cell is biased by ``O((a/R)^3)``. Correcting it makes the
 # answer flat in `R`: it is already at the discretization floor at `R = 1.5a`,

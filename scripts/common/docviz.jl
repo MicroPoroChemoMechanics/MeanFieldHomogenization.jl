@@ -10,7 +10,7 @@
 #  the dark scheme alike.
 #
 #  Standalone `julia scripts/NN_*.jl` runs write the same HTML; opening one
-#  outside the docs needs a `window.mfhPlotly` of its own, which is the price of
+#  outside the docs needs a `window.mfhPlotly` of its own, which is the cost of
 #  having a single emitter for both uses.
 #
 #  Include it with
@@ -23,7 +23,7 @@
 #
 #  Everything here emits a `Base.HTML`, which Documenter embeds verbatim as the
 #  output of the block.  The plot data are inlined and then travel through Vite,
-#  so keep an eye on their size: the knobs that matter are the mesh resolution
+#  so their size needs watching: the parameters that matter are the mesh resolution
 #  (`nu`, `nv`) and `DIGITS`.
 # =============================================================================
 
@@ -661,7 +661,7 @@ end
 
 Surface of the supersphere `|x/a|^p + |y/b|^p + |z/c|^p = 1`.  A morphology
 with no Hill tensor of its own — the standard illustration of what the
-[custom-inclusion contract](@ref man-custom-inclusions) is for.
+[custom-inclusion interface](@ref man-custom-inclusions) is for.
 """
 function supersphere_surface(
         p, a, b, c;
@@ -761,7 +761,7 @@ end
 """
     merge_meshes(meshes) -> (V, F)
 
-Concatenate `(V, F)` pairs, offsetting the face indices — the whole point
+Concatenate `(V, F)` pairs, offsetting the face indices — the purpose
 being to end up with **one** `mesh3d` trace for a whole population.
 """
 function merge_meshes(meshes)
@@ -1045,9 +1045,8 @@ end
 An exploded stack of layers with its normal — the periodic multilayer cell of
 [`theory/laminate.md`](@ref th-laminate-pinv).
 
-Each layer is drawn as a **solid box**.  It used to be two horizontal faces,
-which reads as a stack of planes rather than of matter, and hides the very
-thing the figure is about: the layer thicknesses, which `thickness_labels`
+Each layer is drawn as a solid box, which reads as a stack of matter rather
+than of planes and shows the layer thicknesses, which `thickness_labels`
 names ``h_1, h_2, …`` along the edge that faces right in the default view.
 """
 function laminate_traces(

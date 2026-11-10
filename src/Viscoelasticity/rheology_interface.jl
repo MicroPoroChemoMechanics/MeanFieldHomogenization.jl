@@ -31,7 +31,7 @@ numerical inversion.
 Lift a pair of scalar models to a fourth-order isotropic tensor with
 [`iso_rheology`](@ref) / [`iso_rheology_E_nu`](@ref); the result is an
 [`AbstractTensorRheology`](@ref), which answers the same generics with tensors
-and additionally feeds the aging time-domain pipeline through
+and additionally feeds the aging time-domain calculation through
 `ViscoLaw(model)`.
 
 See the [rheological model catalog](@ref man-rheological-models).
@@ -52,7 +52,7 @@ const AnyRheology = Union{AbstractRheology, AbstractTensorRheology}
 """
     _checkable(xs...) -> Bool
 
-Whether every argument is a scalar on which a comparison returns an honest
+Whether every argument is a scalar on which a comparison returns an faithful
 `Bool`, so a validation may run at all.
 
 `T <: Real` is **not** this predicate: `Symbolics.Num` is `<: Real` yet `<`
@@ -162,7 +162,7 @@ loss_modulus(model::AbstractRheology, ω::Number) = imag(complex_modulus(model, 
     loss_factor(model, ω)
 
 ``\\tan\\delta = E''/E'`` — the phase angle's tangent.  Non-negative for any
-passive material, which makes it a cheap sanity check on a fitted spectrum.
+passive material, which makes it a cheap check on a fitted spectrum.
 """
 function loss_factor(model::AbstractRheology, ω::Number)
     E = complex_modulus(model, ω)

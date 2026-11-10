@@ -45,8 +45,8 @@ in the penny limit while its density stays finite.
 
 ### [Who is the matrix?](@id man-who-is-the-matrix)
 
-Three independent things used to travel together under the name "matrix". They
-are now stated separately.
+Three independent things go under the name "matrix". They are stated
+separately.
 
 **The phase that takes up the complement** is bookkeeping, declared on the
 phase with `fraction = :rest`. Which fractions are given and which is derived
@@ -271,7 +271,7 @@ Two questions that look alike, and answer differently.
 The distribution ellipsoid describes the ellipsoidal symmetry of the two-point
 statistics of the actual medium [ponte1995](@cite) — a measurable property of
 the material, like a phase's shape or its volume fraction. That is what
-separates it from the matrix, which left the RVE in v0.8.0: naming a reference
+separates it from the matrix: naming a reference
 medium is a *modeling* decision, and the same microstructure is a
 matrix/inclusion composite under Mori–Tanaka and a matrix-free aggregate under
 the self-consistent scheme. No such thing is true here. The spatial statistics
@@ -287,9 +287,8 @@ data, not a sign that the field is in the wrong place.
     harmless default. With spherical inclusions, a **spherical** distribution
     makes Maxwell and PCW coincide *exactly* with Mori–Tanaka (more generally,
     the three agree whenever every inclusion has the shape of the
-    distribution). Supplying one silently — which is what this field used to
-    do — therefore answered the scheme whose whole purpose is the distribution
-    with the estimate it generalizes, and said nothing about it.
+    distribution). Supplying one silently would answer the scheme whose whole purpose is the
+    distribution with the estimate it generalizes, and say nothing about it.
 
     So an RVE that declares none raises, the way a matrix-based scheme raises
     when no phase can play the reference medium:
@@ -305,11 +304,11 @@ data, not a sign that the field is in the wrong place.
     ```julia
     rve = RVE(; distribution_shape = Ellipsoid(1.0))
     # ... phases added, every inclusion a sphere ...
-    homogenize(rve, PonteCastanedaWillis()) ≈ homogenize(rve, MoriTanaka())   # true, and now on purpose
+    homogenize(rve, PonteCastanedaWillis()) ≈ homogenize(rve, MoriTanaka())   # true, and on purpose
     ```
 
     With spherical inclusions, this is also the quickest way to check that the
-    option is wired correctly.
+    option is set correctly.
 
 ## [Iterative solvers](@id man-schemes-iterative)
 
@@ -448,7 +447,7 @@ is reported through `@debug`, not `@warn`: set
 The differential scheme applies the *dilute* step over and over, updating the
 reference medium each time — the loop is drawn in
 [The differential scheme](@ref th-differential-incorporation).
-Two knobs follow from that loop: how many steps (`nsteps`), and in which order
+Two parameters follow from that loop: how many steps (`nsteps`), and in which order
 the phases are grown (the **trajectory**).
 
 ### Trajectories
@@ -512,7 +511,7 @@ ks = [k_mu(C)[1] for C in Cs]
 
 Nothing in the schemes above requires real moduli. Complex ones yield the
 frequency-domain response of a viscoelastic composite, by the correspondence
-principle of [The Laplace-Carson route](@ref th-laplace-carson):
+principle of [The Laplace-Carson approach](@ref th-laplace-carson):
 
 ```julia
 δ = 0.05
@@ -553,7 +552,7 @@ C_eff = homogenize_alv(rve, MoriTanaka(), :C; times = times)   # 300 × 300
 ```
 
 See the dedicated [Viscoelasticity manual](@ref man-viscoelasticity) for the
-full pipeline (aging kernels, cracks, sensitivities, fast paths,
+full calculation (aging kernels, cracks, sensitivities, fast paths,
 ECHOES validation).
 
 ## Sensitivity (ForwardDiff)

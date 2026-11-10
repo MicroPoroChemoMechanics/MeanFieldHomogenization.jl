@@ -141,7 +141,7 @@ form filled in; the tests check that they still match what the studio writes
 today. The hand-written demos in `scripts/` do not reopen that way: they build
 their cells at top level, the way one writes Julia directly, and the studio
 *preserves* those verbatim rather than offering them for editing. Read
-`scripts/` for the physics; open the library to turn the knobs.
+`scripts/` for the physics; open the library to change the parameters.
 
 ## The layout
 

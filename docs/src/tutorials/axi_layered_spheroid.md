@@ -129,24 +129,19 @@ Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀
 Two panels are worth a second look. The conduction components **cross at**
 ``\omega = 1``, where the body is a sphere and the response is isotropic —
 nothing in the cell enforces that, so the crossing is a free control. And the
-bottom-middle panel carries **both sides of gate B**: the inclusion is
+bottom-middle panel carries **both sides of level B**: the inclusion is
 heterogeneous, so ``\mathbb A_{\sigma\varepsilon}`` is not
 ``\mathbb C_1 : \mathbb A_{\varepsilon\varepsilon}`` for any single
 ``\mathbb C_1`` — it is measured on the same solve, and it agrees with
 `LayeredSphere` to ``9.5\times10^{-5}``.
 
-### What this comparison found in the analytic solution
+### One confocal layer against the closed form
 
-The elastic sweep above covers the sphere, and for a while it could not. A
-one-layer confocal spheroid **is** a homogeneous spheroid, so the closed-form
-Eshelby result is its answer and the confocal machinery has to reproduce it at
-every aspect ratio. It did not: the error went from ``3\times10^{-15}`` at
-``|1-\omega| \ge 0.3`` to a **total loss** at ``10^{-3}``, while conduction on
-the identical chart stayed at ``10^{-15}``.
+The elastic sweep above covers the sphere. A one-layer confocal spheroid **is** a homogeneous spheroid, so the closed-form Eshelby result is its answer and the confocal machinery has to reproduce it at every aspect ratio, down to the sphere itself.
 
 ![One confocal layer against the closed-form spheroid, approaching the sphere](../assets/fe/layered_spheroid_analytic_near_sphere.png)
 
-One confocal layer is a homogeneous spheroid, so the closed-form Eshelby result is the reference and the confocal machinery must reproduce it exactly. Transport does, everywhere. Elasticity does not, once the chart degenerates (`focal → 0`, `q → ∞`).
+Transport reproduces the closed form to rounding everywhere. Elasticity does too, until the chart degenerates (`focal → 0`, `q → ∞`), where the residual rises to ``4\times10^{-9}`` at ``\omega = 0.999``.
 
 | `ω` | elasticity | transport, same chart |
 |---|---:|---:|
@@ -181,47 +176,41 @@ Two layers. Conduction: `k₁/k₀ = 5`, `k₂/k₀ = 2`. Elasticity: `E₁/E₀
 | spheres, elasticity, `𝔸_εε` | 1.7e-04 | 1.2e-04 |
 | spheres, elasticity, `𝔸_σε` | 9.5e-05 | 7.4e-05 |
 
-The cause was not the geometry and not the layer coupling — one layer already
-showed it, and both the prolate and the oblate family failed. The columns of the
+The residual does not come from the geometry or the layer coupling: one layer
+shows it, for the prolate and the oblate family alike. The columns of the
 elastic system are amplitudes of Papkovich–Neuber potentials at the interface,
 so a growing mode of degree ``n`` scales like ``q^n`` and a decaying one like
 ``q^{-n-1}``. As the spheroid approaches a sphere the focal distance goes to
 zero and ``q \to \infty``, so the column magnitudes span ``q^{2n+1}`` — about
-``10^{25}`` at ``\omega = 0.999`` with degrees up to nine, and the solve has
-nothing left to work with.
+``10^{25}`` at ``\omega = 0.999`` with degrees up to nine, which leaves an
+unscaled solve with nothing to work with.
 
 The degeneracy is in the basis's **normalization**, not in the problem: as
 ``q \to \infty`` the spheroidal harmonics tend to spherical ones, which are
-perfectly independent. So the solve now scales each column to unit norm before
+perfectly independent. The solve therefore scales each column to unit norm before
 the factorization — a change of unknowns, exact in exact arithmetic, and the
 scaling that minimizes the 2-norm condition number over all diagonal choices to
 within ``\sqrt n``. Columns only: equilibrating rows would reweight an
 overdetermined least squares and change *which* solution comes back.
 
-| ``\|1-\omega\|`` | before | after |
-|---:|---:|---:|
-| ``3\times10^{-1}`` | `3e-15` | `2e-15` |
-| ``10^{-1}`` | `1.6e-3` | `3e-15` |
-| ``5\times10^{-2}`` | `5.4e-2` | `4e-14` |
-| ``10^{-2}`` | `7.7e-1` | `6e-13` |
-| ``10^{-3}`` | `1.0e+0` | `4e-9` |
+| ``\|1-\omega\|`` | deviation from the closed form |
+|---:|---:|
+| ``3\times10^{-1}`` | `2e-15` |
+| ``10^{-1}`` | `3e-15` |
+| ``5\times10^{-2}`` | `4e-14` |
+| ``10^{-2}`` | `6e-13` |
+| ``10^{-3}`` | `4e-9` |
 
 A residual limit remains at ``|1-\omega| = 10^{-4}``, where the spread reaches
 ``q^{19} \approx 10^{35}`` and even the transport branch is only at
-``8\times10^{-10}``. Past what a diagonal scaling can repair, and stated rather
-than hidden.
-
-Nothing caught this before: the failure changes no strain-side result away from
-the sphere, it is invisible in transport, and no test covered the elastic
-near-sphere limit. It surfaced because a finite-element cell was asked the same
-question about the same body — which is the whole reason to have two independent
-routes, and there is now a regression test on the one-layer oracle at every
-aspect ratio.
+``8\times10^{-10}``. This is beyond what a diagonal scaling can repair. A
+regression test compares the one-layer case with the closed form at every aspect
+ratio.
 
 ## Replaying it with your own radii
 
 This is the part the closed forms do not cover, and the whole reason for the
-type. Two things to know, and one to be honest about.
+type. Two points on the mesh, and one limitation.
 
 **The two ways in.** `confocal_layer_radii` for the calibrated slice, and a bare
 pair of semi-axis tuples for anything else:
@@ -251,7 +240,7 @@ Two coaxial concentric ellipses are nested if and only if **both** semi-axes
 grow outwards, so [`check_nested_spheroids`](@ref MeanFieldHomogenization.check_nested_spheroids)
 is two comparisons per layer. It is worth doing rather than trusting: a
 violation is not a wrong answer but a self-intersecting geometry, which gmsh
-rejects from deep inside its own pipeline with a message naming neither the
+rejects from deep inside its own meshing chain with a message naming neither the
 layer nor the semi-axis.
 
 The growth has to be **strict**. Two coinciding boundaries pass every
@@ -260,7 +249,7 @@ size is capped at a fraction of each layer's thickness, so a zero-thickness laye
 asks for a zero-sized element. A sphere is still a perfectly good layer — that is
 `a == c` *within* one layer, which is unrestricted.
 
-**The mesh knobs, in order of importance.** `radius_ratio` before `nradial`:
+**The mesh parameters, in order of importance.** `radius_ratio` before `nradial`:
 what remains after the dipole correction is *truncation*, not discretization.
 
 ```julia
@@ -306,7 +295,7 @@ nowhere else.
 ## It has to arrive in a scheme
 
 Which is the point of all of it. The inclusion is heterogeneous, so it enters
-through gate B with **both** concentration tensors, and both come out of one
+through level B with **both** concentration tensors, and both come out of one
 solve:
 
 ```julia
@@ -345,7 +334,7 @@ Everything above costs a mesh and a factorization per evaluation, and that is
 what forbids a derivative: the solve runs in `Float64` and memoizes on the
 reference medium alone, so a request for `∂/∂w` would come back a silent zero.
 The type raises instead. A trained network is the way through, and it is trained
-**on the cell**, not on a closed form, because half of gate B exists nowhere
+**on the cell**, not on a closed form, because half of level B exists nowhere
 else — the analytic `LayeredSpheroid` supplies no stress side at all.
 
 ```
@@ -417,7 +406,7 @@ nn = NeuralConcentrationInclusion(
 )
 ```
 
-Both tensors are supplied, so the inclusion enters gate B on the heterogeneous
+Both tensors are supplied, so the inclusion enters level B on the heterogeneous
 branch — exactly as the meshed cell does, and the schemes cannot tell them apart.
 
 !!! warning "The semi-axes are not sorted, and that is deliberate"
@@ -428,22 +417,20 @@ branch — exactly as the meshed cell does, and the schemes cannot tell them apa
     frame its `Ellipsoid` teacher returns; `NeuralConcentrationInclusion` must
     **not**, or `(1, 1, ω)` with `ω > 1` would sort to `(ω, 1, 1)`, put the
     revolution axis in column 1, and decode a tensor transversely isotropic
-    about an equatorial direction. That was a real bug, fixed in 0.14.1 and now
-    asserted by a test — it had stayed hidden because every concentration
-    surrogate before this one was trained on a sphere, where the sort is the
-    identity.
+    about an equatorial direction. The invariant is asserted by a test; it is invisible on a
+    sphere, where the sort is the identity.
 
-### Three routes, and one of them is exact
+### Three approaches, and one of them is exact
 
 ![The closed form, the Fourier cell and the surrogate, on values and on the derivative](../assets/nn/layered_spheroid_accuracy.png)
 
 The shipped models cover the **confocal** slice, and that is worth using rather
 than hiding: on it `𝔸_εε` has a closed form, so the figure judges the cell and
 the surrogate against an exact answer instead of against each other. Top left,
-the tensor component by all three routes; top right, the deviation each carries;
+the tensor component by all three approaches; top right, the deviation each carries;
 bottom left, the derivative with respect to the core fraction, again against the
 exact one; bottom right, the quantity that has **no** closed form — the effective
-stiffness, which needs both sides of gate B.
+stiffness, which needs both sides of level B.
 
 The reference is the closed form differenced at `h = 1e-4`, and that step is
 measured rather than assumed: the quotient was checked at `1e-2`, `1e-3`, `1e-4`
@@ -491,7 +478,7 @@ assumed:
 | 700 | `1.5e-3` / `1.0e-2` | `2.0e-2` / `2.3e-1` |
 | 1200 | `5.0e-4` / `4.2e-3` | `7.5e-3` / `6.1e-2` |
 
-Up to 1200 solves every factor of 1.7 bought close to a factor of three, on the
+Up to 1200 solves every factor of 1.7 gave close to a factor of three, on the
 value and on the derivative alike. Beyond that the **held-out block error**
 saturates — its exponent falls `2.10 → 0.95 → 0.59` as the bulk of the box
 reaches the teacher's own floor, the cell being exact only to about `1e-4`
@@ -523,17 +510,17 @@ the closed form where one exists.
 !!! note "Two things that would not have helped, both checked"
     **More capacity.** The fit's residual was swept on a fine grid of 25 values
     of `w` and is smooth and monotone, with no ripple: the network was never
-    over-fitting, so a wider one would have changed nothing. Samples were the
-    lever, three times over.
+    over-fitting, so a wider one would have changed nothing. The number of samples was
+    the decisive parameter, three times over.
 
     **An anchored baseline.** `AnchoredHill` learns a correction to a closed
     form instead of the whole tensor, and a layered spheroid has a close one —
     the homogeneous spheroid at the layers' mean modulus, exact on the whole
     face `r₁ = r₂`. It was implemented, trained on the very same labels, and
-    **it does not pay**: marginally better at the median, 3.5× worse at p90, and
+    **it does not improve the result**: marginally better at the median, 3.5× worse at p90, and
     worse on the derivative at every quantile. Near the exact face the target is
     `𝕄 ≈ 𝕀`, whose off-diagonal Walpole components are zero, so the anchor
-    manufactures zeros exactly where it is perfect and the tail pays. The
+    manufactures zeros exactly where it is perfect, and the tail suffers. The
     baseline ships, tested, so the measurement is reproducible; the shipped
     models stay `DimensionlessHill`.
 
@@ -551,7 +538,7 @@ Not for replacing the closed form where one exists. For the two things that have
 none, both in the figure's bottom-right panel:
 
 * the **stress side** `𝔸_σε`, which the analytic `LayeredSpheroid` does not
-  supply — half of gate B exists only through the cell, and therefore only
+  supply — half of level B exists only through the cell, and therefore only
   through something trained on it;
 * the nests the confocal family does not contain, where there is no reference to
   differentiate at all.
@@ -560,7 +547,7 @@ And for cost, and for the sensitivity itself: microseconds against seconds, and 
 derivative where the cell refuses to give one rather than return the silent zero
 its memoized `Float64` solve would produce.
 
-The whole computation end to end is `scripts/94_fe_neural_layered_spheroid.jl`;
+The whole computation is `scripts/94_fe_neural_layered_spheroid.jl`;
 the figure and the table above come from
 `scripts/nn/make_layered_spheroid_figures.jl`, both run by hand so that no
 documentation build meshes or trains anything.
@@ -580,7 +567,7 @@ finite-element cell implements `PerfectInterface` only. …
 
 That is the next piece of work, and it is a whole one: a new backend generic,
 node duplication on the interface trace, and the local normal/tangent frame
-along a curved meridian. Note that the analytic side is not complete either —
+along a curved meridian. The analytic side is not complete either —
 [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) supports
 Kapitza and surface-conductive interfaces in conduction, but
 **`PerfectInterface` only** in elasticity — so an imperfect interface on a
@@ -607,7 +594,7 @@ the finite elements would stop calibrating and start providing.
 **Sensitivities, from the cell itself.** The solve runs in `Float64` and memoizes
 on the reference medium, so a derivative with respect to a layer radius or a core
 fraction would come back a silent zero; the type raises instead. That is what
-[the surrogate](@ref tut-axi-layered-spheroid-nn) above is for, and the same route
+[the surrogate](@ref tut-axi-layered-spheroid-nn) above is for, and the same approach
 serves [the concave pores](@ref app-concave-pores).
 
 ## Where to go next

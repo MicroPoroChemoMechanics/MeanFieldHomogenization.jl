@@ -28,7 +28,7 @@ Memoization store shared by the quadrature points of a
 Pass one to [`material_response`](@ref) via its `cache` keyword and reuse it
 across the whole element loop — the entries are keyed on the *microstructural
 configuration*, not on the point, so every quadrature point sharing a
-configuration pays for it once.
+configuration pays the cost once.
 
 ```julia
 cache = MaterialCache()

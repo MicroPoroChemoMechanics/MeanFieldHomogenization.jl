@@ -34,7 +34,7 @@ struct Residue <: AbstractAlgorithm end
 "DECUHR 2D hyper-cubature (Espelid & Genz 1994) via Integrals.jl `DecuhrAlgorithm`. Suitable for general anisotropy in 3D."
 struct DECUHR <: AbstractAlgorithm end
 
-"Nested 1D QuadGK cubature (fallback to DECUHR, ForwardDiff-compatible). Historically shipped as `DECUHR` before the split."
+"Nested 1D QuadGK cubature (fallback to DECUHR, ForwardDiff-compatible)."
 struct NestedQuadGK <: AbstractAlgorithm end
 
 "1D QuadGK quadrature dedicated to infinite cylinders (transverse-plane parametrization ζ(φ) = (0, cos φ / b, sin φ / c)). ForwardDiff-compatible, selected whenever an [`AbstractEllipsoidalInclusion`](@ref) with a cylindrical-shape trait meets a general-anisotropic 3D stiffness."

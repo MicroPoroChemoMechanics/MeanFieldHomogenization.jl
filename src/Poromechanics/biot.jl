@@ -34,7 +34,7 @@ phase of stiffness `C_s`, from its drained homogenized stiffness `C_hom`:
 \\dot p\\,\\boldsymbol{B}``; it is generally **anisotropic** even when the solid is
 isotropic, because the pore space is not.
 
-Two limits are worth remembering as sanity checks: a homogeneous medium
+Two limits are worth remembering as checks: a homogeneous medium
 (`C_hom == C_s`) gives ``\\boldsymbol{B} = \\boldsymbol{0}``, and a vanishing drained
 stiffness gives ``\\boldsymbol{B} = \\boldsymbol{1}``. For an isotropic medium
 the tensor collapses to ``b\\,\\boldsymbol{1}`` with the familiar
@@ -43,7 +43,7 @@ the tensor collapses to ``b\\,\\boldsymbol{1}`` with the familiar
 !!! note "Homogeneous solid phase only"
     These relations rest on the solid phase having *uniform* elastic
     properties. A medium with two distinct solid constituents needs the full
-    Levin/eigenstrain route instead, and `C_s` is then not defined.
+    Levin/eigenstrain approach instead, and `C_s` is then not defined.
 
 Pass the solid **stiffness**, not its compliance — the inverse is taken
 internally. Computing several poroelastic parameters at once is cheaper through

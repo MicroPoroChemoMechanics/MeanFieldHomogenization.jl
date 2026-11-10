@@ -12,7 +12,7 @@
 #  Model names: elastic, conduction, triaxial, affine.
 #
 #  Teachers are the *analytic* Hill tensors, so the labels are exact and the
-#  only error in the pipeline is the fit itself.  That is the whole point of the
+#  only error in the chain is the fit itself.  This is the purpose of the
 #  ellipsoid pilot: it is the one morphology where a surrogate can be held to a
 #  closed form.
 # =============================================================================

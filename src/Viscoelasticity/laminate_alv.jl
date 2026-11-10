@@ -66,7 +66,7 @@ Apply a Kelvin-Mandel (Bond) rotation to every time block of an ALV matrix,
 ``\\mathbf{Q}^{T}\\,\\mathbf{M}_{ij}\\,\\mathbf{Q}``: with `Q` the Bond matrix of the
 laminate frame, from the canonical frame to the layer frame, and with `Q'` back.
 Not called when the laminate normal is the third canonical axis, which is why
-the canonical laminate pays nothing.
+the canonical laminate incurs no cost.
 """
 function _alv_rotate_blocks(M::AbstractMatrix, Q::AbstractMatrix, n_times::Int, nc::Int)
     out = similar(M, promote_type(eltype(M), eltype(Q)))
