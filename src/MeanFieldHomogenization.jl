@@ -94,6 +94,7 @@ include("Conductivity/Conductivity.jl")
 include("Interactions/Interactions.jl")
 include("LayeredSpheres/LayeredSpheres.jl")
 include("LayeredSpheroids/LayeredSpheroids.jl")
+include("LayeredCylinders/LayeredCylinders.jl")
 include("Schemes/Schemes.jl")
 # `Laminates` sits between `Schemes` and `Viscoelasticity`: it extends
 # `_evaluate` and uses `HomogenizationScheme`/`Laminated`/`Voigt`/`Reuss` from
@@ -118,6 +119,7 @@ using .Conductivity
 using .Interactions
 using .LayeredSpheres
 using .LayeredSpheroids
+using .LayeredCylinders
 using .Schemes
 using .Laminates
 using .Assemblies
@@ -291,6 +293,9 @@ export local_gradient, local_flux, local_displacement, local_temperature
 export local_strain_strain_concentration, local_stress_strain_concentration,
     local_strain_stress_concentration, local_stress_stress_concentration
 export local_strain, local_stress
+
+# ── LayeredCylinder (multi-coated fiber, transversely isotropic coaxial layers)
+export LayeredCylinder
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
