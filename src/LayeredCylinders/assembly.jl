@@ -23,7 +23,8 @@
 #  `(zz, ze, mz, me, T, L)`: for a stress per strain, σ_zz per ε_zz (`zz`) and
 #  per in-plane equibiaxial strain e (`ze`), in-plane mean stress per ε_zz
 #  (`mz`) and per e (`me`), transverse (`T`) and axial (`L`) shear ratios. A
-#  stiffness (k, l, m, n, p) is `(n, 2l, l, 2k, 2m, 2p)`; in the Walpole basis
+#  stiffness (k, l, m, n, p) is `(n, 2l, l, 2k, 2m, 2p)` (`ze` reads `lt`, the
+#  C₃₃₁₁ of an operator without major symmetry); in the Walpole basis
 #  ℓ₁ = zz, ℓ₂ = me, ℓ₃ = ze/√2, ℓ₄ = √2 mz, ℓ₅ = T, ℓ₆ = L.
 # =============================================================================
 
@@ -90,7 +91,7 @@ function _axial_stress(sol, seq, ε, external::Bool)
     N = length(sol.radii)
     R² = sol.radii[N]^2
     σ = sum(
-        sol.fractions[k] * (2 * (sol.Ls[k].l * seq.amps[k][1]) + sol.Ls[k].n * ε) for k in 1:N
+        sol.fractions[k] * (2 * (sol.Ls[k].lt * seq.amps[k][1]) + sol.Ls[k].n * ε) for k in 1:N
     )
     for k in 1:(external ? N : N - 1)
         σ += _axial_membrane(sol.interfaces[k], sol.radii[k], seq.inside[k][1], ε) / R²
@@ -122,7 +123,7 @@ function _whole_stress(sol, external::Bool)
 end
 
 # Entries of a stiffness, and the composition C ∘ A of two operators.
-_stiffness_entries(L) = (; zz = L.n, ze = 2 * L.l, mz = L.l, me = 2 * L.k, T = 2 * L.m, L = 2 * L.p)
+_stiffness_entries(L) = (; zz = L.n, ze = 2 * L.lt, mz = L.l, me = 2 * L.k, T = 2 * L.m, L = 2 * L.p)
 
 _compose(C, A) = (;
     zz = C.zz * A.zz + C.ze * A.mz, ze = C.zz * A.ze + C.ze * A.me,

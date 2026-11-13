@@ -41,22 +41,28 @@ function _ti_part(P::TensND.AbstractTens, axis)
 end
 
 """
-    _hill_moduli(C, axis) -> (; k, l, m, n, p)
+    _hill_moduli(C, axis) -> (; k, l, m, n, p, lt)
 
 Hill's moduli of a stiffness that is isotropic, or transversely isotropic about
 `axis`: plane-strain bulk modulus ``k = (C_{1111} + C_{1122})/2``,
 ``l = C_{1133}``, transverse shear modulus ``m = (C_{1111} - C_{1122})/2``,
-``n = C_{3333}`` and axial shear modulus ``p = C_{2323}``.
+``n = C_{3333}`` and axial shear modulus ``p = C_{2323}``. `lt` is ``C_{3311}``, equal to
+``l`` for a stiffness and distinct from it for an operator without major symmetry
+(a running estimate in aging viscoelasticity).
 """
 function _hill_moduli(C::TensND.TensISO{4, 3}, axis)
     κ, μ = TensND.k_mu(C)
-    return (; k = κ + μ / 3, l = κ - 2 * μ / 3, m = μ, n = κ + 4 * μ / 3, p = μ)
+    l = κ - 2 * μ / 3
+    return (; k = κ + μ / 3, l, m = μ, n = κ + 4 * μ / 3, p = μ, lt = l)
 end
 
 function _hill_moduli(C::TensND.TensTI{4}, axis)
     TensND.isparallel(TensND.axis(C), axis) || _not_coaxial(C, axis)
     C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃ = TensND.ti_constants(C)
-    return (; k = (C₁₁₁₁ + C₁₁₂₂) / 2, l = C₁₁₃₃, m = (C₁₁₁₁ - C₁₁₂₂) / 2, n = C₃₃₃₃, p = C₂₃₂₃)
+    return (;
+        k = (C₁₁₁₁ + C₁₁₂₂) / 2, l = C₁₁₃₃, m = (C₁₁₁₁ - C₁₁₂₂) / 2, n = C₃₃₃₃, p = C₂₃₂₃,
+        lt = C₁₁₃₃,
+    )
 end
 
 _hill_moduli(C::TensND.AbstractTens{4, 3}, axis) = _hill_moduli(_ti_part(C, axis), axis)
@@ -90,7 +96,7 @@ _check_stiffness(::Val{false}, L, where_) = nothing
 function _check_stiffness(::Val{true}, L, where_)
     all(isfinite, values(L)) && L.k > 0 && L.m > 0 && L.p > 0 || throw(
         ArgumentError(
-            "$where_ of the LayeredCylinder has Hill moduli (k, l, m, n, p) = $(values(L)): " *
+            "$where_ of the LayeredCylinder has Hill moduli (k, l, m, n, p) = $((L.k, L.l, L.m, L.n, L.p)): " *
                 "they must be finite, with k, m and p positive (an incompressible or a " *
                 "void layer is not supported)"
         )

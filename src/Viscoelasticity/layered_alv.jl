@@ -38,6 +38,10 @@ suffix on the crack kernels (`property_contribution_alv_at`).
 """
 const _ALVReference = Union{ViscoLaw, AbstractMatrix}
 
+# The layered inclusions of the ALV pipeline: no Hill kernel, their concentration
+# and contribution come from their own recurrences.
+const _LayeredALV = Union{LayeredSphere, LayeredCylinder}
+
 # The 6n × 6n relaxation matrix of a reference: a law is discretized (one in
 # `:creep` mode, a compliance, inverted to its relaxation), a running reference
 # already is one.

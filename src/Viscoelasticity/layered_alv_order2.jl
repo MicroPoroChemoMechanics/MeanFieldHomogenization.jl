@@ -185,17 +185,18 @@ end
 
 # Voigt and Reuss averages of the layer conductivities: what the two bounds
 # assign to a layered sphere, as in elasticity.
-function _layer_cond_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
+function _layer_cond_kernels_alv(sphere::_LayeredALV, times)
+    N = layer_count(sphere)
     Ks = map(1:N) do k
         K = layer_modulus(sphere, k)
         return _trapezoidal_relaxation(_as_visco_law(K), times, 3)
     end
     return Ks, [layer_volume_fraction(sphere, k) for k in 1:N]
 end
-_layer_voigt_alv2(sphere::LayeredSphere, times) = voigt_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
-_layer_reuss_alv2(sphere::LayeredSphere, times) = reuss_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
+_layer_voigt_alv2(sphere::_LayeredALV, times) = voigt_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
+_layer_reuss_alv2(sphere::_LayeredALV, times) = reuss_alv_order2(_layer_cond_kernels_alv(sphere, times)...)
 
 # The average a scheme reads as the conductivity of a layered sphere, as
 # `_layer_bound_alv` at order 4.
-_layer_bound_alv2(::Reuss, sphere::LayeredSphere, times) = _layer_reuss_alv2(sphere, times)
-_layer_bound_alv2(::HomogenizationScheme, sphere::LayeredSphere, times) = _layer_voigt_alv2(sphere, times)
+_layer_bound_alv2(::Reuss, sphere::_LayeredALV, times) = _layer_reuss_alv2(sphere, times)
+_layer_bound_alv2(::HomogenizationScheme, sphere::_LayeredALV, times) = _layer_voigt_alv2(sphere, times)

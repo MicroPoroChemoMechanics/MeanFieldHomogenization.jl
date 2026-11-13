@@ -651,13 +651,13 @@ function _inclusion_alv_quantities(geom, ::_ALVBound, C_r_law, C_M_law::ALVPrope
     z = zero(C_0)
     return (_alv_phase_operator(C_r_law, C_0.grid), z, z, z)
 end
-function _inclusion_alv_quantities(sphere::LayeredSphere, scheme::_ALVBound, _C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
+function _inclusion_alv_quantities(sphere::_LayeredALV, scheme::_ALVBound, _C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
     z = zero(C_0)
     return (_layer_bound_alv(scheme, sphere, times), z, z, z)
 end
 
 function _inclusion_alv_quantities(
-        sphere::LayeredSphere, scheme, _C_r_law,
+        sphere::_LayeredALV, scheme, _C_r_law,
         C_M_law::ALVProperty,
         C_0::VolterraOperator,
         times::AbstractVector{<:Real}
@@ -677,7 +677,8 @@ end
 
 # The 6n × 6n relaxation matrices of the layers of a layered sphere, and their
 # volume fractions. A layer stored as an elastic tensor is a Heaviside law.
-function _layer_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
+function _layer_kernels_alv(sphere::_LayeredALV, times)
+    N = layer_count(sphere)
     Cs = map(1:N) do k
         C = layer_modulus(sphere, k)
         return _trapezoidal_relaxation(_as_visco_law(C), times, 6)
@@ -688,14 +689,14 @@ end
 # Voigt and Reuss averages of the layer kernels: the stiffness each bound
 # assigns to a layered sphere, as `layer_stiffness_average` and
 # `layer_compliance_average` do in elasticity.
-_layer_voigt_alv(sphere::LayeredSphere, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
-_layer_reuss_alv(sphere::LayeredSphere, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
+_layer_voigt_alv(sphere::_LayeredALV, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
+_layer_reuss_alv(sphere::_LayeredALV, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
 
 # The average a scheme reads as the stiffness of a layered sphere: the Reuss
 # bound inverts the average of the layer compliances, every other scheme takes
 # the Voigt average (only the Voigt bound reads it).
-_layer_bound_alv(::Reuss, sphere::LayeredSphere, times) = _layer_reuss_alv(sphere, times)
-_layer_bound_alv(::HomogenizationScheme, sphere::LayeredSphere, times) = _layer_voigt_alv(sphere, times)
+_layer_bound_alv(::Reuss, sphere::_LayeredALV, times) = _layer_reuss_alv(sphere, times)
+_layer_bound_alv(::HomogenizationScheme, sphere::_LayeredALV, times) = _layer_voigt_alv(sphere, times)
 
 # Convenience: extract the scalar amount value (volume fraction or crack
 # density) from the RVE.  Preserves the element type of the wrapper —

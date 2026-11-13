@@ -188,9 +188,9 @@ _frame_classes2(ℬ) = ()
 # A layered sphere has no Hill kernel: its contribution comes from the
 # recurrence of `layered_alv_order2.jl`. Refused by name rather than through a
 # `MethodError` of `tens_IA`, should a path ask for one.
-hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
+hill_kernel_order2_at(::_LayeredALV, ::AbstractMatrix) = throw(
     ArgumentError(
-        "a LayeredSphere has no Hill kernel; its order-2 ALV contribution is " *
+        "a layered inclusion has no Hill kernel; its order-2 ALV contribution is " *
             "`property_contribution_alv`."
     )
 )
@@ -340,13 +340,13 @@ _dilute2_in_classes(K_r, geom, K_0) = _in_class_algebra(_alg_dilute_concentratio
 # The bounds read the phase kernels alone, as at order 4.
 _inclusion_alv2_quantities(geom, ::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
     (_alv_phase_operator(K_r_law, K_0.grid), zero(K_0), zero(K_0))
-_inclusion_alv2_quantities(s::LayeredSphere, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+_inclusion_alv2_quantities(s::_LayeredALV, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
     (_layer_bound_alv2(scheme, s, times), zero(K_0), zero(K_0))
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
 # phase law is a placeholder).
-_inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times) = (
+_inclusion_alv2_quantities(s::_LayeredALV, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times) = (
     _layer_bound_alv2(scheme, s, times),
     gradient_gradient_concentration_alv(s, K_M_law, times),
     property_contribution_alv(s, K_M_law, times),
@@ -356,7 +356,7 @@ _inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0::Volt
 # sphere's law is a placeholder, its layers carrying the kernels: the reference
 # kernel `K_ref` stands in for it.
 _alv2_phase_kernel(geom, law, K_ref, times) = _trapezoidal_relaxation(law, times, 3)
-_alv2_phase_kernel(::LayeredSphere, law, K_ref, times) = K_ref
+_alv2_phase_kernel(::_LayeredALV, law, K_ref, times) = K_ref
 
 """
     _homogenize_alv_order2(rve, scheme, prop::Symbol; times) -> Matrix

@@ -47,7 +47,7 @@ inclusion phase is a `LayeredSphere`. Explicit name in elasticity:
 [`strain_strain_concentration_alv`](@ref).
 """
 gradient_gradient_concentration_alv(
-    sphere::LayeredSphere, ref::_ALVReference, times::AbstractVector{<:Real}; kw...
+    sphere::_LayeredALV, ref::_ALVReference, times::AbstractVector{<:Real}; kw...
 ) = _gradient_gradient_concentration_alv(_alv_order(ref, times), sphere, ref, times; kw...)
 
 """
@@ -84,7 +84,7 @@ conduction. Explicit names: [`stiffness_contribution_alv`](@ref) and
 [`conductivity_contribution_alv`](@ref).
 """
 property_contribution_alv(
-    sphere::LayeredSphere, ref::_ALVReference, times::AbstractVector{<:Real}; kw...
+    sphere::_LayeredALV, ref::_ALVReference, times::AbstractVector{<:Real}; kw...
 ) = _property_contribution_alv(_alv_order(ref, times), sphere, ref, times; kw...)
 
 # ── The names of elasticity and of conduction ────────────────────────────────

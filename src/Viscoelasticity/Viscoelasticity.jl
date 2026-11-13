@@ -56,6 +56,8 @@ using ..LayeredSpheres: LayeredSphere, layer_radius, layer_modulus,
     layer_interface, AbstractInterface, PerfectInterface,
     SpringInterface, MembraneInterface, KapitzaInterface, SurfaceConductiveInterface,
     interfaces_eltype, layer_count, layer_volume_fraction, outer_radius
+import ..LayeredCylinders
+using ..LayeredCylinders: LayeredCylinder
 import ..Schemes
 import ..Laminates
 using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, DiluteDual,
@@ -99,6 +101,7 @@ include("schemes_alv_sc.jl")
 include("schemes_alv_sc_newton.jl")
 include("schemes_alv_extra.jl")
 include("layered_alv.jl")
+include("layered_cylinder_alv.jl")
 include("laminate_alv.jl")
 include("homogenize_alv.jl")
 include("order2_alv.jl")
