@@ -11,13 +11,34 @@ _not_coaxial(P, axis) = throw(
     )
 )
 
-_not_ti(P) = throw(
+_not_ti(P, drel) = throw(
     ArgumentError(
-        "a LayeredCylinder takes isotropic properties (TensISO) or transversely isotropic " *
-            "ones about its axis (TensTI); got a $(nameof(typeof(P))). A general tensor that " *
-            "has this symmetry can be converted with TensND's `best_fit_ti`"
+        "a LayeredCylinder takes properties that are isotropic or transversely isotropic " *
+            "about its axis; the $(nameof(typeof(P))) it received is at a relative distance " *
+            "$drel from that symmetry"
     )
 )
+
+_symbolic_general(P) = throw(
+    ArgumentError(
+        "a LayeredCylinder takes a symbolic property as a TensISO or as a TensTI about its " *
+            "axis; a $(nameof(typeof(P))) would have to be compared with its transversely " *
+            "isotropic part, which symbols do not allow"
+    )
+)
+
+# Relative distance to transverse isotropy under which a general tensor (the
+# running estimate of a scheme, stored in a rotated basis) is read as such.
+const _TI_RTOL = 1.0e-8
+
+# A general tensor: its transversely isotropic part about the axis, provided
+# it is the whole of it. Numbers only: the distance is compared.
+function _ti_part(P::TensND.AbstractTens, axis)
+    is_hard_numeric(eltype(P)) || _symbolic_general(P)
+    Pti, _, drel = TensND.project(P, Val(:TI), axis)
+    drel ≤ _TI_RTOL || _not_ti(P, drel)
+    return Pti
+end
 
 """
     _hill_moduli(C, axis) -> (; k, l, m, n, p)
@@ -38,7 +59,7 @@ function _hill_moduli(C::TensND.TensTI{4}, axis)
     return (; k = (C₁₁₁₁ + C₁₁₂₂) / 2, l = C₁₁₃₃, m = (C₁₁₁₁ - C₁₁₂₂) / 2, n = C₃₃₃₃, p = C₂₃₂₃)
 end
 
-_hill_moduli(C, axis) = _not_ti(C)
+_hill_moduli(C::TensND.AbstractTens{4, 3}, axis) = _hill_moduli(_ti_part(C, axis), axis)
 
 """
     _conductivities(K, axis) -> (; t, a)
@@ -57,7 +78,7 @@ function _conductivities(K::TensND.TensTI{2, <:Any, 2}, axis)
     return (; t, a)
 end
 
-_conductivities(K, axis) = _not_ti(K)
+_conductivities(K::TensND.AbstractTens{2, 3}, axis) = _conductivities(_ti_part(K, axis), axis)
 
 _entries_eltype(nt::NamedTuple) = promote_type(map(typeof, values(nt))...)
 

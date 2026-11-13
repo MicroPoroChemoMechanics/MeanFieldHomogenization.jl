@@ -47,6 +47,7 @@ import ..Core: inverse_property_contribution, delta_inverse_property,
     inverse_and_property_contribution
 import ..LayeredSpheres
 import ..LayeredSpheroids
+import ..LayeredCylinders
 import ..LayeredSpheres: layer_property_average, layer_inverse_property_average
 
 include("rve.jl")
