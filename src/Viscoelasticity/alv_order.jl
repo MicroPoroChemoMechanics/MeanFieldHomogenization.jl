@@ -25,6 +25,7 @@ end
 
 """
     gradient_gradient_concentration_alv(sphere, ref, times; external = true) -> Matrix
+    gradient_gradient_concentration_alv(sphere, ref, times; layer = k, external = false, internal = false) -> Matrix
 
 Volume-averaged gradient concentration of a whole [`LayeredSphere`](@ref) in an
 isotropic aging reference `ref` (a `ViscoLaw`, or the Volterra matrix of a running
@@ -41,6 +42,16 @@ interfaces. In conduction, the ``3n\\times 3n`` gradient concentration
 ``[\\![T]\\!] = -\\rho\\,q_n`` of the Kapitza interfaces. `external` decides whether the
 outer interface belongs to the sphere, as in the elastic
 [`gradient_gradient_concentration`](@ref).
+
+With `layer = k` the operator is that of layer ``k``,
+``\\widetilde{\\mathbb A}_k = \\alpha_k\\,\\mathbb J + \\beta_k\\,\\mathbb K`` (in conduction
+``\\alpha_k\\,\\boldsymbol 1``): the average over its material by default, plus the
+jump across its outer boundary ``r_k`` when `external` and across its inner one
+``r_{k-1}`` when `internal`, each divided by the volume of the layer — nonzero
+across a spring (Kapitza) interface only, as in the elastic
+[`gradient_gradient_concentration`](@ref)`(sphere, C₀; layer)`. With
+`external = true` on every layer the shells partition the sphere:
+``\\sum_k f_k\\,\\widetilde{\\mathbb A}_k`` is the operator of the whole sphere.
 
 This is what the ALV dilute / Mori–Tanaka / Maxwell schemes use when an
 inclusion phase is a `LayeredSphere`. Explicit name in elasticity:
@@ -86,6 +97,27 @@ conduction. Explicit names: [`stiffness_contribution_alv`](@ref) and
 property_contribution_alv(
     sphere::_LayeredALV, ref::_ALVReference, times::AbstractVector{<:Real}; kw...
 ) = _property_contribution_alv(_alv_order(ref, times), sphere, ref, times; kw...)
+
+"""
+    flux_gradient_concentration_alv(sphere::LayeredSphere, ref, times; layer = nothing, external = true) -> Matrix
+
+Volterra block matrix of the average flux of a [`LayeredSphere`](@ref) per unit
+remote gradient history, against the isotropic aging reference `ref`: in
+elasticity the average stress per unit remote strain, in conduction the average
+of ``k\\,\\nabla T`` per unit remote gradient. Without `layer`, the whole sphere,
+``\\sum_k f_k\\,\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k`` plus the surface stress
+(flux) of its membranes (conducting surfaces), that of the outer one when
+`external`: [`property_contribution_alv`](@ref) is this operator minus
+``\\widetilde{\\mathbb C}_0\\circ\\langle\\widetilde{\\mathbb A}\\rangle``. With `layer = k`, the
+material of layer ``k``: its relaxation operator applied **on the left** of its
+average gradient, ``\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k``.
+"""
+function flux_gradient_concentration_alv(
+        sphere::LayeredSphere, ref::_ALVReference, times::AbstractVector{<:Real};
+        layer::Union{Nothing, Int} = nothing, external::Bool = true,
+    )
+    return _flux_gradient_concentration_alv(_alv_order(ref, times), sphere, ref, times, layer, external)
+end
 
 # ── The names of elasticity and of conduction ────────────────────────────────
 

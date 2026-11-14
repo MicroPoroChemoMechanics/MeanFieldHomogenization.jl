@@ -103,6 +103,8 @@ function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractStri
     C_0 = _relaxation_operator(C_M_law, grid)
     # The matrix kernel enters the estimate as it is: it must be isotropic.
     C_0.class isa TensISO || _alv_iso_error(who, m, "the anisotropy of the kernel")
+    # The host enters through the Hill kernel of its shape, which a layered one lacks.
+    _alv_refuse_layered_host(who, m, rve.phases[m].geometry)
     C_phases = AbstractMatrix[C_0]
     geometries = MFH_Core.AbstractInclusion[rve.phases[m].geometry]
     fractions = [volume_fraction(rve, m)]
@@ -117,15 +119,19 @@ function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractStri
         Union{Nothing, AbstractMatrix},
         Union{Nothing, AbstractMatrix},
     }[]
-    # Layered spheres have no Hill kernel: their concentration and stress come
-    # from the recurrences, against the running estimate, at every iteration.
+    # Layered inclusions have no Hill kernel: their concentration and stress come
+    # from their radial problems, against the running estimate, at every iteration.
     layered_data = NamedTuple[]
     for name in inclusion_phase_names(rve, m)
         ph = rve.phases[name]
         a = rve.amounts[name]
         sym = phase_symmetrize(rve, name)
         # The phases of a cell are of many types, known at run time: a branch.
-        if ph.geometry isa LayeredSphere
+        if ph.geometry isa _LayeredALV
+            # A layered sphere is isotropic; a layered cylinder, transversely
+            # isotropic, needs an isotropic orientation average.
+            _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
+                _alv_iso_error(who, name, "the transversely isotropic contribution")
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = sym))
             continue
         end

@@ -349,7 +349,7 @@ once from the matrix `ViscoLaw` sample type):
     permittivity) → returns ``3n\\times 3n`` matrix via the order-2 ALV
     calculation (`hill_kernel_order2`, time-space decoupling).
 
-Supports two inclusion-geometry families, in both orders:
+Supports three inclusion-geometry families, in both orders:
   * Single-shape ellipsoidal (`Ellipsoid`, `Spheroid`): the standard
     Hill-kernel + dilute-concentration calculation.
   * `LayeredSphere`: the ALV recurrences feed its concentration and
@@ -360,6 +360,10 @@ Supports two inclusion-geometry families, in both orders:
     [`gradient_gradient_concentration_alv`](@ref) and [`property_contribution_alv`](@ref).
     The phase property is ignored (the layers carry their own kernels); pass
     any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
+  * [`LayeredCylinder`](@ref) of axis ``\\underline{e}_3``: its radial problems feed its
+    concentration and contribution in the same way, the phase property being a
+    placeholder too. Its contribution is transversely isotropic about
+    ``\\underline{e}_3``.
 
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
@@ -379,7 +383,17 @@ Volterra inverses (Reuss) directly, each over its orientation distribution
     spherical inclusion with an isotropic phase law, or an isotropic
     orientation average `symmetrize = :iso`, which is also what randomly
     oriented inclusions and cracks mean physically. A `LayeredSphere`, whose
-    contribution is isotropic by construction, is always accepted.
+    contribution is isotropic by construction, is always accepted; a
+    `LayeredCylinder` needs `symmetrize = :iso`.
+
+    One cell escapes the restriction: when **every** phase, the host included, is a
+    `LayeredCylinder` of axis ``\\underline{e}_3`` without orientation average, no
+    Hill kernel is needed and the three schemes run on an estimate transversely
+    isotropic about ``\\underline{e}_3``. The moduli are then those of the layers:
+    `SelfConsistent` treats every phase alike, `AsymmetricSelfConsistent` and
+    `DifferentialScheme` take the kernel of the matrix from the only layer of the
+    host (a one-layer cylinder with a perfect interface), and the iteration is the
+    Picard one (`AndersonDefault()`).
 
     An RVE satisfying neither raises an `ArgumentError` naming the phase,
     rather than reading iso parameters off a matrix that is not isotropic.
@@ -487,6 +501,9 @@ function _homogenize_alv_rve(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
+    # A cell of aligned layered cylinders under a scheme on its running estimate:
+    # no Hill kernel, an estimate transversely isotropic about e₃.
+    _alv_all_cylinders(scheme, rve) && return _homogenize_alv_cylinders(rve, scheme, prop; times, kw...)
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
     #    it resolves the scheme's reference medium itself.
     m = matrix_name(scheme, rve)

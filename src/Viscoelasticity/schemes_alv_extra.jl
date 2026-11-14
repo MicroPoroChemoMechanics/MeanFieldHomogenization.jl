@@ -130,7 +130,7 @@ function _asc_alv(
     )
     K_M, data, cracks = _sc2_phases(rve, prop, times, matrix, _ASC_WHO)
     opts = (; abstol, reltol, maxiters, damping, verbose, select_best)
-    if !any(d -> d.geom isa LayeredSphere, data)
+    if !any(d -> d.geom isa _LayeredALV, data)
         phases = _sc2_class_phases(data, times)
         K_M_op = first(phases).K_r
         return _fixed_point_in_classes(
@@ -307,13 +307,7 @@ function differential_alv(
         formulation::Symbol = :stiffness,
         solver_kwargs::NamedTuple = NamedTuple()
     )
-    formulation in (:stiffness, :compliance) ||
-        throw(
-        ArgumentError(
-            "differential_alv: formulation must be :stiffness or " *
-                ":compliance; got :$(formulation)"
-        )
-    )
+    _diff_alv_check_formulation("differential_alv", formulation)
     m = host_phase_name(rve, matrix, "differential_alv")
     C_M_law = phase_property(rve, m, prop)
     C_M_law isa ALVProperty ||
@@ -336,14 +330,7 @@ function differential_alv(
     for name in inclusion_phase_names(rve, m)
         ph = rve.phases[name]
         amt = rve.amounts[name]
-        amt isa Schemes.Remainder &&
-            throw(
-            ArgumentError(
-                "differential_alv: phase :$(name) carries the volume " *
-                    "complement and so has no target to integrate up to; name it " *
-                    "as the matrix, or give it an explicit fraction."
-            )
-        )
+        _diff_alv_refuse_remainder("differential_alv", name, amt)
         if !(amt isa Schemes.CrackDensity)   # volume: the remainder is refused above
             sym = phase_symmetrize(rve, name)
             push!(
@@ -385,9 +372,7 @@ function differential_alv(
     # every input (Dual-safe, cf. `_alv_promoted_eltype`).
     Tp = eltype(C_M_full)
     for sd in solid_data
-        Tp = promote_type(Tp, typeof(sd.target))
-        sd.C_r === nothing || (Tp = promote_type(Tp, eltype(sd.C_r)))
-        sd.C_r === nothing || (Tp = promote_type(Tp, eltype(tens_UA(sd.geom))))
+        Tp = promote_type(Tp, typeof(sd.target), _diff_alv_solid_eltype(sd.C_r, sd.geom, C_M_full, times))
     end
     for cd in crack_data
         Tp = promote_type(Tp, typeof(cd.target))
@@ -396,8 +381,6 @@ function differential_alv(
     end
     sz = 6 * n
     dual = formulation === :compliance
-    # The dual form integrates the creep function J̃ = C̃^{-vol}.
-    x0 = vec(Tp.(dual ? volterra_inverse(C_M_full; block_size = 6) : C_M_full))
     # Tuples of concrete records, each carrying its own trajectory: the
     # right-hand side runs over them without a dynamic dispatch per phase.
     ode_p = (
@@ -408,10 +391,38 @@ function differential_alv(
         grid = TimeGrid(times),
         dual = dual,
     )
-    rhs! = (du, u, p, τ) -> _diff_alv_ode_rhs!(du, u, p, τ)
-    prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
+    return _diff_alv_integrate(_diff_alv_ode_rhs!, C_M_full, Tp, ode_p, 6; alg, abstol, reltol, solver_kwargs)
+end
+
+# The formulation of the differential drivers, a run-time keyword.
+_diff_alv_check_formulation(who::AbstractString, formulation::Symbol) =
+    formulation in (:stiffness, :compliance) || throw(
+    ArgumentError("$who: formulation must be :stiffness or :compliance; got :$(formulation)")
+)
+
+# An inclusion phase is integrated up to its target, which the volume complement
+# does not have.
+_diff_alv_refuse_remainder(who::AbstractString, name::Symbol, ::Schemes.AbstractAmount) = nothing
+_diff_alv_refuse_remainder(who::AbstractString, name::Symbol, ::Schemes.Remainder) = throw(
+    ArgumentError(
+        "$who: phase :$(name) carries the volume complement and so has no target to " *
+            "integrate up to; name it as the matrix, or give it an explicit fraction."
+    )
+)
+
+# The element type a solid phase brings to the state: its kernel and its shape, or,
+# for a layered inclusion (no kernel of its own), its contribution against the matrix.
+_diff_alv_solid_eltype(C_r, geom, C_M, times) = promote_type(eltype(C_r), eltype(tens_UA(geom)))
+_diff_alv_solid_eltype(::Nothing, geom, C_M, times) = eltype(property_contribution_alv(geom, C_M, times))
+
+# The differential ODE integrated over τ ∈ [0, 1] from the kernel `X_M` of the matrix
+# (`block_size` rows per instant) in the element type `Tp`, and its end state as a
+# relaxation matrix. With `p.dual` the state is the Volterra inverse of the kernel
+# (the creep function, the resistivity), inverted back at the end.
+function _diff_alv_integrate(rhs!::F, X_M::AbstractMatrix, ::Type{Tp}, p, block_size::Int; alg, abstol, reltol, solver_kwargs) where {F, Tp}
+    x0 = vec(Tp.(p.dual ? volterra_inverse(X_M; block_size) : X_M))
     sol = solve(
-        prob,
+        ODEProblem(rhs!, x0, (0.0, 1.0), p),
         something(alg, Tsit5());
         abstol, reltol,
         # Only the end state is returned: one copy of the dense state, not one per point.
@@ -419,8 +430,19 @@ function differential_alv(
         dense = false,
         solver_kwargs...
     )
-    P_end = reshape(sol.u[end], sz, sz)
-    return dual ? volterra_inverse(P_end; block_size = 6) : P_end
+    P_end = reshape(sol.u[end], size(X_M))
+    return p.dual ? volterra_inverse(P_end; block_size) : P_end
+end
+
+# The increments dφ_α/dτ of the solid phases at τ, the fraction f_0 left to the
+# matrix and Σ df/dτ: the volume balance [df] = (𝟙 − [f] Uᵀ) [dφ] inverted by
+# Sherman–Morrison, dφ_α = df_α + (f_α / f_0) Σ df.
+function _diff_alv_increments(solid_data, τ, ::Type{T}) where {T}
+    f = map(r -> r.path.f(τ) * r.target, solid_data)
+    df = map(r -> r.path.df(τ) * r.target, solid_data)
+    f0 = one(T) - sum(f; init = zero(T))
+    sum_df = sum(df; init = zero(T))
+    return map((fᵢ, dfᵢ) -> dfᵢ + (fᵢ / f0) * sum_df, f, df), f0, sum_df
 end
 
 # A layered sphere: the moduli of its layers, carried by the geometry, are the
@@ -453,21 +475,16 @@ function _diff_alv_ode_rhs!(du, u, p, τ)
     Δ = reshape(du, p.sz, p.sz)
     fill!(Δ, zero(T))
 
-    # Sherman-Morrison : dφ_α/dτ = df_α/dτ + (f_α / f_0) · sum(df).  Only
-    # solid phases enter the volume balance; the sum is needed by the crack
-    # loop below as well, so it is computed unconditionally.
-    f = map(r -> r.path.f(τ) * r.target, p.solid_data)
-    df = map(r -> r.path.df(τ) * r.target, p.solid_data)
-    f0 = one(T) - sum(f; init = zero(T))
-    sum_df = sum(df; init = zero(T))
+    # Only solid phases enter the volume balance; the crack loop below reads f_0
+    # and the sum as well.
+    dφ, f0, sum_df = _diff_alv_increments(p.solid_data, τ, T)
 
     # The running medium is isotropic (the setup refuses what would take it out
     # of the class): its two blocks, and their Volterra inverses, shared across the
     # solid phases.
     C_op = _iso_operator(C_curr, p.grid, Val(4))
     J_long, J_shear = _alv_iso_inverses(C_op)
-    map(p.solid_data, f, df) do r, fᵢ, dfᵢ
-        dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
+    map(p.solid_data, dφ) do r, dφᵢ
         iszero(dφᵢ) || _diff_alv_add!(
             Δ, _maybe_symmetrize_alv(_diff_alv_solid_contribution(r, r.geom, C_curr, C_op, J_long, J_shear, p.times), r.sym),
             dφᵢ, p.dual, P_curr, p.grid

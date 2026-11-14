@@ -306,11 +306,12 @@ function bulk_amplitude_seq_alv(
     n = length(times)
     radii = sphere.radii
 
-    # Over EVERY layer, not just the first: the amplitudes are propagated
-    # outward, so a `Dual` in any layer's modulus (autodiff with respect to
-    # one layer of the coating) reaches `A` / `B` before the recurrence ends.
+    # Over EVERY layer and interface, not just the first: the amplitudes are
+    # propagated outward, so a `Dual` in any layer's modulus or interface
+    # parameter (autodiff with respect to one layer of the coating) reaches
+    # `A` / `B` before the recurrence ends.
     Telt = promote_type(
-        eltype(M_κ_0), eltype(M_μ_0),
+        eltype(M_κ_0), eltype(M_μ_0), interfaces_eltype(sphere.interfaces),
         (eltype(m) for lay in layers for m in lay)...
     )
     Id = Matrix{Telt}(I, n, n)
@@ -438,6 +439,24 @@ end
 # =============================================================================
 
 """
+    _shear_mode_operators_alv(M_κ, M_μ) -> (U₂, W₂, U₄)
+
+The three Volterra ratios of the displacement rows of the ``Y_2`` fundamental
+matrix [`_shear_M_matrix_alv`](@ref), the inverse of ``\\widetilde{\\mu}`` on the left:
+``U_2 = 6\\,\\widetilde{\\mu}^{-1^{\\circ}}\\circ(3\\widetilde{k} - 2\\widetilde{\\mu})`` and
+``W_2 = \\widetilde{\\mu}^{-1^{\\circ}}\\circ(15\\widetilde{k} + 11\\widetilde{\\mu})`` for mode 2
+(``U = U_2 r^3``, ``W = W_2 r^3``), and
+``U_4 = 3\\,\\widetilde{\\mu}^{-1^{\\circ}}\\circ(\\widetilde{k} + \\widetilde{\\mu})`` for mode 4
+(``U = U_4/r^2``, ``W = 1/r^2``). The other entries of those rows are numbers:
+``(U, W) = (2r, r)`` for mode 1 and ``(3, -1)/r^4`` for mode 3.
+"""
+_shear_mode_operators_alv(M_κ::AbstractMatrix, M_μ::AbstractMatrix) = (
+    6 .* volterra_left_divide(M_μ, 3 .* M_κ .- 2 .* M_μ; block_size = 1),
+    volterra_left_divide(M_μ, 15 .* M_κ .+ 11 .* M_μ; block_size = 1),
+    3 .* volterra_left_divide(M_μ, M_κ .+ M_μ; block_size = 1),
+)
+
+"""
     _shear_M_matrix_alv(r, M_κ, M_μ, n) -> Matrix{T}  (4n × 4n, time-major)
 
 ALV fundamental matrix for the deviatoric ``Y_2`` harmonic.  The state
@@ -491,6 +510,7 @@ function _shear_M_matrix_alv(
     # with `D_row = diag(1/2, 1, 1/2, 1)`, `D_col = diag(1, 1, 2, 2)`.
 
     blocks = Array{Matrix{T}, 2}(undef, 4, 4)
+    U₂, W₂, U₄ = _shear_mode_operators_alv(Mκ, Mμ)
 
     # Mode 1 — uniform deviatoric strain. (U, V) = (2r, r).
     blocks[1, 1] = (2 * Tr) * Id
@@ -499,14 +519,8 @@ function _shear_M_matrix_alv(
     blocks[4, 1] = 2 * Mμ
 
     # Mode 2 — r³ profile.  α₂ = 6(3x − 2), γ₂ = 15x + 11 with x = κ/μ.
-    blocks[1, 2] = (6 * r³) * volterra_left_divide(
-        Mμ, 3 .* Mκ .- 2 .* Mμ;
-        block_size = 1
-    )
-    blocks[2, 2] = r³ * volterra_left_divide(
-        Mμ, 15 .* Mκ .+ 11 .* Mμ;
-        block_size = 1
-    )
+    blocks[1, 2] = r³ * U₂
+    blocks[2, 2] = r³ * W₂
     blocks[3, 2] = r² * (12 .* Mμ .- 18 .* Mκ)         # 6(2μ − 3κ) r²
     blocks[4, 2] = r² * (48 .* Mκ .+ 10 .* Mμ)         # 2(24κ + 5μ) r²
 
@@ -517,10 +531,7 @@ function _shear_M_matrix_alv(
     blocks[4, 3] = 8 * inv_r⁵ * Mμ
 
     # Mode 4 — 1/r² profile. α₄ = 3(x + 1).
-    blocks[1, 4] = (3 * inv_r²) * volterra_left_divide(
-        Mμ, Mκ .+ Mμ;
-        block_size = 1
-    )
+    blocks[1, 4] = inv_r² * U₄
     blocks[2, 4] = inv_r² * Id
     blocks[3, 4] = -2 * inv_r³ * (9 .* Mκ .+ 4 .* Mμ)
     blocks[4, 4] = 3 * inv_r³ * Mκ
@@ -755,28 +766,32 @@ function _shear_seed_states_alv(
 end
 
 """
-    _shear_amp_blocks_alv(r, M_κ, M_μ, n, state) -> (a, b)
+    _shear_amplitudes_alv(r, M_κ, M_μ, n, state) -> (a, b, c, d)
 
 Given a ``4n\\times m`` state matrix in time-major layout and the Volterra
-moduli of the layer at radius ``r``, solve ``\\mathbf{M}(r)\\,\\mathbf{x}`` = `state` (Volterra
-inverse with `block_size = 4`) and extract the "mode 1" and "mode 2"
-amplitude blocks (``n\\times m`` each).  Modes 3 and 4 are not returned (they
-are not needed for layered-sphere concentration since ``c = d = 0`` for the
-core probe construction and the matrix-side normalization only fixes
-``a`` and ``b``).
+moduli of the layer at radius ``r``, solve ``\\mathbf{M}(r)\\,\\mathbf{x}`` = `state` with
+the closed-form inverse [`_shear_M_inverse_alv`](@ref) (its only ``n\\times n``
+Volterra inverses are those of ``3k + 4\\mu`` and ``\\mu``) and return the
+``n\\times m`` amplitude blocks of the four modes.
 """
-function _shear_amp_blocks_alv(
+function _shear_amplitudes_alv(
         r::Real, M_κ::AbstractMatrix, M_μ::AbstractMatrix,
         n::Int, state::AbstractMatrix
     )
-    # Closed-form M(r)^{-1} (the only n × n Volterra inverses are
-    # `(3κ+4μ)^{-vol}` and `μ^{-vol}`, both stable for any non-vacuum
-    # modulus — see `_shear_M_inverse_alv`).
-    M_r_inv = _shear_M_inverse_alv(r, M_κ, M_μ, n)
-    amp = M_r_inv * state                            # (4n × m)
-    # The first two state components at every time: rows 1 and 2 of each 4-block.
-    return amp[1:4:(4n), :], amp[2:4:(4n), :]
+    amp = _shear_M_inverse_alv(r, M_κ, M_μ, n) * state     # (4n × m)
+    # Mode j at every time: row j of each 4-block.
+    return ntuple(j -> amp[j:4:(4n), :], Val(4))
 end
+
+"""
+    _shear_amp_blocks_alv(r, M_κ, M_μ, n, state) -> (a, b)
+
+The amplitudes of the two regular modes of [`_shear_amplitudes_alv`](@ref):
+what the concentration of a layer and the normalization on the matrix side
+read.
+"""
+_shear_amp_blocks_alv(r::Real, M_κ::AbstractMatrix, M_μ::AbstractMatrix, n::Int, state::AbstractMatrix) =
+    _shear_amplitudes_alv(r, M_κ, M_μ, n, state)[1:2]
 
 """
     _shear_solve_far_field_alv(a_a, a_b, b_a, b_b, n) -> (λ_a, λ_b)
@@ -848,6 +863,7 @@ function _shear_state_seq_alv(
     # loop.  Type the containers from the promotion over all of them.
     T_state = promote_type(
         eltype(sa), eltype(sb), eltype(M_κ_0), eltype(M_μ_0),
+        interfaces_eltype(sphere.interfaces),
         (eltype(m) for lay in layers for m in lay)...
     )
     inside_a = Vector{Matrix{T_state}}(undef, N)
@@ -878,6 +894,32 @@ function _shear_state_seq_alv(
 end
 
 """
+    _shear_unit_states_alv(sphere, layers, M_κ_0, M_μ_0, times) -> (inside, outside)
+
+The deviatoric states ``(U, W, \\sigma_{rr}, \\sigma_{r\\theta})`` per unit remote
+deviatoric strain history: `inside[k]` (``4n\\times n``, time-major) just inside
+``r_k``, and `outside` on the matrix side of ``r_N``. The two probes of
+[`_shear_state_seq_alv`](@ref) are combined by the Volterra matrices
+``\\lambda_a``, ``\\lambda_b`` applied **on the right**, which set the matrix-side
+amplitudes to ``(a, b) = (\\mathbb 1_n, 0)``.
+"""
+function _shear_unit_states_alv(
+        sphere::LayeredSphere{T, N}, layers::Tuple, M_κ_0, M_μ_0,
+        times::AbstractVector{<:Real}
+    ) where {T, N}
+    n = length(times)
+    inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
+    # The closed-form `M(r_N)^{-1}` is the same for both probes: one call on
+    # their concatenation.
+    a_ab, b_ab = _shear_amp_blocks_alv(sphere.radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
+    λ_a, λ_b = _shear_solve_far_field_alv(
+        a_ab[:, 1:n], a_ab[:, (n + 1):(2n)],
+        b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
+    )
+    return [inside_a[k] * λ_a + inside_b[k] * λ_b for k in 1:N], s_a * λ_a + s_b * λ_b
+end
+
+"""
     shear_concentration_alv(sphere, C0_law, times) -> NTuple{N, Matrix}
 
 Per-layer deviatoric ALV concentration matrices ``\\beta_k(t,t')`` (``n\\times n``
@@ -903,27 +945,12 @@ function shear_concentration_alv(
     n = length(times)
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
 
-    inside_a, inside_b, s_mat_a, s_mat_b = _shear_state_seq_alv(
-        sphere, layers, M_κ_0, M_μ_0, times
-    )
+    inside, _ = _shear_unit_states_alv(sphere, layers, M_κ_0, M_μ_0, times)
     radii = sphere.radii
-
-    # Matrix-side amplitudes of each probe at r_N⁺. The closed-form
-    # `M(r_N)^{-1}` inside `_shear_amp_blocks_alv` is the same for both
-    # probes — concatenate them into one call instead of computing that
-    # inverse twice.
-    state_ab = hcat(s_mat_a, s_mat_b)
-    a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, state_ab)
-    a_a, a_b = a_ab[:, 1:n], a_ab[:, (n + 1):(2n)]
-    b_a, b_b = b_ab[:, 1:n], b_ab[:, (n + 1):(2n)]
-
-    # Linear combination giving (a_{N+1}, b_{N+1}) = (I_n, 0).
-    λ_a, λ_b = _shear_solve_far_field_alv(a_a, a_b, b_a, b_b, n)
 
     return ntuple(N) do k
         (M_κ_k, M_μ_k) = layers[k]
-        inside_combo = inside_a[k] * λ_a + inside_b[k] * λ_b   # (4n × n)
-        a_k, b_k = _shear_amp_blocks_alv(radii[k], M_κ_k, M_μ_k, n, inside_combo)
+        a_k, b_k = _shear_amp_blocks_alv(radii[k], M_κ_k, M_μ_k, n, inside[k])
         # Layer bounds (innermost layer has r_a = 0).
         r_a = (k == 1) ? zero(eltype(radii)) : radii[k - 1]
         r_b = radii[k]
@@ -950,48 +977,52 @@ end
 #     N     = Σ_k f_k (C_k − C_0) ∘ A_k  (size-independent contribution).
 # =============================================================================
 
+# The interfaces a whole sphere owns — the inner ones, and the outer one when
+# `external` — and those a layer is given: its outer boundary when `external`,
+# its inner one when `internal` (the core has none).
+_sphere_interfaces(sphere::LayeredSphere, external::Bool) = 1:(layer_count(sphere) - !external)
+_layer_interfaces(layer::Int, external::Bool, internal::Bool) =
+    [k for (k, on) in ((layer - 1, internal && layer > 1), (layer, external)) if on]
+
+_check_alv_layer(sphere::LayeredSphere, layer::Int) =
+    1 ≤ layer ≤ layer_count(sphere) || throw(BoundsError(sphere, layer))
+
 """
-    _strain_jump_terms_alv(sphere, C0_law, times; external = true) -> (Δα, Δβ)
+    _strain_jump_terms_alv(sphere, C0_law, times, interfaces) -> (Δα, Δβ)
 
 ALV counterpart of the elastic `LayeredSpheres._strain_jump_terms`: the
 ``n\\times n`` Volterra blocks the displacement jumps across the
-[`SpringInterface`](@ref)s add to the average strain of the whole sphere, on
-``\\mathbb J`` and ``\\mathbb K``,
+[`SpringInterface`](@ref)s among `interfaces` add to the average strain of the
+whole sphere, on ``\\mathbb J`` and ``\\mathbb K``,
 
 ```math
 \\Delta\\alpha = \\sum_k \\frac{r_k^2}{R^3}\\,[\\![u_r]\\!]_k\\circ A_\\infty^{-1^{\\circ}},
 \\qquad
-\\Delta\\beta = \\sum_k \\frac{r_k^2}{5R^3}\\,\\big([\\![U]\\!]_k + 3[\\![W]\\!]_k\\big),
+\\Delta\\beta = \\sum_k \\frac{r_k^2}{5R^3}\\,\\big([\\![U]\\!]_k + 3[\\![W]\\!]_k\\big).
 ```
 
-over the inner interfaces, and the outer one when `external` is `true`. Each
-jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows.
+Each jump is ``(\\mathbf J - \\mathbb 1)\\,\\mathbf s`` read on the displacement rows.
+Divided by the volume fraction of a layer, the same sums over its own
+boundaries are what the jumps add to the average strain of that layer.
 """
 function _strain_jump_terms_alv(
         sphere::LayeredSphere{T, N},
         C0_law::_ALVReference,
-        times::AbstractVector{<:Real};
-        external::Bool = true,
+        times::AbstractVector{<:Real},
+        interfaces,
     ) where {T, N}
     n = length(times)
     radii = sphere.radii
     R³ = radii[N]^3
-    springs = [k for k in 1:(external ? N : N - 1) if layer_interface(sphere, k) isa SpringInterface]
+    springs = [k for k in interfaces if layer_interface(sphere, k) isa SpringInterface]
     isempty(springs) && return (zeros(T, n, n), zeros(T, n, n))
 
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
     inside_amps, A_M, _ = bulk_amplitude_seq_alv(sphere, C0_law, times)
     A_M_inv = volterra_inverse(A_M; block_size = 1)
-    inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
-    a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
-    λ_a, λ_b = _shear_solve_far_field_alv(
-        a_ab[:, 1:n], a_ab[:, (n + 1):(2n)],
-        b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
-    )
+    inside, _ = _shear_unit_states_alv(sphere, layers, M_κ_0, M_μ_0, times)
 
-    Δα = nothing
-    Δβ = nothing
-    for k in springs
+    terms = map(springs) do k
         intf = layer_interface(sphere, k)
         r = radii[k]
         (M_κ_k, M_μ_k) = layers[k]
@@ -1001,60 +1032,110 @@ function _strain_jump_terms_alv(
         S_b = vcat(r .* A_k .+ (1 / r^2) .* B_k, 3 .* (M_κ_k * A_k) .- (4 / r^3) .* (M_μ_k * B_k))
         J_b = _bulk_interface_T_alv(intf, M_κ_k, M_μ_k, r, times, n)
         ju = ((J_b - I) * S_b)[1:n, :]
-        tb = (r^2 / R³) .* (ju * A_M_inv)
         # Deviatoric: the time-major (U, W, σ_rr, σ_rθ) state, already at unit
         # remote deviatoric strain.
-        combo = inside_a[k] * λ_a + inside_b[k] * λ_b
         J_s = _shear_interface_T_alv(intf, M_κ_k, M_μ_k, M_κ_b, M_μ_b, r, times, n)
-        ΔS = (J_s - I) * combo
+        ΔS = (J_s - I) * inside[k]
         jU = ΔS[1:4:(4n), :]
         jW = ΔS[2:4:(4n), :]
-        td = (r^2 / (5 * R³)) .* (jU .+ 3 .* jW)
-        Δα = Δα === nothing ? tb : Δα .+ tb
-        Δβ = Δβ === nothing ? td : Δβ .+ td
+        (r^2 / R³) .* (ju * A_M_inv), (r^2 / (5 * R³)) .* (jU .+ 3 .* jW)
     end
-    return Δα, Δβ
+    return sum(first, terms), sum(last, terms)
 end
 
-# The elastic gradient (strain) concentration of the whole sphere: see the generic.
-function _gradient_gradient_concentration_alv(
-        ::Val{4}, sphere::LayeredSphere{T, N},
-        C0_law::_ALVReference,
-        times::AbstractVector{<:Real};
-        external::Bool = true,
+# The iso parameters (on 𝕁 and 𝕂) of the average strain of the whole sphere,
+# `layer = nothing`, or of one layer, per unit remote strain history.
+function _strain_params_alv(
+        sphere::LayeredSphere{T, N}, C0_law::_ALVReference, times::AbstractVector{<:Real},
+        ::Nothing, external::Bool, internal::Bool
     ) where {T, N}
     α_k = bulk_concentration_alv(sphere, C0_law, times)
     β_k = shear_concentration_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
     α_avg = sum(f[k] * α_k[k] for k in 1:N)
     β_avg = sum(f[k] * β_k[k] for k in 1:N)
-    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
-    return iso_blocks_from_params(α_avg .+ Δα, β_avg .+ Δβ)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times, _sphere_interfaces(sphere, external))
+    return α_avg .+ Δα, β_avg .+ Δβ
 end
 
-# The elastic (stiffness) contribution of the whole sphere: see the generic.
-function _property_contribution_alv(
-        ::Val{4}, sphere::LayeredSphere{T, N},
+function _strain_params_alv(
+        sphere::LayeredSphere, C0_law::_ALVReference, times::AbstractVector{<:Real},
+        layer::Int, external::Bool, internal::Bool
+    )
+    _check_alv_layer(sphere, layer)
+    α = bulk_concentration_alv(sphere, C0_law, times)[layer]
+    β = shear_concentration_alv(sphere, C0_law, times)[layer]
+    Δα, Δβ = _strain_jump_terms_alv(
+        sphere, C0_law, times, _layer_interfaces(layer, external, internal)
+    )
+    f = layer_volume_fraction(sphere, layer)
+    return α .+ Δα ./ f, β .+ Δβ ./ f
+end
+
+# The elastic gradient (strain) concentration of the whole sphere, or of one
+# layer: see the generic.
+function _gradient_gradient_concentration_alv(
+        ::Val{4}, sphere::LayeredSphere,
         C0_law::_ALVReference,
         times::AbstractVector{<:Real};
-        external::Bool = true,
+        layer::Union{Nothing, Int} = nothing, external::Bool = layer === nothing,
+        internal::Bool = false,
+    )
+    return iso_blocks_from_params(_strain_params_alv(sphere, C0_law, times, layer, external, internal)...)
+end
+
+# Σ_k f_k (k̃_k − c k̃_0)∘α_k and Σ_k f_k (μ̃_k − c μ̃_0)∘β_k, each modulus on the
+# left of the concentration it multiplies: the average stress of the layers
+# (`contrast = false`) or their contribution against the reference (`true`).
+function _layer_stress_sums_alv(
+        sphere::LayeredSphere{T, N}, C0_law::_ALVReference, times::AbstractVector{<:Real},
+        contrast::Bool
     ) where {T, N}
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
     α_k = bulk_concentration_alv(sphere, C0_law, times)
     β_k = shear_concentration_alv(sphere, C0_law, times)
     f = ntuple(k -> layer_volume_fraction(sphere, k), Val(N))
-    n = length(times)
-
     # Summed, not accumulated into a buffer typed by the first layer: any layer
     # or fraction may carry a dual number.
-    N_bulk = sum(f[k] .* ((layers[k][1] - M_κ_0) * α_k[k]) for k in 1:N)
-    N_shear = sum(f[k] .* ((layers[k][2] - M_μ_0) * β_k[k]) for k in 1:N)
+    return sum(f[k] .* ((layers[k][1] .- contrast .* M_κ_0) * α_k[k]) for k in 1:N),
+        sum(f[k] .* ((layers[k][2] .- contrast .* M_μ_0) * β_k[k]) for k in 1:N),
+        M_κ_0, M_μ_0
+end
+
+# The elastic (stiffness) contribution of the whole sphere: see the generic.
+function _property_contribution_alv(
+        ::Val{4}, sphere::LayeredSphere,
+        C0_law::_ALVReference,
+        times::AbstractVector{<:Real};
+        external::Bool = true,
+    )
+    N_bulk, N_shear, M_κ_0, M_μ_0 = _layer_stress_sums_alv(sphere, C0_law, times, true)
     a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times; external)
-    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times; external)
+    Δα, Δβ = _strain_jump_terms_alv(sphere, C0_law, times, _sphere_interfaces(sphere, external))
     return iso_blocks_from_params(
         3 .* N_bulk .+ a_surf .- 3 .* (M_κ_0 * Δα),
         2 .* N_shear .+ b_surf .- 2 .* (M_μ_0 * Δβ)
     )
+end
+
+# The average stress of the whole sphere, with the surface stress of its
+# membranes, or of the material of one layer: see the generic.
+function _flux_gradient_concentration_alv(
+        ::Val{4}, sphere::LayeredSphere, C0_law::_ALVReference,
+        times::AbstractVector{<:Real}, ::Nothing, external::Bool
+    )
+    S_bulk, S_shear, _, _ = _layer_stress_sums_alv(sphere, C0_law, times, false)
+    a_surf, b_surf = _membrane_surface_stress_alv(sphere, C0_law, times; external)
+    return iso_blocks_from_params(3 .* S_bulk .+ a_surf, 2 .* S_shear .+ b_surf)
+end
+
+function _flux_gradient_concentration_alv(
+        ::Val{4}, sphere::LayeredSphere, C0_law::_ALVReference,
+        times::AbstractVector{<:Real}, layer::Int, external::Bool
+    )
+    α, β = _strain_params_alv(sphere, C0_law, times, layer, false, false)
+    M_κ, M_μ = _bulk_layer_moduli_alv(sphere, C0_law, times)[1][layer]
+    return iso_blocks_from_params(3 .* (M_κ * α), 2 .* (M_μ * β))
 end
 
 """
@@ -1104,39 +1185,29 @@ function _membrane_surface_stress_alv(
     radii = sphere.radii
     R³ = radii[N]^3
 
-    if !any(k -> layer_interface(sphere, k) isa MembraneInterface, 1:N)
-        Z = zeros(T, n, n)
-        return Z, Z
-    end
+    membranes = [
+        k for k in _sphere_interfaces(sphere, external) if layer_interface(sphere, k) isa MembraneInterface
+    ]
+    isempty(membranes) && return (zeros(T, n, n), zeros(T, n, n))
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
 
     # Bulk displacement amplitudes u_r(r_k), normalized by the far-field A∞.
     inside_amps, A_M, _ = bulk_amplitude_seq_alv(sphere, C0_law, times)
     A_M_inv = volterra_inverse(A_M; block_size = 1)
-    Tb = eltype(A_M)
-    a_surf = zeros(Tb, n, n)
-    b_surf = zeros(Tb, n, n)
+    # Deviatoric interface displacement amplitudes (U, W)(r_k), per unit remote
+    # deviatoric strain.
+    inside, _ = _shear_unit_states_alv(sphere, layers, M_κ_0, M_μ_0, times)
 
-    # Deviatoric interface displacement amplitudes (U, W)(r_k), normalized to a
-    # unit remote deviatoric far field (same λ combination as the concentration).
-    inside_a, inside_b, s_a, s_b = _shear_state_seq_alv(sphere, layers, M_κ_0, M_μ_0, times)
-    a_ab, b_ab = _shear_amp_blocks_alv(radii[N], M_κ_0, M_μ_0, n, hcat(s_a, s_b))
-    λ_a, λ_b = _shear_solve_far_field_alv(
-        a_ab[:, 1:n], a_ab[:, (n + 1):(2n)],
-        b_ab[:, 1:n], b_ab[:, (n + 1):(2n)], n
-    )
-
-    for k in 1:(external ? N : N - 1)
+    # Summed, not accumulated into a buffer typed by the amplitudes: a surface
+    # modulus may carry a dual number.
+    terms = map(membranes) do k
         intf = layer_interface(sphere, k)
-        intf isa MembraneInterface || continue
         κs = intf.κs; μs = intf.μs
         r = radii[k]
         A_k, B_k = inside_amps[k]
         u_r = (r .* A_k .+ (1 / r^2) .* B_k) * A_M_inv     # normalized u_r(r_k)
-        a_surf .+= (4 * κs * r / R³) .* u_r
-        combo = inside_a[k] * λ_a + inside_b[k] * λ_b       # (4n × n) state
-        U, W = combo[1:4:(4n), :], combo[2:4:(4n), :]
-        b_surf .+= (r / R³) .* ((2 / 5) .* (-κs .* U .+ 3κs .* W .+ 6μs .* W))
+        U, W = inside[k][1:4:(4n), :], inside[k][2:4:(4n), :]
+        (4 * κs * r / R³) .* u_r, (r / R³) .* ((2 / 5) .* (-κs .* U .+ 3κs .* W .+ 6μs .* W))
     end
-    return a_surf, b_surf
+    return sum(first, terms), sum(last, terms)
 end

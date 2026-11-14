@@ -23,7 +23,10 @@
 #      A_b = (3 k_b)^{-∘} ∘ (s⁺ + (2/R) k_b ∘ u⁺),     B_b = R² (u⁺ − R A_b),
 #
 #  so the only Volterra inverse is that of `3 k_b`: an impermeable core
-#  (`k_1 = 0`) needs none, as in the elastic recurrence.
+#  (`k_1 = 0`) needs none, as in the elastic recurrence. An impermeable shell
+#  (`k_j = 0`, `j > 1`) lets no flux through: the layers inside it are shielded,
+#  their field is zero, and its own field, the limit of a vanishing
+#  conductivity, vanishes on its inner face, `A_j = 1`, `B_j = −r_{j−1}³`.
 # =============================================================================
 
 # The n × n conductivity matrix of a layer, of a reference law, or of a running
@@ -75,14 +78,37 @@ _cond_jump_alv(intf::AbstractInterface, u, s, R) = throw(
     )
 )
 
+# An impermeable layer: a conductivity matrix that is exactly zero, entry by
+# entry as the elastic recurrence tests its scalar.
+_is_impermeable_alv(k::AbstractMatrix) = all(LayeredSpheres._is_impermeable, k)
+
+# The amplitudes (A, B) of the impermeable shell `j`, whose inner radius is `R`,
+# and the zero field of the layers it shields: the Volterra form of
+# `LayeredSpheres._cond_enter_layer!`.
+function _cond_enter_impermeable_alv!(amps, states, layers, R, j::Int)
+    _is_impermeable_alv(layers[j - 1]) && throw(
+        ArgumentError(
+            "layers $(j - 1) and $j of the LayeredSphere both have a zero conductivity: " *
+                "the field of an impermeable layer is defined by a conducting neighbor " *
+                "inside it; merge the two layers"
+        )
+    )
+    Z = zero(first(first(amps)))
+    amps[1:(j - 1)] .= Ref((Z, Z))
+    states[1:(j - 1)] .= Ref((Z, Z))
+    return one(Z), -R^3 .* one(Z)
+end
+
 """
     _cond_amplitude_seq_alv(sphere, K0_ref, times)
-        -> (amps, states, A_∞, layers, k₀)
+        -> (amps, states, (A_∞, B_∞), layers, k₀)
 
 Forward recurrence of the conduction amplitudes. `amps[k] = (A_k, B_k)` and
 `states[k] = (u, s)`, the temperature and the radial flux analog just inside
 ``r_k``, are ``n\\times n`` Volterra matrices acting on the seed ``A_1 = \\mathbb 1_n``,
-``B_1 = 0``; `A_∞` is the amplitude of the remote gradient in the reference.
+``B_1 = 0``; ``A_\\infty`` is the amplitude of the remote gradient in the reference
+and ``B_\\infty`` that of its decaying mode. An impermeable shell restarts the
+sequence with a unit amplitude of its own (`_cond_enter_impermeable_alv!`).
 """
 function _cond_amplitude_seq_alv(
         sphere::LayeredSphere{T, N}, K0_ref::_ALVReference,
@@ -105,12 +131,37 @@ function _cond_amplitude_seq_alv(
         u = R .* A .+ B ./ R^2
         s = layers[k] * (A .- (2 / R^3) .* B)
         states[k] = (u, s)
-        u, s = _cond_jump_alv(layer_interface(sphere, k), u, s, R)
-        k_b = k < N ? layers[k + 1] : k₀
-        A = volterra_left_divide(3 .* k_b, s .+ (2 / R) .* (k_b * u); block_size = 1)
-        B = R^2 .* (u .- R .* A)
+        if k < N && _is_impermeable_alv(layers[k + 1])
+            A, B = _cond_enter_impermeable_alv!(amps, states, layers, R, k + 1)
+        else
+            u, s = _cond_jump_alv(layer_interface(sphere, k), u, s, R)
+            k_b = k < N ? layers[k + 1] : k₀
+            A = volterra_left_divide(3 .* k_b, s .+ (2 / R) .* (k_b * u); block_size = 1)
+            B = R^2 .* (u .- R .* A)
+        end
     end
-    return amps, states, A, layers, k₀
+    return amps, states, (A, B), layers, k₀
+end
+
+"""
+    _cond_unit_solution_alv(sphere, K0_ref, times) -> (; amps, states, layers, k₀)
+
+The conduction solution per unit remote gradient history: the amplitudes
+`amps[k] = (A_k, B_k)` of the layers, then of the reference (``k = N + 1``,
+``A = \\mathbb 1_n``), and the states `(u, s)` just inside each ``r_k``, those of
+[`_cond_amplitude_seq_alv`](@ref) with ``A_\\infty^{-1^{\\circ}}`` applied **on the
+right**.
+"""
+function _cond_unit_solution_alv(
+        sphere::LayeredSphere, K0_ref::_ALVReference, times::AbstractVector{<:Real}
+    )
+    amps, states, (A_∞, B_∞), layers, k₀ = _cond_amplitude_seq_alv(sphere, K0_ref, times)
+    A_∞⁻¹ = volterra_inverse(A_∞; block_size = 1)
+    unit(pair) = (pair[1] * A_∞⁻¹, pair[2] * A_∞⁻¹)
+    return (;
+        amps = push!(map(unit, amps), (one(A_∞), B_∞ * A_∞⁻¹)),
+        states = map(unit, states), layers, k₀,
+    )
 end
 
 """
@@ -127,60 +178,96 @@ function gradient_concentration_alv(
         sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
         times::AbstractVector{<:Real}
     ) where {T, N}
-    amps, _, A_∞, _, _ = _cond_amplitude_seq_alv(sphere, K0_law, times)
-    A_∞⁻¹ = volterra_inverse(A_∞; block_size = 1)
-    return ntuple(k -> amps[k][1] * A_∞⁻¹, Val(N))
+    sol = _cond_unit_solution_alv(sphere, K0_law, times)
+    return ntuple(k -> sol.amps[k][1], Val(N))
 end
+
+# The moments an interface at `r` adds to the averages, from the state (u, s)
+# just inside it: that of its temperature jump (a Kapitza resistance) and that
+# of its surface flux (a conducting surface).
+_cond_interface_moments_alv(::AbstractInterface, u, s, r) = (zero(u), zero(u))
+_cond_interface_moments_alv(intf::KapitzaInterface, u, s, r) =
+    ((r^2 * intf.resistance) .* s, zero(u))
+_cond_interface_moments_alv(intf::SurfaceConductiveInterface, u, s, r) =
+    (zero(u), (2 * intf.conductance * r) .* u)
 
 # The temperature jumps of the Kapitza interfaces and the surface flux of the
-# surface-conductive ones, as n × n blocks per unit remote gradient, over the
-# inner interfaces and the outer one when `external` is true.
-function _cond_interface_terms_alv(
-        sphere::LayeredSphere{T, N}, states, A_∞, external::Bool
-    ) where {T, N}
+# surface-conductive ones among `interfaces`, as n × n blocks per unit remote
+# gradient and per unit volume of the whole sphere.
+function _cond_interface_terms_alv(sphere::LayeredSphere{T, N}, sol, interfaces) where {T, N}
     radii = sphere.radii
     R³ = radii[N]^3
-    A_∞⁻¹ = volterra_inverse(A_∞; block_size = 1)
-    Δα = zero(A_∞)
-    surface = zero(A_∞)
-    for k in 1:(external ? N : N - 1)
-        intf = layer_interface(sphere, k)
-        r = radii[k]
-        u, s = states[k]
-        if intf isa KapitzaInterface
-            Δα .+= (r^2 * intf.resistance / R³) .* (s * A_∞⁻¹)
-        elseif intf isa SurfaceConductiveInterface
-            surface .+= (2 * intf.conductance * r / R³) .* (u * A_∞⁻¹)
-        end
-    end
-    return Δα, surface
+    Z = zero(sol.k₀)
+    moments = [
+        _cond_interface_moments_alv(layer_interface(sphere, k), sol.states[k]..., radii[k])
+            for k in interfaces
+    ]
+    return sum(first, moments; init = Z) ./ R³, sum(last, moments; init = Z) ./ R³
 end
 
-# The gradient concentration of the whole sphere in conduction: see the generic.
-function _gradient_gradient_concentration_alv(
-        ::Val{2}, sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
-        times::AbstractVector{<:Real}; external::Bool = true
+# The scalar (on 𝟏) of the average gradient of the whole sphere,
+# `layer = nothing`, or of one layer, per unit remote gradient history.
+function _gradient_params_alv(
+        sphere::LayeredSphere{T, N}, sol, ::Nothing, external::Bool, internal::Bool
     ) where {T, N}
-    amps, states, A_∞, _, _ = _cond_amplitude_seq_alv(sphere, K0_law, times)
-    A_∞⁻¹ = volterra_inverse(A_∞; block_size = 1)
-    α = sum(layer_volume_fraction(sphere, k) .* (amps[k][1] * A_∞⁻¹) for k in 1:N)
-    Δα, _ = _cond_interface_terms_alv(sphere, states, A_∞, external)
-    return iso_order2_blocks_from_params(α .+ Δα)
+    α = sum(layer_volume_fraction(sphere, k) .* sol.amps[k][1] for k in 1:N)
+    Δα, _ = _cond_interface_terms_alv(sphere, sol, _sphere_interfaces(sphere, external))
+    return α .+ Δα
 end
+
+function _gradient_params_alv(sphere::LayeredSphere, sol, layer::Int, external::Bool, internal::Bool)
+    _check_alv_layer(sphere, layer)
+    Δα, _ = _cond_interface_terms_alv(sphere, sol, _layer_interfaces(layer, external, internal))
+    return sol.amps[layer][1] .+ Δα ./ layer_volume_fraction(sphere, layer)
+end
+
+# The gradient concentration of the whole sphere in conduction, or of one
+# layer: see the generic.
+function _gradient_gradient_concentration_alv(
+        ::Val{2}, sphere::LayeredSphere, K0_law::_ALVReference,
+        times::AbstractVector{<:Real};
+        layer::Union{Nothing, Int} = nothing, external::Bool = layer === nothing,
+        internal::Bool = false,
+    )
+    sol = _cond_unit_solution_alv(sphere, K0_law, times)
+    return iso_order2_blocks_from_params(_gradient_params_alv(sphere, sol, layer, external, internal))
+end
+
+# Σ_k f_k (k_k − k_ref)∘α_k, each conductivity on the left of its concentration.
+_cond_layer_flux_sum_alv(sphere::LayeredSphere{T, N}, sol, k_ref) where {T, N} = sum(
+    layer_volume_fraction(sphere, k) .* ((sol.layers[k] .- k_ref) * sol.amps[k][1]) for k in 1:N
+)
 
 # The conductivity contribution of the whole sphere: see the generic.
 function _property_contribution_alv(
-        ::Val{2}, sphere::LayeredSphere{T, N}, K0_law::_ALVReference,
+        ::Val{2}, sphere::LayeredSphere, K0_law::_ALVReference,
         times::AbstractVector{<:Real}; external::Bool = true
-    ) where {T, N}
-    amps, states, A_∞, layers, k₀ = _cond_amplitude_seq_alv(sphere, K0_law, times)
-    A_∞⁻¹ = volterra_inverse(A_∞; block_size = 1)
-    N_K = sum(
-        layer_volume_fraction(sphere, k) .* ((layers[k] .- k₀) * (amps[k][1] * A_∞⁻¹))
-            for k in 1:N
     )
-    Δα, surface = _cond_interface_terms_alv(sphere, states, A_∞, external)
-    return iso_order2_blocks_from_params(N_K .+ surface .- k₀ * Δα)
+    sol = _cond_unit_solution_alv(sphere, K0_law, times)
+    Δα, surface = _cond_interface_terms_alv(sphere, sol, _sphere_interfaces(sphere, external))
+    return iso_order2_blocks_from_params(
+        _cond_layer_flux_sum_alv(sphere, sol, sol.k₀) .+ surface .- sol.k₀ * Δα
+    )
+end
+
+# The average of k·∇T over the whole sphere, with the flux of its conducting
+# surfaces, or over the material of one layer: see the generic.
+function _flux_gradient_concentration_alv(
+        ::Val{2}, sphere::LayeredSphere, K0_law::_ALVReference,
+        times::AbstractVector{<:Real}, ::Nothing, external::Bool
+    )
+    sol = _cond_unit_solution_alv(sphere, K0_law, times)
+    _, surface = _cond_interface_terms_alv(sphere, sol, _sphere_interfaces(sphere, external))
+    return iso_order2_blocks_from_params(_cond_layer_flux_sum_alv(sphere, sol, zero(sol.k₀)) .+ surface)
+end
+
+function _flux_gradient_concentration_alv(
+        ::Val{2}, sphere::LayeredSphere, K0_law::_ALVReference,
+        times::AbstractVector{<:Real}, layer::Int, external::Bool
+    )
+    _check_alv_layer(sphere, layer)
+    sol = _cond_unit_solution_alv(sphere, K0_law, times)
+    return iso_order2_blocks_from_params(sol.layers[layer] * sol.amps[layer][1])
 end
 
 # Voigt and Reuss averages of the layer conductivities: what the two bounds
