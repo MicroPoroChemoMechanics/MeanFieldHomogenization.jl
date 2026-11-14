@@ -61,6 +61,7 @@ pages = [
         # that treatment belongs here.
         "The generalized Eshelby problem — morphological patterns" => [
             "theory/layered_sphere.md",
+            "theory/layered_cylinder.md",
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
         ],
@@ -177,6 +178,8 @@ pages = [
         "The generalized Eshelby problem — morphological patterns" => [
             "tutorials/generated/layered_sphere.md",
             "tutorials/generated/layered_sphere_local_fields.md",
+            "tutorials/generated/layered_sphere_symbolic.md",
+            "tutorials/generated/layered_cylinder_symbolic.md",
             "tutorials/generated/layered_spheroid_effective.md",
             "tutorials/generated/layered_spheroid_interfaces.md",
             "tutorials/generated/layered_spheroid_hc.md",
@@ -359,6 +362,7 @@ pages = [
         "api/conductivity.md",
         "api/concentration.md",
         "api/layered_sphere.md",
+        "api/layered_cylinder.md",
         "api/layered_spheroid.md",
         "api/superspheres.md",
         "api/laminate.md",
