@@ -61,7 +61,7 @@ function julia_run(omega, T, sch, frac)
     add_phase!(
         rve, :I,
         omega == 1.0 ? Ellipsoid(1.0, 1.0, 1.0) : Spheroid(omega),
-        Dict(:Y => law_I); fraction = frac
+        Dict(:Y => law_I); fraction = frac, symmetrize = :iso
     )
     return homogenize_alv_order2(rve, sch, :Y; times = T)
 end
