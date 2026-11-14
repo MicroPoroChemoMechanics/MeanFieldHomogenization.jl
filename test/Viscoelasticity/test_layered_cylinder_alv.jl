@@ -162,8 +162,15 @@ end
 
 @testset "LayeredCylinder ALV — refused inputs, block conversions" begin
     h0 = heaviside_law(LCV_C0)
-    tilted = LayeredCylinder((1.0,), (lc_tensor(LC_F; axis = (1.0, 0.0, 0.0)),); axis = (1.0, 0.0, 0.0))
-    @test_throws "its axis must be e₃" gradient_gradient_concentration_alv(tilted, h0, LCV_TIMES)
+    # a cylinder of axis e₁ whose layer, or whose reference, is transversely
+    # isotropic about e₃
+    ex = (1.0, 0.0, 0.0)
+    @test_throws "layer 1" gradient_gradient_concentration_alv(
+        LayeredCylinder((1.0,), (LCV_CF,); axis = ex), heaviside_law(lc_tensor(LC_0; axis = ex)), LCV_TIMES
+    )
+    @test_throws "the reference medium" gradient_gradient_concentration_alv(
+        LayeredCylinder((1.0,), (lc_tensor(LC_F; axis = ex),); axis = ex), h0, LCV_TIMES
+    )
     # a layer, or the reference, transversely isotropic about another axis
     @test_throws "layer 1" gradient_gradient_concentration_alv(LayeredCylinder((1.0,), (lc_tensor(LC_F; axis = (1.0, 0.0, 0.0)),)), h0, LCV_TIMES)
     @test_throws "the reference medium" gradient_gradient_concentration_alv(

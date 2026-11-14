@@ -8,9 +8,10 @@
 #  matrices of the moduli in place of numbers, and the results reassembled in
 #  6n × 6n (resp. 3n × 3n) block matrices. No formula is restated.
 #
-#  The block matrices of this pipeline are written in the canonical frame, so
-#  the axis of the cylinder must be e₃, and each layer and the reference
-#  isotropic or transversely isotropic about e₃.
+#  The axis n of the cylinder is any direction. Its layers and the reference,
+#  isotropic or transversely isotropic about n, are written in the frame of the
+#  cylinder, the radial problems are solved there, and the result is brought
+#  back to the canonical frame at the end (see "The frame of the cylinder").
 # =============================================================================
 
 const _LC = LayeredCylinders
@@ -95,25 +96,59 @@ end
 # axis. Compared where the entries compare.
 function _check_ti_blocks(M::AbstractMatrix, rebuilt::AbstractMatrix, who::AbstractString)
     is_hard_numeric(eltype(M)) || return nothing
-    norm(M - rebuilt) ≤ _LC._TI_RTOL * norm(M) || throw(
-        ArgumentError(
-            "$who of the LayeredCylinder is not transversely isotropic about e₃: in aging " *
-                "viscoelasticity the cylinder, its layers and the reference must be isotropic " *
-                "or transversely isotropic about e₃"
-        )
-    )
+    norm(M - rebuilt) ≤ _LC._TI_RTOL * norm(M) || _not_ti_about_axis(who)
     return nothing
 end
 
-function _check_canonical_axis(cyl::LayeredCylinder)
-    TensND.isparallel(cyl.axis, (0, 0, 1)) || throw(
-        ArgumentError(
-            "the ALV kernels of a LayeredCylinder are written in the canonical frame: its " *
-                "axis must be e₃; got $(cyl.axis)"
-        )
-    )
-    return nothing
+# ── The frame of the cylinder ────────────────────────────────────────────────
+#
+# The radial problems are solved in a frame of the cylinder, its axis n being
+# the third vector. An operator transversely isotropic about n is stored by
+# TensND in the basis adapted to its class, whose blocks do not depend on the
+# direction of the axis: read in the class about e₃, the same blocks are the
+# operator written in the frame of the cylinder; read back in the class about
+# n, they are the operator in the canonical frame. So a law or a reference is
+# written in the frame of the cylinder once, everything is computed there, and
+# the result alone is brought back. Neither move touches the order of the
+# Volterra products: a frame does not depend on time.
+
+const _E₃ = (0.0, 0.0, 1.0)
+_canonical_axis(cyl::LayeredCylinder) = TensND.isparallel(cyl.axis, _E₃)
+
+# The transversely isotropic class about n: general at order 4 (a concentration
+# has no major symmetry).
+_ti_class(::Val{4}, n) = TensTI{4}(1.0, 1.0, 0.0, 0.0, 1.0, 1.0, n)
+_ti_class(::Val{2}, n) = TensTI{2}(1.0, 1.0, n)
+
+# A property or a reference as a Volterra operator on the grid.
+_alv_operator(R::VolterraOperator, times) = R
+_alv_operator(P::Union{TensND.AbstractTens, AbstractMatrix, TensND.AbstractTens{2}}, times) = VolterraOperator(P, times)
+_alv_operator(P, times) = VolterraOperator(_as_visco_law(P), times)
+
+# The block matrix of `P` in the frame of `cyl`, `b` rows per instant; refused
+# when `P` is not transversely isotropic about the axis.
+function _cylinder_frame_blocks(o::Val, cyl::LayeredCylinder, P, times, who::AbstractString)
+    _canonical_axis(cyl) && return _alv_blocks(P, times, _block_rows(o))
+    R, failure = _converted(_alv_operator(P, times), _ti_class(o, cyl.axis), _CLASS_RTOL)
+    failure === nothing || _not_ti_about_axis(who)
+    return Matrix(VolterraOperator(_ti_class(o, _E₃), R.blocks, R.grid))
 end
+
+# The block matrix `M` of an operator computed in the frame of `cyl`, in the
+# canonical frame.
+function _canonical_frame_blocks(o::Val, cyl::LayeredCylinder, M::AbstractMatrix, times)
+    _canonical_axis(cyl) && return M
+    R = VolterraOperator(M, times; like = _ti_class(o, _E₃))
+    return Matrix(VolterraOperator(_ti_class(o, cyl.axis), R.blocks, R.grid))
+end
+
+_not_ti_about_axis(who::AbstractString) = throw(
+    ArgumentError(
+        "$who of the LayeredCylinder is not transversely isotropic about its axis: in " *
+            "aging viscoelasticity its layers and the reference must be isotropic or " *
+            "transversely isotropic about the axis of the cylinder"
+    )
+)
 
 _finite_blocks(c::NamedTuple, who::AbstractString) =
     any(M -> any(_nonfinite, M), values(c)) && throw(
@@ -178,12 +213,12 @@ function _cylinder_alv_solution(o::Val, cyl::LayeredCylinder, ref::_ALVReference
     return _cylinder_alv_from_blocks(o, cyl, R₀, Rs)
 end
 
-# The block matrices of the reference and of the layers, `b` rows per instant.
-function _cylinder_alv_blocks(o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real})
-    _check_canonical_axis(cyl)
-    b = _block_rows(o)
-    return _alv_blocks(ref, times, b), map(P -> _alv_blocks(P, times, b), cyl.moduli)
-end
+# The block matrices of the reference and of the layers in the frame of the
+# cylinder, `b` rows per instant.
+_cylinder_alv_blocks(o::Val, cyl::LayeredCylinder{T, N}, ref::_ALVReference, times::AbstractVector{<:Real}) where {T, N} = (
+    _cylinder_frame_blocks(o, cyl, ref, times, "the reference medium"),
+    ntuple(k -> _cylinder_frame_blocks(o, cyl, layer_modulus(cyl, k), times, "layer $k"), Val(N)),
+)
 
 _block_rows(::Val{4}) = 6
 _block_rows(::Val{2}) = 3
@@ -228,13 +263,16 @@ end
 _blocks_alv(c::NamedTuple{(:zz, :ze, :mz, :me, :T, :L)}) = ti_blocks_from_params(c)
 _blocks_alv(c::NamedTuple{(:t, :a)}) = ti_order2_blocks_from_params(c)
 
+# The block matrix of an operator of the radial problems, in the canonical frame.
+_canonical_blocks(o::Val, cyl::LayeredCylinder, c::NamedTuple, times) = _canonical_frame_blocks(o, cyl, _blocks_alv(c), times)
+
 function _gradient_gradient_concentration_alv(
         o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
         layer::Union{Nothing, Int} = nothing, external::Bool = layer === nothing,
         internal::Bool = false,
     )
     sol = _cylinder_alv_solution(o, cyl, ref, times)
-    return _blocks_alv(_strain_entries_alv(o, sol, cyl, layer, external, internal))
+    return _canonical_blocks(o, cyl, _strain_entries_alv(o, sol, cyl, layer, external, internal), times)
 end
 
 _contribution_entries_alv(::Val{4}, sol, external) = _LC._contribution(sol, external)
@@ -243,7 +281,7 @@ _contribution_entries_alv(::Val{2}, sol, external) = _LC._conduction_contributio
 _property_contribution_alv(
     o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
     external::Bool = true,
-) = _blocks_alv(_contribution_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), external))
+) = _canonical_blocks(o, cyl, _contribution_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), external), times)
 
 _flux_entries_alv(::Val{4}, sol, cyl, ::Nothing, external) = _LC._whole_stress(sol, external)
 _flux_entries_alv(::Val{2}, sol, cyl, ::Nothing, external) = _LC._whole_flux(sol, external)
@@ -268,7 +306,7 @@ function flux_gradient_concentration_alv(
         layer::Union{Nothing, Int} = nothing, external::Bool = true,
     )
     o = _alv_order(ref, times)
-    return _blocks_alv(_flux_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), cyl, layer, external))
+    return _canonical_blocks(o, cyl, _flux_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), cyl, layer, external), times)
 end
 
 # The concentration A and the average flux B of the cylinder from one solution.
@@ -277,8 +315,8 @@ function _concentration_and_flux_alv(
         external::Bool = true,
     )
     sol = _cylinder_alv_solution(o, cyl, ref, times)
-    return _blocks_alv(_strain_entries_alv(o, sol, cyl, nothing, external, false)),
-        _blocks_alv(_flux_entries_alv(o, sol, cyl, nothing, external))
+    return _canonical_blocks(o, cyl, _strain_entries_alv(o, sol, cyl, nothing, external, false), times),
+        _canonical_blocks(o, cyl, _flux_entries_alv(o, sol, cyl, nothing, external), times)
 end
 
 # ── Pointwise operators ──────────────────────────────────────────────────────
@@ -306,8 +344,10 @@ function LayeredCylinderALVFields(
     o = _alv_order(ref, times)
     R₀, Rs = _cylinder_alv_blocks(o, cyl, ref, times)
     sol = _cylinder_alv_from_blocks(o, cyl, R₀, Rs)
-    # the laws, discretized once, of the layers then of the reference
-    return LayeredCylinderALVFields(o, cyl, sol, _matrix_amplitudes_alv(o, sol), (Rs..., R₀))
+    # the laws, discretized once, of the layers then of the reference, in the
+    # canonical frame where the pointwise operators are written
+    relaxations = map(M -> _canonical_frame_blocks(o, cyl, M, times), (Rs..., R₀))
+    return LayeredCylinderALVFields(o, cyl, sol, _matrix_amplitudes_alv(o, sol), relaxations)
 end
 
 _matrix_amplitudes_alv(::Val{4}, sol) = _LC._matrix_amplitudes(sol)

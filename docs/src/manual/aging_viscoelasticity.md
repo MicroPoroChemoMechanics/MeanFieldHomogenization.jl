@@ -676,10 +676,11 @@ homogenize_alv(needles, DifferentialScheme(), :K; times)
 
 A [`LayeredCylinder`](@ref) has no Hill kernel: its concentration and its flux
 come from its own recurrences, which accept a reference transversely
-isotropic about ``\underline{e}_3``. A cell made only of coaxial layered
-cylinders, its matrix given the shape of a one-layer cylinder, is therefore
-solved by `SelfConsistent`, `AsymmetricSelfConsistent` and
-`DifferentialScheme` with a transversely isotropic running estimate,
+isotropic about the axis of the cylinder. A cell made only of layered
+cylinders of one axis, its matrix given the shape of a one-layer cylinder, is
+therefore solved by `SelfConsistent`, `AsymmetricSelfConsistent` and
+`DifferentialScheme` with a running estimate transversely isotropic about that
+axis,
 ``\widetilde{\mathbb C} = \big(\sum_i f_i\widetilde{\mathbb B}_i\big)\circ\big(\sum_i f_i\widetilde{\mathbb A}_i\big)^{-1}``
 for the self-consistent scheme, the inverse on the right:
 
@@ -693,6 +694,34 @@ homogenize_alv(aligned, SelfConsistent(), :C; times)
 
 The Newton solver is written on isotropic parameters and is refused there;
 the Picard iteration is used.
+
+The axis may point in any direction ``\underline n``. Three conditions then
+hold: every cylinder of the cell has the axis ``\underline n``; each layer law,
+the matrix law included, is isotropic or transversely isotropic about
+``\underline n``; the matrix is a one-layer cylinder whose declared property is
+the law of its layer. The cell above, turned to ``\underline n = (1, -2, 2)/3``,
+with a fiber now transversely isotropic about ``\underline n``
+(`ti_from_constants` takes the axis as its last argument):
+
+```@example vo
+n = (1.0, -2.0, 2.0) ./ 3
+C_f = ti_from_constants(120.0, 60.0, 30.0, 200.0, 25.0, n)
+fiber_n = ViscoLaw((t, tp) -> t < tp ? 0.0 * C_f : C_f, :relaxation)
+turned = RVE()
+add_phase!(turned, :M, LayeredCylinder((1.0,), (law_M,); axis = n), Dict(:C => law_M); fraction = :rest)
+add_phase!(turned, :F, LayeredCylinder((0.8, 1.0), (fiber_n, law_M); axis = n), Dict(:C => fiber_n); fraction = 0.4)
+C_turned = homogenize_alv(turned, SelfConsistent(), :C; times)
+TensND.axis(operator_value(C_turned, length(times), 1))
+```
+
+The estimate is stored in the transversely isotropic class about
+``\underline n`` ([Symmetry classes](@ref man-volterra-operators)), and
+`Matrix(C_turned)` gives its matrix in the canonical frame. It is computed in
+the frame of the cylinders, ``(\underline t_1, \underline t_2, \underline n)``: the
+laws are written there once, every iteration runs there, and the converged
+estimate alone is brought back to the canonical frame. A frame does not depend
+on time, so neither change alters the order of the Volterra products
+([Layered cylinder](@ref th-layered-cylinder), section 9).
 
 ## 8. The differential scheme in ALV
 

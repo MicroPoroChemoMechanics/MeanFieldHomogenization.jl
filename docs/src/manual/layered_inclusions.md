@@ -196,6 +196,31 @@ Its tensors are transversely isotropic about the axis; the concentration
 tensor has no major symmetry, the axial and in-plane loadings being coupled.
 The derivation is on [Layered cylinder](@ref th-layered-cylinder).
 
+The axis may point in any direction ``\underline n``, given by `axis`. A layer
+that is transversely isotropic must then be so about ``\underline n``:
+`ti_from_constants` takes the axis as its last argument, as `ti` above does
+with ``\underline e_3``. The same fiber, turned to
+``\underline n = (1, -2, 2)/3``:
+
+```@example layered
+n = (1.0, -2.0, 2.0) ./ 3
+ti_n(k, l, m, n₃₃, p) = ti_from_constants(k + m, k - m, l, n₃₃, p, n)
+fiber_n = LayeredCylinder(
+    (0.8, 1.0),
+    (ti_n(30.0, 12.0, 9.0, 150.0, 14.0), iso_stiffness(4.0, 1.5)),
+    interfaces = (SpringInterface(20.0, 12.5), PerfectInterface()),
+    axis = n,
+)
+N_n = property_contribution(fiber_n, iso_stiffness(3.0, 1.2))
+ti_constants(best_fit_ti(N_n, n))
+```
+
+The constants about ``\underline n`` are those found about ``\underline e_3``:
+turning the fiber turns its contribution and changes nothing else. A
+transversely isotropic tensor is stored by its coefficients and its axis, so
+no rotation is computed in elasticity. The aging case is in
+[Coaxial layered cylinders: a transversely isotropic reference](@ref man-alv-cylinders-ti).
+
 ### Confocal spheroids
 
 [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid)
@@ -242,8 +267,8 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
 - **A cylinder with incompressible or void layers**, or a reference that is
   not transversely isotropic about its axis: the radial problems divide by the
   plane-strain bulk and the shear moduli, and their decoupling rests on that
-  symmetry. In aging viscoelasticity the axis must also be ``\underline e_3``,
-  the Volterra block matrices being written in the canonical frame.
+  symmetry. The axis itself may point in any direction, in aging
+  viscoelasticity as well.
 
 ## Where to go next
 

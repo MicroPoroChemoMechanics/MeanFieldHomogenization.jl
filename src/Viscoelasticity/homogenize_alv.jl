@@ -481,17 +481,29 @@ _raw_properties(cell, prop) = [
 ]
 
 # The classes a result is tried in, cheapest first: isotropic, those of the phase
-# properties (a law's value, an operator's class), transversely isotropic about e₃,
-# orthotropic in the canonical frame.
+# properties (a law's value, an operator's class), transversely isotropic about
+# the axis of each layered cylinder of the cell and about e₃, orthotropic in the
+# canonical frame.
 function _candidate_classes(rve, prop, times)
     ℬ = TensND.CanonicalBasis{3, Float64}()
     phase = Any[c for c in (_property_class(v, times) for v in _raw_properties(rve, prop)) if c isa _StructuredClass]
+    axes = Any[
+        c for g in _cell_geometries(rve) for c in _axis_classes(g)
+    ]
     return Any[
-        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase...,
+        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase..., axes...,
         TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
         TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
     ]
 end
+# The geometries of the phases of a cell (none for a cell without phases).
+_cell_geometries(rve::RVE) = (rve.phases[name].geometry for name in rve.phase_names)
+_cell_geometries(cell) = ()
+# The transversely isotropic classes about the axis of a layered cylinder.
+_axis_classes(g::LayeredCylinder) = (
+    TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, g.axis), TensTI{2}(1.0, 1.0, g.axis),
+)
+_axis_classes(g) = ()
 _property_class(law::AbstractViscoLaw, times) = _class_of(visco_eval(law, first(times), first(times)))
 _property_class(R::VolterraOperator, times) = R.class
 _property_class(C::TensND.AbstractTens, times) = _class_of(C)
@@ -501,8 +513,8 @@ function _homogenize_alv_rve(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
-    # A cell of aligned layered cylinders under a scheme on its running estimate:
-    # no Hill kernel, an estimate transversely isotropic about e₃.
+    # A cell of coaxial layered cylinders under a scheme on its running estimate:
+    # no Hill kernel, an estimate transversely isotropic about their axis.
     _check_layered_host_alv(rve, scheme, prop, times)
     _alv_all_cylinders(scheme, rve) && return _homogenize_alv_cylinders(rve, scheme, prop; times, kw...)
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so

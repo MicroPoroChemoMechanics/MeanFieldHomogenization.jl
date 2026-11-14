@@ -231,12 +231,12 @@ end
         M = lcs_aging(LCS_C.M, 0.8)
         L = lcs_aging(LCS_C.core, 0.3)
         tilted(law) = LayeredCylinder((1.0,), (law,); axis = (1.0, 0.0, 0.0))
-        # The axis of an inclusion, and that of the host.
+        # Cylinders of two axes: no transversely isotropic estimate holds them.
         for scheme in (SelfConsistent(), AsymmetricSelfConsistent(), DifferentialScheme())
-            @test_throws "its axis must be e₃" homogenize_alv(lcs_fibers(:C, M, tilted(L)), scheme, :C; times = LCS_TIMES)
+            @test_throws "must share one axis" homogenize_alv(lcs_fibers(:C, M, tilted(L)), scheme, :C; times = LCS_TIMES)
+            @test_throws "must share one axis" homogenize_alv(lcs_cell(:C, tilted(M), M, lcs_single(L)), scheme, :C; times = LCS_TIMES)
         end
         for scheme in (AsymmetricSelfConsistent(), DifferentialScheme())
-            @test_throws "its axis must be e₃" homogenize_alv(lcs_cell(:C, tilted(M), M, lcs_single(L)), scheme, :C; times = LCS_TIMES)
             # A host of several layers, or with an imperfect interface, has no single kernel.
             @test_throws "one-layer LayeredCylinder with a perfect interface" homogenize_alv(
                 lcs_cell(:C, lcs_coated(M, L), M, lcs_single(L)), scheme, :C; times = LCS_TIMES
@@ -261,5 +261,126 @@ end
         @test_throws "has no target to integrate up to" homogenize_alv(named, DifferentialScheme(:M), :C; times = LCS_TIMES)
         # One cylinder with an orientation average: no longer the cell of aligned cylinders.
         @test_throws ArgumentError homogenize_alv(lcs_fibers(:C, M, lcs_single(L); symmetrize = :iso), SelfConsistent(), :C; times = LCS_TIMES)
+    end
+end
+
+# ── Any axis ─────────────────────────────────────────────────────────────────
+#
+# The radial problems are solved in a frame of the axis. Two references that do
+# not go through that change of basis: the elastic `homogenize`, which takes
+# transversely isotropic tensors of any axis as they are, and covariance — the
+# operator of a cylinder of axis n, read in a frame (t₁, t₂, n) built here from
+# vectors, is the operator of the same cylinder of axis e₃ read in the canonical
+# frame. The second holds outside the elastic limit, on aging laws.
+
+const LCS_N = Tuple(normalize([1.0, -2.0, 2.0]))
+# A frame (t₁, t₂, n) as the columns of a matrix.
+function lcs_frame(n)
+    t₁ = normalize(cross(collect(n), abs(n[1]) < 0.9 ? [1.0, 0.0, 0.0] : [0.0, 1.0, 0.0]))
+    return hcat(t₁, cross(collect(n), t₁), collect(n))
+end
+# The Kelvin-Mandel basis tensors of the frame F, as vectors in canonical
+# components ((11, 22, 33, 23, 13, 12), the shear terms weighted by √2).
+function lcs_mandel_frame(F)
+    km = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
+    vec(S) = [S[1, 1], S[2, 2], S[3, 3], √2 * S[2, 3], √2 * S[1, 3], √2 * S[1, 2]]
+    cols = map(km) do (i, j)
+        D = F[:, i] * F[:, j]'
+        vec(i == j ? D : (D + D') / √2)
+    end
+    return reduce(hcat, cols)
+end
+# Every b × b time block of X read in the frame whose basis vectors are the
+# columns of P: Pᵀ Xᵢⱼ P.
+function lcs_in_frame(X::AbstractMatrix, P::AbstractMatrix)
+    b = size(P, 1)
+    Y = similar(X)
+    for i in 0:(size(X, 1) ÷ b - 1), j in 0:(size(X, 2) ÷ b - 1)
+        rows, cols = (b * i + 1):(b * i + b), (b * j + 1):(b * j + b)
+        Y[rows, cols] = P' * X[rows, cols] * P
+    end
+    return Y
+end
+lcs_P(prop::Symbol, F) = prop === :C ? lcs_mandel_frame(F) : F
+
+# Transversely isotropic layers about `n`: a stiffness of Hill moduli, or a
+# conductivity.
+lcs_ti(prop::Symbol, s, n) = prop === :C ?
+    TensND.ti_from_constants(s * 9.0 + s * 2.5, s * 9.0 - s * 2.5, s * 3.0, s * 25.0, s * 3.5, n) :
+    TensND.TensTI{2}(s * 1.0, s * 2.5, n)
+
+@testset "LayeredCylinder of any axis — aging" begin
+    F = lcs_frame(LCS_N)
+    e3 = (0.0, 0.0, 1.0)
+    @testset "elastic limit against the elastic schemes, $prop" for prop in (:C, :K)
+        cell(n) = begin
+            core, coat, M = lcs_ti(prop, 3.0, n), lcs_ti(prop, 0.6, n), lcs_ti(prop, 1.0, n)
+            r = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 1.0))
+            add_phase!(r, :M, LayeredCylinder((1.0,), (M,); axis = n), Dict(prop => M); fraction = :rest)
+            add_phase!(r, :F, LayeredCylinder((0.7, 1.0), (core, coat); axis = n), Dict(prop => M); fraction = 0.3)
+            r
+        end
+        r = cell(LCS_N)
+        for (alv, el) in (
+                (SelfConsistent(; reltol = 1.0e-12), SelfConsistent(; reltol = 1.0e-12)),
+                (AsymmetricSelfConsistent(; reltol = 1.0e-12), AsymmetricSelfConsistent(:M; reltol = 1.0e-12)),
+                (DifferentialScheme(; abstol = 1.0e-11, reltol = 1.0e-11), DifferentialScheme(; abstol = 1.0e-11, reltol = 1.0e-11)),
+            )
+            R = homogenize_alv(r, alv, prop; times = LCS_TIMES)
+            @test R.class isa TensTI && TensND.isparallel(TensND.axis(R.class), LCS_N)
+            @test lcs_rel(R, lcs_elastic(homogenize(r, el, prop), LCS_TIMES)) < 1.0e-9
+        end
+    end
+
+    @testset "covariance on aging laws, $prop" for prop in (:C, :K)
+        P = lcs_P(prop, F)
+        laws(n) = (lcs_aging(lcs_ti(prop, 3.0, n), 0.3), lcs_aging(lcs_ti(prop, 0.6, n), 1.5), lcs_aging(lcs_ti(prop, 1.0, n), 0.8))
+        interfaces = prop === :C ? (SpringInterface(20.0, 10.0), MembraneInterface(0.4, 0.2)) :
+            (KapitzaInterface(0.05), SurfaceConductiveInterface(0.3))
+        coated(n) = (L = laws(n); LayeredCylinder((0.7, 1.0), (L[1], L[2]); interfaces, axis = n))
+        ref(n) = laws(n)[3]
+        # the operators of one cylinder: whole, per layer, contribution
+        for f in (
+                (c, R) -> gradient_gradient_concentration_alv(c, R, LCS_TIMES),
+                (c, R) -> gradient_gradient_concentration_alv(c, R, LCS_TIMES; layer = 2, internal = true),
+                (c, R) -> flux_gradient_concentration_alv(c, R, LCS_TIMES),
+                (c, R) -> flux_gradient_concentration_alv(c, R, LCS_TIMES; layer = 1),
+                (c, R) -> property_contribution_alv(c, R, LCS_TIMES),
+            )
+            X₃ = Matrix(f(coated(e3), ref(e3)))
+            @test lcs_rel(lcs_in_frame(Matrix(f(coated(LCS_N), ref(LCS_N))), P), X₃) < 1.0e-12
+        end
+        # the derivative with respect to a layer modulus follows the same frame
+        dcontribution(n) = ForwardDiff.derivative(
+            s -> Matrix(
+                property_contribution_alv(
+                    LayeredCylinder((0.7, 1.0), (lcs_aging(lcs_ti(prop, s, n), 0.3), laws(n)[2]); interfaces, axis = n),
+                    ref(n), LCS_TIMES
+                )
+            ), 3.0
+        )
+        @test lcs_rel(lcs_in_frame(dcontribution(LCS_N), P), dcontribution(e3)) < 1.0e-12
+        # the pointwise operators, at a point of the coating and of the matrix
+        for x in ([0.5, 0.6, 0.3], [1.1, -0.4, 2.0])
+            X₃ = local_flux_gradient_concentration_alv(coated(e3), ref(e3), LCS_TIMES, x)
+            Xₙ = local_flux_gradient_concentration_alv(coated(LCS_N), ref(LCS_N), LCS_TIMES, F * x)
+            @test lcs_rel(lcs_in_frame(Xₙ, P), X₃) < 1.0e-12
+        end
+        # the three schemes on the running estimate
+        cell(n) = begin
+            L = laws(n)
+            r = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 1.0))
+            add_phase!(r, :M, LayeredCylinder((1.0,), (L[3],); axis = n), Dict(prop => L[3]); fraction = :rest)
+            add_phase!(r, :F, coated(n), Dict(prop => L[3]); fraction = 0.3)
+            r
+        end
+        for scheme in (
+                SelfConsistent(; reltol = 1.0e-12), AsymmetricSelfConsistent(; reltol = 1.0e-12),
+                DifferentialScheme(; abstol = 1.0e-11, reltol = 1.0e-11),
+                DifferentialScheme(; formulation = :compliance, abstol = 1.0e-11, reltol = 1.0e-11),
+            )
+            X₃ = Matrix(homogenize_alv(cell(e3), scheme, prop; times = LCS_TIMES))
+            @test lcs_rel(lcs_in_frame(Matrix(homogenize_alv(cell(LCS_N), scheme, prop; times = LCS_TIMES)), P), X₃) < 1.0e-9
+        end
     end
 end

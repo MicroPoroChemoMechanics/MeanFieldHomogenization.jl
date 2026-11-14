@@ -132,3 +132,41 @@ end
     alternating(x) = x isa TensISO ? ti : iso
     @test_throws "alternates" MeanFieldHomogenization.Schemes._sc_newton_seed(iso, alternating)
 end
+
+@testset "Aligned coated fibers in a transversely isotropic matrix, any axis" begin
+    # Every phase transversely isotropic about the fiber axis n, the matrix a
+    # one-layer cylinder: the self-consistent, asymmetric and differential
+    # estimates are transversely isotropic about n. Turning the cell from e₃ to
+    # n turns the estimate and leaves its Hill moduli unchanged.
+    n = Tuple(normalize([1.0, -2.0, 2.0]))
+    coat = (k = 8.0, l = 3.0, m = 2.5, n = 20.0, p = 3.0)
+    function cell(axis)
+        CM = lc_tensor(LC_M; axis)
+        fiber = LayeredCylinder(
+            (0.7, 1.0), (lc_tensor(LC_F; axis), lc_tensor(coat; axis));
+            interfaces = (SpringInterface(20.0, 10.0), PerfectInterface()), axis
+        )
+        host = LayeredCylinder((1.0,), (CM,); axis)
+        r = RVE(; distribution_shape = host)
+        add_phase!(r, :M, host, Dict(:C => CM); fraction = :rest)
+        add_phase!(r, :I, fiber, Dict(:C => CM); fraction = 0.3)
+        return r, host, fiber
+    end
+    hill(C, axis) = LCyl._hill_moduli(TensND.best_fit_ti(C, axis), axis)
+    r₃, _, _ = cell((0.0, 0.0, 1.0))
+    rₙ, host, fiber = cell(n)
+    dscheme(formulation) = DifferentialScheme(; formulation, abstol = 1.0e-11, reltol = 1.0e-11)
+    for scheme in (SelfConsistent(; reltol = 1.0e-12), AsymmetricSelfConsistent(:M; reltol = 1.0e-12), dscheme(:stiffness), dscheme(:compliance))
+        Cₙ = homogenize(rₙ, scheme, :C)
+        # transversely isotropic about n
+        @test norm(lc_cc(Cₙ) - lc_cc(TensND.best_fit_ti(Cₙ, n))) < 1.0e-12 * norm(lc_cc(Cₙ))
+        h₃, hₙ = hill(homogenize(r₃, scheme, :C), (0.0, 0.0, 1.0)), hill(Cₙ, n)
+        @test all(isapprox(getfield(hₙ, s), getfield(h₃, s); rtol = 1.0e-12) for s in (:k, :l, :m, :n, :p))
+    end
+    # the self-consistent equation at its root, against the estimate
+    C = TensND.best_fit_ti(homogenize(rₙ, SelfConsistent(; reltol = 1.0e-12), :C), n)
+    residual = 0.7 * MeanFieldHomogenization.property_contribution(host, C) + 0.3 * MeanFieldHomogenization.property_contribution(fiber, C)
+    @test norm(lc_data(residual)) < 1.0e-9 * norm(lc_data(C))
+    # the two formulations of the differential scheme
+    @test lc_rel(homogenize(rₙ, dscheme(:stiffness), :C), homogenize(rₙ, dscheme(:compliance), :C)) < 1.0e-9
+end

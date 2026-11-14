@@ -299,11 +299,23 @@ the aging cylinder is the elastic one evaluated on Volterra matrices:
 elastic tensors or `ViscoLaw`s, with the interfaces of section 3, which do
 not age.
 
+The axis ``\underline n`` of the cylinder is any direction. A layer or a reference
+transversely isotropic about ``\underline n`` is written in the frame of the
+cylinder, ``(\underline t_1, \underline t_2, \underline n)``, where it is
+transversely isotropic about the third vector: its Volterra operator keeps the
+same blocks in the basis adapted to its class (two ``n\times n`` scalars and a
+``2\times 2`` array of them), only the axis of the class changes. The radial
+problems, and the schemes of a cell of such cylinders, are solved in that
+frame; the result, read back in the class about ``\underline n``, is the operator
+in the canonical frame. A frame does not depend on time, so neither move alters
+the order of the Volterra products.
+
 The reference of the Hill kernels of the aging schemes is isotropic. A
 layered cylinder needs no Hill kernel, so a cell made only of coaxial layered
-cylinders is solved by the self-consistent and differential schemes with a
-transversely isotropic running estimate; among other shapes, a cylinder phase
-takes an isotropic orientation average.
+cylinders is solved by the self-consistent, asymmetric self-consistent and
+differential schemes with a running estimate transversely isotropic about
+their common axis; among other shapes, a cylinder phase takes an isotropic
+orientation average.
 
 ## 10. Pointwise fields
 

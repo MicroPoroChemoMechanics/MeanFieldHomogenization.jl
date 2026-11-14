@@ -10,10 +10,10 @@
 #     cylinder, transversely isotropic, enters like a layered sphere but under an
 #     isotropic orientation average only (the methods of the first section);
 #
-#   * every phase a cylinder of axis e₃ without orientation average. No phase
-#     needs a Hill kernel, the radial problems accept a reference transversely
-#     isotropic about e₃, and the estimate runs in that class, on full matrices
-#     (the rest of the file).
+#   * every phase a cylinder, all of one axis, without orientation average. No
+#     phase needs a Hill kernel, the radial problems accept a reference
+#     transversely isotropic about that axis, and the estimate runs in that
+#     class, on full matrices (the rest of the file).
 #
 #  Volterra operators do not commute. With E₀ the history of the remote strain
 #  of the auxiliary problem of each phase, ⟨ε⟩ᵢ = Ãᵢ ∘ E₀ and ⟨σ⟩ᵢ = B̃ᵢ ∘ E₀,
@@ -45,7 +45,7 @@ _alv_refuse_layered_host(who::AbstractString, name::Symbol, geom::_LayeredALV) =
     ArgumentError(
         "$who: the host phase :$(name) is a $(nameof(typeof(geom))), which has no ALV Hill " *
             "kernel. A layered host is admitted in a cell whose every phase is a " *
-            "LayeredCylinder of axis e₃ without orientation average, through `homogenize_alv`."
+            "LayeredCylinder, all of one axis, without orientation average, through `homogenize_alv`."
     )
 )
 
@@ -59,7 +59,7 @@ end
 _diff_alv_solid_contribution(r, ::LayeredCylinder, C_curr, C_op, J_long, J_shear, times) =
     property_contribution_alv(r.geom, C_curr, times)
 
-# ── Every phase a cylinder of axis e₃ ────────────────────────────────────────
+# ── Every phase a cylinder, all of one axis ──────────────────────────────────
 
 # The schemes whose reference is the running estimate.
 const _ALVRunningScheme = Union{SelfConsistent, AsymmetricSelfConsistent, DifferentialScheme}
@@ -71,35 +71,37 @@ _is_aligned_cylinder(geom, ::AbstractSymmetrize) = false
     _alv_all_cylinders(scheme, rve) -> Bool
 
 Whether `homogenize_alv` runs `scheme` with an estimate transversely isotropic
-about ``\\underline{e}_3``: a scheme whose reference is the running estimate,
-and a cell whose every phase, the host included, is a [`LayeredCylinder`](@ref)
-without orientation average. The axis is checked where the radial problems are
-solved.
+about the axis of the cylinders: a scheme whose reference is the running
+estimate, and a cell whose every phase, the host included, is a
+[`LayeredCylinder`](@ref) without orientation average. That they share one axis
+is checked by `_homogenize_alv_cylinders`.
 """
 _alv_all_cylinders(::HomogenizationScheme, ::RVE) = false
 _alv_all_cylinders(::_ALVRunningScheme, rve::RVE) = !isempty(rve.phase_names) && all(
     name -> _is_aligned_cylinder(rve.phases[name].geometry, phase_symmetrize(rve, name)), rve.phase_names
 )
 
-# The cylinder with the block matrices of its layers on the grid for moduli:
-# discretized once, not at every evaluation against the running estimate.
-_discretized_cylinder(cyl::LayeredCylinder{T, N}, times, b::Int) where {T, N} = LayeredCylinder(
-    cyl.radii, ntuple(k -> _alv_blocks(layer_modulus(cyl, k), times, b), Val(N)), cyl.interfaces, cyl.axis
+# The cylinder written in its own frame, the block matrices of its layers on the
+# grid for moduli: discretized once, not at every evaluation against the running
+# estimate, which lives in that frame too. Its axis is then e₃.
+_discretized_cylinder(o::Val, cyl::LayeredCylinder{T, N}, times) where {T, N} = LayeredCylinder(
+    cyl.radii, ntuple(k -> _cylinder_frame_blocks(o, cyl, layer_modulus(cyl, k), times, "layer $k"), Val(N)),
+    cyl.interfaces, _E₃
 )
 
 # The phases `names` as the steps read them: the discretized cylinder and the
 # volume fraction of each, in a tuple of concrete records.
-_cylinder_phases(rve::RVE, names, times, b::Int) = Tuple(
-    (geom = _discretized_cylinder(rve.phases[name].geometry, times, b), f = volume_fraction(rve, name))
+_cylinder_phases(o::Val, rve::RVE, names, times) = Tuple(
+    (geom = _discretized_cylinder(o, rve.phases[name].geometry, times), f = volume_fraction(rve, name))
         for name in names
 )
 
 # The kernel of the host of the schemes that single it out (asymmetric
-# self-consistent, differential): the modulus of its only layer.
-function _cylinder_host_kernel(who::AbstractString, rve::RVE, m::Symbol, times, b::Int)
+# self-consistent, differential): the modulus of its only layer, in the frame
+# of the cylinders.
+function _cylinder_host_kernel(who::AbstractString, o::Val, rve::RVE, m::Symbol, times)
     host = rve.phases[m].geometry
-    _check_canonical_axis(host)
-    return _alv_blocks(_host_modulus(who, m, host), times, b)
+    return _cylinder_frame_blocks(o, host, _host_modulus(who, m, host), times, "the host layer")
 end
 _host_modulus(who, m, host::LayeredCylinder{<:Number, 1, <:Any, <:Tuple{PerfectInterface}}) = layer_modulus(host, 1)
 _host_modulus(who, m, host::LayeredCylinder) = throw(
@@ -151,11 +153,11 @@ _cylinders_fixed_point(
     _homogenize_alv_cylinders(rve, scheme, prop; times, kw...) -> Matrix
 
 Aging viscoelastic estimate of a cell whose every phase is a
-[`LayeredCylinder`](@ref) of axis ``\\underline{e}_3``, by a scheme whose
-reference is the running estimate, in elasticity or in conduction (the order of
-the first layer of the first phase). The estimate is transversely isotropic
-about ``\\underline{e}_3``. The moduli are those of the layers; the property
-declared on a phase is a placeholder.
+[`LayeredCylinder`](@ref), all of one axis ``\\underline{n}`` (any direction), by
+a scheme whose reference is the running estimate, in elasticity or in conduction
+(the order of the first layer of the first phase). The estimate is transversely
+isotropic about ``\\underline{n}``. The moduli are those of the layers; the
+property declared on a phase is a placeholder.
 
 - [`SelfConsistent`](@ref): the fixed point of
   ``\\widetilde{\\mathbb{C}} = \\bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{B}}_i\\bigr)\\stackrel{\\circ}{:}\\bigl(\\sum_i f_i\\,\\widetilde{\\mathbb{A}}_i\\bigr)^{-1^{\\circ}}``
@@ -173,6 +175,18 @@ schemes is a one-layer cylinder with a perfect interface, whose layer carries
 the kernel of the matrix.
 """
 function _homogenize_alv_cylinders(rve::RVE, scheme::_ALVRunningScheme, prop::Symbol; times::AbstractVector{<:Real}, kw...)
+    # One axis for all: the estimate is transversely isotropic about it.
+    n = rve.phases[first(rve.phase_names)].geometry.axis
+    for name in rve.phase_names
+        a = rve.phases[name].geometry.axis
+        TensND.isparallel(a, n) || throw(
+            ArgumentError(
+                "homogenize_alv: the cylinders of a cell solved with a transversely isotropic " *
+                    "estimate must share one axis; the phase :$(name) has the axis $(a), the " *
+                    "phase :$(first(rve.phase_names)) $(n)"
+            )
+        )
+    end
     # The order is that of the property homogenized; every layer must share it.
     order = _alv_order(phase_property(rve, first(rve.phase_names), prop), times)
     for name in rve.phase_names, (k, P) in enumerate(rve.phases[name].geometry.moduli)
@@ -184,7 +198,9 @@ function _homogenize_alv_cylinders(rve::RVE, scheme::_ALVRunningScheme, prop::Sy
             )
         )
     end
-    return _alv_cylinders(scheme, order, rve, times; kw...)
+    # Computed in the frame of the cylinders, brought back at the end.
+    X = _alv_cylinders(scheme, order, rve, times; kw...)
+    return _canonical_frame_blocks(order, rve.phases[first(rve.phase_names)].geometry, X, times)
 end
 
 # The ALV counterpart of `Schemes._check_layered_host`: a host given as a
@@ -209,7 +225,7 @@ end
 
 function _alv_cylinders(sc::SelfConsistent, order::Val, rve::RVE, times; kw...)
     _alv_refuse_seed("SelfConsistent", sc.init)
-    phases = _cylinder_phases(rve, rve.phase_names, times, _alv_block_size(order))
+    phases = _cylinder_phases(order, rve, rve.phase_names, times)
     # The Voigt average of the layers of every phase.
     X_0 = sum(
         p.f * layer_volume_fraction(p.geom, k) * layer_modulus(p.geom, k)
@@ -223,10 +239,9 @@ end
 
 function _alv_cylinders(asc::AsymmetricSelfConsistent, order::Val, rve::RVE, times; kw...)
     _alv_refuse_seed("AsymmetricSelfConsistent", asc.init)
-    b = _alv_block_size(order)
     m = matrix_name(asc, rve)
-    X_M = _cylinder_host_kernel(_ASC_WHO, rve, m, times, b)
-    phases = _cylinder_phases(rve, inclusion_phase_names(rve, m), times, b)
+    X_M = _cylinder_host_kernel(_ASC_WHO, order, rve, m, times)
+    phases = _cylinder_phases(order, rve, inclusion_phase_names(rve, m), times)
     return _cylinders_picard(
         asc.algorithm, X -> _asc_cylinders_step(order, X_M, phases, X, times), X_M, "AsymmetricSelfConsistent";
         asc.options..., kw...
@@ -239,12 +254,12 @@ function _alv_cylinders(sch::DifferentialScheme, order::Val, rve::RVE, times; kw
     _diff_alv_check_formulation(who, opts.formulation)
     b = _alv_block_size(order)
     m = matrix_name(sch, rve)
-    X_M = _cylinder_host_kernel(who, rve, m, times, b)
+    X_M = _cylinder_host_kernel(who, order, rve, m, times)
     names = inclusion_phase_names(rve, m)
     foreach(name -> _diff_alv_refuse_remainder(who, name, rve.amounts[name]), names)
     paths = _resolve_paths_alv(something(opts.trajectory, Schemes.Proportional()), rve, opts.nsteps, m)
     solid_data = Tuple(
-        (geom = _discretized_cylinder(rve.phases[name].geometry, times, b), target = _amount_value(rve, name), path = paths[name])
+        (geom = _discretized_cylinder(order, rve.phases[name].geometry, times), target = _amount_value(rve, name), path = paths[name])
             for name in names
     )
     # The state carries the element type of every input: the kernel of the host,

@@ -33,7 +33,8 @@ listed under Fixed.
   cylinder is the elastic one evaluated on Volterra matrices. Every ALV scheme
   takes it; a cell made of coaxial layered cylinders only is solved by the
   self-consistent, asymmetric self-consistent and differential schemes with a
-  transversely isotropic running estimate (the cylinder axis must then be e₃).
+  transversely isotropic running estimate, about the common axis of the
+  cylinders, whatever its direction.
 - **The layered sphere in aging viscoelasticity, inside**: per-layer gradient
   and flux operators (`gradient_gradient_concentration_alv(…; layer)`,
   `flux_gradient_concentration_alv`), pointwise operators
