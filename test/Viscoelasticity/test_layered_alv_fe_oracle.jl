@@ -13,7 +13,7 @@
 #  grid is not uniform, so that the Volterra matrices do not commute (checked
 #  below): a product taken in the wrong order is an error of order 10⁻¹.
 #
-#  Not registered in runtests.jl.
+#  Part of the `visco-neural` part of the suite.
 # =============================================================================
 using Test, MeanFieldHomogenization, TensND, LinearAlgebra
 isdefined(@__MODULE__, :FEOracleLayered) || include(joinpath(@__DIR__, "fe_oracle_layered.jl"))
