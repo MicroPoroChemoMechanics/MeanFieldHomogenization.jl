@@ -347,6 +347,7 @@ end
         include("LayeredCylinders/test_conductivity.jl")
         include("LayeredCylinders/test_local_fields.jl")
         include("LayeredCylinders/test_scheme_integration.jl")
+        include("LayeredCylinders/test_prolate_limit.jl")
         HAS_SYMBOLIC_BACKENDS && include("LayeredCylinders/test_generic.jl")
     end
 
