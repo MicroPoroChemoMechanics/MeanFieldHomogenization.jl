@@ -579,6 +579,36 @@ Every order-2 scheme takes them, as at order 4 (the table of
 [section 5.3](@ref man-visco-cracks)), the self-consistent and differential ones
 with `symmetrize = :iso`.
 
+### [6.2 Inside a layered inclusion](@id man-visco-layered-inside)
+
+A [`LayeredSphere`](@ref) and a [`LayeredCylinder`](@ref) answer at every order
+what they answer in elasticity, as Volterra operators. With `layer = k`,
+[`gradient_gradient_concentration_alv`](@ref) is the operator of the average
+gradient of layer ``k`` per unit remote history — its material by default, plus
+the jump of the interface on its outer (`external`) or inner (`internal`)
+boundary — and [`flux_gradient_concentration_alv`](@ref) the average flux,
+``\widetilde{\mathbb C}_k\circ\widetilde{\mathbb A}_k``, the relaxation of the
+layer acting on the left:
+
+```@example vo
+A_core = gradient_gradient_concentration_alv(grain, law_κ, times; layer = 1)
+B_core = flux_gradient_concentration_alv(grain, law_κ, times; layer = 1)
+size(A_core), size(B_core)
+```
+
+At a point, a cache of the radial solution ([`LayeredSphereALVFields`](@ref),
+[`LayeredCylinderALVFields`](@ref)) gives the operator of the local gradient and
+of the local flux, with the `side` keyword on an interface as in elasticity:
+
+```@example vo
+fields = LayeredSphereALVFields(grain, law_κ, times)
+A_point = local_gradient_gradient_concentration_alv(fields, (0.5, 0.2, 0.3))
+size(A_point)
+```
+
+A layer of zero conductivity is admissible at any rank: the layers it
+encloses are shielded and carry no field.
+
 ## [7. The isotropic reference of the self-consistent and differential schemes](@id man-alv-iso-reference)
 
 Every ALV Hill kernel — order 2 and order 4 alike — is built for an
@@ -605,7 +635,9 @@ That splits the schemes in two:
     that: **spherical inclusions** with an isotropic phase law, or an
     **isotropic orientation average**, `symmetrize = :iso`, which is also
     what randomly oriented inclusions or cracks mean physically. A
-    `LayeredSphere`, isotropic by construction, is always accepted.
+    `LayeredSphere`, isotropic by construction, is always accepted; a
+    `LayeredCylinder`, transversely isotropic, takes the orientation average
+    among other shapes.
 
     An RVE that satisfies neither raises an explicit `ArgumentError` naming
     the offending phase, rather than silently reading iso parameters off a
@@ -636,6 +668,28 @@ homogenize_alv(needles, DifferentialScheme(), :K; times)
     running medium of any symmetry class — the differential scheme even
     tracks it, growing its ODE state from the iso to the TI, ortho or fully
     anisotropic layout as the phases require.
+
+### [Coaxial layered cylinders: a transversely isotropic reference](@id man-alv-cylinders-ti)
+
+A [`LayeredCylinder`](@ref) has no Hill kernel: its concentration and its flux
+come from its own recurrences, which accept a reference transversely
+isotropic about ``\underline{e}_3``. A cell made only of coaxial layered
+cylinders, its matrix given the shape of a one-layer cylinder, is therefore
+solved by `SelfConsistent`, `AsymmetricSelfConsistent` and
+`DifferentialScheme` with a transversely isotropic running estimate,
+``\widetilde{\mathbb C} = \big(\sum_i f_i\widetilde{\mathbb B}_i\big)\circ\big(\sum_i f_i\widetilde{\mathbb A}_i\big)^{-1}``
+for the self-consistent scheme, the inverse on the right:
+
+```@example vo
+fiber_law = ViscoLaw((t, tp) -> t < tp ? zero(TensISO{3}(90.0, 40.0)) : TensISO{3}(90.0, 40.0), :relaxation)
+aligned = RVE()
+add_phase!(aligned, :M, LayeredCylinder((1.0,), (law_M,)), Dict(:C => law_M); fraction = :rest)
+add_phase!(aligned, :F, LayeredCylinder((0.8, 1.0), (fiber_law, law_M)), Dict(:C => fiber_law); fraction = 0.4)
+homogenize_alv(aligned, SelfConsistent(), :C; times)
+```
+
+The Newton solver is written on isotropic parameters and is refused there;
+the Picard iteration is used.
 
 ## 8. The differential scheme in ALV
 

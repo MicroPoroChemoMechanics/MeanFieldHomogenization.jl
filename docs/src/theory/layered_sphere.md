@@ -414,6 +414,11 @@ Gurtin–Murdoch membrane interfaces alike.
 See the worked example with figures:
 [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields).
 
+The averages of §7 and the pointwise fields of §8 have their aging
+counterparts, the moduli and the amplitudes becoming Volterra operators in the
+order fixed on [the symbolic page](@ref tut-layered-sphere-symbolic): see
+[Inside a layered inclusion](@ref man-visco-layered-inside).
+
 ## Where to go next
 
 The next page, [Layered cylinder](@ref th-layered-cylinder), solves the same
