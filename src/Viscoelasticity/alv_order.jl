@@ -27,7 +27,7 @@ end
     gradient_gradient_concentration_alv(sphere, ref, times; external = true) -> Matrix
     gradient_gradient_concentration_alv(sphere, ref, times; layer = k, external = false, internal = false) -> Matrix
 
-Volume-averaged gradient concentration of a whole [`LayeredSphere`](@ref) in an
+Volume-averaged gradient concentration of a whole [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) in an
 isotropic aging reference `ref` (a `ViscoLaw`, or the Volterra matrix of a running
 estimate), under a unit Volterra far-field gradient. The order of `ref` selects
 the physics.
@@ -68,7 +68,7 @@ Size-independent ALV contribution of an inclusion to the property of an aging
 reference `ref`: the dilute effective property at volume fraction ``f`` is
 ``\\widetilde{\\mathbb{C}}_0 + f\\,\\widetilde{\\mathbb{N}}``.
 
-For a [`LayeredSphere`](@ref) the order of `ref` selects the physics. In
+For a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) the order of `ref` selects the physics. In
 elasticity the ``6n\\times 6n`` stiffness contribution has the iso parameters
 
 ```math
@@ -101,7 +101,7 @@ property_contribution_alv(
 """
     flux_gradient_concentration_alv(sphere::LayeredSphere, ref, times; layer = nothing, external = true) -> Matrix
 
-Volterra block matrix of the average flux of a [`LayeredSphere`](@ref) per unit
+Volterra block matrix of the average flux of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per unit
 remote gradient history, against the isotropic aging reference `ref`: in
 elasticity the average stress per unit remote strain, in conduction the average
 of ``k\\,\\nabla T`` per unit remote gradient. Without `layer`, the whole sphere,

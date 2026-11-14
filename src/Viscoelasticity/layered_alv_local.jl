@@ -27,7 +27,7 @@
 """
     LayeredSphereALVFields(sphere, ref, times)
 
-Pointwise solution of a [`LayeredSphere`](@ref) against the isotropic aging
+Pointwise solution of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) against the isotropic aging
 reference `ref` (a `ViscoLaw`, or the Volterra matrix of a running estimate) on
 the instants `times`: the mode amplitudes of the radial functions in every
 layer and in the matrix, as ``n\\times n`` Volterra matrices per unit remote
@@ -160,11 +160,11 @@ end
 
 Volterra block matrix (``6n\\times 6n`` in elasticity, ``3n\\times 3n`` in
 conduction, time-major, canonical frame) of the pointwise concentration of a
-[`LayeredSphere`](@ref): it maps the history of the remote strain (gradient)
+[`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere): it maps the history of the remote strain (gradient)
 to the history of the strain (gradient) at the point, in any layer and in the
 matrix. The point is a Cartesian vector or its spherical coordinates
 ``(r, \\theta, \\varphi)``; `side` and `layer` have the meaning they have for the
-elastic [`local_gradient_gradient_concentration`](@ref), whose tensor this is
+elastic [`local_gradient_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_gradient_gradient_concentration), whose tensor this is
 at every instant for a non-aging problem.
 
 In elasticity, with ``\\underline n = \\underline x/r`` and the Walpole tensors
@@ -189,13 +189,13 @@ _flux_sign(::LayeredSphereALVFields{2}) = -1
     local_flux_gradient_concentration_alv(f::LayeredSphereALVFields, point...; side = :outer, layer = nothing) -> Matrix
     local_flux_gradient_concentration_alv(sphere, ref, times, point...; side, layer) -> Matrix
 
-Volterra block matrix of the pointwise flux of a [`LayeredSphere`](@ref) per
+Volterra block matrix of the pointwise flux of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per
 unit remote gradient history: the relaxation operator of the region applied
 **on the left** of [`local_gradient_gradient_concentration_alv`](@ref),
 ``\\widetilde{\\mathbb C}(\\underline x)\\circ\\widetilde{\\mathbb A}(\\underline x)``, the stress per
 unit remote strain. In conduction it is the flux
 ``\\underline q = -k\\,\\nabla T``, ``-\\widetilde k(\\underline x)\\circ\\widetilde{\\boldsymbol A}(\\underline x)``,
-as in the elastic [`local_flux_gradient_concentration`](@ref).
+as in the elastic [`local_flux_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux_gradient_concentration).
 """
 function local_flux_gradient_concentration_alv(
         f::LayeredSphereALVFields, point...; side::Symbol = :outer, layer = nothing
@@ -220,7 +220,7 @@ end
     local_displacement_alv(sphere, ref, times, point...; side, layer) -> Matrix
 
 ``3n\\times 6n`` Volterra block matrix of the displacement at a point of a
-[`LayeredSphere`](@ref) per unit remote strain history (Mandel components),
+[`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per unit remote strain history (Mandel components),
 
 ```math
 \\underline u = \\frac{\\mathrm{tr}\\,\\boldsymbol\\varepsilon^{\\infty}}{3}\\,f\\,\\underline n
@@ -229,7 +229,7 @@ end
 ```
 
 ``f``, ``g``, ``h`` being ``n\\times n`` Volterra matrices: the operator form of the
-elastic [`local_displacement`](@ref). It jumps across a
+elastic [`local_displacement`](@ref MeanFieldHomogenization.LayeredSpheres.local_displacement). It jumps across a
 [`SpringInterface`](@ref); `side` selects the limit.
 """
 function local_displacement_alv(
@@ -252,9 +252,9 @@ end
     local_temperature_alv(sphere, ref, times, point...; side, layer) -> Matrix
 
 ``n\\times 3n`` Volterra block matrix of the temperature at a point of a
-[`LayeredSphere`](@ref) per unit remote gradient history,
+[`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per unit remote gradient history,
 ``T = f\\,(\\underline n\\cdot\\nabla T^{\\infty})``: the operator form of the elastic
-[`local_temperature`](@ref). It jumps across a [`KapitzaInterface`](@ref);
+[`local_temperature`](@ref MeanFieldHomogenization.LayeredSpheres.local_temperature). It jumps across a [`KapitzaInterface`](@ref);
 `side` selects the limit.
 """
 function local_temperature_alv(

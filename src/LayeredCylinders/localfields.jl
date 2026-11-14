@@ -20,7 +20,7 @@
 Index of the region containing the distance `r` to the axis: ``1, \\dots, N``
 for the layers, ``N+1`` for the matrix. On an interface ``r = r_k``,
 `side = :outer` (default) gives the region outside it and `side = :inner` the
-one inside, as for a [`LayeredSphere`](@ref). A symbolic radius is not
+one inside, as for a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere). A symbolic radius is not
 comparable: name the region with the `layer` keyword of the pointwise entry
 points instead.
 """

@@ -25,7 +25,7 @@ Strain concentration tensor of the whole cylinder in the reference `C₀`
 It is transversely isotropic about the axis and has no major symmetry. The
 average includes the opening of the inner [`SpringInterface`](@ref)s, and that
 of the outer one when `external` is `true` (the default, which the schemes
-use), as for a [`LayeredSphere`](@ref). `C₁` is ignored.
+use), as for a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere). `C₁` is ignored.
 """
 function gradient_gradient_concentration(
         cyl::LayeredCylinder, ::_Order4, C₀::_Order4; external::Bool = true, kw...

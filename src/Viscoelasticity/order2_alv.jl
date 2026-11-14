@@ -935,7 +935,7 @@ Volterra setting: the fixed point of
 ``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\stackrel{\\circ}{\\cdot}\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-1^{\\circ}}``,
 every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
 ``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
-the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters
+the one with `fraction = :rest`). A [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) phase enters
 through its recurrence, and an insulating crack family through its resistivity
 against the estimate, in the denominator (the form of Echoes, as at order 4).
 Every phase must keep the estimate isotropic, as the order-2 Hill kernel against

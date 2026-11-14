@@ -167,7 +167,7 @@ end
 """
     gradient_concentration_alv(sphere, K0_law, times) -> NTuple{N, Matrix}
 
-Per-layer gradient concentrations of a [`LayeredSphere`](@ref) in an isotropic
+Per-layer gradient concentrations of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) in an isotropic
 aging reference: the ``n\\times n`` Volterra matrices ``\\alpha_k`` with
 ``\\langle\\nabla T\\rangle_k = \\alpha_k\\circ\\nabla T^{\\infty}``, averaged over the material of
 layer ``k`` (the conduction twin of [`bulk_concentration_alv`](@ref)). For a

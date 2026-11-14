@@ -366,7 +366,7 @@ conduction, canonical frame) of the pointwise concentration of a
 to the history of the strain (gradient) at the point, given as a vector or by
 its cylindrical coordinates ``(r, \\theta, z)``. `side` and `layer` have the
 meaning they have for the elastic
-[`local_gradient_gradient_concentration`](@ref).
+[`local_gradient_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_gradient_gradient_concentration).
 """
 local_gradient_gradient_concentration_alv(
     f::LayeredCylinderALVFields, point...; side::Symbol = :outer, layer = nothing
@@ -380,7 +380,7 @@ Volterra block matrix of the pointwise flux of a [`LayeredCylinder`](@ref) per
 unit remote gradient history: the relaxation operator of the region applied on
 the left of [`local_gradient_gradient_concentration_alv`](@ref). In conduction
 it is the flux ``\\underline q = -\\boldsymbol k\\cdot\\nabla T``, as in the elastic
-[`local_flux_gradient_concentration`](@ref).
+[`local_flux_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux_gradient_concentration).
 """
 function local_flux_gradient_concentration_alv(
         f::LayeredCylinderALVFields, point...; side::Symbol = :outer, layer = nothing
