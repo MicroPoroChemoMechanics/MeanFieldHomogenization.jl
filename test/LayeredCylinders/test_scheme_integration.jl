@@ -79,3 +79,21 @@ end
     @test lc_cc(L.layer_conductivity_average(ck)) ≈ Diagonal([0.36 * 5 + 0.64 * 2, 0.36 * 5 + 0.64 * 2, 0.36 * 7 + 0.64 * 2])
     @test lc_cc(L.layer_resistivity_average(ck)) ≈ Diagonal([0.36 / 5 + 0.64 / 2, 0.36 / 5 + 0.64 / 2, 0.36 / 7 + 0.64 / 2])
 end
+
+@testset "LayeredCylinder — Newton self-consistent in a mixed cell" begin
+    # Spheres in a cell with aligned cylinders: the estimate widens from isotropic
+    # to transversely isotropic, then to a general tensor (an isotropic sphere in a
+    # transversely isotropic reference). The Newton unknowns follow every widening,
+    # for the homogeneous cylinder as for the layered one, and the root is Picard's.
+    K = lc_K(5.0, 7.0)
+    C = lc_tensor(LC_F)
+    for (prop, P_I, P_M) in ((:K, K, TensISO{3}(2.0)), (:C, C, TensISO{3}(3 * 6.0, 2 * 2.5)))
+        for geom in (LC_HOM, LayeredCylinder((1.0,), (P_I,)))
+            r = RVE()
+            add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(prop => P_M); fraction = :rest)
+            add_phase!(r, :I, geom, Dict(prop => P_I); fraction = 0.3)
+            newton = homogenize(r, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-12), prop)
+            @test lc_rel(newton, homogenize(r, SelfConsistent(reltol = 1.0e-12), prop)) < 1.0e-9
+        end
+    end
+end
