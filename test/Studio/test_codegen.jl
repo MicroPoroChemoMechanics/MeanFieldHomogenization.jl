@@ -162,6 +162,21 @@ oriented(geo) = MS.StudioModel(; cells = [MS.Cell(; name = "r", phases = [MS.Pha
     @test occursin("LayeredSphere((0.6, 1.0)", src) && !occursin("(0.6, 1)", src)
     sphere.layers[1]["interface"] = props("kind" => "SpringInterface", "args" => props("kn" => 1.0, "kt" => 2.0))
     @test occursin("; interfaces = (SpringInterface(1.0, 2.0), PerfectInterface()))", gen(oriented(sphere)))
+    # a layered cylinder: the sphere's table, and the axis its angles give;
+    # the generated expression builds the cylinder it describes
+    cyl = MS.Geometry(; kind = "layered_cylinder", layers = Any[lay(0.6, 1, 1), lay(1, 30, 12)])
+    cg = MS.CodeGen(MS.StudioModel())
+    @test MS.geometry_expr(cg, MS.Phase(; geometry = cyl)) == "LayeredCylinder((0.6, 1.0), (iso_stiffness(1.0, 1.0), iso_stiffness(30.0, 12.0)))"
+    cyl.layers[1]["interface"] = props("kind" => "MembraneInterface", "args" => props("ks" => 0.5, "mus" => 0.2))
+    cyl.euler_angles = Any[0.7, 1.2]
+    expr = MS.geometry_expr(cg, MS.Phase(; geometry = cyl))
+    @test occursin("; interfaces = (MembraneInterface(0.5, 0.2), PerfectInterface()), axis = Tuple(vecbasis(RotatedBasis(0.7, 1.2", expr)
+    sandbox = Module()
+    Core.eval(sandbox, :(using MeanFieldHomogenization, TensND))
+    built = Core.eval(sandbox, Meta.parse(expr))
+    @test built isa MeanFieldHomogenization.LayeredCylinder && collect(built.radii) == [0.6, 1.0]
+    @test collect(built.axis) ≈ [sin(0.7) * cos(1.2), sin(0.7) * sin(1.2), cos(0.7)]
+    @test built.interfaces[1] == MeanFieldHomogenization.MembraneInterface(0.5, 0.2)
     shapes = [
         MS.Geometry(; kind = "cylinder", args = props("b" => 1, "c" => "c0")) => "Cylinder(1.0, c0)",
         MS.Geometry(; kind = "penny_crack", args = MS.JDict()) => "PennyCrack(1.0)",

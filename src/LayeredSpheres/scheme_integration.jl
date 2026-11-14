@@ -209,6 +209,11 @@ end
 _is_primal(::AbstractInterface) = false
 _is_primal(::SpringInterface) = true
 _is_primal(::KapitzaInterface) = true
+# A dual interface lets the flux jump: a membrane carries a surface stress, a
+# conducting surface a surface current.
+_is_dual(::AbstractInterface) = false
+_is_dual(::MembraneInterface) = true
+_is_dual(::SurfaceConductiveInterface) = true
 
 _has_primal(sphere::LayeredSphere{T, N}) where {T, N} =
     any(k -> _is_primal(layer_interface(sphere, k)), 1:N)

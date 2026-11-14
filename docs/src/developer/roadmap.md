@@ -16,7 +16,7 @@ package already does is described in the [manual](@ref man-index) and the
   [`ConductiveCrack`](@ref) for the penny crack only): resistive cracks
   (linear-spring analog) **and** conductive cracks (elastic-membrane analog) of any
   shape and anisotropy, via a tensorial conduction COD.
-- Multi-layer extensions: coated cylinders, anisotropic per-layer moduli, and
+- Multi-layer extensions: anisotropic per-layer moduli in a sphere, and
   an *analytic* excentered sphere (only the finite-element approach reaches that
   morphology).
 - Laminate extensions: viscoelastic *interface* laws (the interface types

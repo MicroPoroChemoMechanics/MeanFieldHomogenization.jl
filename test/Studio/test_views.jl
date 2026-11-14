@@ -94,6 +94,23 @@ conduction(k) = MS.jdict("key" => ":K", "source" => "builder", "builder" => "Ten
     @test length(MS.traces(ls; cutaway = false)[1]["x"]) == 41
     @test MS.shape(m, phase("layered_sphere", ())) === nothing
     @test MS.shape(m, phase("layered_sphere", (); layers = Any[lay("r")])) === nothing
+    # a layered cylinder: coaxial shells, a length of them drawn; turned by
+    # two angles, every point of layer i lies at distance rᵢ from the axis
+    lc = MS.shape(m, phase("layered_cylinder", (); layers = Any[lay(0.6), lay(1)]))
+    @test lc isa MeanFieldHomogenization.LayeredCylinder && collect(lc.axis) ≈ [0, 0, 1]
+    @test [t["name"] for t in MS.traces(lc)] == ["layer 1 (r = 0.6)", "layer 2 (r = 1.0)"]
+    @test length(MS.traces(lc; cutaway = false)[1]["x"]) == 41
+    θc, ϕc = 0.7, 1.2
+    turned = MS.shape(m, phase("layered_cylinder", (); angles = Any[θc, ϕc], layers = Any[lay(0.6), lay(1)]))
+    ax = [sin(θc) * cos(ϕc), sin(θc) * sin(ϕc), cos(θc)]
+    @test abs(collect(turned.axis)' * ax) ≈ 1
+    for (r, tr) in zip((0.6, 1.0), MS.traces(turned; length_shown = 4.0))
+        pts = [[x, y, z] for (xs, ys, zs) in zip(tr["x"], tr["y"], tr["z"]) for (x, y, z) in zip(xs, ys, zs)]
+        @test all(p -> norm(p - (p' * ax) * ax) ≈ r, pts) && maximum(p -> abs(p' * ax), pts) ≈ 2
+    end
+    @test MS.shape(m, phase("layered_cylinder", ())) === nothing
+    @test MS.shape(m, phase("layered_cylinder", (); layers = Any[lay("r")])) === nothing
+    @test MS.shape(m, phase("layered_cylinder", (); angles = Any["θ"], layers = Any[lay(1)])) === nothing
     frac(f) = MS.jdict("fraction" => f, "property" => conduction(1.0))
     upright = MS.shape(m, phase("layered_spheroid", ("omega" => 0.5, "radius" => 1.0, "Nseries" => 5); layers = Any[frac(0.3), frac(0.7)]))
     @test MS.frame_matrix(upright)[:, 3] ≈ [0, 0, 1]

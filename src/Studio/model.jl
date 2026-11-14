@@ -115,7 +115,7 @@ property_from_dict(d::AbstractDict) = update_fields!(Property(), d)
     Geometry
 
 The shape of a phase: its `kind` (`spheroid`, `ellipsoid`, `cylinder`,
-`penny_crack`, `elliptic_crack`, `ribbon_crack`, `layered_sphere`,
+`penny_crack`, `elliptic_crack`, `ribbon_crack`, `layered_sphere`, `layered_cylinder`,
 `layered_spheroid`), its sizes, its ZYZ angles, and the layers of a layered
 inclusion (`radius` or `fraction`, `property`, `interface` each).
 """

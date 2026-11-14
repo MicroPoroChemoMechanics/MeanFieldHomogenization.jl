@@ -326,18 +326,24 @@ function geometry_expr(g::CodeGen, ph::Phase)
     k == "penny_crack" && return "PennyCrack($(v("a", 1.0))$ang)"
     k == "elliptic_crack" && return "EllipticCrack($(v("a", 1.0)), $(v("b", 0.5))$ang)"
     k == "ribbon_crack" && return "RibbonCrack($(v("b", 1.0))$ang)"
-    k == "layered_sphere" && return layered_sphere_expr(g, geo)
+    k == "layered_sphere" && return layered_concentric_expr(g, geo, "LayeredSphere")
+    k == "layered_cylinder" && return layered_concentric_expr(g, geo, "LayeredCylinder")
     k == "layered_spheroid" && return layered_spheroid_expr(g, geo)
     return "Spheroid(1.0)"
 end
 
-function layered_sphere_expr(g::CodeGen, geo::Geometry)
+"""
+A layered sphere or cylinder: the outer radius of each layer, its moduli, the
+interfaces when one is imperfect and, for the cylinder, the axis the angles give.
+"""
+function layered_concentric_expr(g::CodeGen, geo::Geometry, ctor::AbstractString)
     radii = join((arg_text(l, "radius", 1.0) for l in geo.layers), ", ")
     moduli = join((prop_expr(g, property_from_dict(l["property"])) for l in geo.layers), ", ")
     # the joined lists are split again on ", ", as the studio always wrote them
     radii_t = isempty(radii) ? "()" : tuple_expr(split(radii, ", "))
     mod_t = isempty(moduli) ? "()" : tuple_expr(split(moduli, ", "))
     ifaces = [get(l, "interface", nothing) for l in geo.layers]
+    kw = String[]
     if any(i -> truthy(i) && field(i, "kind", "PerfectInterface") != "PerfectInterface", ifaces)
         parts = map(ifaces) do i
             i = either(i, jdict("kind" => "PerfectInterface", "args" => JDict()))
@@ -345,10 +351,12 @@ function layered_sphere_expr(g::CodeGen, geo::Geometry)
             args = join((julia_number(x) for x in values(either(get(i, "args", nothing), JDict()))), ", ")
             isempty(args) ? "$kind()" : "$kind($args)"
         end
-        it = length(parts) == 1 ? "($(only(parts)),)" : "(" * join(parts, ", ") * ")"
-        return "LayeredSphere($radii_t, $mod_t; interfaces = $it)"
+        push!(kw, "interfaces = " * (length(parts) == 1 ? "($(only(parts)),)" : "(" * join(parts, ", ") * ")"))
     end
-    return "LayeredSphere($radii_t, $mod_t)"
+    # a sphere has no axis; the cylinder's is the canonical e₃ unless turned
+    ctor == "LayeredCylinder" && !isempty(padded_angles(geo.euler_angles)) &&
+        push!(kw, "axis = $(axis_tuple_expr(geo.euler_angles))")
+    return isempty(kw) ? "$ctor($radii_t, $mod_t)" : "$ctor($radii_t, $mod_t; " * join(kw, ", ") * ")"
 end
 
 """

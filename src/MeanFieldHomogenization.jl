@@ -94,6 +94,7 @@ include("Conductivity/Conductivity.jl")
 include("Interactions/Interactions.jl")
 include("LayeredSpheres/LayeredSpheres.jl")
 include("LayeredSpheroids/LayeredSpheroids.jl")
+include("LayeredCylinders/LayeredCylinders.jl")
 include("Schemes/Schemes.jl")
 # `Laminates` sits between `Schemes` and `Viscoelasticity`: it extends
 # `_evaluate` and uses `HomogenizationScheme`/`Laminated`/`Voigt`/`Reuss` from
@@ -118,6 +119,7 @@ using .Conductivity
 using .Interactions
 using .LayeredSpheres
 using .LayeredSpheroids
+using .LayeredCylinders
 using .Schemes
 using .Laminates
 using .Assemblies
@@ -292,6 +294,11 @@ export local_strain_strain_concentration, local_stress_strain_concentration,
     local_strain_stress_concentration, local_stress_stress_concentration
 export local_strain, local_stress
 
+# ── LayeredCylinder (multi-coated fiber, transversely isotropic coaxial layers)
+export LayeredCylinder, LayeredCylinderFields, LayeredCylinderTransportFields
+export cylinder_gradient_average, cylinder_flux_average,
+    cylinder_strain_average, cylinder_stress_average
+
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
 export layer_q, layer_semiaxes, outer_semiaxes
@@ -404,6 +411,9 @@ export self_consistent_alv, asymmetric_self_consistent_alv,
 export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv
 export gradient_gradient_concentration_alv, property_contribution_alv, gradient_concentration_alv
 export strain_strain_concentration_alv, stiffness_contribution_alv, conductivity_contribution_alv
+export flux_gradient_concentration_alv
+export LayeredSphereALVFields, LayeredCylinderALVFields, local_gradient_gradient_concentration_alv,
+    local_flux_gradient_concentration_alv, local_displacement_alv, local_temperature_alv
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params

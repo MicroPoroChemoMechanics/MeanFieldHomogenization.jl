@@ -579,6 +579,59 @@ Every order-2 scheme takes them, as at order 4 (the table of
 [section 5.3](@ref man-visco-cracks)), the self-consistent and differential ones
 with `symmetrize = :iso`.
 
+### [6.2 Inside a layered inclusion](@id man-visco-layered-inside)
+
+A [`LayeredSphere`](@ref) and a [`LayeredCylinder`](@ref) give, at both orders,
+the averages over a layer and the pointwise gradient and flux as Volterra
+operators; the pointwise displacement and temperature
+([`local_displacement_alv`](@ref), [`local_temperature_alv`](@ref)) are those
+of the sphere. With `layer = k`,
+[`gradient_gradient_concentration_alv`](@ref) is the operator of the average
+gradient of layer ``k`` per unit remote history — its material by default, plus
+the jump of the interface on its outer (`external`) or inner (`internal`)
+boundary — and [`flux_gradient_concentration_alv`](@ref) the average flux,
+``\widetilde{\mathbb C}_k\circ\widetilde{\mathbb A}_k``, the relaxation of the
+layer acting on the left:
+
+```@example vo
+A_core = gradient_gradient_concentration_alv(grain, law_κ, times; layer = 1)
+B_core = flux_gradient_concentration_alv(grain, law_κ, times; layer = 1)
+size(A_core), size(B_core)
+```
+
+At a point, a cache of the radial solution ([`LayeredSphereALVFields`](@ref),
+[`LayeredCylinderALVFields`](@ref)) gives the operator of the local gradient and
+of the local flux, with the `side` keyword on an interface as in elasticity:
+
+```@example vo
+fields = LayeredSphereALVFields(grain, law_κ, times)
+A_point = local_gradient_gradient_concentration_alv(fields, (0.5, 0.2, 0.3))
+size(A_point)
+```
+
+A coated fiber is handled with the same calls. Its axis is set by `axis`,
+here ``\underline e_1``, and every operator is returned in the canonical frame.
+Along the axis an infinite fiber does not disturb the gradient: in every layer
+the axial component of the average gradient is the remote one, so the block of
+that component in the operator of the core is the identity at every instant:
+
+```@example vo
+fiber_c = LayeredCylinder((0.8, 1.0), (law_κ, TensISO{3}(5.0));
+                          interfaces = (KapitzaInterface(0.1), SurfaceConductiveInterface(0.3)),
+                          axis = (1.0, 0.0, 0.0))
+A_fiber = gradient_gradient_concentration_alv(fiber_c, law_κ, times; layer = 1)
+A_fiber[1:3:end, 1:3:end] ≈ I                     # axial component, every instant
+```
+
+```@example vo
+fields_c = LayeredCylinderALVFields(fiber_c, law_κ, times)
+A_point_c = local_gradient_gradient_concentration_alv(fields_c, (0.3, 0.5, 0.2))
+size(A_point_c)
+```
+
+A layer of zero conductivity is admissible at any rank, in a sphere as in a
+cylinder: the layers it encloses are shielded and carry no field.
+
 ## [7. The isotropic reference of the self-consistent and differential schemes](@id man-alv-iso-reference)
 
 Every ALV Hill kernel — order 2 and order 4 alike — is built for an
@@ -605,7 +658,9 @@ That splits the schemes in two:
     that: **spherical inclusions** with an isotropic phase law, or an
     **isotropic orientation average**, `symmetrize = :iso`, which is also
     what randomly oriented inclusions or cracks mean physically. A
-    `LayeredSphere`, isotropic by construction, is always accepted.
+    `LayeredSphere`, isotropic by construction, is always accepted; a
+    `LayeredCylinder`, transversely isotropic, takes the orientation average
+    among other shapes.
 
     An RVE that satisfies neither raises an explicit `ArgumentError` naming
     the offending phase, rather than silently reading iso parameters off a
@@ -636,6 +691,57 @@ homogenize_alv(needles, DifferentialScheme(), :K; times)
     running medium of any symmetry class — the differential scheme even
     tracks it, growing its ODE state from the iso to the TI, ortho or fully
     anisotropic layout as the phases require.
+
+### [Coaxial layered cylinders: a transversely isotropic reference](@id man-alv-cylinders-ti)
+
+A [`LayeredCylinder`](@ref) has no Hill kernel: its concentration and its flux
+come from its own recurrences, which accept a reference transversely
+isotropic about the axis of the cylinder. A cell made only of layered
+cylinders of one axis, its matrix given the shape of a one-layer cylinder, is
+therefore solved by `SelfConsistent`, `AsymmetricSelfConsistent` and
+`DifferentialScheme` with a running estimate transversely isotropic about that
+axis,
+``\widetilde{\mathbb C} = \big(\sum_i f_i\widetilde{\mathbb B}_i\big)\circ\big(\sum_i f_i\widetilde{\mathbb A}_i\big)^{-1}``
+for the self-consistent scheme, the inverse on the right:
+
+```@example vo
+fiber_law = ViscoLaw((t, tp) -> t < tp ? zero(TensISO{3}(90.0, 40.0)) : TensISO{3}(90.0, 40.0), :relaxation)
+aligned = RVE()
+add_phase!(aligned, :M, LayeredCylinder((1.0,), (law_M,)), Dict(:C => law_M); fraction = :rest)
+add_phase!(aligned, :F, LayeredCylinder((0.8, 1.0), (fiber_law, law_M)), Dict(:C => fiber_law); fraction = 0.4)
+homogenize_alv(aligned, SelfConsistent(), :C; times)
+```
+
+The Newton solver is written on isotropic parameters and is refused there;
+the Picard iteration is used.
+
+The axis may point in any direction ``\underline n``. Three conditions then
+hold: every cylinder of the cell has the axis ``\underline n``; each layer law,
+the matrix law included, is isotropic or transversely isotropic about
+``\underline n``; the matrix is a one-layer cylinder whose declared property is
+the law of its layer. The cell above, turned to ``\underline n = (1, -2, 2)/3``,
+with a fiber now transversely isotropic about ``\underline n``
+(`ti_from_constants` takes the axis as its last argument):
+
+```@example vo
+n = (1.0, -2.0, 2.0) ./ 3
+C_f = ti_from_constants(120.0, 60.0, 30.0, 200.0, 25.0, n)
+fiber_n = ViscoLaw((t, tp) -> t < tp ? 0.0 * C_f : C_f, :relaxation)
+turned = RVE()
+add_phase!(turned, :M, LayeredCylinder((1.0,), (law_M,); axis = n), Dict(:C => law_M); fraction = :rest)
+add_phase!(turned, :F, LayeredCylinder((0.8, 1.0), (fiber_n, law_M); axis = n), Dict(:C => fiber_n); fraction = 0.4)
+C_turned = homogenize_alv(turned, SelfConsistent(), :C; times)
+TensND.axis(operator_value(C_turned, length(times), 1))
+```
+
+The estimate is stored in the transversely isotropic class about
+``\underline n`` ([Symmetry classes](@ref man-volterra-operators)), and
+`Matrix(C_turned)` gives its matrix in the canonical frame. It is computed in
+the frame of the cylinders, ``(\underline t_1, \underline t_2, \underline n)``: the
+laws are written there once, every iteration runs there, and the converged
+estimate alone is brought back to the canonical frame. A frame does not depend
+on time, so neither change alters the order of the Volterra products
+([Layered cylinder](@ref th-layered-cylinder), section 9).
 
 ## 8. The differential scheme in ALV
 

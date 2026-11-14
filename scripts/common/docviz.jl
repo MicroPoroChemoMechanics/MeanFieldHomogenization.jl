@@ -987,6 +987,36 @@ function shape_traces(
     return traces
 end
 
+# A layered cylinder: coaxial shells around its axis, each cut open over the
+# same quarter as the sphere's, and each shown a little longer than the one
+# around it, so that the core and every coating can be seen. The cylinder is
+# unbounded; `len` is the length shown of the outer shell. `arrow` draws the
+# axis n.
+function shape_traces(
+        lc::MeanFieldHomogenization.LayeredCylinder;
+        colors = nothing, cutaway::Bool = true, len::Real = 4 * Float64(last(lc.radii)),
+        arrow::Bool = true, opacity::Real = 1.0, nu::Integer = 41,
+    )
+    radii = Float64.(lc.radii)
+    N = length(radii)
+    cols = colors === nothing ? _layer_colors(N) : colors
+    R = rotation_from_axis(lc.axis)
+    u0 = cutaway ? CUT_START : 0.0
+    umax = cutaway ? 1.5π : 2π
+    traces = SceneItem[]
+    for (k, r) in enumerate(radii)
+        h = len * (1 + 0.3 * (N - k)) / 2
+        f = (u, z) -> Tuple(R * [r * cos(u), r * sin(u), z])
+        X, Y, Z = param_surface(f, range(u0, u0 + umax; length = nu), range(-h, h; length = 2))
+        push!(traces, surface_trace(X, Y, Z; color = cols[mod1(k, length(cols))], opacity = opacity))
+    end
+    if arrow   # from the end of the core, along n
+        base = R[:, 3] .* (len * (1 + 0.3 * (N - 1)) / 2)
+        append!(traces, arrow_trace(Tuple(base), Tuple(R[:, 3] .* (1.2 * last(radii))); size = 0.35 * last(radii), label = "<u><i>n</i></u>"))
+    end
+    return traces
+end
+
 function shape_traces(
         sp::MeanFieldHomogenization.LayeredSpheroid;
         colors = nothing, cutaway::Bool = true,

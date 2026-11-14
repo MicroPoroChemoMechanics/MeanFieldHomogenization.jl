@@ -111,7 +111,7 @@ const TEST_PARTS = Dict(
     # runner took past the timeout on the prerelease of Julia.
     "polycrystals" => ("Polycrystals",),
     "patterns" => (
-        "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
+        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "Superspheres",
         "FiniteElementInclusions",
     ),
     "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
@@ -337,6 +337,19 @@ end
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
+        include("LayeredSpheres/test_impermeable_shell.jl")
+        include("LayeredSpheres/test_remote_flux.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredSpheres/test_symbolics_num.jl")
+    end
+
+    rungroup("LayeredCylinders") && @testset "LayeredCylinders" begin
+        include("LayeredCylinders/test_elasticity.jl")
+        include("LayeredCylinders/test_interfaces.jl")
+        include("LayeredCylinders/test_conductivity.jl")
+        include("LayeredCylinders/test_local_fields.jl")
+        include("LayeredCylinders/test_scheme_integration.jl")
+        include("LayeredCylinders/test_prolate_limit.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredCylinders/test_generic.jl")
     end
 
     # The periodic multilayer cell. Placed after the layered morphologies
@@ -444,6 +457,11 @@ end
         include("Viscoelasticity/test_sc_alv_newton.jl")
         include("Viscoelasticity/test_layered_alv.jl")
         include("Viscoelasticity/test_layered_alv_order2.jl")
+        include("Viscoelasticity/test_layered_alv_layers.jl")
+        include("Viscoelasticity/test_layered_alv_local_fields.jl")
+        include("Viscoelasticity/test_layered_cylinder_alv.jl")
+        include("Viscoelasticity/test_layered_cylinder_alv_schemes.jl")
+        include("Viscoelasticity/test_layered_alv_fe_oracle.jl")
         include("Viscoelasticity/test_ti_alv.jl")
         include("Viscoelasticity/test_ortho_alv.jl")
         include("Viscoelasticity/test_ortho_dispatch_alv.jl")

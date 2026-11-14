@@ -126,6 +126,21 @@ plotly_scene(shape_traces(ls); uid = "zoo-layered-sphere", height = 460,
     title = "Three-layer composite sphere — shells cut open at r = 0.5, 0.75, 1")
 ```
 
+The **coaxial cylinder** is its counterpart for a coated fiber: an unbounded
+core and coatings around an axis ``\underline n``, any direction, each layer
+isotropic or transversely isotropic about ``\underline n``
+([Layered cylinder](@ref th-layered-cylinder)). Only a length of it is drawn:
+
+```@example zoo
+lc = LayeredCylinder(
+    (0.5, 0.75, 1.0),
+    (iso_stiffness(10.0, 5.0), iso_stiffness(20.0, 9.0), iso_stiffness(35.0, 15.0));
+    axis = (1.0, 1.0, 2.0) ./ sqrt(6.0),
+)
+plotly_scene(shape_traces(lc); uid = "zoo-layered-cylinder", height = 460,
+    title = "Three-layer coaxial cylinder of axis n — shells cut open at r = 0.5, 0.75, 1")
+```
+
 The **confocal spheroid** is the anisotropic counterpart: the layer boundaries
 share their foci rather than their center, which is what keeps the transfer
 matrices tractable ([Layered spheroids](@ref th-layered-spheroid)). Confocal

@@ -96,7 +96,7 @@ property_contribution_alv_at
 delta_property_alv
 ```
 
-## Layered spheres
+## Layered spheres and cylinders
 
 One function per notion serves elasticity and conduction, the order of the
 reference law selecting the method: [`gradient_gradient_concentration_alv`](@ref)
@@ -106,6 +106,18 @@ fourth-order reference and a ``3n\times 3n`` one for a second-order reference.
 ```@docs
 gradient_gradient_concentration_alv
 property_contribution_alv
+flux_gradient_concentration_alv
+```
+
+Inside the inclusion, at a point:
+
+```@docs
+LayeredSphereALVFields
+LayeredCylinderALVFields
+local_gradient_gradient_concentration_alv
+local_flux_gradient_concentration_alv
+local_displacement_alv
+local_temperature_alv
 ```
 
 The per-layer kernels behind them, of the bulk and shear modes in elasticity

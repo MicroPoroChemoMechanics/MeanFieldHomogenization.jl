@@ -53,6 +53,11 @@ end
 "Keyword arguments for the angles: none for none."
 angle_keywords(angles::Tuple) = isempty(angles) ? (;) : (; euler_angles = angles)
 
+# The revolution axis that the first two ZYZ angles give (the third vector of
+# the rotated basis), the canonical e₃ when there is none.
+revolution_axis(angles) = isempty(angles) ? (0.0, 0.0, 1.0) :
+    Tuple(MeanFieldHomogenization.TensND.vecbasis(MeanFieldHomogenization.TensND.RotatedBasis(vcat(collect(angles), zeros(3))[1:3]...))[:, 3])
+
 """
     shape(m, phase) -> Union{Nothing, geometry}
 
@@ -70,7 +75,7 @@ function shape(m::StudioModel, ph::Phase)
     geo = ph.geometry
     k = geo.kind
     # a kind the forms do not know is written `Spheroid(1.0)`, and drawn so
-    (haskey(SHAPE_SIZES, k) || k in ("layered_sphere", "layered_spheroid")) || return MeanFieldHomogenization.Spheroid(1.0)
+    (haskey(SHAPE_SIZES, k) || k in ("layered_sphere", "layered_cylinder", "layered_spheroid")) || return MeanFieldHomogenization.Spheroid(1.0)
     arg(key, default) = numeric(m, get(geo.args, key, default))
     angles = numeric_angles(m, geo.euler_angles)
     angles === nothing && return nothing
@@ -81,17 +86,20 @@ function shape(m::StudioModel, ph::Phase)
         isempty(radii) && return nothing
         moduli = Tuple(MeanFieldHomogenization.iso_stiffness(1.0, 1.0) for _ in radii)
         return MeanFieldHomogenization.LayeredSphere(Tuple(Float64.(radii)), moduli)
+    elseif k == "layered_cylinder"
+        radii = [numeric(m, get(l, "radius", 1.0)) for l in geo.layers]
+        (any(isnothing, radii) || isempty(radii)) && return nothing
+        moduli = Tuple(MeanFieldHomogenization.iso_stiffness(1.0, 1.0) for _ in radii)
+        return MeanFieldHomogenization.LayeredCylinder(Tuple(Float64.(radii)), moduli; axis = revolution_axis(angles))
     elseif k == "layered_spheroid"
         fractions = [numeric(m, get(l, "fraction", 1.0)) for l in geo.layers]
         omega, radius, ns = arg("omega", 0.5), arg("radius", 1.0), arg("Nseries", 5)
         (any(isnothing, fractions) || isempty(fractions) || any(isnothing, (omega, radius, ns))) && return nothing
         # the order of the series is a count
         (isinteger(ns) && 1 <= ns <= 1000) || return nothing
-        axis = isempty(angles) ? (0.0, 0.0, 1.0) :
-            Tuple(MeanFieldHomogenization.TensND.vecbasis(MeanFieldHomogenization.TensND.RotatedBasis(vcat(collect(angles), zeros(3))[1:3]...))[:, 3])
         moduli = Tuple(MeanFieldHomogenization.TensND.TensISO{3}(1.0) for _ in fractions)
         return MeanFieldHomogenization.layered_spheroid_from_fractions(
-            omega, radius, Tuple(Float64.(fractions)), moduli; Nseries = round(Int, ns), axis,
+            omega, radius, Tuple(Float64.(fractions)), moduli; Nseries = round(Int, ns), axis = revolution_axis(angles),
         )
     end
     defaults = Dict("omega" => 1.0, "a" => 1.0, "b" => k == "elliptic_crack" ? 0.5 : 1.0, "c" => 1.0)
@@ -224,9 +232,10 @@ end
 frame_matrix(x::Union{MeanFieldHomogenization.Ellipsoid, MeanFieldHomogenization.Cylinder, MeanFieldHomogenization.EllipticCrack, MeanFieldHomogenization.RibbonCrack, MeanFieldHomogenization.Laminate}) =
     Matrix{Float64}(MeanFieldHomogenization.TensND.vecbasis(x.basis))
 
-# A layered spheroid stores its revolution axis, not a basis: a frame whose
-# third vector is that axis draws it, the transverse plane being isotropic.
-function frame_matrix(ls::MeanFieldHomogenization.LayeredSpheroid)
+# A layered spheroid or cylinder stores its revolution axis, not a basis: a
+# frame whose third vector is that axis draws it, the transverse plane being
+# isotropic.
+function frame_matrix(ls::Union{MeanFieldHomogenization.LayeredSpheroid, MeanFieldHomogenization.LayeredCylinder})
     e3 = normalize(Float64.(collect(ls.axis)))
     t = zeros(3)
     t[argmin(abs.(e3))] = 1.0       # the canonical vector least aligned with e3
@@ -282,6 +291,24 @@ function traces(ls::MeanFieldHomogenization.LayeredSphere; cutaway::Bool = true,
         r > 0 || continue
         f(u, v) = (r * cos(v) * cos(u), r * cos(v) * sin(u), r * sin(v))
         X, Y, Z = param_surface(f, range(0, ulim; length = 41), range(-π / 2, π / 2; length = 21))
+        push!(out, surface(X, Y, Z; color = colors[i], opacity = i == n ? 0.55 : 0.9, name = "layer $i (r = $(round(r; digits = 3)))"))
+    end
+    return out
+end
+
+function traces(lc::MeanFieldHomogenization.LayeredCylinder; cutaway::Bool = true, length_shown = 6.0, kw...)
+    radii = Float64.(collect(lc.radii))
+    n = length(radii)
+    colors = layer_colors(n)
+    R = frame_matrix(lc)
+    half = length_shown / 2
+    out = Dict{String, Any}[]
+    # a cut-away keeps half of each shell, so that the inner ones show; the
+    # cylinder is unbounded and only a length of it is drawn
+    ulim = cutaway ? 1.0π : 2.0π
+    for (i, r) in enumerate(radii)
+        f(u, z) = Tuple(R * [r * cos(u), r * sin(u), z])
+        X, Y, Z = param_surface(f, range(0, ulim; length = 41), range(-half, half; length = 2))
         push!(out, surface(X, Y, Z; color = colors[i], opacity = i == n ? 0.55 : 0.9, name = "layer $i (r = $(round(r; digits = 3)))"))
     end
     return out

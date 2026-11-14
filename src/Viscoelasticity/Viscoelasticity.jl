@@ -56,6 +56,8 @@ using ..LayeredSpheres: LayeredSphere, layer_radius, layer_modulus,
     layer_interface, AbstractInterface, PerfectInterface,
     SpringInterface, MembraneInterface, KapitzaInterface, SurfaceConductiveInterface,
     interfaces_eltype, layer_count, layer_volume_fraction, outer_radius
+import ..LayeredCylinders
+using ..LayeredCylinders: LayeredCylinder
 import ..Schemes
 import ..Laminates
 using ..Schemes: RVE, HomogenizationScheme, Laminated, Voigt, Reuss, Dilute, DiluteDual,
@@ -99,10 +101,13 @@ include("schemes_alv_sc.jl")
 include("schemes_alv_sc_newton.jl")
 include("schemes_alv_extra.jl")
 include("layered_alv.jl")
+include("layered_cylinder_alv.jl")
 include("laminate_alv.jl")
 include("homogenize_alv.jl")
 include("order2_alv.jl")
 include("layered_alv_order2.jl")
+include("layered_alv_local.jl")
+include("layered_cylinder_alv_schemes.jl")
 include("cracks_alv.jl")
 include("alv_order.jl")
 
@@ -124,6 +129,9 @@ export self_consistent_alv, asymmetric_self_consistent_alv,
 export bulk_concentration_alv, bulk_state_seq_alv, shear_concentration_alv
 export gradient_gradient_concentration_alv, property_contribution_alv, gradient_concentration_alv
 export strain_strain_concentration_alv, stiffness_contribution_alv, conductivity_contribution_alv
+export flux_gradient_concentration_alv
+export LayeredSphereALVFields, LayeredCylinderALVFields, local_gradient_gradient_concentration_alv,
+    local_flux_gradient_concentration_alv, local_displacement_alv, local_temperature_alv
 export self_consistent_alv_order2
 export homogenize_alv, has_visco_property
 export iso_order2_params_from_blocks, iso_order2_blocks_from_params

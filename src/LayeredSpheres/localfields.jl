@@ -109,18 +109,14 @@ function get_layer(sphere::LayeredSphere{T, N}, r; side::Symbol = :outer) where 
                 "(1..$(N) for a layer, $(N + 1) for the matrix)"
         )
     )
-    k = 1
-    if side === :outer
-        while k ≤ N && r ≥ sphere.radii[k]
-            k += 1
-        end
-    else
-        while k ≤ N && r > sphere.radii[k]
-            k += 1
-        end
-    end
-    return k
+    return _locate_region(sphere.radii, r, side)
 end
+
+# First region whose outer radius lies beyond `r`: `r_k^+` belongs to region
+# k + 1 (`:outer`), `r_k^-` to region k (`:inner`). Shared by the layered
+# inclusions whose regions are bounded by ascending radii.
+_locate_region(radii::NTuple{N}, r, side::Symbol) where {N} = side === :outer ?
+    something(findfirst(>(r), radii), N + 1) : something(findfirst(≥(r), radii), N + 1)
 
 """
     _resolve_layer(sphere, r; side, layer) -> Int
@@ -135,21 +131,24 @@ Symbolic work is exactly the case where the region is known up front, so
 passing `layer = k` costs nothing and keeps the whole reconstruction
 symbolic.
 """
-@inline function _resolve_layer(
-        sphere::LayeredSphere{T, N}, r; side::Symbol, layer
-    ) where {T, N}
-    if layer !== nothing
-        1 ≤ layer ≤ N + 1 ||
-            throw(ArgumentError("layer must be in 1..$(N + 1) (N+1 = matrix), got $(layer)"))
-        return Int(layer)
-    end
+@inline _resolve_layer(sphere::LayeredSphere, r; side::Symbol, layer) =
+    _resolve_region(sphere, layer_count(sphere), r, side, layer)
+
+# The region named by `layer`, checked, or else located from `r` by `get_layer`.
+@inline function _resolve_region(incl, N::Int, r, side::Symbol, layer::Integer)
+    1 ≤ layer ≤ N + 1 ||
+        throw(ArgumentError("layer must be in 1..$(N + 1) (N+1 = matrix), got $(layer)"))
+    return Int(layer)
+end
+
+@inline function _resolve_region(incl, N::Int, r, side::Symbol, ::Nothing)
     is_hard_numeric(typeof(r)) || throw(
         ArgumentError(
             "cannot locate a symbolic radius by comparison; pass `layer = k` " *
                 "explicitly (1..$(N) for a layer, $(N + 1) for the matrix)"
         )
     )
-    return get_layer(sphere, r; side)
+    return get_layer(incl, r; side)
 end
 
 """
@@ -469,7 +468,8 @@ Exact because the remote medium is uniform: ``\\boldsymbol{\\varepsilon}^{\\inft
 Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conventions.
 
 In conduction, with a second-order matrix conductivity `K₀`:
-Pointwise gradient-flux concentration ``\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient
+Pointwise gradient-flux concentration ``-\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}`` (the remote
+gradient of a remote flux is ``\\nabla T^{\\infty} = -\\boldsymbol{K}_0^{-1}\\cdot\\underline{q}^{\\infty}``): the local gradient
 under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_concentration(…) · q∞`.
 """
 function local_gradient_flux_concentration end
@@ -486,7 +486,8 @@ under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
 Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conventions.
 
 In conduction, with a second-order matrix conductivity `K₀`:
-Pointwise flux-flux concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local flux under
+Pointwise flux-flux concentration ``k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``, the identity in
+a homogeneous medium: the local flux under
 a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `q(x) = local_flux_flux_concentration(…) · q∞`.
 """
 function local_flux_flux_concentration end
@@ -704,9 +705,7 @@ function LayeredSphereTransportFields(
         if k > N
             (one(TP), B_inf * inv_A_inf)
         else
-            Ak, Bk = _cond_extract_AB(
-                TP(radii[k]), TP(k_layers[k]), inside[k][1], inside[k][2]
-            )
+            Ak, Bk = _cond_layer_AB(radii, k_layers, k, inside[k][1], inside[k][2])
             k == 1 ? (Ak * inv_A_inf, zero(TP)) : (Ak * inv_A_inf, Bk * inv_A_inf)
         end
     end
@@ -767,7 +766,8 @@ function _local_K_scaled(
         A = -_region_conductivity(f, k) * A
     end
     if post
-        A = A ⋅ inv(f.K₀)
+        # the remote gradient of a remote flux: ∇T∞ = −K₀⁻¹ · q∞
+        A = -A ⋅ inv(f.K₀)
     end
     return A
 end

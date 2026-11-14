@@ -188,9 +188,9 @@ _frame_classes2(ℬ) = ()
 # A layered sphere has no Hill kernel: its contribution comes from the
 # recurrence of `layered_alv_order2.jl`. Refused by name rather than through a
 # `MethodError` of `tens_IA`, should a path ask for one.
-hill_kernel_order2_at(::LayeredSphere, ::AbstractMatrix) = throw(
+hill_kernel_order2_at(::_LayeredALV, ::AbstractMatrix) = throw(
     ArgumentError(
-        "a LayeredSphere has no Hill kernel; its order-2 ALV contribution is " *
+        "a layered inclusion has no Hill kernel; its order-2 ALV contribution is " *
             "`property_contribution_alv`."
     )
 )
@@ -340,13 +340,13 @@ _dilute2_in_classes(K_r, geom, K_0) = _in_class_algebra(_alg_dilute_concentratio
 # The bounds read the phase kernels alone, as at order 4.
 _inclusion_alv2_quantities(geom, ::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
     (_alv_phase_operator(K_r_law, K_0.grid), zero(K_0), zero(K_0))
-_inclusion_alv2_quantities(s::LayeredSphere, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
+_inclusion_alv2_quantities(s::_LayeredALV, scheme::_ALVBound, K_r_law, K_M_law, K_0::VolterraOperator, times) =
     (_layer_bound_alv2(scheme, s, times), zero(K_0), zero(K_0))
 
 # No Hill kernel: the recurrence gives the concentration and the contribution
 # of the whole sphere, and its layers the conductivity each bound averages (the
 # phase law is a placeholder).
-_inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times) = (
+_inclusion_alv2_quantities(s::_LayeredALV, scheme, K_r_law, K_M_law, K_0::VolterraOperator, times) = (
     _layer_bound_alv2(scheme, s, times),
     gradient_gradient_concentration_alv(s, K_M_law, times),
     property_contribution_alv(s, K_M_law, times),
@@ -356,7 +356,7 @@ _inclusion_alv2_quantities(s::LayeredSphere, scheme, K_r_law, K_M_law, K_0::Volt
 # sphere's law is a placeholder, its layers carrying the kernels: the reference
 # kernel `K_ref` stands in for it.
 _alv2_phase_kernel(geom, law, K_ref, times) = _trapezoidal_relaxation(law, times, 3)
-_alv2_phase_kernel(::LayeredSphere, law, K_ref, times) = K_ref
+_alv2_phase_kernel(::_LayeredALV, law, K_ref, times) = K_ref
 
 """
     _homogenize_alv_order2(rve, scheme, prop::Symbol; times) -> Matrix
@@ -650,13 +650,7 @@ function differential_alv_order2(
         formulation::Symbol = :stiffness,
         solver_kwargs::NamedTuple = NamedTuple()
     )
-    formulation in (:stiffness, :compliance) ||
-        throw(
-        ArgumentError(
-            "differential_alv_order2: formulation must be :stiffness or " *
-                ":compliance; got :$(formulation)"
-        )
-    )
+    _diff_alv_check_formulation("differential_alv_order2", formulation)
     m = host_phase_name(rve, matrix, "differential_alv_order2")
     K_M_law = phase_property(rve, m, prop)
     K_M_law isa ALVProperty ||
@@ -690,14 +684,7 @@ function differential_alv_order2(
             push!(crack_data, (name = name, geom = ph.geometry, target = amt.value, sym = sym, A_int = A_int))
             continue
         end
-        amt isa Schemes.Remainder &&
-            throw(
-            ArgumentError(
-                "differential_alv_order2: phase :$(name) carries the volume " *
-                    "complement and so has no target to integrate up to; name it " *
-                    "as the matrix, or give it an explicit fraction."
-            )
-        )
+        _diff_alv_refuse_remainder("differential_alv_order2", name, amt)
         K_r_law = phase_property(rve, name, prop)
         K_r_law isa ALVProperty ||
             throw(ArgumentError("differential_alv_order2: phase $name property is neither a viscoelastic law, a relaxation operator nor an elastic tensor"))
@@ -737,7 +724,6 @@ function differential_alv_order2(
     end
     sz = 3 * length(grid)
     dual = formulation === :compliance
-    x0 = vec(Tp.(dual ? volterra_inverse(K_0; block_size = 3) : K_0))
     # A tuple of concrete records, each carrying its own trajectory: the
     # right-hand side runs over it without a dynamic dispatch per phase.
     ode_p = (
@@ -745,26 +731,14 @@ function differential_alv_order2(
         solid_data = Tuple(merge(r, (path = paths[r.name],)) for r in solid_data),
         crack_data = Tuple(merge(r, (path = paths[r.name],)) for r in crack_data),
     )
-    rhs! = (du, u, p, τ) -> _diff_alv2_ode_rhs!(du, u, p, τ)
-    prob = ODEProblem(rhs!, x0, (0.0, 1.0), ode_p)
-    sol = solve(
-        prob,
-        something(alg, Tsit5());
-        abstol, reltol,
-        # Only the end state is returned: one copy of the dense state, not one per point.
-        saveat = (1.0,),
-        dense = false,
-        solver_kwargs...
-    )
-    P_end = reshape(sol.u[end], sz, sz)
-    return dual ? volterra_inverse(P_end; block_size = 3) : P_end
+    return _diff_alv_integrate(_diff_alv2_ode_rhs!, K_0, Tp, ode_p, 3; alg, abstol, reltol, solver_kwargs)
 end
 
 # The dilute contribution of one phase against the isotropic running medium `K_op`:
 # in the classes of its operators for an ellipsoid, from the recurrence of a layered
 # sphere, which has no Hill kernel, on full matrices.
 _diff_alv2_contribution(geom, K_r, K_op, times) = (K_r - K_op) * _dilute2_in_classes(K_r, geom, K_op)
-_diff_alv2_contribution(s::LayeredSphere, K_r, K_op, times) = property_contribution_alv(s, Matrix(K_op), times)
+_diff_alv2_contribution(s::_LayeredALV, K_r, K_op, times) = property_contribution_alv(s, Matrix(K_op), times)
 
 # Adds `weight` times a contribution to the right-hand side, mapped to its resistivity
 # counterpart −R̃ ∘ Ñ ∘ R̃ in the dual form: on full matrices for a layered sphere,
@@ -787,14 +761,9 @@ function _diff_alv2_ode_rhs!(du, u, p, τ)
     Δ = reshape(du, p.sz, p.sz)
     fill!(Δ, zero(T))
 
-    # Sherman-Morrison : dφ_α/dτ = df_α/dτ + (f_α / f_0) · sum(df).
-    f = map(r -> r.path.f(τ) * r.target, p.solid_data)
-    df = map(r -> r.path.df(τ) * r.target, p.solid_data)
-    f0 = one(T) - sum(f; init = zero(T))
-    sum_df = sum(df; init = zero(T))
+    dφ, f0, sum_df = _diff_alv_increments(p.solid_data, τ, T)
 
-    map(p.solid_data, f, df) do r, fᵢ, dfᵢ
-        dφᵢ = dfᵢ + (fᵢ / f0) * sum_df
+    map(p.solid_data, dφ) do r, dφᵢ
         iszero(dφᵢ) && return nothing
         # The order-2 projector: the order-4 one on (3n × 3n) blocks mixed two
         # consecutive time blocks and took the running medium out of its class.
@@ -854,9 +823,8 @@ function _sc2_phase_AB(geom, K_r, K, sym, times)
     A = dilute_concentration_alv_order2(K_r, K, hill_kernel_order2_at(geom, K))
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(K_r * A, sym)
 end
-function _sc2_phase_AB(s::LayeredSphere, K_r, K, sym, times)
-    A = gradient_gradient_concentration_alv(s, K, times)
-    B = property_contribution_alv(s, K, times) .+ K * A
+function _sc2_phase_AB(s::_LayeredALV, K_r, K, sym, times)
+    A, B = _alv_layered_AB(s, K, times)
     return _maybe_symmetrize_alv2(A, sym), _maybe_symmetrize_alv2(B, sym)
 end
 
@@ -945,7 +913,7 @@ _sc2_eltype(K_M, data, cracks, times) = mapreduce(
 _maybe_eltype(::Nothing) = Union{}
 _maybe_eltype(A::AbstractMatrix) = eltype(A)
 _sc2_phase_eltype(geom, d, K_M, times) = promote_type(eltype(d.K_r), typeof(d.f), eltype(Elasticity.tens_IA(geom)))
-_sc2_phase_eltype(s::LayeredSphere, d, K_M, times) =
+_sc2_phase_eltype(s::_LayeredALV, d, K_M, times) =
     promote_type(typeof(d.f), eltype(gradient_gradient_concentration_alv(s, K_M, times)))
 
 # One order-2 self-consistent step on full matrices, the running estimate `K` to the
@@ -967,7 +935,7 @@ Volterra setting: the fixed point of
 ``\\widetilde{\\boldsymbol K} = \\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol K}_\\alpha\\stackrel{\\circ}{\\cdot}\\widetilde{\\boldsymbol A}_\\alpha\\bigr)\\stackrel{\\circ}{\\cdot}\\bigl(\\sum_\\alpha f_\\alpha\\,\\widetilde{\\boldsymbol A}_\\alpha\\bigr)^{-1^{\\circ}}``,
 every concentration ``\\widetilde{\\boldsymbol A}_\\alpha`` being taken in the running estimate
 ``\\widetilde{\\boldsymbol K}``, by Picard iteration from the matrix (the phase `matrix`, or
-the one with `fraction = :rest`). A [`LayeredSphere`](@ref) phase enters
+the one with `fraction = :rest`). A [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) phase enters
 through its recurrence, and an insulating crack family through its resistivity
 against the estimate, in the denominator (the form of Echoes, as at order 4).
 Every phase must keep the estimate isotropic, as the order-2 Hill kernel against
@@ -995,7 +963,7 @@ function _self_consistent_alv_order2(
     K_M, data, cracks = _sc2_phases(rve, prop, times, matrix, "self_consistent_alv_order2")
     # Without layered spheres, whose recurrences are written on full matrices, the
     # iteration runs in the classes of the operators.
-    any(d -> d.geom isa LayeredSphere, data) ||
+    any(d -> d.geom isa _LayeredALV, data) ||
         return _sc2_in_classes(K_M, data, cracks, times; abstol, reltol, maxiters, damping, verbose, select_best)
     return _fixed_point_dense(
         K -> _sc2_dense_step(K, data, cracks, times), K_M, "SC-ALV order 2";

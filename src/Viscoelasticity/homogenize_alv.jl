@@ -349,7 +349,7 @@ once from the matrix `ViscoLaw` sample type):
     permittivity) → returns ``3n\\times 3n`` matrix via the order-2 ALV
     calculation (`hill_kernel_order2`, time-space decoupling).
 
-Supports two inclusion-geometry families, in both orders:
+Supports three inclusion-geometry families, in both orders:
   * Single-shape ellipsoidal (`Ellipsoid`, `Spheroid`): the standard
     Hill-kernel + dilute-concentration calculation.
   * `LayeredSphere`: the ALV recurrences feed its concentration and
@@ -360,6 +360,10 @@ Supports two inclusion-geometry families, in both orders:
     [`gradient_gradient_concentration_alv`](@ref) and [`property_contribution_alv`](@ref).
     The phase property is ignored (the layers carry their own kernels); pass
     any `ViscoLaw` (e.g. `heaviside_law(C_0)`) as a placeholder.
+  * [`LayeredCylinder`](@ref) of axis ``\\underline{e}_3``: its radial problems feed its
+    concentration and contribution in the same way, the phase property being a
+    placeholder too. Its contribution is transversely isotropic about
+    ``\\underline{e}_3``.
 
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
@@ -379,7 +383,17 @@ Volterra inverses (Reuss) directly, each over its orientation distribution
     spherical inclusion with an isotropic phase law, or an isotropic
     orientation average `symmetrize = :iso`, which is also what randomly
     oriented inclusions and cracks mean physically. A `LayeredSphere`, whose
-    contribution is isotropic by construction, is always accepted.
+    contribution is isotropic by construction, is always accepted; a
+    `LayeredCylinder` needs `symmetrize = :iso`.
+
+    One cell escapes the restriction: when **every** phase, the host included, is a
+    `LayeredCylinder` of axis ``\\underline{e}_3`` without orientation average, no
+    Hill kernel is needed and the three schemes run on an estimate transversely
+    isotropic about ``\\underline{e}_3``. The moduli are then those of the layers:
+    `SelfConsistent` treats every phase alike, `AsymmetricSelfConsistent` and
+    `DifferentialScheme` take the kernel of the matrix from the only layer of the
+    host (a one-layer cylinder with a perfect interface), and the iteration is the
+    Picard one (`AndersonDefault()`).
 
     An RVE satisfying neither raises an `ArgumentError` naming the phase,
     rather than reading iso parameters off a matrix that is not isotropic.
@@ -467,17 +481,29 @@ _raw_properties(cell, prop) = [
 ]
 
 # The classes a result is tried in, cheapest first: isotropic, those of the phase
-# properties (a law's value, an operator's class), transversely isotropic about e₃,
-# orthotropic in the canonical frame.
+# properties (a law's value, an operator's class), transversely isotropic about
+# the axis of each layered cylinder of the cell and about e₃, orthotropic in the
+# canonical frame.
 function _candidate_classes(rve, prop, times)
     ℬ = TensND.CanonicalBasis{3, Float64}()
     phase = Any[c for c in (_property_class(v, times) for v in _raw_properties(rve, prop)) if c isa _StructuredClass]
+    axes = Any[
+        c for g in _cell_geometries(rve) for c in _axis_classes(g)
+    ]
     return Any[
-        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase...,
+        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase..., axes...,
         TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
         TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
     ]
 end
+# The geometries of the phases of a cell (none for a cell without phases).
+_cell_geometries(rve::RVE) = (rve.phases[name].geometry for name in rve.phase_names)
+_cell_geometries(cell) = ()
+# The transversely isotropic classes about the axis of a layered cylinder.
+_axis_classes(g::LayeredCylinder) = (
+    TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, g.axis), TensTI{2}(1.0, 1.0, g.axis),
+)
+_axis_classes(g) = ()
 _property_class(law::AbstractViscoLaw, times) = _class_of(visco_eval(law, first(times), first(times)))
 _property_class(R::VolterraOperator, times) = R.class
 _property_class(C::TensND.AbstractTens, times) = _class_of(C)
@@ -487,6 +513,10 @@ function _homogenize_alv_rve(
         rve::RVE, scheme::HomogenizationScheme,
         prop::Symbol; times::AbstractVector{<:Real}, kw...
     )
+    # A cell of coaxial layered cylinders under a scheme on its running estimate:
+    # no Hill kernel, an estimate transversely isotropic about their axis.
+    _check_layered_host_alv(rve, scheme, prop, times)
+    _alv_all_cylinders(scheme, rve) && return _homogenize_alv_cylinders(rve, scheme, prop; times, kw...)
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
     #    it resolves the scheme's reference medium itself.
     m = matrix_name(scheme, rve)
@@ -651,13 +681,13 @@ function _inclusion_alv_quantities(geom, ::_ALVBound, C_r_law, C_M_law::ALVPrope
     z = zero(C_0)
     return (_alv_phase_operator(C_r_law, C_0.grid), z, z, z)
 end
-function _inclusion_alv_quantities(sphere::LayeredSphere, scheme::_ALVBound, _C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
+function _inclusion_alv_quantities(sphere::_LayeredALV, scheme::_ALVBound, _C_r_law, C_M_law::ALVProperty, C_0::VolterraOperator, times::AbstractVector{<:Real})
     z = zero(C_0)
     return (_layer_bound_alv(scheme, sphere, times), z, z, z)
 end
 
 function _inclusion_alv_quantities(
-        sphere::LayeredSphere, scheme, _C_r_law,
+        sphere::_LayeredALV, scheme, _C_r_law,
         C_M_law::ALVProperty,
         C_0::VolterraOperator,
         times::AbstractVector{<:Real}
@@ -677,7 +707,8 @@ end
 
 # The 6n × 6n relaxation matrices of the layers of a layered sphere, and their
 # volume fractions. A layer stored as an elastic tensor is a Heaviside law.
-function _layer_kernels_alv(sphere::LayeredSphere{T, N}, times) where {T, N}
+function _layer_kernels_alv(sphere::_LayeredALV, times)
+    N = layer_count(sphere)
     Cs = map(1:N) do k
         C = layer_modulus(sphere, k)
         return _trapezoidal_relaxation(_as_visco_law(C), times, 6)
@@ -688,14 +719,14 @@ end
 # Voigt and Reuss averages of the layer kernels: the stiffness each bound
 # assigns to a layered sphere, as `layer_stiffness_average` and
 # `layer_compliance_average` do in elasticity.
-_layer_voigt_alv(sphere::LayeredSphere, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
-_layer_reuss_alv(sphere::LayeredSphere, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
+_layer_voigt_alv(sphere::_LayeredALV, times) = voigt_alv(_layer_kernels_alv(sphere, times)...)
+_layer_reuss_alv(sphere::_LayeredALV, times) = reuss_alv(_layer_kernels_alv(sphere, times)...)
 
 # The average a scheme reads as the stiffness of a layered sphere: the Reuss
 # bound inverts the average of the layer compliances, every other scheme takes
 # the Voigt average (only the Voigt bound reads it).
-_layer_bound_alv(::Reuss, sphere::LayeredSphere, times) = _layer_reuss_alv(sphere, times)
-_layer_bound_alv(::HomogenizationScheme, sphere::LayeredSphere, times) = _layer_voigt_alv(sphere, times)
+_layer_bound_alv(::Reuss, sphere::_LayeredALV, times) = _layer_reuss_alv(sphere, times)
+_layer_bound_alv(::HomogenizationScheme, sphere::_LayeredALV, times) = _layer_voigt_alv(sphere, times)
 
 # Convenience: extract the scalar amount value (volume fraction or crack
 # density) from the RVE.  Preserves the element type of the wrapper —

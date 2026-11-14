@@ -277,7 +277,9 @@ end
 #  no layer-wise average falls through to the informative error below rather
 #  than to a `MethodError` from three frames down.  (Keying the specificity on
 #  the tensor order instead would make the catch-all unreachable.)
-const _Layered = Union{LayeredSpheres.LayeredSphere, LayeredSpheroids.LayeredSpheroid}
+const _Layered = Union{
+    LayeredSpheres.LayeredSphere, LayeredSpheroids.LayeredSpheroid, LayeredCylinders.LayeredCylinder,
+}
 
 _layer_voigt(sphere::_Layered, ref::TensND.AbstractTens) = layer_property_average(sphere, ref)
 _layer_reuss(sphere::_Layered, ref::TensND.AbstractTens) = layer_inverse_property_average(sphere, ref)

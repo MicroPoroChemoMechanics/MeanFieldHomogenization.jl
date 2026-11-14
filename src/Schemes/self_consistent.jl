@@ -810,17 +810,40 @@ end
 Prototype whose symmetry class defines the Newton parameter space.
 
 Returns `x0` when one application of `step` stays in the same class, and
-`step(x0)` when it lands in a richer one (e.g. `TensISO` → `TensTI{4,T,8}`
-for `TISymmetrize` phases).  Parameterizing on `x0` alone would
-make the residual subtract vectors of different lengths.
+otherwise the first iterate whose class `step` keeps (e.g. `TensISO` →
+`TensTI{4,T,8}` for `TISymmetrize` phases). The class may widen more than once:
+an isotropic start, a transversely isotropic phase, then an isotropic sphere in
+that transversely isotropic reference, whose answer is stored as a general
+tensor. Parameterizing on a narrower class would make the residual subtract
+vectors of different lengths.
 
-The extra `step` call is not wasted work: its result is also a strictly
-better starting iterate than `x0`.
+The extra `step` calls are not wasted work: each result is also a better
+starting iterate than the previous one. The class may also narrow (a
+transversely isotropic start, phases averaged over isotropic orientations): the
+iterate is then followed down to the class the scheme keeps. A `step` that
+would alternate between classes has no class to parameterize the Newton
+unknowns in, and is refused.
 """
 function _sc_newton_seed(x0::TensND.AbstractTens, step)
-    x1 = step(x0)        # an error here is the one the main loop would raise
-    return length(TensND.get_data(x1)) == length(TensND.get_data(x0)) ? x0 : x1
+    x, x1 = x0, step(x0)  # an error here is the one the main loop would raise
+    seen = Int[]
+    while _sc_param_count(x1) != _sc_param_count(x)
+        push!(seen, _sc_param_count(x))
+        _sc_param_count(x1) in seen && throw(
+            ArgumentError(
+                "NewtonDefault: the self-consistent step alternates between symmetry classes " *
+                    "($(seen) unknowns); use the default algorithm (Picard with Anderson " *
+                    "acceleration), which needs no fixed class"
+            )
+        )
+        x, x1 = x1, step(x1)
+    end
+    return x
 end
+
+# The number of Newton unknowns of a tensor: the coordinates of `to_vector`,
+# which every class has, a general tensor included.
+_sc_param_count(x::TensND.AbstractTens) = length(TensND.to_vector(x))
 
 """
     _sc_param_weights(prototype) -> Vector

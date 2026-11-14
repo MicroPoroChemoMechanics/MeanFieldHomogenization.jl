@@ -221,6 +221,10 @@ cut-away only the outermost shell is visible.
 Radii are ascending with ``r = 0`` implicit at the center, and layer 1 is the
 core — the same convention as [`LayeredSphere`](@ref).
 
+A [`LayeredCylinder`](@ref) takes the same table: outer radii from the axis,
+moduli and interfaces. Two angles orient its axis, the cylinder being unbounded
+along it; the view draws a length of it, cut open like the sphere.
+
 A [`LayeredSpheroid`](@ref) is described differently, because it must be
 *confocal*: every layer shares one focal distance, and radii entered one by one
 essentially never do. The form therefore asks for the outer aspect ratio, the
