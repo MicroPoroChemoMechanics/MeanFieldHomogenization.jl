@@ -153,7 +153,41 @@ end
     g = LayeredCylinderTransportFields(c2, K0)
     @test local_temperature(c2, K0, x, G) ≈ local_temperature(g, x, G)
     m(t) = collect(lc_cc(t))
-    @test m(local_gradient_flux_concentration(g, x)) ≈ m(local_gradient_gradient_concentration(g, x)) / m(K0)
-    @test m(local_flux_flux_concentration(c2, K0, x)) ≈ -m(lc_K(1.0, 2.0)) * m(local_gradient_gradient_concentration(g, x)) / m(K0)
+    # under a remote flux q∞ the remote gradient is −K₀⁻¹·q∞: the flux concentrations
+    # are those of that gradient, and the identity in a homogeneous medium
+    q∞ = [0.4, -0.3, 0.8]
+    ∇T∞ = TensND.Vec{3}(Tuple(-(m(K0) \ q∞)))
+    @test m(local_gradient_flux_concentration(g, x)) * q∞ ≈ collect(local_gradient(g, x, ∇T∞))
+    @test m(local_flux_flux_concentration(c2, K0, x)) * q∞ ≈ collect(local_flux(g, x, ∇T∞))
+    neutral = LayeredCylinderTransportFields(LayeredCylinder((0.6, 1.0), (K0, K0)), K0)
+    @test m(local_flux_flux_concentration(neutral, x)) ≈ I(3)
+    @test m(local_gradient_flux_concentration(neutral, x)) ≈ -inv(m(K0))
     @test collect(local_flux(c2, K0, x, G)) ≈ -m(lc_K(1.0, 2.0)) * collect(local_gradient(g, x, G))
+end
+
+@testset "LayeredCylinder — jumps of the flux and remote loadings in other bases" begin
+    ez = (0.0, 0.0, 1.0)
+    kˢ = 0.3
+    c = LayeredCylinder((0.6, 1.0), (lc_K(5.0, 7.0), lc_K(1.0, 2.0)); interfaces = (SurfaceConductiveInterface(kˢ), PerfectInterface()))
+    g = LayeredCylinderTransportFields(c, lc_K(2.0, 3.0))
+    G = TensND.Vec{3}((0.3, -0.2, 0.9))
+    θ = 0.7
+    er = [cos(θ), sin(θ), 0.0]
+    T = local_temperature(g, 0.6, θ, 0.4, G)
+    qi = collect(local_flux(g, 0.6, θ, 0.4, G; side = :inner))
+    qo = collect(local_flux(g, 0.6, θ, 0.4, G; side = :outer))
+    # the surface current kˢ∇ₛT, of divergence −kˢ T/R² on the cos θ mode, takes
+    # what the normal flux loses: [q_r] = −kˢ T/R²
+    @test dot(qo - qi, er) ≈ -kˢ * (T - 0.4 * 0.9) / 0.6^2
+    @test local_temperature(g, 0.6, θ, 0.4, G; side = :inner) ≈ T
+    # a remote strain given in a rotated basis
+    Cf, Cm, C0 = lc_tensor(LC_F), lc_tensor(LC_M), lc_tensor(LC_0)
+    f = LayeredCylinderFields(LayeredCylinder((0.6, 1.0), (Cf, Cm)), C0)
+    E = MeanFieldHomogenization.Core._tens_in([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
+    Er = TensND.express(E, TensND.RotatedBasis(0.3, 1.1, -0.4))
+    @test !(TensND.get_array(Er) ≈ TensND.get_array(E))
+    for x in ((0.3, 0.1, 0.2), (0.8, -0.3, 0.0), (1.5, 0.2, 0.1))
+        @test lc_cc(local_flux(f, x, Er)) ≈ lc_cc(local_flux(f, x, E))
+        @test collect(local_displacement(f, x, Er)) ≈ collect(local_displacement(f, x, E))
+    end
 end

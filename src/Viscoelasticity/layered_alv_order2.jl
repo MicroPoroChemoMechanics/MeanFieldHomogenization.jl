@@ -80,19 +80,12 @@ _cond_jump_alv(intf::AbstractInterface, u, s, R) = throw(
 
 # An impermeable layer: a conductivity matrix that is exactly zero, entry by
 # entry as the elastic recurrence tests its scalar.
-_is_impermeable_alv(k::AbstractMatrix) = all(LayeredSpheres._is_impermeable, k)
 
 # The amplitudes (A, B) of the impermeable shell `j`, whose inner radius is `R`,
 # and the zero field of the layers it shields: the Volterra form of
 # `LayeredSpheres._cond_enter_layer!`.
 function _cond_enter_impermeable_alv!(amps, states, layers, R, j::Int)
-    _is_impermeable_alv(layers[j - 1]) && throw(
-        ArgumentError(
-            "layers $(j - 1) and $j of the LayeredSphere both have a zero conductivity: " *
-                "the field of an impermeable layer is defined by a conducting neighbor " *
-                "inside it; merge the two layers"
-        )
-    )
+    LayeredSpheres._is_impermeable(layers[j - 1]) && LayeredSpheres._adjacent_impermeable("LayeredSphere", j)
     Z = zero(first(first(amps)))
     amps[1:(j - 1)] .= Ref((Z, Z))
     states[1:(j - 1)] .= Ref((Z, Z))
@@ -131,7 +124,7 @@ function _cond_amplitude_seq_alv(
         u = R .* A .+ B ./ R^2
         s = layers[k] * (A .- (2 / R^3) .* B)
         states[k] = (u, s)
-        if k < N && _is_impermeable_alv(layers[k + 1])
+        if k < N && LayeredSpheres._is_impermeable(layers[k + 1])
             A, B = _cond_enter_impermeable_alv!(amps, states, layers, R, k + 1)
         else
             u, s = _cond_jump_alv(layer_interface(sphere, k), u, s, R)

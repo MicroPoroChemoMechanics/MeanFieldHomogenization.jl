@@ -503,6 +503,7 @@ function _homogenize_alv_rve(
     )
     # A cell of aligned layered cylinders under a scheme on its running estimate:
     # no Hill kernel, an estimate transversely isotropic about e₃.
+    _check_layered_host_alv(rve, scheme, prop, times)
     _alv_all_cylinders(scheme, rve) && return _homogenize_alv_cylinders(rve, scheme, prop; times, kw...)
     # 1. Matrix kernel.  `homogenize_alv` does not go through `homogenize`, so
     #    it resolves the scheme's reference medium itself.

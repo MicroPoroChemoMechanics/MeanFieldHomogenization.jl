@@ -33,7 +33,7 @@ import ..LayeredSpheres: layer_count, layer_radius, layer_modulus, layer_interfa
     local_gradient_flux_concentration, local_flux_flux_concentration,
     local_gradient, local_flux, local_displacement, local_temperature,
     layer_gradient_average, layer_flux_average
-using ..LayeredSpheres: _locate_region, _resolve_region
+using ..LayeredSpheres: _locate_region, _resolve_region, _is_impermeable, _adjacent_impermeable
 
 include("geometry.jl")
 include("kernel.jl")             # the radial problems, for scalars and operators

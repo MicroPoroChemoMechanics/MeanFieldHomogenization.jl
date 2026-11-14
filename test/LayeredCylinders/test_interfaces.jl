@@ -9,22 +9,31 @@ isdefined(@__MODULE__, :lc_ti) || include(joinpath(@__DIR__, "helpers.jl"))
 
 @testset "LayeredCylinder — interfaces as thin layers" begin
     Cf, Cm, C0 = lc_tensor(LC_F), lc_tensor(LC_M), lc_tensor(LC_0)
-    h, r₁ = 1.0e-6, 0.6
+    h, r₁ = 1.0e-7, 0.6           # the error of the limit is proportional to h
     κs, μs, sn, st = 3.0, 1.2, 0.05, 0.08
     quantities = (gradient_gradient_concentration, flux_gradient_concentration, MeanFieldHomogenization.property_contribution)
     for (itf, thin) in ((MembraneInterface(κs, μs), lc_thin_membrane(κs, μs, h)), (SpringInterface(; sn, st), lc_thin_spring(sn, st, h)))
         # the interface inside the cylinder
         ref = LayeredCylinder((r₁, 1.0), (Cf, Cm); interfaces = (itf, PerfectInterface()))
         lay = LayeredCylinder((r₁ - h / 2, r₁ + h / 2, 1.0), (Cf, thin, Cm))
-        @test all(isapprox(lc_data(g(ref, Cm, C0)), lc_data(g(lay, Cm, C0)); rtol = 1.0e-4) for g in quantities)
+        @test all(lc_close(g(ref, Cm, C0), g(lay, Cm, C0)) for g in quantities)
         # the interface on its outer boundary, counted with the cylinder
         ref = LayeredCylinder((r₁, 1.0), (Cf, Cm); interfaces = (PerfectInterface(), itf))
         lay = LayeredCylinder((r₁, 1.0 - h, 1.0), (Cf, Cm, thin))
-        @test all(isapprox(lc_data(g(ref, Cm, C0)), lc_data(g(lay, Cm, C0)); rtol = 1.0e-4) for g in quantities)
-        # … or left to the matrix: the cylinder then ends on its inner side
-        inner = LayeredCylinder((r₁, 1.0), (Cf, Cm))
-        @test !(gradient_gradient_concentration(ref, Cm, C0) ≈ gradient_gradient_concentration(ref, Cm, C0; external = false)) ||
-            !(flux_gradient_concentration(ref, Cm, C0) ≈ flux_gradient_concentration(ref, Cm, C0; external = false))
+        @test all(lc_close(g(ref, Cm, C0), g(lay, Cm, C0)) for g in quantities)
+        # … or left to the matrix: the thin layer then lies outside the cylinder,
+        # whose strain and stress are those of its two layers alone
+        out = LayeredCylinder((r₁, 1.0, 1.0 + h), (Cf, Cm, thin))
+        f = ntuple(k -> layer_volume_fraction(out, k), 2)
+        two_layers(g) = sum(f[k] * g(out, C0; layer = k) for k in 1:2) / sum(f)
+        @test lc_close(gradient_gradient_concentration(ref, Cm, C0; external = false), two_layers(gradient_gradient_concentration))
+        @test lc_close(flux_gradient_concentration(ref, Cm, C0; external = false), two_layers(flux_gradient_concentration))
+        # what the outer interface carries changes sides: the opening of a spring,
+        # the surface stress of a membrane (which does not open)
+        moved = itf isa SpringInterface ? gradient_gradient_concentration : flux_gradient_concentration
+        kept = itf isa SpringInterface ? flux_gradient_concentration : gradient_gradient_concentration
+        @test !lc_close(moved(ref, Cm, C0; external = false), moved(ref, Cm, C0))
+        @test lc_close(kept(ref, Cm, C0; external = false), kept(ref, Cm, C0))
         for ext in (true, false)
             N = MeanFieldHomogenization.property_contribution(ref, Cm, C0; external = ext)
             @test N ≈ flux_gradient_concentration(ref, Cm, C0; external = ext) - C0 ⊡ gradient_gradient_concentration(ref, Cm, C0; external = ext)
@@ -57,4 +66,25 @@ end
     @test !(f[1] * Bₖ(1) + f[2] * Bₖ(2) ≈ flux_gradient_concentration(mem, Cm, C0))
     @test f[1] * gradient_gradient_concentration(mem, C0; layer = 1) + f[2] * gradient_gradient_concentration(mem, C0; layer = 2) ≈
         gradient_gradient_concentration(mem, Cm, C0)
+end
+
+@testset "LayeredCylinder — refused and converted inputs" begin
+    Cf, Cm, C0 = lc_tensor(LC_F), lc_tensor(LC_M), lc_tensor(LC_0)
+    # vectors are stored as tuples
+    c = LayeredCylinder([0.6, 1.0], [Cf, Cm]; interfaces = [SpringInterface(20.0, 10.0), PerfectInterface()])
+    @test c.moduli isa Tuple && c.interfaces isa Tuple
+    @test gradient_gradient_concentration(c, C0, C0) ≈
+        gradient_gradient_concentration(LayeredCylinder((0.6, 1.0), (Cf, Cm); interfaces = (SpringInterface(20.0, 10.0), PerfectInterface())), C0, C0)
+    @test_throws "AbstractInterface" LayeredCylinder((0.6, 1.0), (Cf, Cm); interfaces = (0.3, PerfectInterface()))
+    # a conductivity where a stiffness is expected, and the reverse
+    ck = LayeredCylinder((1.0,), (lc_K(5.0, 7.0),))
+    @test_throws "same physics" gradient_gradient_concentration(ck, C0, C0)
+    @test_throws "same physics" gradient_gradient_concentration(LayeredCylinder((1.0,), (Cf,)), lc_K(2.0, 3.0), lc_K(2.0, 3.0))
+    # an operator not invariant under the mirrors through the axis
+    skew = TensND.TensTI{4}(9.0, 10.0, 1.0, 1.0, 4.0, 6.0, 0.5, 0.0, (0.0, 0.0, 1.0))
+    @test_throws "relative distance" gradient_gradient_concentration(LayeredCylinder((1.0,), (Cf,)), C0, skew)
+    # an operator without major symmetry is read as it is: C₃₃₁₁ ≠ C₁₁₃₃
+    asym = TensND.TensTI{4}(9.0, 10.0, 1.2, 1.8, 4.0, 6.0, (0.0, 0.0, 1.0))
+    L = LCyl._hill_moduli(asym, (0.0, 0.0, 1.0))
+    @test [L.n, 2L.k, sqrt(2) * L.lt, sqrt(2) * L.l, 2L.m, 2L.p] ≈ [9.0, 10.0, 1.2, 1.8, 4.0, 6.0]
 end

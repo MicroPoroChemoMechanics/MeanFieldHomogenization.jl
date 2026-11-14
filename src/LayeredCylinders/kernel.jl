@@ -1,9 +1,10 @@
 # =============================================================================
-#  kernel.jl — the three radial problems of a layered cylinder, written once
-#  for scalars and for operators.
+#  kernel.jl — the radial problems of a layered cylinder, written once for
+#  scalars and for operators.
 #
-#  A remote uniform strain on a cylinder with transversely isotropic coaxial
-#  layers splits into three independent problems (Hill's moduli k, l, m, n, p):
+#  A remote uniform strain or gradient on a cylinder with transversely isotropic
+#  coaxial layers splits into independent problems of three kinds (Hill's
+#  moduli k, l, m, n, p):
 #
 #    * potential     φ(r) cos θ, flux f = c φ′           — antiplane shear
 #                    (φ = u_z, c = p, f = σ_rz) and transverse conduction
@@ -30,17 +31,13 @@
 #  equilibrium equations do not impose.
 # =============================================================================
 
-# c⁻¹ ∘ x. For numbers, a plain division (it also gives m/k = 0 at k = ∞).
+# c⁻¹ ∘ x. For numbers, a plain division.
 @inline _ldiv(c::Number, x) = x / c
 @inline _ldiv(c::AbstractMatrix, x::AbstractMatrix) = c \ x
 
 # χ + c·𝟙, the identity being that of the algebra χ lives in.
 @inline _shift(χ, c::Real) = χ + c * one(χ)
 
-# Exact zero of a modulus (an impermeable layer). Never true for a symbol,
-# which does not compare.
-@inline _is_zero_modulus(c::Number) = is_hard_numeric(c) && iszero(c)
-@inline _is_zero_modulus(c::AbstractMatrix) = is_hard_numeric(eltype(c)) && iszero(c)
 
 # ── Potential problem: φ = A r + B / r,  f = c (A − B / r²) ──────────────────
 
@@ -73,15 +70,21 @@ end
 #      σ_rr = m ( 2a            − 6 c / r⁴ − 4 d / r²),
 #      σ_rθ = m (−2a + 6 r² b   − 6 c / r⁴ − 2 d / r²).
 #
-#  At k = ∞ (χ = 0) every entry stays finite: an incompressible layer needs no
-#  special case here.
+#  Only m⁻¹ and (1 + χ)⁻¹ are inverted in going back to the amplitudes; the
+#  axisymmetric problem inverts k + m (an incompressible layer is refused upstream).
 
-@inline function _shear_state(r, k, m, a, b, c, d)
+# (U, V) of the four modes, the singular ones dropped on the axis.
+@inline function _shear_displacements(r, k, m, a, b, c, d)
     χ = _ldiv(k, m)
     χb = χ * b
     χd = χ * d
-    U = r * a + r^3 * (χb - b) + c / r^3 + (d + χd) / r
-    V = -r * a + r^3 * (χb + 2 * b) + c / r^3 - χd / r
+    c₃ = _over(c, r, 3)
+    return r * a + r^3 * (χb - b) + c₃ + _over(d + χd, r, 1),
+        -r * a + r^3 * (χb + 2 * b) + c₃ - _over(χd, r, 1)
+end
+
+@inline function _shear_state(r, k, m, a, b, c, d)
+    U, V = _shear_displacements(r, k, m, a, b, c, d)
     σrr = m * (2 * a - 6 * c / r^4 - 4 * d / r^2)
     σrθ = m * (-2 * a + 6 * r^2 * b - 6 * c / r^4 - 2 * d / r^2)
     return U, V, σrr, σrθ
@@ -118,9 +121,7 @@ struct TransverseConduction end
 struct Axisymmetric end
 struct TransverseShear end
 
-_physics_name(::Antiplane) = "elasticity"
-_physics_name(::Axisymmetric) = "elasticity"
-_physics_name(::TransverseShear) = "elasticity"
+_physics_name(::Union{Antiplane, Axisymmetric, TransverseShear}) = "elasticity"
 _physics_name(::TransverseConduction) = "conduction"
 
 _wrong_interface(itf, pb) = throw(
@@ -184,14 +185,8 @@ function _pot_sequence(pb, radii::NTuple{N}, cs::NTuple{N, S}, interfaces, A₁:
     A, B = A₁, zero(A₁)
     for k in 1:N
         if k > 1
-            if _is_zero_modulus(cs[k])
-                _is_zero_modulus(cs[k - 1]) && throw(
-                    ArgumentError(
-                        "layers $(k - 1) and $k of the LayeredCylinder both have a zero modulus: " *
-                            "the field of an impermeable layer is defined by a conducting " *
-                            "neighbor inside it; merge the two layers"
-                    )
-                )
+            if _is_impermeable(cs[k])
+                _is_impermeable(cs[k - 1]) && _adjacent_impermeable("LayeredCylinder", k)
                 for j in 1:(k - 1)
                     inside[j] = outside[j] = amps[j] = (zero(A₁), zero(A₁))
                 end
@@ -346,11 +341,10 @@ end
 @inline _at_axis(r) = is_hard_numeric(typeof(r)) && iszero(r)
 @inline _over(x, r, p::Int) = _at_axis(r) ? zero(x) : x / r^p
 
-# (u_r/r − 2B/r², u_r/r) per unit loading: the pair (ε_rr, ε_θθ) of u_r = A r + B/r.
-@inline _axi_strains(r, A, B) = (A - _over(B, r, 2), A + _over(B, r, 2))
-
-# (φ′, φ/r) of φ = A r + B/r.
-@inline _pot_gradients(r, A, B) = (A - _over(B, r, 2), A + _over(B, r, 2))
+# A r + B/r, the radial function of the axisymmetric and potential problems,
+# and its derivative and quotient by r: (u_r, ε_rr, ε_θθ), or (φ, φ′, φ/r).
+@inline _two_modes(r, A, B) = r * A + _over(B, r, 1)
+@inline _two_mode_gradients(r, A, B) = (A - _over(B, r, 2), A + _over(B, r, 2))
 
 # (U′, (U + 2V)/r, (2U/r − V′ + V/r)/2) of the transverse shear modes.
 @inline function _shear_strains(r, k, m, a, b, c, d)
@@ -365,15 +359,6 @@ end
     return dU, T, H
 end
 
-# (U, V) alone, for the displacement.
-@inline function _shear_displacements(r, k, m, a, b, c, d)
-    χ = _ldiv(k, m)
-    χb = χ * b
-    χd = χ * d
-    c₃ = _over(c, r, 3)
-    return r * a + r^3 * (χb - b) + c₃ + _over(d + χd, r, 1),
-        -r * a + r^3 * (χb + 2 * b) + c₃ - _over(χd, r, 1)
-end
 
 """
     _matrix_amplitudes(sol) -> (; dilatation, axial, shear, antiplane)
@@ -394,6 +379,29 @@ function _matrix_amplitudes(sol)
 end
 
 """
+    _matrix_transport_amplitudes(sol) -> (A, B)
+
+Amplitudes of the transverse conduction problem in the matrix.
+"""
+_matrix_transport_amplitudes(sol) =
+    _pot_amplitudes(last(sol.radii), sol.K₀.t, last(sol.transverse.outside)...)
+
+"""
+    _local_conduction_matrix(dφ, φ_r) -> Matrix (3 × 3)
+
+The pointwise gradient concentration of conduction in the cylindrical frame of
+the point, ``\\varphi'\\,\\underline e_r\\otimes\\underline e_r + (\\varphi/r)\\,\\underline e_\\theta\\otimes\\underline e_\\theta + \\underline e_z\\otimes\\underline e_z``,
+as an array of numbers or of Volterra matrices.
+"""
+function _local_conduction_matrix(dφ, φ_r)
+    M = fill(zero(dφ), 3, 3)     # an array of matrices in aging viscoelasticity
+    M[1, 1] = dφ
+    M[2, 2] = φ_r
+    M[3, 3] = one(dφ)
+    return M
+end
+
+"""
     _local_strain_entries(sol, mat, k, r) -> NamedTuple
 
 Entries of the pointwise strain concentration of region `k` (the matrix for
@@ -406,10 +414,10 @@ function _local_strain_entries(sol, mat, k::Int, r)
     N = length(sol.radii)
     L = k ≤ N ? sol.Ls[k] : sol.L₀
     amp(seq, name) = k ≤ N ? seq.amps[k] : getfield(mat, name)
-    rr_e, tt_e = _axi_strains(r, amp(sol.dilatation, :dilatation)...)
-    rr_z, tt_z = _axi_strains(r, amp(sol.axial, :axial)...)
+    rr_e, tt_e = _two_mode_gradients(r, amp(sol.dilatation, :dilatation)...)
+    rr_z, tt_z = _two_mode_gradients(r, amp(sol.axial, :axial)...)
     rr_D, tt_D, rt = _shear_strains(r, L.k, L.m, amp(sol.shear, :shear)...)
-    rz, tz = _pot_gradients(r, amp(sol.antiplane, :antiplane)...)
+    rz, tz = _two_mode_gradients(r, amp(sol.antiplane, :antiplane)...)
     return (; rr_e, rr_z, rr_D, tt_e, tt_z, tt_D, rt, rz, tz)
 end
 

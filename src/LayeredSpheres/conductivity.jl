@@ -108,6 +108,18 @@ end
 # An impermeable layer: a conductivity that is exactly zero. Never true for a
 # symbol, which does not compare.
 @inline _is_impermeable(k) = is_hard_numeric(typeof(k)) && iszero(k)
+# The Volterra matrix of a conductivity: impermeable at every instant.
+@inline _is_impermeable(k::AbstractMatrix) = all(_is_impermeable, k)
+
+# Two impermeable layers side by side: the field of the inner one is defined by
+# no conducting neighbor inside it.
+_adjacent_impermeable(name::AbstractString, j::Int) = throw(
+    ArgumentError(
+        "layers $(j - 1) and $j of the $name both have a zero conductivity: the field of " *
+            "an impermeable layer is defined by a conducting neighbor inside it; merge the " *
+            "two layers"
+    )
+)
 
 """
     _cond_layer_AB(radii, k_layers, j, T̂, q̂n) -> (A, B)
@@ -199,13 +211,7 @@ function _cond_enter_layer!(inside_states, s::Vector{TP}, radii, k_layers, j::In
     _is_impermeable(k_layers[j]) || return _cond_layer_transfer(
         TP(radii[j]), TP(radii[j - 1]), TP(k_layers[j])
     ) * s
-    _is_impermeable(k_layers[j - 1]) && throw(
-        ArgumentError(
-            "layers $(j - 1) and $j of the LayeredSphere both have a zero conductivity: " *
-                "the field of an impermeable layer is defined by a conducting neighbor " *
-                "inside it; merge the two layers"
-        )
-    )
+    _is_impermeable(k_layers[j - 1]) && _adjacent_impermeable("LayeredSphere", j)
     for i in 1:(j - 1)
         inside_states[i] = zeros(TP, 2)
     end

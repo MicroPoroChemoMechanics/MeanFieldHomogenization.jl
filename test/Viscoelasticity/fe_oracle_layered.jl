@@ -103,6 +103,8 @@ struct Harmonic
     SH::Matrix{Matrix{Float64}}     # [e, q] surface gradient per unit a_e
     powers::Vector{Int}             # decaying exponents of the exterior element
     loads::Vector{Load}
+    patterns::Vector{Any}           # the g_c, kept for the pointwise fields
+    prescribed::Vector{Any}         # the h_e
 end
 
 _radius(x, d) = d == 3 ? norm(x) : hypot(x[1], x[2])
@@ -154,7 +156,7 @@ function Harmonic(
         ue = elastic ? mandel_to_matrix(L.E) * x : [dot(L.E, x)]
         @assert isapprox(u, ue; atol = 1.0e-12) "load $(L.name) is not the field its amplitudes describe"
     end
-    return Harmonic(d, elastic, nc, ne, b, w, pts, gv, A, B, H, SB, SH, powers, loads)
+    return Harmonic(d, elastic, nc, ne, b, w, pts, gv, A, B, H, SB, SH, powers, loads, patterns, prescribed)
 end
 
 # ── The four problems ────────────────────────────────────────────────────────
@@ -232,6 +234,9 @@ struct Region
     node0::Int              # first global node
     law::Int                # index of the Volterra matrix
     withH::Bool             # prescribed fields counted (not in the exterior element)
+    edges::Vector{Float64}  # element ends (the exterior element: [Rt])
+    p::Int                  # degree (0 for the exterior element)
+    powers::Vector{Int}     # decaying exponents of the exterior element
 end
 nnodes(R::Region) = size(R.N, 2)
 
@@ -273,26 +278,40 @@ function fe_region(edges::Vector{Float64}, p::Int, d::Int, node0::Int, law::Int;
             push!(rs, r); push!(ws, w * r^(d - 1)); push!(Ns, row); push!(dNs, drow)
         end
     end
-    return Region(rs, ws, permutedims(reduce(hcat, Ns)), permutedims(reduce(hcat, dNs)), node0, law, true)
+    return Region(
+        rs, ws, permutedims(reduce(hcat, Ns)), permutedims(reduce(hcat, dNs)), node0, law, true,
+        edges, p, Int[],
+    )
 end
 
 # The exterior element on [Rt, ∞): shape functions ψ₁ = (Rt/r)^s₁ (value 1 at Rt) and
 # ψ_k - ψ₁ (zero at Rt) for the other exponents; r = Rt/τ, τ ∈ (0, 1].
 function exterior_region(Rt::Float64, powers::Vector{Int}, d::Int, node0::Int, law::Int; nq = 12)
     τq, wτ = gauss_on(0.0, 1.0, nq)
-    K = length(powers)
-    N = zeros(nq, K); dN = zeros(nq, K)
-    ψ(s, τ) = τ^s; dψ(s, τ) = -s * τ^(s + 1) / Rt
     r = Rt ./ τq
     w = wτ .* (Rt ./ τq .^ 2) .* r .^ (d - 1)
-    for (g, τ) in enumerate(τq)
-        N[g, 1] = ψ(powers[1], τ); dN[g, 1] = dψ(powers[1], τ)
-        for k in 2:K
-            N[g, k] = ψ(powers[k], τ) - ψ(powers[1], τ)
-            dN[g, k] = dψ(powers[k], τ) - dψ(powers[1], τ)
-        end
+    N = zeros(nq, length(powers)); dN = zeros(nq, length(powers))
+    for g in eachindex(r)
+        N[g, :], dN[g, :] = exterior_shape(Rt, powers, r[g])
     end
-    return Region(r, w, N, dN, node0, law, false)
+    return Region(r, w, N, dN, node0, law, false, [Rt], 0, powers)
+end
+function exterior_shape(Rt, powers, r)
+    τ = Rt / r
+    ψ = [τ^s for s in powers]; dψ = [-s * τ^(s + 1) / Rt for s in powers]
+    return vcat(ψ[1], ψ[2:end] .- ψ[1]), vcat(dψ[1], dψ[2:end] .- dψ[1])
+end
+
+# The shape functions of a region and their derivatives at the radius r.
+function shape_at(R::Region, r)
+    R.p == 0 && return exterior_shape(R.edges[1], R.powers, r)
+    e = clamp(searchsortedlast(R.edges, r), 1, length(R.edges) - 1)
+    a, b = R.edges[e], R.edges[e + 1]
+    Nl, dNl = lagrange(collect(range(-1.0, 1.0; length = R.p + 1)), 2 * (r - a) / (b - a) - 1)
+    N = zeros(nnodes(R)); dN = zeros(nnodes(R))
+    idx = ((e - 1) * R.p + 1):(e * R.p + 1)
+    N[idx] = Nl; dN[idx] = dNl .* (2 / (b - a))
+    return N, dN
 end
 
 # ── Assembly ─────────────────────────────────────────────────────────────────
@@ -336,17 +355,21 @@ hdof(m::Model, e) = m.nnode * m.h.nc + e
 """
     build_model(h, radii, laws, itfs, ref; p, nel, shell = 0.0, nel_shell)
 
-`laws` the Volterra matrices of the layers, `ref` that of the matrix, `nel` the number
-of elements per unit length in each layer (at least 2 per layer), `shell` the outer
-radius of a meshed matrix shell (0: the exterior element starts at r_N).
+`laws` the Volterra matrices of the layers, `ref` that of the matrix (any 6n×6n or 3n×3n
+block matrix: no symmetry is assumed), `nel` the number of elements per unit length in
+each layer (at least 2 per layer) unless `nel_layers` gives the count of each layer (a
+mesh that moves with the radii, for differences in a radius), `shell` the outer radius
+of a meshed matrix shell (0: the exterior element starts at r_N).
 """
-function build_model(h::Harmonic, radii, laws, itfs, ref; p = 3, nel = 8, shell = 0.0, nel_shell = 8)
+function build_model(
+        h::Harmonic, radii, laws, itfs, ref; p = 3, nel = 8, shell = 0.0, nel_shell = 8, nel_layers = nothing
+    )
     nl = length(radii)
     regions = Region[]; itf_nodes = Tuple{Int, Int}[]
     node = 1
     rin = 0.0
     for k in 1:nl
-        ne_k = max(2, ceil(Int, nel * (radii[k] - rin)))
+        ne_k = nel_layers === nothing ? max(2, ceil(Int, nel * (radii[k] - rin))) : nel_layers[k]
         R = fe_region(collect(range(rin, radii[k]; length = ne_k + 1)), p, h.d, node, k)
         push!(regions, R)
         last = node + nnodes(R) - 1
@@ -593,25 +616,81 @@ function oracle_solve(h::Harmonic, radii, laws, itfs, ref; external = true, kw..
     end
     return (;
         eps = epsA, sig = sigA, N = NA, eps_layer = epsL, sig_layer = sigL,
-        eps_layer_ext = epsLe, eps_layer_int = epsLi, model = m,
+        eps_layer_ext = epsLe, eps_layer_int = epsLi, model = m, Q,
     )
 end
 
 """
-    compare(pkg, arr, h; loads) -> relative error
+    point_fields(res, x, region) -> (; u, grad, flux)
+
+The fields of the solution `res` at the point `x`, read in the region `region` (k ≤ N
+the layer k, N + 1 the matrix): arrays `[load, i, J]` of the displacement (temperature,
+a 1-vector), of the gradient (Mandel strain, or ∇T) and of the flux R̃ ∘ gradient (σ, or
++k·∇T) of that region. The amplitudes are interpolated by the shape functions of the
+region; on an interface, `region` chooses the side.
+"""
+function point_fields(res, x::AbstractVector, region::Int)
+    m, Q = res.model, res.Q
+    h = m.h
+    nt, nL = m.nt, length(h.loads)
+    r = _radius(x, h.d)
+    n = h.d == 3 ? x ./ r : [x[1], x[2], 0.0] ./ r
+    val(f, y) = h.elastic ? f(y) : [f(y)]
+    gr(f, y) = h.elastic ? ForwardDiff.jacobian(f, y) : reshape(ForwardDiff.gradient(f, y), 1, 3)
+    gc = [val(f, n) for f in h.patterns]
+    A = [h.elastic ? mandel_sym(gc[c] * n') : gc[c][1] .* n for c in 1:h.nc]
+    B = [h.elastic ? mandel_sym(gr(h.patterns[c], n)) : vec(gr(h.patterns[c], n)) for c in 1:h.nc]
+    H = [h.elastic ? mandel_sym(gr(f, x)) : vec(gr(f, x)) for f in h.prescribed]
+    hv = [val(f, x) for f in h.prescribed]
+    R = if region ≤ m.nlayers
+        m.regions[region]
+    else                                              # the meshed shell, or the exterior element
+        length(m.regions) > m.nlayers + 1 && r ≤ m.Rt ? m.regions[m.nlayers + 1] : m.regions[end]
+    end
+    N, dN = shape_at(R, r)
+    ψ1, dψ1 = R.p == 0 ? (N[1], dN[1]) : (0.0, 0.0)
+    u = Array{Vector{Float64}}(undef, nL, nt, nt); g = similar(u); f = similar(u)
+    for ℓ in 1:nL, J in 1:nt
+        cl = (ℓ - 1) * nt + J
+        L = h.loads[ℓ]
+        for i in 1:nt
+            q = Q[i][:, cl]
+            Ei = i == J ? 1.0 : 0.0
+            U = [sum(N[a] * q[dof(m, R.node0 + a - 1, c)] for a in eachindex(N)) for c in 1:h.nc]
+            dU = [sum(dN[a] * q[dof(m, R.node0 + a - 1, c)] for a in eachindex(N)) for c in 1:h.nc]
+            if R.p == 0                               # u = u∞ + w in the exterior element
+                U .+= L.c .* (r - m.Rt * ψ1) .* Ei
+                dU .+= L.c .* (1 - m.Rt * dψ1) .* Ei
+            end
+            a = [q[hdof(m, e)] for e in 1:h.ne]
+            g[ℓ, i, J] = sum(dU[c] .* A[c] .+ (U[c] / r) .* B[c] for c in 1:h.nc) +
+                sum(a[e] .* H[e] for e in 1:h.ne; init = zeros(h.b))
+            u[ℓ, i, J] = sum(U[c] .* gc[c] for c in 1:h.nc) + sum(a[e] .* hv[e] for e in 1:h.ne; init = zero(gc[1]))
+        end
+        for i in 1:nt
+            f[ℓ, i, J] = sum(law_block(m, R.law, i, j) * g[ℓ, j, J] for j in 1:i)
+        end
+    end
+    return (; u, grad = g, flux = f, normal = n)
+end
+
+"""
+    compare(pkg, arr, h; loads, rb = h.b, sign = 1) -> relative error
 
 Compare a Volterra block matrix `pkg` of the package with an oracle array `arr`
 (`[load, i, J]`): block (i, J) applied to the gradient of each load, against the
-oracle's response at instant i to that load applied as a unit at instant J. The error is
-the largest absolute difference over the largest absolute entry of the package.
+oracle's response at instant i to that load applied as a unit at instant J, times
+`sign`. `rb` is the number of rows per instant (3 for a displacement, 1 for a
+temperature). The error is the largest absolute difference over the largest absolute
+entry of the package.
 """
-function compare(pkg::AbstractMatrix, arr, h::Harmonic; loads = eachindex(h.loads))
+function compare(pkg::AbstractMatrix, arr, h::Harmonic; loads = eachindex(h.loads), rb = h.b, sign = 1)
     _, nt, _ = size(arr)
     b = h.b
     err = 0.0; sc = 0.0
     for ℓ in loads, i in 1:nt, J in 1:nt
-        P = pkg[((i - 1) * b + 1):(i * b), ((J - 1) * b + 1):(J * b)] * h.loads[ℓ].E
-        err = max(err, maximum(abs, P - arr[ℓ, i, J])); sc = max(sc, maximum(abs, P))
+        P = pkg[((i - 1) * rb + 1):(i * rb), ((J - 1) * b + 1):(J * b)] * h.loads[ℓ].E
+        err = max(err, maximum(abs, P - sign .* arr[ℓ, i, J])); sc = max(sc, maximum(abs, P))
     end
     return err / sc
 end

@@ -134,6 +134,11 @@ _compose(C, A) = (;
 
 _minus(B, C) = map(-, B, C)
 
+# The average stress of the material of layer k, its stiffness on the left of
+# its average strain; in conduction, its average of k·∇T.
+_layer_stress(sol, k::Int) =
+    _compose(_stiffness_entries(sol.Ls[k]), _layer_strain(sol, k, false, false))
+
 """
     _contribution(sol, external) -> (; zz, ze, mz, me, T, L)
 
@@ -178,6 +183,11 @@ function _whole_flux(sol, external::Bool)
         init = zero(eltype(sol.radii))
     )
     return (; t = _side(sol.transverse, N, external)[2], a = layers + (surfaces / sol.radii[N]^2) * 𝟙)
+end
+
+function _layer_flux(sol, k::Int)
+    G = _layer_gradient(sol, k, false, false)
+    return (; t = sol.Ks[k].t * G.t, a = sol.Ks[k].a * G.a)
 end
 
 function _conduction_contribution(sol, external::Bool)

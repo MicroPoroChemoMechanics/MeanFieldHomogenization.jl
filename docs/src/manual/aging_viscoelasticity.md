@@ -581,8 +581,11 @@ with `symmetrize = :iso`.
 
 ### [6.2 Inside a layered inclusion](@id man-visco-layered-inside)
 
-A [`LayeredSphere`](@ref) and a [`LayeredCylinder`](@ref) answer at every order
-what they answer in elasticity, as Volterra operators. With `layer = k`,
+A [`LayeredSphere`](@ref) and a [`LayeredCylinder`](@ref) give, at both orders,
+the averages over a layer and the pointwise gradient and flux as Volterra
+operators; the pointwise displacement and temperature
+([`local_displacement_alv`](@ref), [`local_temperature_alv`](@ref)) are those
+of the sphere. With `layer = k`,
 [`gradient_gradient_concentration_alv`](@ref) is the operator of the average
 gradient of layer ``k`` per unit remote history — its material by default, plus
 the jump of the interface on its outer (`external`) or inner (`internal`)

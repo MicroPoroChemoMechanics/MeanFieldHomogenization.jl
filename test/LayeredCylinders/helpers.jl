@@ -31,3 +31,10 @@ function lc_thin_membrane(κs, μs, h)
     return lc_iso(2μ * λs / (2μ - λs), μ)
 end
 lc_thin_spring(sn, st, h) = lc_ti(h / sn - h / st, 0.3h, h / st, h, h / st)
+
+# Two transversely isotropic tensors close coefficient by coefficient, each
+# within `rtol` of the largest: a norm would let the small coefficients drift.
+function lc_close(a, b; rtol = 1.0e-6)
+    da, db = lc_data(a), lc_data(b)
+    return all(abs.(da .- db) .<= rtol * maximum(abs, db))
+end

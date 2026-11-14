@@ -56,16 +56,31 @@ function _hill_moduli(C::TensND.TensISO{4, 3}, axis)
     return (; k = κ + μ / 3, l, m = μ, n = κ + 4 * μ / 3, p = μ, lt = l)
 end
 
+# Read on the Walpole coefficients, as the block matrices of aging
+# viscoelasticity are: ℓ₁ = n, ℓ₂ = 2k, ℓ₃ = √2 C₃₃₁₁, ℓ₄ = √2 C₁₁₃₃, ℓ₅ = 2m,
+# ℓ₆ = 2p. An operator without major symmetry (ℓ₃ ≠ ℓ₄) is read as it is; one
+# that is not invariant under the mirrors through the axis (ℓ₇, ℓ₈ ≠ 0) is not
+# transversely isotropic in the sense of the cylinder, and is refused at the
+# tolerance of a general tensor.
 function _hill_moduli(C::TensND.TensTI{4}, axis)
     TensND.isparallel(TensND.axis(C), axis) || _not_coaxial(C, axis)
-    C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃ = TensND.ti_constants(C)
-    return (;
-        k = (C₁₁₁₁ + C₁₁₂₂) / 2, l = C₁₁₃₃, m = (C₁₁₁₁ - C₁₁₂₂) / 2, n = C₃₃₃₃, p = C₂₃₂₃,
-        lt = C₁₁₃₃,
-    )
+    ℓ = TensND.walpole_coeffs(C, Val(8))
+    _check_mirror_invariant(C, ℓ)
+    sq2 = sqrt(oftype(ℓ[1], 2))
+    return (; k = ℓ[2] / 2, l = ℓ[4] / sq2, m = ℓ[5] / 2, n = ℓ[1], p = ℓ[6] / 2, lt = ℓ[3] / sq2)
+end
+
+_check_mirror_invariant(C, ℓ) = _check_mirror_invariant(Val(is_hard_numeric(eltype(ℓ))), C, ℓ)
+# The coefficients ℓ₇ and ℓ₈ of a symbolic tensor are those it is built with.
+_check_mirror_invariant(::Val{false}, C, ℓ) = nothing
+function _check_mirror_invariant(::Val{true}, C, ℓ)
+    drel = max(abs(ℓ[7]), abs(ℓ[8])) / maximum(abs, ℓ)
+    drel ≤ _TI_RTOL || _not_ti(C, drel)
+    return nothing
 end
 
 _hill_moduli(C::TensND.AbstractTens{4, 3}, axis) = _hill_moduli(_ti_part(C, axis), axis)
+_hill_moduli(C::TensND.AbstractTens{2, 3}, axis) = _wrong_order(C, "a stiffness")
 
 """
     _conductivities(K, axis) -> (; t, a)
@@ -85,6 +100,15 @@ function _conductivities(K::TensND.TensTI{2, <:Any, 2}, axis)
 end
 
 _conductivities(K::TensND.AbstractTens{2, 3}, axis) = _conductivities(_ti_part(K, axis), axis)
+_conductivities(K::TensND.AbstractTens{4, 3}, axis) = _wrong_order(K, "a conductivity")
+
+_wrong_order(P, expected) = throw(
+    ArgumentError(
+        "a LayeredCylinder was given a property of order $(TensND.get_order(P)) where " *
+            "$expected is expected: the layers, the reference and the remote loading must " *
+            "belong to the same physics"
+    )
+)
 
 _entries_eltype(nt::NamedTuple) = promote_type(map(typeof, values(nt))...)
 
@@ -104,13 +128,16 @@ function _check_stiffness(::Val{true}, L, where_)
     return nothing
 end
 
-_check_conductivity(K, where_) = _check_conductivity(Val(is_hard_numeric(_entries_eltype(K))), K, where_)
-_check_conductivity(::Val{false}, K, where_) = nothing
-function _check_conductivity(::Val{true}, K, where_)
-    all(isfinite, values(K)) && K.t ≥ 0 && K.a ≥ 0 || throw(
+# A layer may be impermeable (zero conductivity); the reference medium carries
+# the remote gradient and may not.
+_check_conductivity(K, where_; positive::Bool = false) =
+    _check_conductivity(Val(is_hard_numeric(_entries_eltype(K))), K, where_, positive)
+_check_conductivity(::Val{false}, K, where_, positive) = nothing
+function _check_conductivity(::Val{true}, K, where_, positive)
+    all(isfinite, values(K)) && (positive ? K.t > 0 && K.a > 0 : K.t ≥ 0 && K.a ≥ 0) || throw(
         ArgumentError(
             "$where_ of the LayeredCylinder has conductivities (transverse, axial) = " *
-                "$(values(K)): they must be finite and nonnegative"
+                "$(values(K)): they must be finite and $(positive ? "positive" : "nonnegative")"
         )
     )
     return nothing
@@ -137,12 +164,19 @@ function _elastic_solution(cyl::LayeredCylinder{T, N}, C₀::TensND.AbstractTens
     return _elastic_solution(S, cyl, L₀, Ls)
 end
 
+# The entries of the moduli in the common type `S`: numbers, or the Volterra
+# matrices of aging viscoelasticity.
+_in_type(::Type{S}, x::Number) where {S} = S(x)
+_in_type(::Type{S}, x::AbstractMatrix) where {S} = convert(Matrix{S}, x)
+_in_type(::Type{S}, nt::NamedTuple) where {S} = map(x -> _in_type(S, x), nt)
+
 # Behind a function barrier: `S` is a type computed from the inputs, which the
-# conversions below must see as a static parameter to stay inferred.
+# conversions below must see as a static parameter to stay inferred. The same
+# method solves the aging problem, the entries being Volterra matrices.
 function _elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls) where {S, T, N}
     radii = map(x -> S(x), cyl.radii)
-    L₀ = map(x -> S(x), L₀)
-    Ls = map(L -> map(x -> S(x), L), Ls)
+    L₀ = _in_type(S, L₀)
+    Ls = map(L -> _in_type(S, L), Ls)
     itfs = cyl.interfaces
     dilatation, axial = _solve_axisymmetric(radii, Ls, itfs, L₀)
     shear = _solve_shear(radii, Ls, itfs, L₀)
@@ -162,7 +196,7 @@ function _conduction_solution(cyl::LayeredCylinder{T, N}, K₀::TensND.AbstractT
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     K₀e = _conductivities(K₀, cyl.axis)
     Ks = map(K -> _conductivities(K, cyl.axis), cyl.moduli)
-    _check_conductivity(K₀e, "the reference medium")
+    _check_conductivity(K₀e, "the reference medium"; positive = true)
     foreach(k -> _check_conductivity(Ks[k], "layer $k"), 1:N)
     S = promote_type(
         T, _entries_eltype(K₀e), map(_entries_eltype, Ks)..., interfaces_eltype(cyl.interfaces)
@@ -172,8 +206,8 @@ end
 
 function _conduction_solution(::Type{S}, cyl::LayeredCylinder{T, N}, K₀e, Ks) where {S, T, N}
     radii = map(x -> S(x), cyl.radii)
-    K₀e = map(x -> S(x), K₀e)
-    Ks = map(K -> map(x -> S(x), K), Ks)
+    K₀e = _in_type(S, K₀e)
+    Ks = map(K -> _in_type(S, K), Ks)
     transverse = _solve_potential(
         TransverseConduction(), radii, map(K -> K.t, Ks), cyl.interfaces, K₀e.t
     )

@@ -818,13 +818,24 @@ tensor. Parameterizing on a narrower class would make the residual subtract
 vectors of different lengths.
 
 The extra `step` calls are not wasted work: each result is also a better
-starting iterate than the previous one. The loop follows the widenings only:
-the number of unknowns grows strictly at each pass and is bounded by that of a
-general tensor, so it ends.
+starting iterate than the previous one. The class may also narrow (a
+transversely isotropic start, phases averaged over isotropic orientations): the
+iterate is then followed down to the class the scheme keeps. A `step` that
+would alternate between classes has no class to parameterize the Newton
+unknowns in, and is refused.
 """
 function _sc_newton_seed(x0::TensND.AbstractTens, step)
     x, x1 = x0, step(x0)  # an error here is the one the main loop would raise
-    while _sc_param_count(x1) > _sc_param_count(x)
+    seen = Int[]
+    while _sc_param_count(x1) != _sc_param_count(x)
+        push!(seen, _sc_param_count(x))
+        _sc_param_count(x1) in seen && throw(
+            ArgumentError(
+                "NewtonDefault: the self-consistent step alternates between symmetry classes " *
+                    "($(seen) unknowns); use the default algorithm (Picard with Anderson " *
+                    "acceleration), which needs no fixed class"
+            )
+        )
         x, x1 = x1, step(x1)
     end
     return x

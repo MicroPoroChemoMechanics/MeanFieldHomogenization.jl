@@ -45,6 +45,7 @@ function homogenize(
         property::Symbol; kw...
     )
     validate_cell(cell, scheme)
+    _check_layered_host(cell, scheme, property)
     # The scope spans the WHOLE evaluation, iterative solvers included: a
     # self-consistent loop reads the phase properties once per iteration, and
     # without the memoization a declaratively nested cell would be
@@ -85,6 +86,44 @@ end
 # the old `homogenize(rve, scheme; property = …)` signature keep working.
 # New code is encouraged to pass the property name as a positional argument
 # (the user must always state explicitly which property is being homogenized).
+# A host given the shape of a one-layer layered cylinder carries its property
+# twice, declared and in its layer: the schemes that use the host as the
+# reference read the former, those that solve its own problem the latter.
+# They must be the same property, or two schemes would silently answer for two
+# different matrices.
+_check_layered_host(cell, scheme, property) = nothing
+function _check_layered_host(rve::RVE, scheme::HomogenizationScheme, property::Symbol)
+    r = _layered_host_name(rve, scheme)
+    (r === nothing || !haskey(rve.phases, r)) && return nothing  # an absent phase is reported by the scheme
+    geom = rve.phases[r].geometry
+    geom isa LayeredCylinders.LayeredCylinder && LayeredCylinders.layer_count(geom) == 1 || return nothing
+    declared = get(rve.phases[r].properties, property, nothing)
+    declared === nothing && return nothing
+    _same_property(declared, LayeredCylinders.layer_modulus(geom, 1)) || throw(
+        ArgumentError(
+            "the host phase :$(r) is a one-layer LayeredCylinder whose layer differs from its " *
+                "declared property :$(property): the schemes that take the host as their " *
+                "reference read the declared property, the others its layer. Declare the " *
+                "property of the layer"
+        )
+    )
+    return nothing
+end
+
+# The phase a scheme takes as its matrix, when it has one: the one it names,
+# else the remainder phase.
+_layered_host_name(rve::RVE, scheme::HomogenizationScheme) =
+    something(scheme_matrix(scheme), remainder_phase_name(rve), Some(nothing))
+
+# Two properties compared, where they compare: tensors by their canonical
+# components, block matrices entry by entry; anything else (a law, a symbol) is
+# left to the caller.
+_same_property(a::TensND.AbstractTens, b::TensND.AbstractTens) =
+    _same_property(TensND.canonical_components(a), TensND.canonical_components(b))
+_same_property(a::AbstractArray, b::AbstractArray) =
+    !(is_hard_numeric(eltype(a)) && is_hard_numeric(eltype(b))) || size(a) == size(b) && isapprox(a, b; rtol = 1.0e-12)
+_same_property(a, b) = true
+
 function homogenize(
         cell::AbstractHomogenizationCell, scheme::HomogenizationScheme;
         property::Symbol = :C, kw...

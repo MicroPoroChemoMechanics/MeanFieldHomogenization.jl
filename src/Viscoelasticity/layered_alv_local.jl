@@ -50,10 +50,10 @@ function LayeredSphereALVFields(
         sphere::LayeredSphere, ref::_ALVReference, times::AbstractVector{<:Real}
     )
     o = _alv_order(ref, times)
-    N = layer_count(sphere)
-    relaxations = [
-        _alv_blocks(k ≤ N ? layer_modulus(sphere, k) : ref, times, _block_rows(o)) for k in 1:(N + 1)
-    ]
+    b = _block_rows(o)
+    # the laws of the layers, then of the reference, discretized: a tuple, so that
+    # a dual in one layer keeps the type of each
+    relaxations = (map(P -> _alv_blocks(P, times, b), sphere.moduli)..., _alv_blocks(ref, times, b))
     return LayeredSphereALVFields(o, sphere, _radial_profiles_alv(o, sphere, ref, times), relaxations)
 end
 
@@ -182,8 +182,6 @@ function local_gradient_gradient_concentration_alv(
     return _local_alv(f, r, n, k)
 end
 
-_flux_sign(::LayeredSphereALVFields{4}) = 1
-_flux_sign(::LayeredSphereALVFields{2}) = -1
 
 """
     local_flux_gradient_concentration_alv(f::LayeredSphereALVFields, point...; side = :outer, layer = nothing) -> Matrix
@@ -201,7 +199,7 @@ function local_flux_gradient_concentration_alv(
         f::LayeredSphereALVFields, point...; side::Symbol = :outer, layer = nothing
     )
     r, n, k = _region_at(f, point, side, layer)
-    return _flux_sign(f) * (f.relaxations[k] * _local_alv(f, r, n, k))
+    return _flux_sign(f.order) * (f.relaxations[k] * _local_alv(f, r, n, k))
 end
 
 # The 3 × 6 matrix of ε ↦ ε·n on the Mandel components of ε.

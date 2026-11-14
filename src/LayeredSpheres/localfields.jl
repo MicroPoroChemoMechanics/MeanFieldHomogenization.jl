@@ -468,7 +468,8 @@ Exact because the remote medium is uniform: ``\\boldsymbol{\\varepsilon}^{\\inft
 Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conventions.
 
 In conduction, with a second-order matrix conductivity `K₀`:
-Pointwise gradient-flux concentration ``\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local gradient
+Pointwise gradient-flux concentration ``-\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}`` (the remote
+gradient of a remote flux is ``\\nabla T^{\\infty} = -\\boldsymbol{K}_0^{-1}\\cdot\\underline{q}^{\\infty}``): the local gradient
 under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_concentration(…) · q∞`.
 """
 function local_gradient_flux_concentration end
@@ -485,7 +486,8 @@ under a remote uniform **stress** ``\\boldsymbol{\\sigma}^{\\infty}`` is
 Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conventions.
 
 In conduction, with a second-order matrix conductivity `K₀`:
-Pointwise flux-flux concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``: the local flux under
+Pointwise flux-flux concentration ``k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}``, the identity in
+a homogeneous medium: the local flux under
 a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `q(x) = local_flux_flux_concentration(…) · q∞`.
 """
 function local_flux_flux_concentration end
@@ -764,7 +766,8 @@ function _local_K_scaled(
         A = -_region_conductivity(f, k) * A
     end
     if post
-        A = A ⋅ inv(f.K₀)
+        # the remote gradient of a remote flux: ∇T∞ = −K₀⁻¹ · q∞
+        A = -A ⋅ inv(f.K₀)
     end
     return A
 end

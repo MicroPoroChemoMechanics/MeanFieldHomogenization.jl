@@ -97,3 +97,38 @@ end
         end
     end
 end
+
+@testset "LayeredCylinder in the schemes — aligned coated fibers" begin
+    CM = TensISO{3}(3 * 6.0, 2 * 2.5)
+    coated = LayeredCylinder((0.7, 1.0), (lc_tensor(LC_F), lc_tensor(LC_M)); interfaces = (SpringInterface(20.0, 10.0), PerfectInterface()))
+    host = LayeredCylinder((1.0,), (CM,))
+    # the self-consistent equation at its root: Σ fᵢ Nᵢ(C) = 0 against the estimate
+    C = lc_eff(coated, SelfConsistent(; reltol = 1.0e-12), :C; P_I = CM, P_M = CM, matrix_geom = host)
+    Cti = TensND.best_fit_ti(C, (0.0, 0.0, 1.0))
+    residual = 0.7 * MeanFieldHomogenization.property_contribution(host, Cti) +
+        0.3 * MeanFieldHomogenization.property_contribution(coated, Cti)
+    @test norm(lc_data(residual)) < 1.0e-9 * norm(lc_data(Cti))
+    # an orientation average about the fiber axis changes nothing
+    @test lc_rel(
+        lc_eff(coated, MoriTanaka(), :C; P_I = CM, P_M = CM, symmetrize = TISymmetrize((0.0, 0.0, 1.0))),
+        lc_eff(coated, MoriTanaka(), :C; P_I = CM, P_M = CM)
+    ) < 1.0e-12
+    # a host whose layer is not its declared property is refused
+    @test_throws "declared property" lc_eff(coated, MoriTanaka(), :C; P_I = CM, P_M = CM, matrix_geom = LayeredCylinder((1.0,), (lc_tensor(LC_M),)))
+end
+
+@testset "Self-consistent Newton — a class that narrows, a class that alternates" begin
+    # a transversely isotropic matrix, every phase averaged over isotropic
+    # orientations: the estimate narrows to the isotropic class
+    r = RVE()
+    CM = lc_ti(12.0, 4.0, 3.0, 20.0, 5.0)
+    add_phase!(r, :M, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => CM); fraction = :rest, symmetrize = :iso)
+    add_phase!(r, :I, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => TensISO{3}(90.0, 40.0)); fraction = 0.3, symmetrize = :iso)
+    newton = homogenize(r, SelfConsistent(algorithm = NewtonDefault(), reltol = 1.0e-12), :C)
+    @test lc_rel(newton, homogenize(r, SelfConsistent(reltol = 1.0e-12), :C)) < 1.0e-9
+    # a step that alternates between two classes has no class for the unknowns
+    iso = TensISO{3}(3.0, 2.0)
+    ti = lc_ti(1.5, 0.5, 1.0, 3.0, 1.0)
+    alternating(x) = x isa TensISO ? ti : iso
+    @test_throws "alternates" MeanFieldHomogenization.Schemes._sc_newton_seed(iso, alternating)
+end

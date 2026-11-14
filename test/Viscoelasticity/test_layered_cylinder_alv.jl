@@ -216,3 +216,33 @@ end
         @test norm(R - echoes(name)) / norm(echoes(name)) < 1.0e-9
     end
 end
+
+@testset "LayeredCylinder ALV — vanishing moduli, orders, hosts" begin
+    h0 = heaviside_law(LCV_C0)
+    # a void layer in elasticity: the recurrences divide by k + m, m and p
+    @test_throws "vanishing" gradient_gradient_concentration_alv(LayeredCylinder((0.5, 1.0), (TensISO{3}(0.0, 0.0), LCV_CM)), h0, LCV_TIMES)
+    # in conduction a layer may be impermeable, the reference may not
+    K(t, a) = lc_K(t, a)
+    K0 = heaviside_law(K(2.0, 3.0))
+    radii = (0.4, 0.7, 1.0)
+    itfs = (KapitzaInterface(0.2), SurfaceConductiveInterface(0.3), PerfectInterface())
+    aging_K = lcv_law(K(1.0, 2.0), lcv_gm)
+    zero_k = LayeredCylinder(radii, (K(5.0, 7.0), K(0.0, 0.0), aging_K); interfaces = itfs)
+    small_k = LayeredCylinder(radii, (K(5.0, 7.0), K(1.0e-10, 0.0), aging_K); interfaces = itfs)
+    for f in (gradient_gradient_concentration_alv, property_contribution_alv, LCV.flux_gradient_concentration_alv)
+        @test isapprox(f(zero_k, K0, LCV_TIMES), f(small_k, K0, LCV_TIMES); rtol = 1.0e-7, atol = 1.0e-9)
+    end
+    @test_throws "vanishing" gradient_gradient_concentration_alv(zero_k, heaviside_law(K(0.0, 3.0)), LCV_TIMES)
+    # in a scheme, every layer belongs to the physics homogenized
+    mixed = RVE()
+    add_phase!(mixed, :M, LayeredCylinder((1.0,), (LCV_CM,)), Dict(:C => LCV_CM); fraction = :rest)
+    add_phase!(mixed, :F, LayeredCylinder((1.0,), (K(5.0, 7.0),)), Dict(:C => LCV_CF); fraction = 0.3)
+    @test_throws "physics homogenized" homogenize_alv(mixed, SelfConsistent(), :C; times = LCV_TIMES)
+    # a one-layer host declares the kernel of its layer
+    host = RVE()
+    add_phase!(host, :M, LayeredCylinder((1.0,), (lcv_law(LCV_CM, lcv_gm),)), Dict(:C => LCV_CM); fraction = :rest)
+    add_phase!(host, :F, LayeredCylinder((1.0,), (LCV_CF,)), Dict(:C => LCV_CF); fraction = 0.3)
+    for scheme in (MoriTanaka(), SelfConsistent())
+        @test_throws "declared property" homogenize_alv(host, scheme, :C; times = LCV_TIMES)
+    end
+end

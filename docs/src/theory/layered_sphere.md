@@ -423,9 +423,9 @@ order fixed on [the symbolic page](@ref tut-layered-sphere-symbolic): see
 
 The next page, [Layered cylinder](@ref th-layered-cylinder), solves the same
 problem for a coated fiber, whose layers may be transversely isotropic. The
-page after it, [Layered spheroid](@ref th-layered-spheroid), solves it in
-conduction for confocal spheroidal layers, on which an imperfect interface
-couples the harmonic degrees that a sphere keeps apart. The
+page after it, [Layered spheroid](@ref th-layered-spheroid), solves it for
+confocal spheroidal layers, in conduction and in elasticity; there an imperfect
+interface couples the harmonic degrees that a sphere keeps apart. The
 per-layer concentration tensors of §7 are computed on a random multilayer in the
 tutorial
 [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),

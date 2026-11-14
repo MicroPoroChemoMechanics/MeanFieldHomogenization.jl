@@ -168,8 +168,8 @@ function _local_u(f::LayeredCylinderFields, r, z, Q, k::Int, ε∞)
     A_z, B_z = amp(sol.axial, :axial)
     U, V = _shear_displacements(r, L.k, L.m, amp(sol.shear, :shear)...)
     A, B = amp(sol.antiplane, :antiplane)
-    φ = r * A + _over(B, r, 1)
-    uᵣ = (r * Aₑ + _over(Bₑ, r, 1)) * e + (r * A_z + _over(B_z, r, 1)) * E[3, 3] + U * D + z * E[1, 3]
+    φ = _two_modes(r, A, B)
+    uᵣ = _two_modes(r, Aₑ, Bₑ) * e + _two_modes(r, A_z, B_z) * E[3, 3] + U * D + z * E[1, 3]
     uθ = -V * E[1, 2] + z * E[2, 3]
     u_z = z * E[3, 3] + (2 * φ - r) * E[1, 3]
     return TensND.Vec{3}(ntuple(i -> Q[i, 1] * uᵣ + Q[i, 2] * uθ + Q[i, 3] * u_z, 3))
@@ -193,9 +193,7 @@ end
 
 function LayeredCylinderTransportFields(cyl::LayeredCylinder, K₀::_Order2)
     sol = _conduction_solution(cyl, K₀)
-    N = layer_count(cyl)
-    mat = _pot_amplitudes(sol.radii[N], sol.K₀.t, sol.transverse.outside[N]...)
-    return LayeredCylinderTransportFields(cyl, sol, mat, _ti_tensor(sol.K₀, cyl.axis))
+    return LayeredCylinderTransportFields(cyl, sol, _matrix_transport_amplitudes(sol), _ti_tensor(sol.K₀, cyl.axis))
 end
 
 function _region_conductivity(f::LayeredCylinderTransportFields, k::Int)
@@ -208,22 +206,21 @@ _transport_amplitudes(f::LayeredCylinderTransportFields, k::Int) =
 
 # 𝑨(x) = φ′ e_r ⊗ e_r + (φ/r) e_θ ⊗ e_θ + e_z ⊗ e_z, in canonical components.
 function _local_K(f::LayeredCylinderTransportFields, r, Q, k::Int)
-    dφ, φ_r = _pot_gradients(r, _transport_amplitudes(f, k)...)
-    A = Q * Diagonal([dφ, φ_r, one(dφ)]) * transpose(Q)
+    A = Q * _local_conduction_matrix(_two_mode_gradients(r, _transport_amplitudes(f, k)...)...) * transpose(Q)
     return MFH_Core._tens_in(A, MFH_Core.inclusion_basis(f.cylinder))
 end
 
 function _local_K_scaled(f::LayeredCylinderTransportFields, r, Q, k::Int, pre::Bool, post::Bool)
     A = _local_K(f, r, Q, k)
     pre && (A = -_region_conductivity(f, k) ⋅ A)
-    post && (A = A ⋅ inv(f.K₀))
+    post && (A = -A ⋅ inv(f.K₀))      # ∇T∞ = −K₀⁻¹ · q∞
     return A
 end
 
 function _local_T(f::LayeredCylinderTransportFields, r, z, Q, k::Int, ∇T∞)
     A, B = _transport_amplitudes(f, k)
     G = transpose(Q) * collect(_canonical_vector(∇T∞))
-    return (r * A + _over(B, r, 1)) * G[1] + z * G[3]
+    return _two_modes(r, A, B) * G[1] + z * G[3]
 end
 
 # ── Entry points ─────────────────────────────────────────────────────────────

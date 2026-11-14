@@ -1014,7 +1014,7 @@ function _strain_jump_terms_alv(
     n = length(times)
     radii = sphere.radii
     R³ = radii[N]^3
-    springs = [k for k in interfaces if layer_interface(sphere, k) isa SpringInterface]
+    springs = [k for k in interfaces if LayeredSpheres._is_primal(layer_interface(sphere, k))]
     isempty(springs) && return (zeros(T, n, n), zeros(T, n, n))
 
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)
@@ -1186,7 +1186,7 @@ function _membrane_surface_stress_alv(
     R³ = radii[N]^3
 
     membranes = [
-        k for k in _sphere_interfaces(sphere, external) if layer_interface(sphere, k) isa MembraneInterface
+        k for k in _sphere_interfaces(sphere, external) if LayeredSpheres._is_dual(layer_interface(sphere, k))
     ]
     isempty(membranes) && return (zeros(T, n, n), zeros(T, n, n))
     layers, M_κ_0, M_μ_0 = _bulk_layer_moduli_alv(sphere, C0_law, times)

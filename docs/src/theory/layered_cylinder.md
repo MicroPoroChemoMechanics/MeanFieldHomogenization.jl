@@ -20,7 +20,7 @@ The solution of the coated fiber goes back to the composite-cylinder model of
 [hashinRosen1964](@citet) and, for the transverse shear, to the three-phase
 model of [christensenLo1979](@citet); [herve1995](@citet) gave it for any
 number of coatings by transfer matrices, [hashin1979](@citet) treated
-anisotropic constituents and [herve2002](@citet) conduction. The derivation
+anisotropic constituents. The derivation
 below is made with symbolic computations on
 [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic).
 
@@ -126,7 +126,7 @@ opens in proportion to the traction [hashin1990](@cite):
 
 A membrane carries the surface stress
 ``\boldsymbol\sigma^{\mathrm s} = \lambda^{\mathrm s}(\operatorname{tr}\boldsymbol\varepsilon^{\mathrm s})\boldsymbol 1^{\mathrm s} + 2\mu^{\mathrm s}\boldsymbol\varepsilon^{\mathrm s}``
-of the strain in its tangent plane [chenDvorakYu2006](@cite), and its
+of the strain in its tangent plane [chenDvorakYu2007](@cite), and its
 equilibrium, ``[\![\boldsymbol\sigma]\!]\cdot\underline{e}_r = -\operatorname{div}^{\mathrm s}\boldsymbol\sigma^{\mathrm s}``,
 gives at the radius ``R``, with ``\kappa^{\mathrm s} = \lambda^{\mathrm s} + \mu^{\mathrm s}``:
 
@@ -142,12 +142,14 @@ gives at the radius ``R``, with ``\kappa^{\mathrm s} = \lambda^{\mathrm s} + \mu
 In conduction, a Kapitza resistance ``\rho`` gives ``[\![T]\!] = -\rho\,q_r`` and
 a conducting surface ``k^{\mathrm s}`` gives ``[\![q_r]\!] = -k^{\mathrm s}\,T/R^2``.
 
-Each of these is the limit of a thin layer [benvenisteMiloh2001](@cite): a
-spring is a soft layer of thickness ``h`` with ``s_n = h/(k + m)`` and
-``s_t = h/m = h/p``, a membrane a stiff isotropic one with
-``\mu^{\mathrm s} = h\mu`` and ``\lambda^{\mathrm s} = 2h\lambda\mu/(\lambda + 2\mu)``.
-The test suite checks every jump against that limit, computed with perfect
-interfaces.
+Each of these is the limit of a thin layer of thickness ``h``, as shown in
+elasticity by [benvenisteMiloh2001](@citet): a spring is a soft layer with
+``s_n = h/(k + m)`` and ``s_t = h/m = h/p``, a membrane a stiff isotropic one
+with ``\mu^{\mathrm s} = h\mu`` and ``\lambda^{\mathrm s} = 2h\lambda\mu/(\lambda + 2\mu)``;
+in conduction, a Kapitza resistance is a layer of conductivity ``h/\rho`` and
+a conducting surface one of conductivity ``k^{\mathrm s}/h``. The test suite
+checks each of the four interfaces against its thin layer, computed with
+perfect interfaces.
 
 ## 4. Chaining the layers
 
@@ -200,7 +202,8 @@ The strain concentration ``\mathbb{A}`` and the average stress ``\mathbb{B}``
 per unit remote strain are transversely isotropic about the axis. They are
 not symmetric: ``\mathbb A`` maps an axial strain to an in-plane one and not the
 reverse. The contribution ``\mathbb N = \mathbb B - \mathbb C_0:\mathbb A`` is
-symmetric.
+symmetric when the cylinder carries all of the perturbation, its outer
+interface included (`external = true`, what the schemes use).
 
 ```@example layered_cylinder
 A = gradient_gradient_concentration(cyl, C₀, C₀)      # ⟨ε⟩ = A : E

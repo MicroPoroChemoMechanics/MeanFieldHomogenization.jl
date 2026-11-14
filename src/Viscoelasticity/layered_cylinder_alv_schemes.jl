@@ -173,8 +173,38 @@ schemes is a one-layer cylinder with a perfect interface, whose layer carries
 the kernel of the matrix.
 """
 function _homogenize_alv_cylinders(rve::RVE, scheme::_ALVRunningScheme, prop::Symbol; times::AbstractVector{<:Real}, kw...)
-    order = _alv_order(layer_modulus(rve.phases[first(rve.phase_names)].geometry, 1), times)
+    # The order is that of the property homogenized; every layer must share it.
+    order = _alv_order(phase_property(rve, first(rve.phase_names), prop), times)
+    for name in rve.phase_names, (k, P) in enumerate(rve.phases[name].geometry.moduli)
+        _alv_order(P, times) === order || throw(
+            ArgumentError(
+                "homogenize_alv: layer $k of the phase :$(name) is not of the order of the " *
+                    "property :$(prop) (order $(only(typeof(order).parameters))): the layers of " *
+                    "every phase must belong to the physics homogenized"
+            )
+        )
+    end
     return _alv_cylinders(scheme, order, rve, times; kw...)
+end
+
+# The ALV counterpart of `Schemes._check_layered_host`: a host given as a
+# one-layer cylinder declares the kernel of its layer, compared on the grid.
+function _check_layered_host_alv(rve::RVE, scheme::HomogenizationScheme, prop::Symbol, times)
+    r = Schemes._layered_host_name(rve, scheme)
+    (r === nothing || !haskey(rve.phases, r)) && return nothing  # an absent phase is reported by the scheme
+    geom = rve.phases[r].geometry
+    geom isa LayeredCylinder && layer_count(geom) == 1 || return nothing
+    declared = phase_property(rve, r, prop)
+    b = _block_rows(_alv_order(declared, times))
+    Schemes._same_property(_alv_blocks(declared, times, b), _alv_blocks(layer_modulus(geom, 1), times, b)) || throw(
+        ArgumentError(
+            "homogenize_alv: the host phase :$(r) is a one-layer LayeredCylinder whose layer " *
+                "differs from its declared property :$(prop) on the grid: the schemes that take " *
+                "the host as their reference read the declared property, the others its layer. " *
+                "Declare the kernel of the layer"
+        )
+    )
+    return nothing
 end
 
 function _alv_cylinders(sc::SelfConsistent, order::Val, rve::RVE, times; kw...)

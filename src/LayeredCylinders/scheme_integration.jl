@@ -113,9 +113,7 @@ Average stress of the material of layer `layer` per unit remote strain,
 """
 function flux_gradient_concentration(cyl::LayeredCylinder, C₀::_Order4; layer::Int, kw...)
     _check_layer(cyl, layer)
-    sol = _elastic_solution(cyl, C₀)
-    A = _layer_strain(sol, layer, false, false)
-    return _ti_tensor(_compose(_stiffness_entries(sol.Ls[layer]), A), cyl.axis)
+    return _ti_tensor(_layer_stress(_elastic_solution(cyl, C₀), layer), cyl.axis)
 end
 
 # ── Conduction ───────────────────────────────────────────────────────────────
@@ -190,9 +188,7 @@ end
 
 function flux_gradient_concentration(cyl::LayeredCylinder, K₀::_Order2; layer::Int, kw...)
     _check_layer(cyl, layer)
-    sol = _conduction_solution(cyl, K₀)
-    G = _layer_gradient(sol, layer, false, false)
-    return _ti_tensor((; t = sol.Ks[layer].t * G.t, a = sol.Ks[layer].a * G.a), cyl.axis)
+    return _ti_tensor(_layer_flux(_conduction_solution(cyl, K₀), layer), cyl.axis)
 end
 
 # ── Layer averages of the properties (Voigt and Reuss bounds) ────────────────

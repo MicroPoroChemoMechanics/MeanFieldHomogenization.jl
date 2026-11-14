@@ -120,18 +120,38 @@ _finite_blocks(c::NamedTuple, who::AbstractString) =
     ArgumentError("$who of the LayeredCylinder has an infinite modulus, which has no Volterra matrix")
 )
 
+# A Volterra matrix the recurrences divide by: its diagonal (the instantaneous
+# modulus at each instant) must not vanish. Checked where the numbers compare.
+function _check_invertible(M::AbstractMatrix, what::AbstractString, who::AbstractString)
+    is_hard_numeric(eltype(M)) || return nothing
+    any(iszero, diag(M)) && throw(
+        ArgumentError(
+            "$who of the LayeredCylinder has a vanishing $what at some instant: the ALV " *
+                "recurrences divide by it (a void layer is not supported in elasticity)"
+        )
+    )
+    return nothing
+end
+
 # Hill moduli (n × n matrices) of a 6n × 6n transversely isotropic operator.
 function _hill_volterra(M::AbstractMatrix, who::AbstractString)
     c = ti_params_from_blocks(M)
     _finite_blocks(c, who)
     _check_ti_blocks(M, ti_blocks_from_params(c), who)
-    return (; k = c.me ./ 2, l = c.mz, m = c.T ./ 2, n = c.zz, p = c.L ./ 2, lt = c.ze ./ 2)
+    L = (; k = c.me ./ 2, l = c.mz, m = c.T ./ 2, n = c.zz, p = c.L ./ 2, lt = c.ze ./ 2)
+    _check_invertible(L.k + L.m, "plane-strain modulus k + m", who)
+    _check_invertible(L.m, "transverse shear modulus m", who)
+    _check_invertible(L.p, "axial shear modulus p", who)
+    return L
 end
 
-function _conductivity_volterra(M::AbstractMatrix, who::AbstractString)
+# A layer may be impermeable, its conductivity zero at every instant; otherwise
+# the recurrence divides by it. The reference carries the remote gradient.
+function _conductivity_volterra(M::AbstractMatrix, who::AbstractString; reference::Bool = false)
     c = ti_order2_params_from_blocks(M)
     _finite_blocks(c, who)
     _check_ti_blocks(M, ti_order2_blocks_from_params(c), who)
+    (reference || !_LC._is_impermeable(c.t)) && _check_invertible(c.t, "transverse conductivity", who)
     return c
 end
 
@@ -141,9 +161,6 @@ _alv_blocks(P::AbstractMatrix, times, b::Int) = P
 # An order-2 tensor of TensND is an `AbstractMatrix` too, but an elastic property.
 _alv_blocks(P::TensND.AbstractTens{2}, times, b::Int) = _trapezoidal_relaxation(heaviside_law(P), times, b)
 _alv_blocks(P, times, b::Int) = _trapezoidal_relaxation(_as_visco_law(P), times, b)
-
-# All the matrices of a solution in one element type (a dual in one layer).
-_common_matrices(E::Type, c::NamedTuple) = map(M -> convert(Matrix{E}, M), c)
 
 """
     _cylinder_alv_solution(Val(order), cyl, ref, times) -> NamedTuple
@@ -157,46 +174,40 @@ loading to the history of each state.
 function _cylinder_alv_solution(
         o::Val{O}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}
     ) where {O}
-    _check_canonical_axis(cyl)
-    b = _block_rows(o)
+    R₀, Rs = _cylinder_alv_blocks(o, cyl, ref, times)
     # The type of a discretized law is known only once it is evaluated: the
     # solution is computed behind a function barrier, on the block matrices.
-    return _cylinder_alv_from_blocks(o, cyl, _alv_blocks(ref, times, b), map(P -> _alv_blocks(P, times, b), cyl.moduli))
+    return _cylinder_alv_from_blocks(o, cyl, R₀, Rs)
 end
 
-_volterra_entries(::Val{4}, M, who) = _hill_volterra(M, who)
-_volterra_entries(::Val{2}, M, who) = _conductivity_volterra(M, who)
+# The block matrices of the reference and of the layers, `b` rows per instant.
+function _cylinder_alv_blocks(o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real})
+    _check_canonical_axis(cyl)
+    b = _block_rows(o)
+    return _alv_blocks(ref, times, b), map(P -> _alv_blocks(P, times, b), cyl.moduli)
+end
+
+_block_rows(::Val{4}) = 6
+_block_rows(::Val{2}) = 3
+
+_volterra_entries(::Val{4}, M, who; kw...) = _hill_volterra(M, who)
+_volterra_entries(::Val{2}, M, who; kw...) = _conductivity_volterra(M, who; kw...)
 
 function _cylinder_alv_from_blocks(
         o::Val, cyl::LayeredCylinder{T, N}, R₀::AbstractMatrix, Rs::Tuple
     ) where {T, N}
-    L₀ = _volterra_entries(o, R₀, "the reference medium")
+    L₀ = _volterra_entries(o, R₀, "the reference medium"; reference = true)
     Ls = ntuple(k -> _volterra_entries(o, Rs[k], "layer $k"), Val(N))
     E = promote_type(
         T, map(eltype, values(L₀))..., map(L -> eltype(first(L)), Ls)...,
         interfaces_eltype(cyl.interfaces)
     )
-    return _cylinder_alv_solve(o, E, cyl, _common_matrices(E, L₀), map(L -> _common_matrices(E, L), Ls))
+    # The elastic solution, its entries being Volterra matrices.
+    return _cylinder_alv_solve(o, E, cyl, L₀, Ls)
 end
 
-function _cylinder_alv_solve(::Val{4}, ::Type{E}, cyl::LayeredCylinder{T, N}, L₀, Ls) where {E, T, N}
-    radii = map(E, cyl.radii)
-    itfs = cyl.interfaces
-    dilatation, axial = _LC._solve_axisymmetric(radii, Ls, itfs, L₀)
-    shear = _LC._solve_shear(radii, Ls, itfs, L₀)
-    antiplane = _LC._solve_potential(_LC.Antiplane(), radii, map(L -> L.p, Ls), itfs, L₀.p)
-    fractions = ntuple(k -> E(layer_volume_fraction(cyl, k)), Val(N))
-    return (; radii, Ls, L₀, fractions, interfaces = itfs, dilatation, axial, shear, antiplane)
-end
-
-function _cylinder_alv_solve(::Val{2}, ::Type{E}, cyl::LayeredCylinder{T, N}, K₀, Ks) where {E, T, N}
-    radii = map(E, cyl.radii)
-    transverse = _LC._solve_potential(
-        _LC.TransverseConduction(), radii, map(K -> K.t, Ks), cyl.interfaces, K₀.t
-    )
-    fractions = ntuple(k -> E(layer_volume_fraction(cyl, k)), Val(N))
-    return (; radii, Ks, K₀, fractions, interfaces = cyl.interfaces, transverse)
-end
+_cylinder_alv_solve(::Val{4}, ::Type{E}, cyl, L₀, Ls) where {E} = _LC._elastic_solution(E, cyl, L₀, Ls)
+_cylinder_alv_solve(::Val{2}, ::Type{E}, cyl, K₀, Ks) where {E} = _LC._conduction_solution(E, cyl, K₀, Ks)
 
 # ── Operators of the cylinder and of its layers ──────────────────────────────
 #
@@ -205,17 +216,14 @@ end
 #  plus the jump across its outer boundary when `external` and across its inner
 #  one when `internal`, as in elasticity.
 
-_check_alv_layer(cyl::LayeredCylinder, layer::Int) =
-    1 ≤ layer ≤ layer_count(cyl) || throw(BoundsError(cyl, layer))
-
 _strain_entries_alv(::Val{4}, sol, cyl, ::Nothing, external, internal) = _LC._whole_strain(sol, external)
 _strain_entries_alv(::Val{2}, sol, cyl, ::Nothing, external, internal) = _LC._whole_gradient(sol, external)
 function _strain_entries_alv(::Val{4}, sol, cyl, layer::Int, external, internal)
-    _check_alv_layer(cyl, layer)
+    _LC._check_layer(cyl, layer)
     return _LC._layer_strain(sol, layer, external, internal)
 end
 function _strain_entries_alv(::Val{2}, sol, cyl, layer::Int, external, internal)
-    _check_alv_layer(cyl, layer)
+    _LC._check_layer(cyl, layer)
     return _LC._layer_gradient(sol, layer, external, internal)
 end
 
@@ -242,13 +250,12 @@ _property_contribution_alv(
 _flux_entries_alv(::Val{4}, sol, cyl, ::Nothing, external) = _LC._whole_stress(sol, external)
 _flux_entries_alv(::Val{2}, sol, cyl, ::Nothing, external) = _LC._whole_flux(sol, external)
 function _flux_entries_alv(::Val{4}, sol, cyl, layer::Int, external)
-    _check_alv_layer(cyl, layer)
-    return _LC._compose(_LC._stiffness_entries(sol.Ls[layer]), _LC._layer_strain(sol, layer, false, false))
+    _LC._check_layer(cyl, layer)
+    return _LC._layer_stress(sol, layer)
 end
 function _flux_entries_alv(::Val{2}, sol, cyl, layer::Int, external)
-    _check_alv_layer(cyl, layer)
-    G = _LC._layer_gradient(sol, layer, false, false)
-    return (; t = sol.Ks[layer].t * G.t, a = sol.Ks[layer].a * G.a)
+    _LC._check_layer(cyl, layer)
+    return _LC._layer_flux(sol, layer)
 end
 
 """
@@ -261,7 +268,8 @@ the average stress per unit remote strain, in conduction the average of
 cylinder, with the surface stress (flux) of its membranes (conducting
 surfaces), that of the outer one when `external`. With `layer = k`, the
 material of layer ``k``: its relaxation operator applied on the left of its
-average gradient, ``\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k``.
+average gradient, ``\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k``; `external`
+then plays no part, a layer's material carrying no interface.
 """
 function flux_gradient_concentration_alv(
         cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
@@ -304,19 +312,14 @@ function LayeredCylinderALVFields(
         cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}
     )
     o = _alv_order(ref, times)
-    sol = _cylinder_alv_solution(o, cyl, ref, times)
-    b = _block_rows(o)
-    N = layer_count(cyl)
-    relaxations = [_alv_blocks(k ≤ N ? layer_modulus(cyl, k) : ref, times, b) for k in 1:(N + 1)]
-    return LayeredCylinderALVFields(o, cyl, sol, _matrix_amplitudes_alv(o, sol), relaxations)
+    R₀, Rs = _cylinder_alv_blocks(o, cyl, ref, times)
+    sol = _cylinder_alv_from_blocks(o, cyl, R₀, Rs)
+    # the laws, discretized once, of the layers then of the reference
+    return LayeredCylinderALVFields(o, cyl, sol, _matrix_amplitudes_alv(o, sol), (Rs..., R₀))
 end
 
-_block_rows(::Val{4}) = 6
-_block_rows(::Val{2}) = 3
-
 _matrix_amplitudes_alv(::Val{4}, sol) = _LC._matrix_amplitudes(sol)
-_matrix_amplitudes_alv(::Val{2}, sol) =
-    _LC._pot_amplitudes(last(sol.radii), sol.K₀.t, last(sol.transverse.outside)...)
+_matrix_amplitudes_alv(::Val{2}, sol) = _LC._matrix_transport_amplitudes(sol)
 
 # The b × b array of n × n matrices `M` rotated by the b × b matrix `R` of
 # numbers, R ∘ M ∘ Rᵀ, written out as a bn × bn time-major block matrix.
@@ -339,12 +342,7 @@ _local_blocks_alv(f::LayeredCylinderALVFields{4}, r, k::Int) =
 
 function _local_blocks_alv(f::LayeredCylinderALVFields{2}, r, k::Int)
     amps = k ≤ layer_count(f.cylinder) ? f.sol.transverse.amps[k] : f.matrix
-    dφ, φ_r = _LC._pot_gradients(r, amps...)
-    M = fill(zero(dφ), 3, 3)     # an array of matrices, not their concatenation
-    M[1, 1] = dφ
-    M[2, 2] = φ_r
-    M[3, 3] = one(dφ)
-    return M
+    return _LC._local_conduction_matrix(_LC._two_mode_gradients(r, amps...)...)
 end
 
 _frame_rotation(::LayeredCylinderALVFields{4}, Q) = TensND.mandel_rotation(Q)
@@ -386,11 +384,12 @@ function local_flux_gradient_concentration_alv(
         f::LayeredCylinderALVFields, point...; side::Symbol = :outer, layer = nothing
     )
     A, k = _local_alv(f, point, side, layer)
-    return _flux_sign(f) * (f.relaxations[k] * A)
+    return _flux_sign(f.order) * (f.relaxations[k] * A)
 end
 
-_flux_sign(::LayeredCylinderALVFields{4}) = 1
-_flux_sign(::LayeredCylinderALVFields{2}) = -1
+# The pointwise flux: the stress in elasticity, q = −k·∇T in conduction.
+_flux_sign(::Val{4}) = 1
+_flux_sign(::Val{2}) = -1
 
 for name in (:local_gradient_gradient_concentration_alv, :local_flux_gradient_concentration_alv)
     @eval $name(

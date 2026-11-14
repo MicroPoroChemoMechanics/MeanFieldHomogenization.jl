@@ -338,6 +338,7 @@ end
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
         include("LayeredSpheres/test_impermeable_shell.jl")
+        include("LayeredSpheres/test_remote_flux.jl")
         HAS_SYMBOLIC_BACKENDS && include("LayeredSpheres/test_symbolics_num.jl")
     end
 

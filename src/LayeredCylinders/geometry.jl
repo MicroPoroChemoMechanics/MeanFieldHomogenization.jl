@@ -32,7 +32,7 @@ Type parameters: `T` is the element type of the radii (`Float64`, `BigFloat`,
 `ForwardDiff.Dual`, `Symbolics.Num`, `SymPyPythonCall.Sym`), `N` the number of
 layers, `A` the element type of the axis.
 """
-struct LayeredCylinder{T <: Number, N, Cs, Is, A <: Number} <:
+struct LayeredCylinder{T <: Number, N, Cs <: Tuple, Is <: Tuple, A <: Number} <:
     MFH_Core.AbstractLayeredInclusion{3, T}
     radii::NTuple{N, T}
     moduli::Cs
@@ -40,14 +40,14 @@ struct LayeredCylinder{T <: Number, N, Cs, Is, A <: Number} <:
     axis::NTuple{3, A}
     LayeredCylinder{T, N, Cs, Is, A}(
         radii, moduli, interfaces, axis
-    ) where {T <: Number, N, Cs, Is, A <: Number} =
+    ) where {T <: Number, N, Cs <: Tuple, Is <: Tuple, A <: Number} =
         new{T, N, Cs, Is, A}(radii, moduli, interfaces, axis)
 end
 
 # Positional form, for `Schemes._replace_geom_field`.
 LayeredCylinder(
     radii::Tuple{T, Vararg{T, M}}, moduli::Cs, interfaces::Is, axis::NTuple{3, A}
-) where {T <: Number, M, Cs, Is, A <: Number} =
+) where {T <: Number, M, Cs <: Tuple, Is <: Tuple, A <: Number} =
     LayeredCylinder{T, M + 1, Cs, Is, A}(radii, moduli, interfaces, axis)
 
 """
@@ -60,11 +60,16 @@ must be a unit vector.
 """
 function LayeredCylinder(
         radii::Tuple{T, Vararg{T, M}},
-        moduli::Cs;
-        interfaces::Is = ntuple(_ -> PerfectInterface{TensND.float_like(T)}(), Val(M + 1)),
+        moduli;
+        interfaces = ntuple(_ -> PerfectInterface{TensND.float_like(T)}(), Val(M + 1)),
         axis::Tuple{Number, Number, Number} = (0.0, 0.0, 1.0),
-    ) where {T <: Number, M, Cs, Is}
+    ) where {T <: Number, M}
     N = M + 1
+    # stored as tuples, of a concrete type each (a vector is converted)
+    moduli, interfaces = Tuple(moduli), Tuple(interfaces)
+    all(i -> i isa AbstractInterface, interfaces) || throw(
+        ArgumentError("LayeredCylinder: the interfaces must be AbstractInterface objects; got $(interfaces)")
+    )
     length(moduli) == N || throw(
         DimensionMismatch("LayeredCylinder: $N radii but $(length(moduli)) layer moduli")
     )
@@ -81,10 +86,13 @@ function LayeredCylinder(
     end
     Tf = TensND.float_like(T)
     ax = _unit_axis(promote(axis...))
-    return LayeredCylinder{Tf, N, Cs, Is, eltype(ax)}(
+    return LayeredCylinder{Tf, N, typeof(moduli), typeof(interfaces), eltype(ax)}(
         NTuple{N, Tf}(Tf.(radii)), moduli, interfaces, ax
     )
 end
+
+# Radii given as a vector: stored as a tuple.
+LayeredCylinder(radii::AbstractVector{<:Number}, moduli; kwargs...) = LayeredCylinder(Tuple(radii), moduli; kwargs...)
 
 LayeredCylinder(::Tuple{}, moduli; kwargs...) = throw(
     ArgumentError("LayeredCylinder requires at least one layer; got no radius")
