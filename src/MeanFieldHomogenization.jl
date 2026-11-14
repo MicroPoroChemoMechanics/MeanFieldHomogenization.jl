@@ -295,7 +295,9 @@ export local_strain_strain_concentration, local_stress_strain_concentration,
 export local_strain, local_stress
 
 # ── LayeredCylinder (multi-coated fiber, transversely isotropic coaxial layers)
-export LayeredCylinder
+export LayeredCylinder, LayeredCylinderFields, LayeredCylinderTransportFields
+export cylinder_gradient_average, cylinder_flux_average,
+    cylinder_strain_average, cylinder_stress_average
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii

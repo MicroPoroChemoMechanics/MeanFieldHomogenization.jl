@@ -27,14 +27,23 @@ using ..LayeredSpheres: AbstractInterface, PerfectInterface, SpringInterface,
     spring_compliances, interfaces_eltype
 import ..LayeredSpheres: layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius, layer_property_average,
-    layer_inverse_property_average
+    layer_inverse_property_average, get_layer, region_stiffness,
+    local_gradient_gradient_concentration, local_flux_gradient_concentration,
+    local_gradient_flux_concentration, local_flux_flux_concentration,
+    local_gradient, local_flux, local_displacement, local_temperature,
+    layer_gradient_average, layer_flux_average
+using ..LayeredSpheres: _locate_region, _resolve_region
 
 include("geometry.jl")
 include("kernel.jl")             # the radial problems, for scalars and operators
 include("assembly.jl")           # averages over the cylinder and its layers
 include("elastic.jl")            # moduli, solutions, packing in TI tensors
 include("scheme_integration.jl") # concentration, flux, contribution, bounds
+include("localfields.jl")        # pointwise fields
+include("averages.jl")           # averages under a given remote loading
 
-export LayeredCylinder
+export LayeredCylinder, LayeredCylinderFields, LayeredCylinderTransportFields
+export cylinder_gradient_average, cylinder_flux_average,
+    cylinder_strain_average, cylinder_stress_average
 
 end # module

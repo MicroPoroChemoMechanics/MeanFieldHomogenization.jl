@@ -109,18 +109,14 @@ function get_layer(sphere::LayeredSphere{T, N}, r; side::Symbol = :outer) where 
                 "(1..$(N) for a layer, $(N + 1) for the matrix)"
         )
     )
-    k = 1
-    if side === :outer
-        while k ≤ N && r ≥ sphere.radii[k]
-            k += 1
-        end
-    else
-        while k ≤ N && r > sphere.radii[k]
-            k += 1
-        end
-    end
-    return k
+    return _locate_region(sphere.radii, r, side)
 end
+
+# First region whose outer radius lies beyond `r`: `r_k^+` belongs to region
+# k + 1 (`:outer`), `r_k^-` to region k (`:inner`). Shared by the layered
+# inclusions whose regions are bounded by ascending radii.
+_locate_region(radii::NTuple{N}, r, side::Symbol) where {N} = side === :outer ?
+    something(findfirst(>(r), radii), N + 1) : something(findfirst(≥(r), radii), N + 1)
 
 """
     _resolve_layer(sphere, r; side, layer) -> Int
@@ -135,21 +131,24 @@ Symbolic work is exactly the case where the region is known up front, so
 passing `layer = k` costs nothing and keeps the whole reconstruction
 symbolic.
 """
-@inline function _resolve_layer(
-        sphere::LayeredSphere{T, N}, r; side::Symbol, layer
-    ) where {T, N}
-    if layer !== nothing
-        1 ≤ layer ≤ N + 1 ||
-            throw(ArgumentError("layer must be in 1..$(N + 1) (N+1 = matrix), got $(layer)"))
-        return Int(layer)
-    end
+@inline _resolve_layer(sphere::LayeredSphere, r; side::Symbol, layer) =
+    _resolve_region(sphere, layer_count(sphere), r, side, layer)
+
+# The region named by `layer`, checked, or else located from `r` by `get_layer`.
+@inline function _resolve_region(incl, N::Int, r, side::Symbol, layer::Integer)
+    1 ≤ layer ≤ N + 1 ||
+        throw(ArgumentError("layer must be in 1..$(N + 1) (N+1 = matrix), got $(layer)"))
+    return Int(layer)
+end
+
+@inline function _resolve_region(incl, N::Int, r, side::Symbol, ::Nothing)
     is_hard_numeric(typeof(r)) || throw(
         ArgumentError(
             "cannot locate a symbolic radius by comparison; pass `layer = k` " *
                 "explicitly (1..$(N) for a layer, $(N + 1) for the matrix)"
         )
     )
-    return get_layer(sphere, r; side)
+    return get_layer(incl, r; side)
 end
 
 """

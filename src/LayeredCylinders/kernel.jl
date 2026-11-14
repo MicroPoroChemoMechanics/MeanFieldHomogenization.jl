@@ -328,3 +328,109 @@ function _solve_shear(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {
         amps = _combine(p₁[3], X₁, p₂[3], X₂),
     )
 end
+
+# ── Pointwise strain of each problem, from the amplitudes of a region ────────
+#
+#  In the cylindrical frame (e_r, e_θ, e_z) of the point, the remote strain has
+#  the components e = (E_rr + E_θθ)/2, D = (E_rr − E_θθ)/2, E_rθ, E_rz, E_θz and
+#  ε = E_zz, and the local strain does not depend on θ any more:
+#
+#      ε_rr = (A_e − B_e/r²) e + (A_z − B_z/r²) ε + U′ D,
+#      ε_θθ = (A_e + B_e/r²) e + (A_z + B_z/r²) ε + ((U + 2V)/r) D,
+#      ε_rθ = ((2U/r − V′ + V/r)/2) E_rθ,
+#      ε_rz = φ′ E_rz,     ε_θz = (φ/r) E_θz,     ε_zz = ε.
+#
+#  The terms singular on the axis carry amplitudes that vanish identically in
+#  the core; they are dropped there rather than evaluated as 0/0.
+
+@inline _at_axis(r) = is_hard_numeric(typeof(r)) && iszero(r)
+@inline _over(x, r, p::Int) = _at_axis(r) ? zero(x) : x / r^p
+
+# (u_r/r − 2B/r², u_r/r) per unit loading: the pair (ε_rr, ε_θθ) of u_r = A r + B/r.
+@inline _axi_strains(r, A, B) = (A - _over(B, r, 2), A + _over(B, r, 2))
+
+# (φ′, φ/r) of φ = A r + B/r.
+@inline _pot_gradients(r, A, B) = (A - _over(B, r, 2), A + _over(B, r, 2))
+
+# (U′, (U + 2V)/r, (2U/r − V′ + V/r)/2) of the transverse shear modes.
+@inline function _shear_strains(r, k, m, a, b, c, d)
+    χ = _ldiv(k, m)
+    χb = χ * b
+    χd = χ * d
+    c₄ = _over(c, r, 4)
+    d₂ = _over(d, r, 2)
+    dU = a + 3 * r^2 * (χb - b) - 3 * c₄ - _over(d + χd, r, 2)
+    T = -a + 3 * r^2 * (χb + b) + 3 * c₄ + _over(d - χd, r, 2)
+    H = a - 3 * r^2 * b + 3 * c₄ + d₂
+    return dU, T, H
+end
+
+# (U, V) alone, for the displacement.
+@inline function _shear_displacements(r, k, m, a, b, c, d)
+    χ = _ldiv(k, m)
+    χb = χ * b
+    χd = χ * d
+    c₃ = _over(c, r, 3)
+    return r * a + r^3 * (χb - b) + c₃ + _over(d + χd, r, 1),
+        -r * a + r^3 * (χb + 2 * b) + c₃ - _over(χd, r, 1)
+end
+
+"""
+    _matrix_amplitudes(sol) -> (; dilatation, axial, shear, antiplane)
+
+Amplitudes of the four problems in the matrix (region ``N+1``), read on the
+outer side of ``r_N``.
+"""
+function _matrix_amplitudes(sol)
+    N = length(sol.radii)
+    R = sol.radii[N]
+    𝟙 = one(sol.L₀.k)
+    return (;
+        dilatation = _axi_amplitudes(R, sol.L₀, sol.dilatation.outside[N]..., zero(𝟙)),
+        axial = _axi_amplitudes(R, sol.L₀, sol.axial.outside[N]..., 𝟙),
+        shear = _shear_amplitudes(R, sol.L₀.k, sol.L₀.m, sol.shear.outside[N]...),
+        antiplane = _pot_amplitudes(R, sol.L₀.p, sol.antiplane.outside[N]...),
+    )
+end
+
+"""
+    _local_strain_entries(sol, mat, k, r) -> NamedTuple
+
+Entries of the pointwise strain concentration of region `k` (the matrix for
+``k = N+1``, of amplitudes `mat`) at radius `r`, in the cylindrical frame:
+`rr_e`, `rr_z`, `rr_D` (``\\varepsilon_{rr}`` per ``e``, ``\\varepsilon`` and
+``D``), `tt_e`, `tt_z`, `tt_D` (``\\varepsilon_{\\theta\\theta}``), and the shear
+ratios `rt`, `rz`, `tz`.
+"""
+function _local_strain_entries(sol, mat, k::Int, r)
+    N = length(sol.radii)
+    L = k ≤ N ? sol.Ls[k] : sol.L₀
+    amp(seq, name) = k ≤ N ? seq.amps[k] : getfield(mat, name)
+    rr_e, tt_e = _axi_strains(r, amp(sol.dilatation, :dilatation)...)
+    rr_z, tt_z = _axi_strains(r, amp(sol.axial, :axial)...)
+    rr_D, tt_D, rt = _shear_strains(r, L.k, L.m, amp(sol.shear, :shear)...)
+    rz, tz = _pot_gradients(r, amp(sol.antiplane, :antiplane)...)
+    return (; rr_e, rr_z, rr_D, tt_e, tt_z, tt_D, rt, rz, tz)
+end
+
+"""
+    _local_mandel(c) -> Matrix (6 × 6)
+
+Mandel matrix, in the cylindrical frame ordered ``(rr, \\theta\\theta, zz,
+\\theta z, rz, r\\theta)``, of the pointwise strain concentration of entries `c`.
+"""
+function _local_mandel(c)
+    𝟘 = zero(c.rt)
+    M = fill(𝟘, 6, 6)
+    M[1, 1] = (c.rr_e + c.rr_D) / 2
+    M[1, 2] = (c.rr_e - c.rr_D) / 2
+    M[1, 3] = c.rr_z
+    M[2, 1] = (c.tt_e + c.tt_D) / 2
+    M[2, 2] = (c.tt_e - c.tt_D) / 2
+    M[2, 3] = c.tt_z
+    M[3, 3] = one(c.rt)
+    M[4, 4] = c.tz
+    M[5, 5] = c.rz
+    M[6, 6] = c.rt
+    return M
+end
