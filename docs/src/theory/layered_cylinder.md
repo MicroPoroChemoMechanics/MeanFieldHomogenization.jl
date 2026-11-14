@@ -30,6 +30,8 @@ The radii are ascending, ``0 = r_0 < r_1 < \cdots < r_N``; layer ``k`` lies
 between ``r_{k-1}`` and ``r_k`` (layer 1 is the core) and the matrix occupies
 ``r > r_N``. The axis is ``\underline{e}_3`` by default.
 
+![Coaxial n-layer cylinder in an unbounded matrix: its section and a cut along its axis](../assets/geometry/layered_cylinder.svg)
+
 A stiffness that is transversely isotropic about ``\underline{e}_3`` has five
 constants, written here with Hill's moduli:
 

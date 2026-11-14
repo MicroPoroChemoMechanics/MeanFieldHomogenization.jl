@@ -65,6 +65,77 @@ function layered_sphere()
     end
 end
 
+"""
+The n-layer cylinder: its section (left), with the radii and the interfaces,
+and a cut along its axis (right), the layers running to infinity along e₃.
+"""
+function layered_cylinder()
+    return sheet("geometry/layered_cylinder", 760, 420) do
+        unbounded_box(Point(380, 225), 740, 370; label_tensor = "bb(C)_0")
+        fills = (tint(BLUE, 0.15), tint(BLUE, 0.4), tint(BLUE, 0.62), tint(BLUE, 0.82))
+        radii = (130, 98, 70, 40)
+        # ── the section, the axis pointing out of the page ──
+        c = Point(175, 225)
+        for (k, (r, f)) in enumerate(zip(radii, fills))
+            disk(c, r; fill = f, stroke = nothing)
+            disk(c, r; fill = nothing, stroke = INK, lw = 1.4, dash = k == 2 ? [5, 4] : nothing)
+        end
+        label(m("1"), c + Point(0, -20); size = 18)
+        label(m("2"), c + Point(0, -55); size = 18)
+        label(m("dots.c"), c + Point(0, -84); size = 18)
+        label(m("N"), c + Point(0, -114); size = 18, color = "#ffffff")
+        @layer begin
+            setcolor(INK)
+            setline(1.2)
+            line(c, c + Point(130, 0), :stroke)
+            circle(c, 7, :stroke)            # the axis, out of the page
+            circle(c, 2.2, :fill)
+        end
+        label(m("underline(e)_3"), c + Point(-14, 16); size = 15, halign = :right)
+        for (name, r) in (("r_1", 40), ("r_2", 70), ("r_N", 130))
+            @layer (setcolor(INK); circle(c + Point(r, 0), 2.6, :fill))
+            label(m(name), c + Point(r - 4, 15); size = 15, halign = :right, color = r == 130 ? "#ffffff" : INK)
+        end
+        label(m("cal(I)_1"), c + Point(37, -37); size = 14)
+        label(m("cal(I)_N"), c + Point(106, 104); size = 14)
+        # ── the cut along the axis ──
+        x0, x1, yc = 400.0, 650.0, 225.0
+        for (k, (r, f)) in enumerate(zip(radii, fills))
+            h = r * 0.62
+            setcolor(f)
+            box(Point((x0 + x1) / 2, yc), x1 - x0, 2h, :fill)
+            @layer begin
+                setcolor(INK)
+                setline(1.3)
+                k == 2 && setdash([5, 4])
+                line(Point(x0, yc - h), Point(x1, yc - h), :stroke)
+                line(Point(x0, yc + h), Point(x1, yc + h), :stroke)
+            end
+        end
+        # the layers run on: dashed ends on both sides
+        @layer begin
+            setcolor(GUIDE)
+            setline(1.1)
+            setdash([3, 4])
+            for r in radii, s in (-1, 1), (xa, xb) in ((x0 - 34, x0), (x1, x1 + 34))
+                line(Point(xa, yc + s * r * 0.62), Point(xb, yc + s * r * 0.62), :stroke)
+            end
+        end
+        @layer begin
+            setcolor(INK)
+            setline(1.0)
+            setdash([8, 3, 2, 3])
+            line(Point(x0 - 40, yc), Point(x1 + 40, yc), :stroke)
+        end
+        arrow_ab(Point(x1 + 40, yc), Point(x1 + 70, yc); color = INK)
+        label(m("underline(e)_3"), Point(x1 + 58, yc + 16); size = 15)
+        label(m("(k, l, m, n, p)_j"), Point((x0 + x1) / 2, yc - 102); size = 16)
+        # remote loading
+        label(m("underline(u) = bold(E) dot underline(x)"), Point(525, 360); size = 17)
+        label(m("abs(underline(x) - (underline(x) dot underline(e)_3) underline(e)_3) -> infinity"), Point(525, 386); size = 14, color = MUTED)
+    end
+end
+
 "The n-layer confocal spheroid: domains Ω₁…Ω_{N+1}, interfaces 𝓘₁…𝓘_N, common foci."
 function layered_ellipsoid()
     return sheet("geometry/layered_ellipsoid", 520, 460) do
@@ -231,6 +302,6 @@ levin_free_strain() = levin_sum(
 )
 
 geometry_figures() = (
-    eshelby_inclusion(), eshelby_inhomogeneity(), layered_sphere(), layered_ellipsoid(),
+    eshelby_inclusion(), eshelby_inhomogeneity(), layered_sphere(), layered_cylinder(), layered_ellipsoid(),
     levin_prestress(), levin_free_strain(),
 )
