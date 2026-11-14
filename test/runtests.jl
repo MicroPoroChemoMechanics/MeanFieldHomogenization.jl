@@ -337,6 +337,8 @@ end
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
+        include("LayeredSpheres/test_impermeable_shell.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredSpheres/test_symbolics_num.jl")
     end
 
     rungroup("LayeredCylinders") && @testset "LayeredCylinders" begin
