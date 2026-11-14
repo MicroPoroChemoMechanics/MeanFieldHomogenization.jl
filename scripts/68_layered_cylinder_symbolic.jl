@@ -14,6 +14,11 @@
 # layers it separates. Three things are derived here: the modes, the conditions
 # at an interface, and the order in which the moduli must be multiplied when
 # they are operators that do not commute (aging viscoelasticity).
+#
+# Writing the axis as ``\underline{e}_z`` loses nothing: a fiber of any other axis
+# ``\underline{n}`` is the same problem in a frame whose third vector is
+# ``\underline{n}``, which the package sets with the `axis` keyword
+# ([Layered inclusions](@ref man-layered)).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl

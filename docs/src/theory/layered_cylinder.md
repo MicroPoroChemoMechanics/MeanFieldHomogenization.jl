@@ -28,7 +28,10 @@ below is made with symbolic computations on
 
 The radii are ascending, ``0 = r_0 < r_1 < \cdots < r_N``; layer ``k`` lies
 between ``r_{k-1}`` and ``r_k`` (layer 1 is the core) and the matrix occupies
-``r > r_N``. The axis is ``\underline{e}_3`` by default.
+``r > r_N``. The axis is ``\underline{e}_3`` by default and may be any direction
+``\underline n`` (`axis`); this page writes it ``\underline{e}_3``, which loses
+nothing, since a fiber of axis ``\underline n`` is the same problem written in a
+frame whose third vector is ``\underline n`` (section 9 for the aging case).
 
 ![Coaxial n-layer cylinder in an unbounded matrix: its section and a cut along its axis](../assets/geometry/layered_cylinder.svg)
 

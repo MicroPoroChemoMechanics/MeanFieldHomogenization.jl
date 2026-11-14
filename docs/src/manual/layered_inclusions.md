@@ -59,6 +59,22 @@ That also means **one object per physics**: a tuple of `Tens{4,3}` for
 elasticity, a tuple of `Tens{2,3}` for conduction. Mixing them is a constructor
 error rather than a wrong answer.
 
+A coated fiber is built with the same two tuples, its radii being measured from
+its axis; the axis, ``\underline e_3`` unless `axis` gives another one, is the
+one thing a cylinder adds ([Coaxial cylinders](@ref man-layered-cylinders) below):
+
+```@example layered
+cylinder = LayeredCylinder(
+    (0.5, 0.75, 1.0),                                   # ascending radii, from the axis
+    (iso_stiffness(10.0, 5.0),                          # core
+     iso_stiffness(20.0, 9.0),                          # first coating
+     iso_stiffness(35.0, 15.0)),                        # outer coating
+)
+```
+
+Everything that follows on this page is written for the sphere and holds for
+the cylinder unchanged.
+
 ### 2. Use it like any other inclusion
 
 ```@example layered
@@ -169,9 +185,16 @@ jump matching the interface law where there is one.
 
 [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) is
 the classical Hervé–Zaoui pattern: isotropic layers, any number of them, both
-physics. Nothing constrains the radii but that they ascend.
+physics. Nothing constrains the radii but that they ascend. Its tensors are
+isotropic and have no axis, and the reference medium must be isotropic too;
+since a cell of isotropic phases keeps every scheme in that class, the
+self-consistent and differential schemes take it with an ordinary spherical
+matrix ([Layered sphere, section 9](@ref th-layered-sphere)). The tutorials
+[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere)
+and [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields)
+work through one in detail.
 
-### Coaxial cylinders
+### [Coaxial cylinders](@id man-layered-cylinders)
 
 [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder)
 is a coated fiber: an infinite core and coatings of ascending radii around an
@@ -215,11 +238,23 @@ N_n = property_contribution(fiber_n, iso_stiffness(3.0, 1.2))
 ti_constants(best_fit_ti(N_n, n))
 ```
 
+Drag to rotate: the turned fiber, its core and its coating cut open, and its
+axis ``\underline n``.
+
+```@example layered
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))  # hide
+plotly_scene(shape_traces(fiber_n); uid = "layered-fiber-turned", height = 420,
+    title = "The fiber turned to n = (1, −2, 2)/3")
+```
+
 The constants about ``\underline n`` are those found about ``\underline e_3``:
 turning the fiber turns its contribution and changes nothing else. A
 transversely isotropic tensor is stored by its coefficients and its axis, so
 no rotation is computed in elasticity. The aging case is in
-[Coaxial layered cylinders: a transversely isotropic reference](@ref man-alv-cylinders-ti).
+[Coaxial layered cylinders: a transversely isotropic reference](@ref man-alv-cylinders-ti),
+and the tutorial
+[Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder) follows
+one fiber from its fields to the composite and its creep.
 
 ### Confocal spheroids
 
@@ -275,10 +310,11 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
 A morphology outside the shipped families enters the schemes through
 [Custom inclusions](@ref man-custom-inclusions), the interface the two layered
 families themselves use through level B. The tutorials
-[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere)
+[n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),
+[Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder)
 and
 [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
-work through both geometries, and
+work through the three geometries, and
 [The interfacial transition zone in concrete](@ref app-itz-concrete) uses a
 coated sphere for an aggregate and its transition zone.
 

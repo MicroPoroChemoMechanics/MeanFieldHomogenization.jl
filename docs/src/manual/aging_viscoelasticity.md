@@ -609,8 +609,28 @@ A_point = local_gradient_gradient_concentration_alv(fields, (0.5, 0.2, 0.3))
 size(A_point)
 ```
 
-A layer of zero conductivity is admissible at any rank: the layers it
-encloses are shielded and carry no field.
+A coated fiber is handled with the same calls. Its axis is set by `axis`,
+here ``\underline e_1``, and every operator is returned in the canonical frame.
+Along the axis an infinite fiber does not disturb the gradient: in every layer
+the axial component of the average gradient is the remote one, so the block of
+that component in the operator of the core is the identity at every instant:
+
+```@example vo
+fiber_c = LayeredCylinder((0.8, 1.0), (law_κ, TensISO{3}(5.0));
+                          interfaces = (KapitzaInterface(0.1), SurfaceConductiveInterface(0.3)),
+                          axis = (1.0, 0.0, 0.0))
+A_fiber = gradient_gradient_concentration_alv(fiber_c, law_κ, times; layer = 1)
+A_fiber[1:3:end, 1:3:end] ≈ I                     # axial component, every instant
+```
+
+```@example vo
+fields_c = LayeredCylinderALVFields(fiber_c, law_κ, times)
+A_point_c = local_gradient_gradient_concentration_alv(fields_c, (0.3, 0.5, 0.2))
+size(A_point_c)
+```
+
+A layer of zero conductivity is admissible at any rank, in a sphere as in a
+cylinder: the layers it encloses are shielded and carry no field.
 
 ## [7. The isotropic reference of the self-consistent and differential schemes](@id man-alv-iso-reference)
 

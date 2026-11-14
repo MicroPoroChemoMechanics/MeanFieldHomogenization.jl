@@ -20,6 +20,12 @@
 #
 # ``k`` is the plane-strain bulk modulus, ``m`` and ``p`` the transverse and axial
 # shear moduli, ``n = C_{3333}`` and ``l = C_{1133}`` ([theory, section 1](@ref th-layered-cylinder)).
+#
+# The fibers are along ``\underline{e}_3``, the default. Fibers of another
+# direction are given by the `axis` keyword of `LayeredCylinder`, their
+# transversely isotropic layers being then built about that same axis
+# ([Layered inclusions](@ref man-layered)); every result below is turned with
+# them and is otherwise unchanged.
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -28,6 +34,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Printf
+using QuadGK: gauss
 using Plots
 gr()
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
@@ -96,6 +103,21 @@ for side in (:inner, :outer)
     σ = canonical_components(local_flux(fields, a, 0.0, 0.0, E; side))
     @printf("%-6s u₁ = %.5f µm   σ₁₁ = %.3f MPa\n", side, u[1], 1.0e3 * σ[1, 1])
 end
+
+# The pointwise field and the layer averages come from the same amplitudes, and
+# they agree: the strain averaged over the sizing, ``a < r < a + e``, is the one
+# [`gradient_gradient_concentration`](@ref) gives for its layer. The integral over
+# the annulus is computed here by quadrature. In ``\theta`` the strain varies as
+# ``\cos 2\theta`` and ``\sin 2\theta``, which 32 equally spaced angles integrate
+# exactly; in ``r``, 12 Gauss–Legendre points.
+
+strain(r, θ) = canonical_components(local_gradient(fields, r, θ, 0.0, E; layer = 2))
+rs, ws = gauss(12, a, a + e)
+θs = 2π .* (0:31) ./ 32
+ε_quadrature = sum(ws[i] * rs[i] * strain(rs[i], θ) for i in eachindex(rs), θ in θs) *
+    (2π / 32) / (π * ((a + e)^2 - a^2))
+ε_layer = canonical_components(gradient_gradient_concentration(fiber, C_matrix; layer = 2) ⊡ E)
+maximum(abs, ε_quadrature - ε_layer) / maximum(abs, ε_layer)
 
 # ## 3. The aligned composite
 #

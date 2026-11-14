@@ -85,8 +85,12 @@ listed under Fixed.
   Hervé and Zaoui (1993) for the sphere, extended to the imperfect interfaces,
   and those of the cylinder — and fix the order of the products of
   non-commuting operators; a tutorial on coated carbon fibers (3-D view, stress
-  map, aligned composite, prolate limits, creep); the manual pages of layered
-  inclusions and of aging viscoelasticity extended.
+  map, layer averages recovered from the pointwise field, aligned composite,
+  prolate limits, creep); the manual pages of layered inclusions and of aging
+  viscoelasticity extended, the sphere and the cylinder treated alike and the
+  axis of the cylinder explained with a turned fiber; the theory page of the
+  layered sphere gains its use in the schemes and in aging viscoelasticity; the
+  inclusion gallery shows the layered cylinder.
 - Seven references added, each resolved on Crossref: Hashin and Rosen (1964),
   Hill (1964), Hashin (1979, 1990), Hervé and Zaoui (1995),
   Benveniste and Miloh (2001), Chen, Dvorak and Yu (2007).

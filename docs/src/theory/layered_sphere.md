@@ -414,10 +414,55 @@ Gurtin–Murdoch membrane interfaces alike.
 See the worked example with figures:
 [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields).
 
+## 9. In the schemes
+
+A layered sphere has no Hill tensor: it enters every scheme by its tensors
+``\mathbb A``, ``\mathbb B`` and ``\mathbb N``
+([Concentration and contribution tensors](@ref th-concentration)), evaluated in
+the reference medium of the scheme. The recurrences above need that reference
+to be isotropic. A cell of isotropic phases keeps it so in every scheme,
+including the self-consistent and differential ones, whose reference is the
+running estimate: the matrix can stay an ordinary sphere, and the property
+declared on the layered phase is not used, the layers carrying their own
+moduli. Below, coated grains at 40 %:
+
+```@example layered_sphere
+using MeanFieldHomogenization, TensND
+core, shell, matrix = iso_stiffness(30.0, 12.0), iso_stiffness(6.0, 3.0), iso_stiffness(9.0, 4.0)
+grain = LayeredSphere((0.8, 1.0), (core, shell);
+                      interfaces = (SpringInterface(20.0, 10.0), PerfectInterface()))
+rve = RVE()
+add_phase!(rve, :matrix, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => matrix); fraction = :rest)
+add_phase!(rve, :grain, grain, Dict(:C => core); fraction = 0.4)
+k_mu(homogenize(rve, MoriTanaka(), :C)), k_mu(homogenize(rve, SelfConsistent(), :C))
+```
+
+The coated fiber of [Layered cylinder](@ref th-layered-cylinder) differs on one
+point: its tensors are transversely isotropic about its axis, so a
+self-consistent estimate of aligned fibers leaves the isotropic class and the
+matrix must then be a one-layer cylinder.
+
+## 10. Aging viscoelasticity
+
+In aging linear viscoelasticity each modulus is a Volterra operator and each
+amplitude a history ([Aging viscoelasticity (ALV)](@ref man-viscoelasticity)).
+The recurrences of §2 to §6 hold with the products in the order fixed on
+[the symbolic page](@ref tut-layered-sphere-symbolic): a modulus acts on the
+left of the strain it multiplies, a division by a modulus is a left division.
 The averages of §7 and the pointwise fields of §8 have their aging
-counterparts, the moduli and the amplitudes becoming Volterra operators in the
-order fixed on [the symbolic page](@ref tut-layered-sphere-symbolic): see
-[Inside a layered inclusion](@ref man-visco-layered-inside).
+counterparts ([Inside a layered inclusion](@ref man-visco-layered-inside)), and
+a layered sphere enters every aging scheme, its reference being isotropic as
+in elasticity:
+
+```@example layered_sphere
+times = [0.0, 0.5, 1.0, 2.0]
+aging(C, τ) = ViscoLaw((t, t′) -> t < t′ ? 0.0 * C : (1 + t′) / (1 + t′ + (t - t′) / τ) * C, :relaxation)
+rve_alv = RVE()
+add_phase!(rve_alv, :matrix, Ellipsoid(1.0, 1.0, 1.0), Dict(:C => aging(matrix, 2.0)); fraction = :rest)
+add_phase!(rve_alv, :grain, LayeredSphere((0.8, 1.0), (core, aging(shell, 0.5))),
+           Dict(:C => core); fraction = 0.4)
+homogenize_alv(rve_alv, MoriTanaka(), :C; times)
+```
 
 ## Where to go next
 
