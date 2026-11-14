@@ -171,9 +171,7 @@ The radial problems of `cyl` against the aging reference `ref` on the instants
 (order 2), whose entries are the matrices mapping the history of the remote
 loading to the history of each state.
 """
-function _cylinder_alv_solution(
-        o::Val{O}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}
-    ) where {O}
+function _cylinder_alv_solution(o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real})
     R₀, Rs = _cylinder_alv_blocks(o, cyl, ref, times)
     # The type of a discretized law is known only once it is evaluated: the
     # solution is computed behind a function barrier, on the block matrices.
@@ -249,14 +247,8 @@ _property_contribution_alv(
 
 _flux_entries_alv(::Val{4}, sol, cyl, ::Nothing, external) = _LC._whole_stress(sol, external)
 _flux_entries_alv(::Val{2}, sol, cyl, ::Nothing, external) = _LC._whole_flux(sol, external)
-function _flux_entries_alv(::Val{4}, sol, cyl, layer::Int, external)
-    _LC._check_layer(cyl, layer)
-    return _LC._layer_stress(sol, layer)
-end
-function _flux_entries_alv(::Val{2}, sol, cyl, layer::Int, external)
-    _LC._check_layer(cyl, layer)
-    return _LC._layer_flux(sol, layer)
-end
+_flux_entries_alv(::Val{4}, sol, cyl, layer::Int, external) = (_LC._check_layer(cyl, layer); _LC._layer_stress(sol, layer))
+_flux_entries_alv(::Val{2}, sol, cyl, layer::Int, external) = (_LC._check_layer(cyl, layer); _LC._layer_flux(sol, layer))
 
 """
     flux_gradient_concentration_alv(cyl::LayeredCylinder, ref, times; layer = nothing, external = true) -> Matrix

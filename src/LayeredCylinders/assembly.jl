@@ -169,10 +169,8 @@ function _whole_gradient(sol, external::Bool)
     return (; t = _side(sol.transverse, N, external)[1] / sol.radii[N], a = one(sol.K₀.t))
 end
 
-function _layer_gradient(sol, k::Int, external::Bool, internal::Bool)
-    t = _annulus_gradient(TransverseConduction(), sol.transverse, sol.radii, k, external, internal)
-    return (; t, a = one(sol.K₀.t))
-end
+_layer_gradient(sol, k::Int, external::Bool, internal::Bool) =
+    (; t = _annulus_gradient(TransverseConduction(), sol.transverse, sol.radii, k, external, internal), a = one(sol.K₀.t))
 
 function _whole_flux(sol, external::Bool)
     N = length(sol.radii)

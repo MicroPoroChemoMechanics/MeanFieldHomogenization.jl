@@ -134,12 +134,10 @@ end
 the interface of type `intf` located at radius ``r``.  The adjacent
 layer Volterra moduli `(M_κ, M_μ)` are passed in for type promotion.
 
-Supports the imperfect interfaces of the elastic counterpart:
-[`SpringInterface`](@ref) (primal, displacement jump driven by the compliance
-``s_n = 1/k_n``) and [`MembraneInterface`](@ref) (dual, traction jump driven by
-``\\kappa^{\\mathrm s}``). A perfect interface jumps nothing and is skipped by the
-callers. The interface parameters are constant in time (see
-`_iface_param_volterra`).
+Only the [`SpringInterface`](@ref) (primal, displacement jump driven by the
+compliance ``s_n = 1/k_n``) is needed: the callers ask for the displacement jump
+of the interfaces that have one, and a perfect interface or a membrane has none.
+The interface parameters are constant in time (see `_iface_param_volterra`).
 """
 function _bulk_interface_T_alv(
         intf::SpringInterface, M_κ, M_μ, r,
@@ -151,21 +149,6 @@ function _bulk_interface_T_alv(
     M = zeros(T, 2 * n, 2 * n)
     M[1:n, 1:n] = Id
     M[1:n, (n + 1):(2n)] = T.(M_kn)
-    M[(n + 1):(2n), (n + 1):(2n)] = Id
-    return M
-end
-
-function _bulk_interface_T_alv(
-        intf::MembraneInterface, M_κ, M_μ, r,
-        times::AbstractVector, n::Int
-    )
-    M_κs = _iface_param_volterra(intf.κs, times, n)
-    T = promote_type(eltype(M_κ), eltype(M_μ), eltype(M_κs))
-    Id = Matrix{T}(I, n, n)
-    fourκs_over_r² = T(4 / (r * r))
-    M = zeros(T, 2 * n, 2 * n)
-    M[1:n, 1:n] = Id
-    M[(n + 1):(2n), 1:n] = fourκs_over_r² .* T.(M_κs)
     M[(n + 1):(2n), (n + 1):(2n)] = Id
     return M
 end
