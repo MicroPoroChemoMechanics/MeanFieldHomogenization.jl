@@ -142,7 +142,8 @@ _resolve(f, r, side::Symbol, layer) =
 function _local_A(f::LayeredCylinderFields, r, Q, k::Int)
     M = _local_mandel(_local_strain_entries(f.sol, f.matrix, k, r))
     R = TensND.mandel_rotation(Q)
-    return TensND.from_mandel(R * M * transpose(R))
+    # a 6 × 6 Mandel matrix of a minor-symmetric fourth-order tensor, said by type
+    return TensND.from_mandel(Tensors.SymmetricTensor{4, 3}, R * M * transpose(R))
 end
 
 function _local_A_scaled(f::LayeredCylinderFields, r, Q, k::Int, pre::Bool, post::Bool)

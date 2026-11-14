@@ -11,6 +11,7 @@ module LayeredCylinders
 
 using LinearAlgebra
 using TensND
+import Tensors
 
 import ..Core
 using ..Core

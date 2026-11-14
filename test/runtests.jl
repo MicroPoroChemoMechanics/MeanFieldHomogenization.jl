@@ -460,6 +460,7 @@ end
         include("Viscoelasticity/test_layered_alv_local_fields.jl")
         include("Viscoelasticity/test_layered_cylinder_alv.jl")
         include("Viscoelasticity/test_layered_cylinder_alv_schemes.jl")
+        include("Viscoelasticity/test_layered_alv_fe_oracle.jl")
         include("Viscoelasticity/test_ti_alv.jl")
         include("Viscoelasticity/test_ortho_alv.jl")
         include("Viscoelasticity/test_ortho_dispatch_alv.jl")

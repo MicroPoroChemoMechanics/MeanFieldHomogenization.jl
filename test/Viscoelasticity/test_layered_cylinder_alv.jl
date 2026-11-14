@@ -170,6 +170,12 @@ end
         LayeredCylinder((1.0,), (LCV_CF,)), heaviside_law(lc_tensor(LC_0; axis = (1.0, 0.0, 0.0))), LCV_TIMES
     )
     @test_throws "infinite modulus" gradient_gradient_concentration_alv(LayeredCylinder((1.0,), (TensISO{3}(Inf, 2.0),)), h0, LCV_TIMES)
+    # A law is evaluated at run time, so the entry point is a function barrier:
+    # what lies behind it, on the block matrices, is inferred.
+    c_law = LayeredCylinder((0.6, 1.0), (LCV_CF, lcv_law(LCV_CM, lcv_gm)); interfaces = LCV_ITFS)
+    R₀ = LCV._alv_blocks(h0, LCV_TIMES, 6)
+    Rs = map(P -> LCV._alv_blocks(P, LCV_TIMES, 6), c_law.moduli)
+    @inferred LCV._cylinder_alv_from_blocks(Val(4), c_law, R₀, Rs)
     @test_throws ArgumentError LCV.ti_params_from_blocks(zeros(5, 5))
     @test_throws ArgumentError LCV.ti_order2_params_from_blocks(zeros(4, 4))
     # the blocks of a stiffness: (n, 2l, l, 2k, 2m, 2p), and back

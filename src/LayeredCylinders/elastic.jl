@@ -140,9 +140,9 @@ end
 # Behind a function barrier: `S` is a type computed from the inputs, which the
 # conversions below must see as a static parameter to stay inferred.
 function _elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls) where {S, T, N}
-    radii = map(S, cyl.radii)
-    L₀ = map(S, L₀)
-    Ls = map(L -> map(S, L), Ls)
+    radii = map(x -> S(x), cyl.radii)
+    L₀ = map(x -> S(x), L₀)
+    Ls = map(L -> map(x -> S(x), L), Ls)
     itfs = cyl.interfaces
     dilatation, axial = _solve_axisymmetric(radii, Ls, itfs, L₀)
     shear = _solve_shear(radii, Ls, itfs, L₀)
@@ -171,9 +171,9 @@ function _conduction_solution(cyl::LayeredCylinder{T, N}, K₀::TensND.AbstractT
 end
 
 function _conduction_solution(::Type{S}, cyl::LayeredCylinder{T, N}, K₀e, Ks) where {S, T, N}
-    radii = map(S, cyl.radii)
-    K₀e = map(S, K₀e)
-    Ks = map(K -> map(S, K), Ks)
+    radii = map(x -> S(x), cyl.radii)
+    K₀e = map(x -> S(x), K₀e)
+    Ks = map(K -> map(x -> S(x), K), Ks)
     transverse = _solve_potential(
         TransverseConduction(), radii, map(K -> K.t, Ks), cyl.interfaces, K₀e.t
     )

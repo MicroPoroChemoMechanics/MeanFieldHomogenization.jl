@@ -207,12 +207,19 @@ layer_property_average(cyl::LayeredCylinder, ::TensND.AbstractTens{O, 3}) where 
 layer_inverse_property_average(cyl::LayeredCylinder, ::TensND.AbstractTens{O, 3}) where {O} =
     layer_inverse_property_average(cyl, Val(O))
 
-function layer_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N}
+# Every layer is transversely isotropic about the axis of the cylinder: the
+# average is that of the Walpole coefficients, about that axis. (A sum of
+# `TensTI` would compare their axes at run time.)
+function _coaxial_average(cyl::LayeredCylinder{T, N}, tensors::Tuple) where {T, N}
     f = _layer_fractions(cyl)
-    return sum(f[k] * _layer_tensor(cyl, k, order) for k in 1:N)
+    data = reduce((x, y) -> x .+ y, ntuple(k -> f[k] .* TensND.get_data(tensors[k]), Val(N)))
+    return _rebuild_ti(first(tensors), data, cyl.axis)
 end
+_rebuild_ti(::TensND.TensTI{4}, ℓ, axis) = TensND.TensTI{4}(ℓ..., axis)
+_rebuild_ti(::TensND.TensTI{2}, c, axis) = TensND.TensTI{2}(c..., axis)
 
-function layer_inverse_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N}
-    f = _layer_fractions(cyl)
-    return sum(f[k] * inv(_layer_tensor(cyl, k, order)) for k in 1:N)
-end
+layer_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N} =
+    _coaxial_average(cyl, ntuple(k -> _layer_tensor(cyl, k, order), Val(N)))
+
+layer_inverse_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N} =
+    _coaxial_average(cyl, ntuple(k -> inv(_layer_tensor(cyl, k, order)), Val(N)))

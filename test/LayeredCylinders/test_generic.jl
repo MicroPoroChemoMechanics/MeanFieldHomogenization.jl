@@ -34,6 +34,20 @@ end
     cyl = LayeredCylinder((0.6, 1.0), (lc_tensor(LC_F), TensISO{3}(30.0, 8.0)))      # layers of two types
     @inferred LCyl._elastic_solution(cyl, lc_tensor(LC_0))
     @inferred LCyl._conduction_solution(LayeredCylinder((0.6, 1.0), (lc_K(5.0, 7.0), TensISO{3}(2.0))), lc_K(2.0, 3.0))
+    # the public entry points, the pointwise fields and the layer averages
+    C0 = lc_tensor(LC_0)
+    bonded = LayeredCylinder((0.6, 1.0), (lc_tensor(LC_F), TensISO{3}(30.0, 8.0)); interfaces = (SpringInterface(20.0, 10.0), MembraneInterface(3.0, 1.2)))
+    @inferred gradient_gradient_concentration(bonded, C0, C0)
+    @inferred flux_gradient_concentration(bonded, C0, C0)
+    @inferred MeanFieldHomogenization.property_contribution(bonded, C0)
+    @inferred gradient_gradient_concentration(bonded, C0; layer = 2, external = true)
+    @inferred LCyl.layer_property_average(bonded, Val(4))
+    @inferred LCyl.layer_inverse_property_average(bonded, Val(4))
+    fields = @inferred LayeredCylinderFields(bonded, C0)
+    E = TensND.Tens([0.3 0.1 0.0; 0.1 -0.2 0.0; 0.0 0.0 0.5])
+    @inferred local_gradient(fields, (0.3, 0.2, 0.1), E)
+    @inferred local_flux(fields, (0.3, 0.2, 0.1), E)
+    @inferred local_displacement(fields, (0.3, 0.2, 0.1), E)
 end
 
 @testset "LayeredCylinder — ForwardDiff in a layer, a radius, the interfaces" begin

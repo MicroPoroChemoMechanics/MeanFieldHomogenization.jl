@@ -155,17 +155,32 @@ The radial problems of `cyl` against the aging reference `ref` on the instants
 loading to the history of each state.
 """
 function _cylinder_alv_solution(
-        ::Val{4}, cyl::LayeredCylinder{T, N}, ref::_ALVReference, times::AbstractVector{<:Real}
-    ) where {T, N}
+        o::Val{O}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}
+    ) where {O}
     _check_canonical_axis(cyl)
-    L₀ = _hill_volterra(_alv_blocks(ref, times, 6), "the reference medium")
-    Ls = ntuple(k -> _hill_volterra(_alv_blocks(layer_modulus(cyl, k), times, 6), "layer $k"), Val(N))
+    b = _block_rows(o)
+    # The type of a discretized law is known only once it is evaluated: the
+    # solution is computed behind a function barrier, on the block matrices.
+    return _cylinder_alv_from_blocks(o, cyl, _alv_blocks(ref, times, b), map(P -> _alv_blocks(P, times, b), cyl.moduli))
+end
+
+_volterra_entries(::Val{4}, M, who) = _hill_volterra(M, who)
+_volterra_entries(::Val{2}, M, who) = _conductivity_volterra(M, who)
+
+function _cylinder_alv_from_blocks(
+        o::Val, cyl::LayeredCylinder{T, N}, R₀::AbstractMatrix, Rs::Tuple
+    ) where {T, N}
+    L₀ = _volterra_entries(o, R₀, "the reference medium")
+    Ls = ntuple(k -> _volterra_entries(o, Rs[k], "layer $k"), Val(N))
     E = promote_type(
-        T, eltype(L₀.k), map(L -> eltype(L.k), Ls)..., interfaces_eltype(cyl.interfaces)
+        T, map(eltype, values(L₀))..., map(L -> eltype(first(L)), Ls)...,
+        interfaces_eltype(cyl.interfaces)
     )
+    return _cylinder_alv_solve(o, E, cyl, _common_matrices(E, L₀), map(L -> _common_matrices(E, L), Ls))
+end
+
+function _cylinder_alv_solve(::Val{4}, ::Type{E}, cyl::LayeredCylinder{T, N}, L₀, Ls) where {E, T, N}
     radii = map(E, cyl.radii)
-    L₀ = _common_matrices(E, L₀)
-    Ls = map(L -> _common_matrices(E, L), Ls)
     itfs = cyl.interfaces
     dilatation, axial = _LC._solve_axisymmetric(radii, Ls, itfs, L₀)
     shear = _LC._solve_shear(radii, Ls, itfs, L₀)
@@ -174,18 +189,8 @@ function _cylinder_alv_solution(
     return (; radii, Ls, L₀, fractions, interfaces = itfs, dilatation, axial, shear, antiplane)
 end
 
-function _cylinder_alv_solution(
-        ::Val{2}, cyl::LayeredCylinder{T, N}, ref::_ALVReference, times::AbstractVector{<:Real}
-    ) where {T, N}
-    _check_canonical_axis(cyl)
-    K₀ = _conductivity_volterra(_alv_blocks(ref, times, 3), "the reference medium")
-    Ks = ntuple(k -> _conductivity_volterra(_alv_blocks(layer_modulus(cyl, k), times, 3), "layer $k"), Val(N))
-    E = promote_type(
-        T, eltype(K₀.t), map(K -> eltype(K.t), Ks)..., interfaces_eltype(cyl.interfaces)
-    )
+function _cylinder_alv_solve(::Val{2}, ::Type{E}, cyl::LayeredCylinder{T, N}, K₀, Ks) where {E, T, N}
     radii = map(E, cyl.radii)
-    K₀ = _common_matrices(E, K₀)
-    Ks = map(K -> _common_matrices(E, K), Ks)
     transverse = _LC._solve_potential(
         _LC.TransverseConduction(), radii, map(K -> K.t, Ks), cyl.interfaces, K₀.t
     )
