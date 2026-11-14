@@ -47,7 +47,16 @@ function cylinder_gradient_average(cyl::LayeredCylinder{T, N}, P₀::_Order, X�
     return sum(f[k] * layer_gradient_average(cyl, P₀, X∞, k) for k in 1:N)
 end
 
-@doc (@doc cylinder_gradient_average)
+"""
+    cylinder_flux_average(cyl, P₀, X∞)
+
+Average over the material of the whole cylinder of the stress under the remote
+strain `X∞`, or of ``\\boldsymbol k\\cdot\\nabla T`` under the remote gradient `X∞`:
+``\\sum_k f_k\\,\\langle\\cdot\\rangle_k``, without the surface stress (or flux) of the
+membranes (or conducting surfaces), which
+[`flux_gradient_concentration`](@ref)`(cyl, P₁, P₀)` includes. Name in
+elasticity: [`cylinder_stress_average`](@ref).
+"""
 function cylinder_flux_average(cyl::LayeredCylinder{T, N}, P₀::_Order, X∞) where {T, N}
     f = _layer_fractions(cyl)
     return sum(f[k] * layer_flux_average(cyl, P₀, X∞, k) for k in 1:N)
