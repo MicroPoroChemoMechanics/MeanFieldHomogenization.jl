@@ -44,6 +44,10 @@ listed under Fixed.
   pointwise gradient and flux serve the cylinder too
   (`LayeredCylinderALVFields`); the pointwise displacement and temperature are
   those of the sphere.
+- **MFH Studio offers the layered cylinder** as a phase geometry: the layer
+  table of the sphere (outer radii, moduli, interfaces) and two angles for the
+  axis, drawn as a length of coaxial shells cut open, and written into the
+  generated script.
 
 ### Fixed
 
