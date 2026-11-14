@@ -33,6 +33,7 @@
  "Code MFH Studio did not recognize. It is written back unchanged — editing the model never rewrites it.": "Code que MFH Studio n'a pas reconnu. Il est réécrit à l'identique — modifier le modèle ne le réécrit jamais.",
  "Compute": "Calculer",
  "Concentric layers, ascending radii, r = 0 implicit at the center.": "Couches concentriques, rayons croissants, r = 0 implicite au centre.",
+ "Coaxial cylindrical layers, unbounded along the axis, ascending radii, r = 0 implicit on the axis.": "Couches cylindriques coaxiales, infinies le long de l'axe, rayons croissants, r = 0 implicite sur l'axe.",
  "Confocal spheroidal layers, given by volume fraction. Conduction only; ω = 1 is a LayeredSphere.": "Couches sphéroïdales confocales, données par fraction volumique. Conduction seulement ; ω = 1 est une LayeredSphere.",
  "Constants": "Constantes",
  "Core first. Fractions are of the total volume and are normalized; the confocal radii are solved for.": "Le cœur d'abord. Les fractions portent sur le volume total et sont normalisées ; les rayons confocaux sont calculés.",

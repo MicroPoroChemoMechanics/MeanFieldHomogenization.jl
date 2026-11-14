@@ -65,6 +65,7 @@ when touching it:
 | [`MeanFieldHomogenization.Cracks`](@ref) | Crack-opening-displacement (COD) tensor, compliance contribution, stress/displacement intensity factors. |
 | [`MeanFieldHomogenization.Conductivity`](@ref) | Second-order Hill tensor for transport problems (diffusion, conduction, Darcy flow), closed form for any matrix anisotropy. |
 | [`MeanFieldHomogenization.LayeredSpheres`](@ref) | `n`-layer composite spheres (Hervé–Zaoui, Christensen–Lo), five interface types, volume-average and pointwise concentration. |
+| [`MeanFieldHomogenization.LayeredCylinders`](@ref) | `n`-layer coaxial cylinders with transversely isotropic layers (Hashin–Rosen, Christensen–Lo, Hervé–Zaoui), in elasticity, conduction and ALV, four interface types, volume-average and pointwise concentration. |
 | [`MeanFieldHomogenization.LayeredSpheroids`](@ref) | `n`-layer confocal spheroids, in conduction (Kapitza / surface-conductive interfaces, series or quadrature evaluation) and in axisymmetric elasticity. |
 | [`MeanFieldHomogenization.Laminates`](@ref) | Periodic multilayer cell: no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, same imperfect interfaces, per-layer concentration. |
 | [`MeanFieldHomogenization.Schemes`](@ref) | RVE container and `homogenize`; Voigt, Reuss, Dilute, Mori–Tanaka, Maxwell, PCW, self-consistent, asymmetric SC, differential, cluster model, equivalent inclusion; exact vs. best-fit symmetrization; `ForwardDiff` sensitivities. |
@@ -93,6 +94,7 @@ sub-module is for, but what it puts in the namespace.
 | `Cracks`           | `EllipticCrack`, `RibbonCrack`, `cod_tensor`, `sif`, `dif`, and the crack methods of the contribution generics |
 | `Conductivity`     | additional `_kernel` methods for 2nd-order transport tensors                                        |
 | `LayeredSpheres`   | `LayeredSphere`, Hervé–Zaoui recurrences, five interface types, concentration fields                 |
+| `LayeredCylinders` | `LayeredCylinder` (coaxial, TI layers), four radial problems, concentration fields                  |
 | `LayeredSpheroids` | `LayeredSpheroid` (confocal; conduction and axisymmetric elasticity)                                |
 | `Laminates`        | `Laminate`, the interface algebra, per-layer concentration, the ALV twin                              |
 | `Interactions`     | Green operator of the reference and the two-inclusion interaction tensor (closed forms, cubature, periodic sums) |

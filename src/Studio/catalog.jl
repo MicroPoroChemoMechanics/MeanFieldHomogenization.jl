@@ -92,6 +92,15 @@ const GEOMETRIES = [
         angles = 0,
     ),
     (;
+        name = "LayeredCylinder",
+        kind = "layered_cylinder",
+        dim = 3,
+        doc = "Coaxial cylindrical layers, unbounded along the axis, ascending radii, r = 0 implicit on the axis.",
+        fields = Any[],
+        layered = true,
+        angles = 2,
+    ),
+    (;
         name = "LayeredSpheroid",
         kind = "layered_spheroid",
         dim = 3,
