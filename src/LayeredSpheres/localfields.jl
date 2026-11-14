@@ -703,9 +703,7 @@ function LayeredSphereTransportFields(
         if k > N
             (one(TP), B_inf * inv_A_inf)
         else
-            Ak, Bk = _cond_extract_AB(
-                TP(radii[k]), TP(k_layers[k]), inside[k][1], inside[k][2]
-            )
+            Ak, Bk = _cond_layer_AB(radii, k_layers, k, inside[k][1], inside[k][2])
             k == 1 ? (Ak * inv_A_inf, zero(TP)) : (Ak * inv_A_inf, Bk * inv_A_inf)
         end
     end

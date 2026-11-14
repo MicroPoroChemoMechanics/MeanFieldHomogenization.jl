@@ -96,13 +96,33 @@ conductivity `k_iso` given the state ``(\\hat T, \\hat q_n)`` at radius `r`.
     # Impermeable region (k = 0, e.g. a solid aggregate core): the normal flux
     # is identically zero and carries no information on (A, B); the `q̂n/k` terms
     # are the indeterminate `0/0`.  For the core, regularity at the origin fixes
-    # `B = 0`, so `A = T̂ / r`.  (A non-core impermeable shell is not supported.)
+    # `B = 0`, so `A = T̂ / r`.  (An impermeable shell: `_cond_layer_AB`.)
     if iszero(Tk)
         return T(T̂) / Tr, zero(T)
     end
     A = (2 * T(T̂) - Tr * T(q̂n) / Tk) * inv_3 / Tr
     B = (Tr² * T(T̂) + Tr³ * T(q̂n) / Tk) * inv_3
     return A, B
+end
+
+# An impermeable layer: a conductivity that is exactly zero. Never true for a
+# symbol, which does not compare.
+@inline _is_impermeable(k) = is_hard_numeric(typeof(k)) && iszero(k)
+
+"""
+    _cond_layer_AB(radii, k_layers, j, T̂, q̂n) -> (A, B)
+
+Coefficients ``(A, B)`` of layer `j` from its state at ``r_j^-``. In an
+impermeable shell (``k_j = 0``, ``j > 1``) no flux crosses, the layers inside it
+are shielded, and its own field is the limit of a vanishing conductivity: it
+vanishes on its inner face, ``\\hat T = A\\,(r - r_{j-1}^3/r^2)``.
+"""
+@inline function _cond_layer_AB(radii, k_layers, j::Int, T̂, q̂n)
+    j > 1 && _is_impermeable(k_layers[j]) ||
+        return _cond_extract_AB(radii[j], k_layers[j], T̂, q̂n)
+    r³ = radii[j - 1]^3
+    A = T̂ * radii[j]^2 / (radii[j]^3 - r³)
+    return A, -A * r³
 end
 
 # ── Conductivity interface jump matrices ────────────────────────────────────
@@ -166,14 +186,30 @@ function _cond_state_seq(sphere::LayeredSphere{T, N}, k₀) where {T, N}
         Tint = _cond_interface_T(intf, TP(k_layers[k]), TP(radii[k]))
         s = Tint * s
         if k < N
-            Tlay = _cond_layer_transfer(
-                TP(radii[k + 1]), TP(radii[k]),
-                TP(k_layers[k + 1])
-            )
-            s = Tlay * s
+            s = _cond_enter_layer!(inside_states, s, radii, k_layers, k + 1)
         end
     end
     return inside_states, s
+end
+
+# The state at the outer face of layer `j`, from the state `s` at its inner
+# face. An impermeable shell restarts the sequence: the states inside it are
+# zero (those layers are shielded) and its own field has a unit amplitude.
+function _cond_enter_layer!(inside_states, s::Vector{TP}, radii, k_layers, j::Int) where {TP}
+    _is_impermeable(k_layers[j]) || return _cond_layer_transfer(
+        TP(radii[j]), TP(radii[j - 1]), TP(k_layers[j])
+    ) * s
+    _is_impermeable(k_layers[j - 1]) && throw(
+        ArgumentError(
+            "layers $(j - 1) and $j of the LayeredSphere both have a zero conductivity: " *
+                "the field of an impermeable layer is defined by a conducting neighbor " *
+                "inside it; merge the two layers"
+        )
+    )
+    for i in 1:(j - 1)
+        inside_states[i] = zeros(TP, 2)
+    end
+    return TP[TP(radii[j]) - TP(radii[j - 1])^3 / TP(radii[j])^2, zero(TP)]
 end
 
 """
@@ -198,10 +234,7 @@ function _cond_concentration(sphere::LayeredSphere{T, N}, k₀) where {T, N}
     inv_A_inf = one(TP) / A_inf
 
     return ntuple(N) do k
-        (A_k, _) = _cond_extract_AB(
-            TP(radii[k]), TP(k_layers[k]),
-            inside_states[k][1], inside_states[k][2]
-        )
+        (A_k, _) = _cond_layer_AB(radii, k_layers, k, inside_states[k][1], inside_states[k][2])
         A_k * inv_A_inf
     end
 end
