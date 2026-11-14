@@ -327,6 +327,8 @@ of the fiber against its coating.
 
 - [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic):
   the modes, the jumps and the operator order, derived.
+- [Layered spheroid](@ref th-layered-spheroid): the next pattern, confocal
+  spheroidal layers.
 - [Layered inclusions](@ref man-layered): the syntax shared by the layered
   patterns.
 - [Cylindrical inclusions](@ref man-cylindrical-inclusions): the homogeneous

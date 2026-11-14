@@ -14,7 +14,10 @@ contribution tensors and layer / sphere / cumulative averages. The bulk and
 shear recurrences follow [herve1993](@citet) (generalizing the three-phase model
 of [christensenLo1979](@citet)); imperfect interfaces follow
 [herveLuanco2014](@cite) — `PerfectInterface` plus one primal/dual pair per
-physics:
+physics. Every matrix of this page is derived with symbolic computations on
+[Layered sphere: the transfer matrices, symbolically](@ref tut-layered-sphere-symbolic),
+and the order of the products when the moduli are aging operators is fixed
+there:
 
 | Elasticity (primal / dual)                   | Conductivity (primal / dual)                    |
 | :------------------------------------------- | :---------------------------------------------- |
@@ -413,9 +416,11 @@ See the worked example with figures:
 
 ## Where to go next
 
-The next page, [Layered spheroid](@ref th-layered-spheroid), solves the same
-problem in conduction for confocal spheroidal layers, on which an imperfect
-interface couples the harmonic degrees that a sphere keeps apart. The
+The next page, [Layered cylinder](@ref th-layered-cylinder), solves the same
+problem for a coated fiber, whose layers may be transversely isotropic. The
+page after it, [Layered spheroid](@ref th-layered-spheroid), solves it in
+conduction for confocal spheroidal layers, on which an imperfect interface
+couples the harmonic degrees that a sphere keeps apart. The
 per-layer concentration tensors of §7 are computed on a random multilayer in the
 tutorial
 [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere),

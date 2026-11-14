@@ -2,6 +2,7 @@
 
 !!! info "Before this page"
     [Layered spheres](@ref th-layered-sphere),
+    [Layered cylinder](@ref th-layered-cylinder),
     [Layered spheroids](@ref th-layered-spheroid) and
     [The elastic layered spheroid](@ref th-spheroid-elasticity), where the
     algebra behind the two families used below is derived — the Hervé–Zaoui
@@ -22,15 +23,16 @@ scheme needs — the family enters through
 [level B](@ref man-custom-inclusions), supplying both concentration tensors
 directly.
 
-Two families are shipped, and they share their whole surface:
+Three families are shipped, and they share their whole surface:
 
-| Type | Geometry | Physics |
-|:--|:--|:--|
-| [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) | concentric spheres | elasticity and conduction |
-| [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) | **confocal** spheroids | elasticity and conduction |
+| Type | Geometry | Layers | Physics |
+|:--|:--|:--|:--|
+| [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) | concentric spheres | isotropic | elasticity, conduction, aging viscoelasticity |
+| [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) | coaxial infinite cylinders | isotropic or transversely isotropic about the axis | elasticity, conduction, aging viscoelasticity |
+| [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) | **confocal** spheroids | isotropic | elasticity and conduction |
 
-The general syntax comes first below; the two geometries, and what is specific
-to each, come after.
+The general syntax comes first below; the three geometries, and what is
+specific to each, come after.
 
 ## The general syntax
 
@@ -161,13 +163,38 @@ Three checks come free and are worth using on a new configuration:
 and the continuity of tractions across every interface — with the displacement
 jump matching the interface law where there is one.
 
-## The two geometries
+## The three geometries
 
 ### Concentric spheres
 
 [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) is
 the classical Hervé–Zaoui pattern: isotropic layers, any number of them, both
 physics. Nothing constrains the radii but that they ascend.
+
+### Coaxial cylinders
+
+[`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder)
+is a coated fiber: an infinite core and coatings of ascending radii around an
+axis, ``\underline e_3`` unless `axis` says otherwise. Its layers, and the
+reference medium, may be transversely isotropic about that axis, which is the
+symmetry of an aligned-fiber composite; a self-consistent or a differential
+scheme on aligned fibers then stays within it.
+
+```@example layered
+ti(k, l, m, n, p) = ti_from_constants(k + m, k - m, l, n, p, (0.0, 0.0, 1.0))  # Hill's moduli
+fiber = LayeredCylinder(
+    (0.8, 1.0),
+    (ti(30.0, 12.0, 9.0, 150.0, 14.0),                  # carbon-like core
+     iso_stiffness(4.0, 1.5)),                          # isotropic sizing
+    interfaces = (SpringInterface(20.0, 12.5), PerfectInterface()),
+)
+N = property_contribution(fiber, iso_stiffness(3.0, 1.2))
+ti_constants(best_fit_ti(N, (0.0, 0.0, 1.0)))
+```
+
+Its tensors are transversely isotropic about the axis; the concentration
+tensor has no major symmetry, the axial and in-plane loadings being coupled.
+The derivation is on [Layered cylinder](@ref th-layered-cylinder).
 
 ### Confocal spheroids
 
@@ -212,6 +239,11 @@ rather than a chain of transfer matrices. `Nseries` sets the truncation.
   yet. Conduction already has them.
 - **The exact spherical limit of a confocal spheroid**: the coordinates
   degenerate. Use `LayeredSphere`, or a nearly spherical aspect ratio.
+- **A cylinder with incompressible or void layers**, or a reference that is
+  not transversely isotropic about its axis: the radial problems divide by the
+  plane-strain bulk and the shear moduli, and their decoupling rests on that
+  symmetry. In aging viscoelasticity the axis must also be ``\underline e_3``,
+  the Volterra block matrices being written in the canonical frame.
 
 ## Where to go next
 
@@ -226,7 +258,9 @@ work through both geometries, and
 coated sphere for an aggregate and its transition zone.
 
 - [Layered spheres](@ref th-layered-sphere),
+  [Layered cylinder](@ref th-layered-cylinder),
   [Layered spheroids](@ref th-layered-spheroid),
   [The elastic layered spheroid](@ref th-spheroid-elasticity) — the derivations
 - [API — LayeredSphere](@ref api-layered-sphere),
+  [API — LayeredCylinder](@ref api-layered-cylinder),
   [API — LayeredSpheroid](@ref api-layered-spheroid) — the docstrings
