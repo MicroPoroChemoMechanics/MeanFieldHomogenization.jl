@@ -193,47 +193,202 @@ function _cylinder_alv_solution(
     return (; radii, Ks, K₀, fractions, interfaces = cyl.interfaces, transverse)
 end
 
-# ── Whole-cylinder operators ─────────────────────────────────────────────────
+# ── Operators of the cylinder and of its layers ──────────────────────────────
+#
+#  `layer = nothing` is the whole cylinder (its outer interface included when
+#  `external`, the default); `layer = k` is layer k, its material by default,
+#  plus the jump across its outer boundary when `external` and across its inner
+#  one when `internal`, as in elasticity.
 
-_gradient_gradient_concentration_alv(
-    o::Val{4}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
-    external::Bool = true,
-) = ti_blocks_from_params(_LC._whole_strain(_cylinder_alv_solution(o, cyl, ref, times), external))
+_check_alv_layer(cyl::LayeredCylinder, layer::Int) =
+    1 ≤ layer ≤ layer_count(cyl) || throw(BoundsError(cyl, layer))
+
+_strain_entries_alv(::Val{4}, sol, cyl, ::Nothing, external, internal) = _LC._whole_strain(sol, external)
+_strain_entries_alv(::Val{2}, sol, cyl, ::Nothing, external, internal) = _LC._whole_gradient(sol, external)
+function _strain_entries_alv(::Val{4}, sol, cyl, layer::Int, external, internal)
+    _check_alv_layer(cyl, layer)
+    return _LC._layer_strain(sol, layer, external, internal)
+end
+function _strain_entries_alv(::Val{2}, sol, cyl, layer::Int, external, internal)
+    _check_alv_layer(cyl, layer)
+    return _LC._layer_gradient(sol, layer, external, internal)
+end
+
+_blocks_alv(c::NamedTuple{(:zz, :ze, :mz, :me, :T, :L)}) = ti_blocks_from_params(c)
+_blocks_alv(c::NamedTuple{(:t, :a)}) = ti_order2_blocks_from_params(c)
+
+function _gradient_gradient_concentration_alv(
+        o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
+        layer::Union{Nothing, Int} = nothing, external::Bool = layer === nothing,
+        internal::Bool = false,
+    )
+    sol = _cylinder_alv_solution(o, cyl, ref, times)
+    return _blocks_alv(_strain_entries_alv(o, sol, cyl, layer, external, internal))
+end
+
+_contribution_entries_alv(::Val{4}, sol, external) = _LC._contribution(sol, external)
+_contribution_entries_alv(::Val{2}, sol, external) = _LC._conduction_contribution(sol, external)
 
 _property_contribution_alv(
-    o::Val{4}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
+    o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
     external::Bool = true,
-) = ti_blocks_from_params(_LC._contribution(_cylinder_alv_solution(o, cyl, ref, times), external))
+) = _blocks_alv(_contribution_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), external))
 
-_gradient_gradient_concentration_alv(
-    o::Val{2}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
-    external::Bool = true,
-) = ti_order2_blocks_from_params(
-    _LC._whole_gradient(_cylinder_alv_solution(o, cyl, ref, times), external)
-)
+_flux_entries_alv(::Val{4}, sol, cyl, ::Nothing, external) = _LC._whole_stress(sol, external)
+_flux_entries_alv(::Val{2}, sol, cyl, ::Nothing, external) = _LC._whole_flux(sol, external)
+function _flux_entries_alv(::Val{4}, sol, cyl, layer::Int, external)
+    _check_alv_layer(cyl, layer)
+    return _LC._compose(_LC._stiffness_entries(sol.Ls[layer]), _LC._layer_strain(sol, layer, false, false))
+end
+function _flux_entries_alv(::Val{2}, sol, cyl, layer::Int, external)
+    _check_alv_layer(cyl, layer)
+    G = _LC._layer_gradient(sol, layer, false, false)
+    return (; t = sol.Ks[layer].t * G.t, a = sol.Ks[layer].a * G.a)
+end
 
-_property_contribution_alv(
-    o::Val{2}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
-    external::Bool = true,
-) = ti_order2_blocks_from_params(
-    _LC._conduction_contribution(_cylinder_alv_solution(o, cyl, ref, times), external)
-)
+"""
+    flux_gradient_concentration_alv(cyl::LayeredCylinder, ref, times; layer = nothing, external = true) -> Matrix
+
+Volterra block matrix of the average flux of a [`LayeredCylinder`](@ref) per
+unit remote gradient history, against the aging reference `ref`: in elasticity
+the average stress per unit remote strain, in conduction the average of
+``\\boldsymbol k\\cdot\\nabla T`` per unit remote gradient. Without `layer`, the whole
+cylinder, with the surface stress (flux) of its membranes (conducting
+surfaces), that of the outer one when `external`. With `layer = k`, the
+material of layer ``k``: its relaxation operator applied on the left of its
+average gradient, ``\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k``.
+"""
+function flux_gradient_concentration_alv(
+        cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
+        layer::Union{Nothing, Int} = nothing, external::Bool = true,
+    )
+    o = _alv_order(ref, times)
+    return _blocks_alv(_flux_entries_alv(o, _cylinder_alv_solution(o, cyl, ref, times), cyl, layer, external))
+end
 
 # The concentration A and the average flux B of the cylinder from one solution.
 function _concentration_and_flux_alv(
-        o::Val{4}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
+        o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
         external::Bool = true,
     )
     sol = _cylinder_alv_solution(o, cyl, ref, times)
-    return ti_blocks_from_params(_LC._whole_strain(sol, external)),
-        ti_blocks_from_params(_LC._whole_stress(sol, external))
+    return _blocks_alv(_strain_entries_alv(o, sol, cyl, nothing, external, false)),
+        _blocks_alv(_flux_entries_alv(o, sol, cyl, nothing, external))
 end
 
-function _concentration_and_flux_alv(
-        o::Val{2}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real};
-        external::Bool = true,
+# ── Pointwise operators ──────────────────────────────────────────────────────
+
+"""
+    LayeredCylinderALVFields(cyl, ref, times)
+
+Pointwise solution of a [`LayeredCylinder`](@ref) against the aging reference
+`ref` on the instants `times`: the amplitudes of the radial problems in every
+layer and in the matrix, as Volterra matrices. Build it once for many points
+and pass it to [`local_gradient_gradient_concentration_alv`](@ref) and
+[`local_flux_gradient_concentration_alv`](@ref).
+"""
+struct LayeredCylinderALVFields{O, C <: LayeredCylinder, S, M, R}
+    order::Val{O}
+    cylinder::C
+    sol::S
+    matrix::M
+    relaxations::R      # block matrices of the layers, then of the reference
+end
+
+function LayeredCylinderALVFields(
+        cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}
     )
+    o = _alv_order(ref, times)
     sol = _cylinder_alv_solution(o, cyl, ref, times)
-    return ti_order2_blocks_from_params(_LC._whole_gradient(sol, external)),
-        ti_order2_blocks_from_params(_LC._whole_flux(sol, external))
+    b = _block_rows(o)
+    N = layer_count(cyl)
+    relaxations = [_alv_blocks(k ≤ N ? layer_modulus(cyl, k) : ref, times, b) for k in 1:(N + 1)]
+    return LayeredCylinderALVFields(o, cyl, sol, _matrix_amplitudes_alv(o, sol), relaxations)
+end
+
+_block_rows(::Val{4}) = 6
+_block_rows(::Val{2}) = 3
+
+_matrix_amplitudes_alv(::Val{4}, sol) = _LC._matrix_amplitudes(sol)
+_matrix_amplitudes_alv(::Val{2}, sol) =
+    _LC._pot_amplitudes(last(sol.radii), sol.K₀.t, last(sol.transverse.outside)...)
+
+# The b × b array of n × n matrices `M` rotated by the b × b matrix `R` of
+# numbers, R ∘ M ∘ Rᵀ, written out as a bn × bn time-major block matrix.
+function _rotated_blocks(M::AbstractMatrix{<:AbstractMatrix}, R::AbstractMatrix)
+    b = size(M, 1)
+    n = size(M[1, 1], 1)
+    out = zeros(promote_type(eltype(M[1, 1]), eltype(R)), b * n, b * n)
+    for J in 1:b, I in 1:b
+        blk = view(out, I:b:(b * n), J:b:(b * n))
+        for q in 1:b, p in 1:b
+            iszero(R[I, p] * R[J, q]) || (blk .+= (R[I, p] * R[J, q]) .* M[p, q])
+        end
+    end
+    return out
+end
+
+# 𝔸(x) in the cylindrical frame of the point, as an array of n × n matrices.
+_local_blocks_alv(f::LayeredCylinderALVFields{4}, r, k::Int) =
+    _LC._local_mandel(_LC._local_strain_entries(f.sol, f.matrix, k, r))
+
+function _local_blocks_alv(f::LayeredCylinderALVFields{2}, r, k::Int)
+    amps = k ≤ layer_count(f.cylinder) ? f.sol.transverse.amps[k] : f.matrix
+    dφ, φ_r = _LC._pot_gradients(r, amps...)
+    M = fill(zero(dφ), 3, 3)     # an array of matrices, not their concatenation
+    M[1, 1] = dφ
+    M[2, 2] = φ_r
+    M[3, 3] = one(dφ)
+    return M
+end
+
+_frame_rotation(::LayeredCylinderALVFields{4}, Q) = TensND.mandel_rotation(Q)
+_frame_rotation(::LayeredCylinderALVFields{2}, Q) = Q
+
+function _local_alv(f::LayeredCylinderALVFields, point, side::Symbol, layer)
+    r, _, Q = _LC._cylindrical_frame(f.cylinder, point...)
+    k = _LC._resolve(f, r, side, layer)
+    return _rotated_blocks(_local_blocks_alv(f, r, k), _frame_rotation(f, Q)), k
+end
+
+"""
+    local_gradient_gradient_concentration_alv(f::LayeredCylinderALVFields, point...; side = :outer, layer = nothing) -> Matrix
+    local_gradient_gradient_concentration_alv(cyl, ref, times, point...; side, layer) -> Matrix
+
+Volterra block matrix (``6n\\times 6n`` in elasticity, ``3n\\times 3n`` in
+conduction, canonical frame) of the pointwise concentration of a
+[`LayeredCylinder`](@ref): it maps the history of the remote strain (gradient)
+to the history of the strain (gradient) at the point, given as a vector or by
+its cylindrical coordinates ``(r, \\theta, z)``. `side` and `layer` have the
+meaning they have for the elastic
+[`local_gradient_gradient_concentration`](@ref).
+"""
+local_gradient_gradient_concentration_alv(
+    f::LayeredCylinderALVFields, point...; side::Symbol = :outer, layer = nothing
+) = first(_local_alv(f, point, side, layer))
+
+"""
+    local_flux_gradient_concentration_alv(f::LayeredCylinderALVFields, point...; side = :outer, layer = nothing) -> Matrix
+    local_flux_gradient_concentration_alv(cyl, ref, times, point...; side, layer) -> Matrix
+
+Volterra block matrix of the pointwise flux of a [`LayeredCylinder`](@ref) per
+unit remote gradient history: the relaxation operator of the region applied on
+the left of [`local_gradient_gradient_concentration_alv`](@ref). In conduction
+it is the flux ``\\underline q = -\\boldsymbol k\\cdot\\nabla T``, as in the elastic
+[`local_flux_gradient_concentration`](@ref).
+"""
+function local_flux_gradient_concentration_alv(
+        f::LayeredCylinderALVFields, point...; side::Symbol = :outer, layer = nothing
+    )
+    A, k = _local_alv(f, point, side, layer)
+    return _flux_sign(f) * (f.relaxations[k] * A)
+end
+
+_flux_sign(::LayeredCylinderALVFields{4}) = 1
+_flux_sign(::LayeredCylinderALVFields{2}) = -1
+
+for name in (:local_gradient_gradient_concentration_alv, :local_flux_gradient_concentration_alv)
+    @eval $name(
+        cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}, point...; kw...
+    ) = $name(LayeredCylinderALVFields(cyl, ref, times), point...; kw...)
 end
