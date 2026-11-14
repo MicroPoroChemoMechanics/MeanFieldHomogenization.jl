@@ -5,6 +5,7 @@ using TensND
 using LinearAlgebra
 using Random
 using ForwardDiff
+using JSON
 
 const LCyl = MeanFieldHomogenization.LayeredCylinders
 

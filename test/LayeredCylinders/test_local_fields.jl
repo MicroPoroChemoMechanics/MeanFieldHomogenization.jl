@@ -43,6 +43,11 @@ isdefined(@__MODULE__, :lc_ti) || include(joinpath(@__DIR__, "helpers.jl"))
         x = pt(1.0e4, 1.1, 0.0)
         @test lc_cc(local_gradient(f, x, E)) ≈ E0 rtol = 1.0e-6
         @test collect(local_displacement(f, x, E)) ≈ E0 * x rtol = 1.0e-6
+        # a point, and a gradient, given as first-order tensors stored in a rotated basis
+        ℬ = TensND.RotatedBasis(0.3, 1.1, -0.4)
+        xr = TensND.express(TensND.Tens(collect(pt(0.8, 0.7, 0.4))), ℬ)
+        @test !(TensND.get_array(xr) ≈ pt(0.8, 0.7, 0.4))
+        @test lc_cc(local_gradient(f, xr, E)) ≈ lc_cc(local_gradient(f, pt(0.8, 0.7, 0.4), E))
         # on the axis
         @test all(isfinite, lc_cc(local_gradient(f, 0.2 .* n, E)))
         @test lc_cc(local_gradient(f, 0.2 .* n, E)) ≈ lc_cc(local_gradient(f, pt(1.0e-9, 0.3, 0.2), E)) rtol = 1.0e-6
@@ -109,6 +114,9 @@ isdefined(@__MODULE__, :lc_ti) || include(joinpath(@__DIR__, "helpers.jl"))
         @test dot(qi, er) ≈ dot(qo, er)
         @test local_temperature(g, 0.6, θ, 0.1, G; side = :outer) - local_temperature(g, 0.6, θ, 0.1, G; side = :inner) ≈ -0.2 * dot(qi, er)
         @test collect(local_gradient(g, pt(1.0e4, 0.2, 0.0), G)) ≈ Gv rtol = 1.0e-6
+        Gr = TensND.express(TensND.Tens(Gv), TensND.RotatedBasis(0.3, 1.1, -0.4))
+        @test collect(local_gradient(g, pt(0.8, 0.7, 0.4), Gr)) ≈ collect(local_gradient(g, pt(0.8, 0.7, 0.4), G))
+        @test local_temperature(g, pt(0.8, 0.7, 0.4), Gr) ≈ local_temperature(g, pt(0.8, 0.7, 0.4), G)
         @test local_temperature(g, 1.0, θ, 0.1, G; side = :outer) ≈ local_temperature(g, 1.0, θ, 0.1, G; side = :inner)
     end
 end

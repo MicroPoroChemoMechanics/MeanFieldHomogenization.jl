@@ -90,13 +90,14 @@ _axial_membrane(itf::MembraneInterface, r, u, ε) =
 function _axial_stress(sol, seq, ε, external::Bool)
     N = length(sol.radii)
     R² = sol.radii[N]^2
-    σ = sum(
+    layers = sum(
         sol.fractions[k] * (2 * (sol.Ls[k].lt * seq.amps[k][1]) + sol.Ls[k].n * ε) for k in 1:N
     )
-    for k in 1:(external ? N : N - 1)
-        σ += _axial_membrane(sol.interfaces[k], sol.radii[k], seq.inside[k][1], ε) / R²
-    end
-    return σ
+    surfaces = sum(
+        _axial_membrane(sol.interfaces[k], sol.radii[k], seq.inside[k][1], ε) / R²
+            for k in 1:(external ? N : N - 1); init = zero(layers)
+    )
+    return layers + surfaces
 end
 
 """
@@ -146,7 +147,7 @@ _contribution(sol, external::Bool) = _minus(
 
 # ── Conduction ───────────────────────────────────────────────────────────────
 
-_axial_surface_flux(::AbstractInterface, r) = false
+_axial_surface_flux(::AbstractInterface, r) = zero(r)
 _axial_surface_flux(itf::SurfaceConductiveInterface, r) = 2 * itf.conductance * r
 
 """
@@ -171,11 +172,12 @@ end
 function _whole_flux(sol, external::Bool)
     N = length(sol.radii)
     𝟙 = one(sol.K₀.t)
-    a = sum(sol.fractions[k] * sol.Ks[k].a for k in 1:N)
-    for k in 1:(external ? N : N - 1)
-        a += (_axial_surface_flux(sol.interfaces[k], sol.radii[k]) / sol.radii[N]^2) * 𝟙
-    end
-    return (; t = _side(sol.transverse, N, external)[2], a)
+    layers = sum(sol.fractions[k] * sol.Ks[k].a for k in 1:N)
+    surfaces = sum(
+        _axial_surface_flux(sol.interfaces[k], sol.radii[k]) for k in 1:(external ? N : N - 1);
+        init = zero(eltype(sol.radii))
+    )
+    return (; t = _side(sol.transverse, N, external)[2], a = layers + (surfaces / sol.radii[N]^2) * 𝟙)
 end
 
 function _conduction_contribution(sol, external::Bool)

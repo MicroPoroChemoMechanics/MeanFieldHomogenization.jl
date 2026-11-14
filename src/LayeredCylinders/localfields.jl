@@ -55,6 +55,11 @@ function _transverse_direction(n::NTuple{3})
     return t ./ sqrt(sum(abs2, t))
 end
 
+# The canonical components of a point or of a gradient: a first-order tensor is
+# read in the canonical basis, whatever the basis it is stored in.
+_canonical_vector(x::TensND.AbstractTens{1}) = Tuple(TensND.canonical_components(x))
+_canonical_vector(x) = TensND._extract_vec(x)
+
 _cross(a, b) = (a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1])
 
 """
@@ -69,7 +74,7 @@ components, for a point given as a vector or by its cylindrical coordinates
 ``\\underline e_r`` is that fixed direction.
 """
 function _cylindrical_frame(cyl::LayeredCylinder, x)
-    v = TensND._extract_vec(x)
+    v = _canonical_vector(x)
     n = cyl.axis
     z = sum(v[i] * n[i] for i in 1:3)
     ρ = ntuple(i -> v[i] - z * n[i], 3)
@@ -216,7 +221,7 @@ end
 
 function _local_T(f::LayeredCylinderTransportFields, r, z, Q, k::Int, ∇T∞)
     A, B = _transport_amplitudes(f, k)
-    G = transpose(Q) * collect(TensND._extract_vec(∇T∞))
+    G = transpose(Q) * collect(_canonical_vector(∇T∞))
     return (r * A + _over(B, r, 1)) * G[1] + z * G[3]
 end
 
@@ -243,7 +248,7 @@ end
 
 _apply(A::TensND.AbstractTens{4}, ε∞) = A ⊡ ε∞
 _apply(A::TensND.AbstractTens{2}, ∇T∞) = TensND.Vec{3}(
-    Tuple(TensND.canonical_components(A) * collect(TensND._extract_vec(∇T∞)))
+    Tuple(TensND.canonical_components(A) * collect(_canonical_vector(∇T∞)))
 )
 
 # The remote loading is the last positional argument, the point what precedes.

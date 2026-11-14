@@ -818,16 +818,14 @@ tensor. Parameterizing on a narrower class would make the residual subtract
 vectors of different lengths.
 
 The extra `step` calls are not wasted work: each result is also a better
-starting iterate than the previous one. The number of classes is finite and a
-class never narrows under `step` here, so the loop ends; the bound only guards
-against a `step` that would alternate between two classes.
+starting iterate than the previous one. The loop follows the widenings only:
+the number of unknowns grows strictly at each pass and is bounded by that of a
+general tensor, so it ends.
 """
 function _sc_newton_seed(x0::TensND.AbstractTens, step)
-    x = x0
-    for _ in 1:4
-        x1 = step(x)     # an error here is the one the main loop would raise
-        _sc_param_count(x1) == _sc_param_count(x) && return x
-        x = x1
+    x, x1 = x0, step(x0)  # an error here is the one the main loop would raise
+    while _sc_param_count(x1) > _sc_param_count(x)
+        x, x1 = x1, step(x1)
     end
     return x
 end
