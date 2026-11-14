@@ -123,15 +123,15 @@ _finite_blocks(c::NamedTuple, who::AbstractString) =
 # Hill moduli (n × n matrices) of a 6n × 6n transversely isotropic operator.
 function _hill_volterra(M::AbstractMatrix, who::AbstractString)
     c = ti_params_from_blocks(M)
-    _check_ti_blocks(M, ti_blocks_from_params(c), who)
     _finite_blocks(c, who)
+    _check_ti_blocks(M, ti_blocks_from_params(c), who)
     return (; k = c.me ./ 2, l = c.mz, m = c.T ./ 2, n = c.zz, p = c.L ./ 2, lt = c.ze ./ 2)
 end
 
 function _conductivity_volterra(M::AbstractMatrix, who::AbstractString)
     c = ti_order2_params_from_blocks(M)
-    _check_ti_blocks(M, ti_order2_blocks_from_params(c), who)
     _finite_blocks(c, who)
+    _check_ti_blocks(M, ti_order2_blocks_from_params(c), who)
     return c
 end
 

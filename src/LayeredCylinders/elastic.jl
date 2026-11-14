@@ -127,12 +127,19 @@ unit remote loading: `dilatation` and `axial` (axisymmetric), `shear`
 function _elastic_solution(cyl::LayeredCylinder{T, N}, C₀::TensND.AbstractTens{4, 3}) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     L₀ = _hill_moduli(C₀, cyl.axis)
-    Ls = ntuple(k -> _hill_moduli(layer_modulus(cyl, k), cyl.axis), Val(N))
+    # `map` over the tuple of layers: an index would lose the type of each.
+    Ls = map(C -> _hill_moduli(C, cyl.axis), cyl.moduli)
     _check_stiffness(L₀, "the reference medium")
     foreach(k -> _check_stiffness(Ls[k], "layer $k"), 1:N)
     S = promote_type(
         T, _entries_eltype(L₀), map(_entries_eltype, Ls)..., interfaces_eltype(cyl.interfaces)
     )
+    return _elastic_solution(S, cyl, L₀, Ls)
+end
+
+# Behind a function barrier: `S` is a type computed from the inputs, which the
+# conversions below must see as a static parameter to stay inferred.
+function _elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls) where {S, T, N}
     radii = map(S, cyl.radii)
     L₀ = map(S, L₀)
     Ls = map(L -> map(S, L), Ls)
@@ -154,12 +161,16 @@ reference ones `K₀`.
 function _conduction_solution(cyl::LayeredCylinder{T, N}, K₀::TensND.AbstractTens{2, 3}) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     K₀e = _conductivities(K₀, cyl.axis)
-    Ks = ntuple(k -> _conductivities(layer_modulus(cyl, k), cyl.axis), Val(N))
+    Ks = map(K -> _conductivities(K, cyl.axis), cyl.moduli)
     _check_conductivity(K₀e, "the reference medium")
     foreach(k -> _check_conductivity(Ks[k], "layer $k"), 1:N)
     S = promote_type(
         T, _entries_eltype(K₀e), map(_entries_eltype, Ks)..., interfaces_eltype(cyl.interfaces)
     )
+    return _conduction_solution(S, cyl, K₀e, Ks)
+end
+
+function _conduction_solution(::Type{S}, cyl::LayeredCylinder{T, N}, K₀e, Ks) where {S, T, N}
     radii = map(S, cyl.radii)
     K₀e = map(S, K₀e)
     Ks = map(K -> map(S, K), Ks)

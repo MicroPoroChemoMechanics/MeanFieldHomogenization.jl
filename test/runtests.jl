@@ -111,7 +111,7 @@ const TEST_PARTS = Dict(
     # runner took past the timeout on the prerelease of Julia.
     "polycrystals" => ("Polycrystals",),
     "patterns" => (
-        "LayeredSpheres", "Laminates", "LayeredSpheroids", "Superspheres",
+        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "Superspheres",
         "FiniteElementInclusions",
     ),
     "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
@@ -337,6 +337,15 @@ end
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
+    end
+
+    rungroup("LayeredCylinders") && @testset "LayeredCylinders" begin
+        include("LayeredCylinders/test_elasticity.jl")
+        include("LayeredCylinders/test_interfaces.jl")
+        include("LayeredCylinders/test_conductivity.jl")
+        include("LayeredCylinders/test_local_fields.jl")
+        include("LayeredCylinders/test_scheme_integration.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredCylinders/test_generic.jl")
     end
 
     # The periodic multilayer cell. Placed after the layered morphologies
