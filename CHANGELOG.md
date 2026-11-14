@@ -1,5 +1,91 @@
 # Changelog
 
+## v0.26.6 — the layered cylinder, and the layered sphere completed
+
+A patch release, additive: a new layered pattern, the coated fiber, in
+elasticity, conduction and aging viscoelasticity, and the layered sphere gets
+in aging viscoelasticity what it had in elasticity. Results that change are
+listed under Fixed.
+
+### Added
+
+- **`LayeredCylinder`.** An infinite fiber of circular section made of any
+  number of coaxial layers, each isotropic or transversely isotropic about the
+  fiber axis, in a matrix of either symmetry, with the four interfaces of the
+  layered sphere (`SpringInterface`, `MembraneInterface`, `KapitzaInterface`,
+  `SurfaceConductiveInterface`) and impermeable layers at any rank. A coated
+  fiber was until now out of reach: the homogeneous `Cylinder` has one
+  stiffness, and the layered spheroid is confocal and isotropic. The solution
+  splits the remote loading into four radial problems (axisymmetric,
+  transverse shear, antiplane shear, transverse conduction), chained from the
+  core outward as in the transfer-matrix method of Hervé and Zaoui (1995). It
+  enters every scheme through its concentration and contribution tensors, which
+  are transversely isotropic about the axis, and comes with layer averages,
+  Voigt and Reuss averages and pointwise fields (`LayeredCylinderFields`,
+  `LayeredCylinderTransportFields`, `cylinder_gradient_average`,
+  `cylinder_flux_average` and their names in elasticity). A cell of aligned
+  layered cylinders, its matrix a one-layer cylinder, is solved by the
+  self-consistent and differential schemes with a transversely isotropic
+  reference, which no Hill tensor of the package offered in closed form.
+- **The layered cylinder in aging viscoelasticity**, orders 4 and 2: the radial
+  problems are written once, for numbers and for Volterra operators, each
+  product in the order the equilibrium equations give it, so that the aging
+  cylinder is the elastic one evaluated on Volterra matrices. Every ALV scheme
+  takes it; a cell made of coaxial layered cylinders only is solved by the
+  self-consistent, asymmetric self-consistent and differential schemes with a
+  transversely isotropic running estimate (the cylinder axis must then be e₃).
+- **The layered sphere in aging viscoelasticity, inside**: per-layer gradient
+  and flux operators (`gradient_gradient_concentration_alv(…; layer)`,
+  `flux_gradient_concentration_alv`), pointwise operators
+  (`LayeredSphereALVFields`, `local_gradient_gradient_concentration_alv`,
+  `local_flux_gradient_concentration_alv`, `local_displacement_alv`,
+  `local_temperature_alv`), with the same `external`, `internal`, `side` and
+  `layer` keywords as in elasticity. The averages over a layer and the
+  pointwise gradient and flux serve the cylinder too
+  (`LayeredCylinderALVFields`); the pointwise displacement and temperature are
+  those of the sphere.
+
+### Fixed
+
+- **An impermeable shell other than the core of a layered sphere was read as a
+  conducting one.** A layer of zero conductivity has no flux to carry the
+  amplitudes across it; the recurrence extracted them as if it were an
+  impermeable *core*, and returned a field for the layers it encloses. They are
+  now shielded (zero field), the shell's own field vanishes on its inner face
+  (the limit of a vanishing conductivity), in conduction and at order 2 in
+  aging viscoelasticity; two adjacent impermeable layers are refused.
+- **`SelfConsistent(algorithm = NewtonDefault())` failed on a cell whose
+  estimate widens its symmetry class twice**, spheres among aligned cylinders
+  for instance (isotropic, then transversely isotropic, then general):
+  `DimensionMismatch` with a layered cylinder, `MethodError` with the
+  homogeneous `Cylinder`. The Newton unknowns now follow every widening; the
+  root is Picard's; a class that narrows (a transversely isotropic start, phases
+  averaged over isotropic orientations) is followed the same way.
+- **The pointwise concentrations of a layered sphere under a remote flux, in
+  conduction, had the wrong sign.** `local_gradient_flux_concentration` returned
+  ``\boldsymbol A\cdot\boldsymbol K_0^{-1}`` and `local_flux_flux_concentration`
+  ``-k\,\boldsymbol A\cdot\boldsymbol K_0^{-1}``, which forgot that the remote gradient of a
+  remote flux is ``-\boldsymbol K_0^{-1}\cdot\underline q^{\infty}``: in a homogeneous medium the
+  flux under a remote flux came out as its opposite. They are now
+  ``-\boldsymbol A\cdot\boldsymbol K_0^{-1}`` and ``k\,\boldsymbol A\cdot\boldsymbol K_0^{-1}``, as for the layered
+  spheroid. The concentrations under a remote gradient are unchanged.
+- **A derivative with respect to the surface moduli of a membrane** of a
+  layered sphere in aging viscoelasticity raised a `MethodError`: the state
+  vectors were typed without the interface parameters.
+
+### Documentation
+
+- A theory page for the layered cylinder, with its drawing; two pages that
+  derive the transfer relations symbolically with TensND — the matrices of
+  Hervé and Zaoui (1993) for the sphere, extended to the imperfect interfaces,
+  and those of the cylinder — and fix the order of the products of
+  non-commuting operators; a tutorial on coated carbon fibers (3-D view, stress
+  map, aligned composite, prolate limits, creep); the manual pages of layered
+  inclusions and of aging viscoelasticity extended.
+- Seven references added, each resolved on Crossref: Hashin and Rosen (1964),
+  Hill (1964), Hashin (1979, 1990), Hervé and Zaoui (1995),
+  Benveniste and Miloh (2001), Chen, Dvorak and Yu (2007).
+
 ## v0.26.5 — the documentation describes the current version only
 
 A patch release. The documentation, the docstrings and the tutorials no longer
