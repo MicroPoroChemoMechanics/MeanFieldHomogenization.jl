@@ -58,6 +58,7 @@ const PUBLISHED_SCRIPTS = [
     "31_local_nlayers.jl" => "layered_sphere_local_fields",
     "69_layered_sphere_symbolic.jl" => "layered_sphere_symbolic",
     "68_layered_cylinder_symbolic.jl" => "layered_cylinder_symbolic",
+    "72_layered_cylinder.jl" => "layered_cylinder",
     "32_spheroid_effective_conductivity.jl" => "layered_spheroid_effective",
     "33_laminate_basics.jl" => "laminate",
     "34_laminate_interfaces.jl" => "laminate_interfaces",

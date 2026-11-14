@@ -234,6 +234,16 @@ modulus ``m``. Taking the surrounding medium as the unknown effective one is
 the three-phase model [christensenLo1979](@cite), a fixed point of the
 schemes rather than a property of the pattern.
 
+The cylinder is also the limit of elongated inclusions of the package, which
+share none of its code: a homogeneous prolate ellipsoid tends to the one-layer
+cylinder, and a confocal layered spheroid of growing focal distance to the
+layered cylinder. An imperfect interface carries a length (``\rho``,
+``k^{\mathrm s}``, ``1/k_n``), so that a section answers according to its own
+radius: the spheroid then tends to the average of the cylinders of its
+sections, not to the cylinder of its largest radius. Both limits are checked
+by the test suite and drawn in
+[Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder).
+
 ## 7. In the schemes
 
 A layered cylinder has no Hill tensor: it enters every scheme by its
@@ -329,6 +339,8 @@ of the fiber against its coating.
 
 - [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic):
   the modes, the jumps and the operator order, derived.
+- [Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder): one
+  coated fiber, its fields, the aligned composite and its creep.
 - [Layered spheroid](@ref th-layered-spheroid): the next pattern, confocal
   spheroidal layers.
 - [Layered inclusions](@ref man-layered): the syntax shared by the layered

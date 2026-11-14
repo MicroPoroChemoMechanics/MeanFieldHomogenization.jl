@@ -179,6 +179,7 @@ pages = [
             "tutorials/generated/layered_sphere.md",
             "tutorials/generated/layered_sphere_local_fields.md",
             "tutorials/generated/layered_sphere_symbolic.md",
+            "tutorials/generated/layered_cylinder.md",
             "tutorials/generated/layered_cylinder_symbolic.md",
             "tutorials/generated/layered_spheroid_effective.md",
             "tutorials/generated/layered_spheroid_interfaces.md",
