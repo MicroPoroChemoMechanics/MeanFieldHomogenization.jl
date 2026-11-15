@@ -28,7 +28,7 @@ abstract type AbstractAlgorithm end
 "Closed-form / analytical algorithm — used for every isotropic matrix and for every 2D / conductivity case."
 struct Analytical <: AbstractAlgorithm end
 
-"Residue-theorem algorithm — polynomial-root based, `Float64` only (incompatible with `ForwardDiff` and `SymPy`)."
+"Residue-theorem algorithm — polynomial-root based. The roots are found in `Float64`; `ForwardDiff.Dual` numbers are accepted, symbolic numbers (`Symbolics`, `SymPy`), complex moduli and other float types are refused."
 struct Residue <: AbstractAlgorithm end
 
 "DECUHR 2D hyper-cubature (Espelid & Genz 1994) via Integrals.jl `DecuhrAlgorithm`. Suitable for general anisotropy in 3D."

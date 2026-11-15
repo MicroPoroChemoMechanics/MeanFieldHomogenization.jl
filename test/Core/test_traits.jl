@@ -15,8 +15,8 @@ end
 # =============================================================================
 #  `_resolve_algo` policy for a 3D anisotropic elastic reference.
 #
-#  `:auto` must pick a CUBATURE, never the residue algorithm, which takes
-#  `Float64` coefficients only. `Residue` stays reachable on an explicit
+#  `:auto` must pick a CUBATURE, never the residue algorithm. `Residue` stays
+#  reachable on an explicit
 #  `:residues`, including on a reference anisotropic in *type* and isotropic in
 #  *value* — the state the differential and self-consistent schemes feed back
 #  at their first step — whose acoustic polynomial has a triple root.

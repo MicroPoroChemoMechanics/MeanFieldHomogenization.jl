@@ -262,7 +262,7 @@ well — it then owns the four `delta_*` methods itself.
   `Schemes._replace_geom_field` rebuilds it by reflection. Add a method for it
   only if your type needs custom reconstruction. ForwardDiff support then
   requires the whole level-1 path to be type-generic — which rules out
-  algorithms hard-wired to `Float64` (the `Residue` backend) and external
+  algorithms hard-wired to `Float64` and external
   solvers that factorize numerically.
 - **Aging viscoelasticity.** The ALV chain of computations has its own per-geometry seam:
   either `tens_UA` / `tens_VA`, or a `Viscoelasticity._inclusion_alv_quantities`

@@ -1,5 +1,51 @@
 # Changelog
 
+## v0.26.7 — derivatives through the residue algorithm
+
+A patch release, additive: `method = :residues` accepts `ForwardDiff` dual
+numbers. No result in `Float64` changes.
+
+### Added
+
+- **Automatic differentiation through `method = :residues`.** The Hill tensor of
+  an ellipsoid in an arbitrarily anisotropic matrix and the crack opening
+  tensor 𝐁 of an elliptic or a ribbon crack, hence the compliance ℍ and the
+  stress intensity factors, are differentiated by `ForwardDiff` through the
+  residue algorithm: with respect to the stiffness, the semi-axes and the
+  orientation, with any number of partials and at any nesting level
+  (Hessians). The algorithm was until now restricted to `Float64`, because the
+  roots of the acoustic polynomial ``Q`` are the eigenvalues of a companion
+  matrix, which LAPACK computes on plain numbers, and because a root is not
+  differentiable where it meets another one, which is the case of every
+  isotropic or transversely isotropic matrix. The roots are still found in
+  `Float64`, on the values of the coefficients, and are never differentiated:
+  with ``Q = Q_0 + \delta Q``, ``N/Q = \sum_j N(-\delta Q)^j/Q_0^{j+1}``, a sum
+  that stops at the number of nested levels of dual numbers, and each term is a
+  residue sum over the roots of ``Q_0``, of multiplicity ``j + 1``, which the
+  sums over groups of poles of the algorithm take as they are. The derivation
+  is in the theory page of the Hill tensors, *Derivatives of the residue sums*.
+  Each order has its running error bound, each derivative against its own
+  scale; where a bound exceeds the tolerance the quadrature of the same
+  integral takes over, as it does for the value.
+
+### Changed
+
+- `method = :residues` with values that are not `Float64` once promoted (a
+  symbol, a complex modulus, a `BigFloat`, a problem in `Float32` throughout,
+  orientation included) in the stiffness, the semi-axes or the orientation is
+  refused with an `ArgumentError` that names the cubature as the way out. A `BigFloat`
+  stiffness was until now converted to `Float64` in silence by the Hill tensor,
+  and a dual orientation met a `MethodError` in the kernel.
+
+### Fixed
+
+- **`cod_tensor(…; method = :decuhr)` threw a `MethodError` on a dual
+  stiffness.** The kernel of the adaptive cubature received the sine and cosine
+  of the integration angle as plain numbers next to matrices of dual numbers,
+  which its signature does not take. They are converted to the type of the
+  kernel; the derivative of 𝐁 through `:decuhr` is now tested against the two
+  other algorithms.
+
 ## v0.26.6 — the layered cylinder, and the layered sphere completed
 
 A patch release, additive: a new layered pattern, the coated fiber, in

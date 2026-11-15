@@ -1218,8 +1218,10 @@ algorithm traits:
 - **`DECUHR`** — adaptive cubature [espelid1994](@cite), ForwardDiff-safe, once
   its weak dependency is loaded (`src/Cracks/green_decuhr.jl`);
 - **`Residue`** — Cauchy-residue reduction to a 1-D quadrature, as in
-  [masson2008](@citet) adapted to the crack kernel, `Float64` only
-  (`src/Cracks/green_residue.jl`).
+  [masson2008](@citet) adapted to the crack kernel, accepting `ForwardDiff.Dual` numbers but not
+  symbolic numbers, complex moduli or float types other than `Float64`
+  (`src/Cracks/green_residue.jl`; see
+  [Derivatives of the residue sums](@ref th-hill-residue-derivatives)).
 
 `method = :auto` picks `NestedQuadGK`, whatever the coefficient type and
 whatever else is loaded: it is the fastest and the most accurate of the three
@@ -1227,6 +1229,59 @@ whatever else is loaded: it is the fastest and the most accurate of the three
 when the reference is anisotropic in *type* and isotropic in *value*, a case the
 self-consistent and differential schemes reach at their first step, so it is
 available on explicit `method = :residues` only (`src/Core/dispatch.jl`).
+
+**Derivatives.** All three carry the dual numbers of `ForwardDiff`, in the
+stiffness and in the geometry of the crack. The two cubatures differentiate
+their integrand. The residue sums cannot differentiate their poles, the roots of
+the acoustic polynomial ``Q``, which are not differentiable where they meet;
+they expand ``N/Q`` around the values ``Q_0`` of the coefficients instead, each
+order of derivation being a residue sum over the roots of ``Q_0`` with one more
+unit of multiplicity
+([Derivatives of the residue sums](@ref th-hill-residue-derivatives)). The
+figure compares the derivative of ``\boldsymbol{B}`` with respect to an
+anisotropy parameter by the two routes: an elliptic crack ``b/a = 0.45`` in a
+cubic matrix of moduli ``C_{1111} = k + 4\mu/3``, ``C_{1122} = k - 2\mu/3`` and
+``C_{2323} = \mu\,(1 + p)``, with its normal along an axis of the cube. At
+``p = 0`` the matrix is isotropic and ``Q`` has a triple root.
+
+```@example codresder
+using MeanFieldHomogenization, TensND, ForwardDiff, LinearAlgebra, Plots
+gr()
+
+# Cubic matrix, isotropic at p = 0, entered as a general tensor.
+function cubic_matrix(p; k = 30.0, μ = 18.0)
+    λ = k - 2μ / 3
+    g = 2μ * (1 + p)
+    KM = [
+        λ + 2μ λ λ 0 0 0;
+        λ λ + 2μ λ 0 0 0;
+        λ λ λ + 2μ 0 0 0;
+        0 0 0 g 0 0;
+        0 0 0 0 g 0;
+        0 0 0 0 0 g
+    ]
+    return TensND.from_mandel(KM, TensND.CanonicalBasis{3, typeof(p)}())
+end
+
+crack = EllipticCrack(1.0, 0.45)
+B(p, method) = canonical_components(cod_tensor(crack, cubic_matrix(p); method = method, reltol = 1.0e-9))
+dB(p, method) = ForwardDiff.derivative(x -> B(x, method), p)
+
+ps = range(-0.4, 0.4; length = 17)
+d_res = [dB(p, :residues) for p in ps]
+d_nqg = [dB(p, :nestedquadgk) for p in ps]
+fig = plot(; xlabel = "p", ylabel = "dBᵢᵢ/dp", legend = :topright, size = (640, 360),
+    left_margin = 4Plots.mm, bottom_margin = 4Plots.mm)
+for (i, name) in enumerate(("ℓℓ", "mm", "nn"))
+    plot!(fig, ps, [d[i, i] for d in d_nqg]; lw = 2, color = i, label = "$name, nested quadratures")
+    scatter!(fig, ps, [d[i, i] for d in d_res]; color = i, ms = 4, label = "$name, residues")
+end
+fig
+```
+
+```@example codresder
+maximum(norm(r - q) / norm(q) for (r, q) in zip(d_res, d_nqg))
+```
 
 ## [6. Dilute correction to the effective compliance](@id th-cod-dilute)
 
@@ -1458,6 +1513,8 @@ Evaluation: [`sif`](@ref) and [`dif`](@ref) (`src/Cracks/sif.jl`).
 | `EllipticCrack` / `RibbonCrack`, [`TensISO`](@extref TensND TensND.TensISO) | `Analytical` | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, [`TensTI`](@extref TensND TensND.TensTI) (aligned) | `Analytical` (MFH) | — | ✓ |
 | `EllipticCrack` / `RibbonCrack`, `AbstractTens{4,3}` | `NestedQuadGK` | `:residues`, `:decuhr`, `:nestedquadgk` | ✓ |
+
+On the third row, `:residues` accepts `ForwardDiff.Dual` numbers as well.
 
 Entry points: [`cod_tensor`](@ref) / [`B_tensor`](@ref) for ``\boldsymbol{B}``,
 [`inverse_property_contribution`](@ref) for ``\mathbb{H}``,

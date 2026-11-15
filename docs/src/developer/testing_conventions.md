@@ -86,7 +86,7 @@ in the dispatch tables of the theory pages — so it is tested explicitly:
 | type | role |
 | :--- | :--- |
 | `Float64` | the default path |
-| `ForwardDiff.Dual` | every algorithm advertised as AD-safe must be exercised *through* [`derivative`](@ref), not merely called with a `Dual` |
+| `ForwardDiff.Dual` | every algorithm advertised as AD-safe, `Residue` included, must be exercised *through* [`derivative`](@ref), not merely called with a `Dual` |
 | `BigFloat` | precision reference, notably for the spheroid coupling matrices |
 | symbolic (`SymPy`, `Symbolics`) | closed-form paths only |
 

@@ -23,6 +23,7 @@ out of `docs/Project.toml`.
 | `src/applications.jl` | `veritz.svg`, `ver_multi_mix.svg`, `lamellar/`, `fe/axi_schematic.svg`, `applications/cement_paste_scales.svg`, `applications/solidifying_sphere.svg`, `applications/brinkman_problems.svg` |
 | `src/rheology.jl` | `rheology/`: the spring-and-dashpot networks of the model catalog |
 | `src/vignettes.jl` | `schemes/particle_assembly.svg`, `nn/network_sketch.svg`, `fe/crack_mesh_sketch.svg` |
+| `src/theory.jl` | `theory/residue_derivative_poles.svg` |
 
 ## Regenerating
 
@@ -32,7 +33,7 @@ julia --project=docs/assets_src docs/assets_src/make.jl            # every famil
 julia --project=docs/assets_src docs/assets_src/make.jl schemes    # one family
 ```
 
-Families: `geometry`, `schemes`, `applications`, `rheology`, `vignettes`.
+Families: `geometry`, `schemes`, `applications`, `rheology`, `vignettes`, `theory`.
 
 Then **look at the result** — `rsvg-convert -z 2 -o out.png in.svg` renders a
 sheet at readable size. Overlapping text is the failure mode of drawings like

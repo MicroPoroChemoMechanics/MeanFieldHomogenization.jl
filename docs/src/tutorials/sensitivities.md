@@ -113,6 +113,54 @@ scheme, not just Mori–Tanaka, `ForwardDiff` derivatives of
 needs a sensitivity — including, as the next tutorial shows, a
 macroscopic strength criterion built entirely from such derivatives.
 
+## An anisotropic matrix: three algorithms, one derivative
+
+In a matrix of arbitrary anisotropy the Hill tensor has no closed form, and
+[`hill_tensor`](@ref) offers three algorithms: nested quadratures
+(`method = :nestedquadgk`, the automatic choice), an adaptive cubature
+(`:decuhr`) and the residue theorem (`:residues`). The first two differentiate
+their integrand. The third locates the roots of a polynomial, which are not
+differentiable where they meet, and obtains the derivatives from the same roots
+counted with a higher multiplicity
+([Derivatives of the residue sums](@ref th-hill-residue-derivatives)). The three
+are independent evaluations of the same derivative, here that of
+``\mathbb{P}`` with respect to the smallest semi-axis of an ellipsoid in a
+triclinic matrix, held to a centered difference of step ``h = \epsilon^{1/3} c``,
+the step that balances its truncation and rounding errors.
+
+```@example tutsens
+import DECUHR, Integrals      # the `:decuhr` algorithm is an extension
+
+C_tri = TensND.from_mandel([
+    210.0 80.0 75.0 5.0 4.0 3.0;
+    80.0 195.0 90.0 -2.0 3.0 -1.0;
+    75.0 90.0 220.0 1.0 -2.0 2.0;
+    5.0 -2.0 1.0 60.0 2.5 1.5;
+    4.0 3.0 -2.0 2.5 65.0 -1.0;
+    3.0 -1.0 2.0 1.5 -1.0 55.0
+], TensND.CanonicalBasis{3, Float64}())
+
+hill(c, method; abstol = 1.0e-12, reltol = 1.0e-10) = canonical_components(
+    hill_tensor(Ellipsoid(1.0, 0.6, c), C_tri; method = method, abstol = abstol, reltol = reltol)
+)
+
+c₀ = 0.3
+h = cbrt(eps()) * c₀
+reference = (hill(c₀ + h, :residues) - hill(c₀ - h, :residues)) / (2h)
+gap(dP) = round(norm(dP - reference) / norm(reference); sigdigits = 2)
+for method in (:nestedquadgk, :residues)
+    println(rpad(method, 14), gap(ForwardDiff.derivative(c -> hill(c, method), c₀)))
+end
+# The adaptive cubature at the tolerances it is meant for.
+println(rpad(:decuhr, 14), gap(ForwardDiff.derivative(c -> hill(c, :decuhr; abstol = 1.0e-10, reltol = 1.0e-8), c₀)))
+```
+
+Each line is the relative gap between the derivative by dual numbers and the
+centered difference. For the nested quadratures and the residues it is that of
+the centered difference itself, of the order of ``h^2``; the adaptive cubature
+stops at the tolerance it was given. The same holds for the crack opening
+tensor of [`cod_tensor`](@ref), whose three algorithms take the same keywords.
+
 ## Where to go next
 
 [From derivatives to a strength criterion](@ref tut-strength-criteria) uses these

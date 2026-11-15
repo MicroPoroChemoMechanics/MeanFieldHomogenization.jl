@@ -5,10 +5,10 @@
 #      julia --project=docs/assets_src docs/assets_src/make.jl            # all
 #      julia --project=docs/assets_src docs/assets_src/make.jl schemes    # one family
 #
-#  Families: geometry, schemes, applications, rheology, vignettes.
+#  Families: geometry, schemes, applications, rheology, vignettes, theory.
 # =============================================================================
 
-for f in ("style.jl", "geometry.jl", "schemes.jl", "applications.jl", "rheology.jl", "vignettes.jl")
+for f in ("style.jl", "geometry.jl", "schemes.jl", "applications.jl", "rheology.jl", "vignettes.jl", "theory.jl")
     include(joinpath(@__DIR__, "src", f))
 end
 
@@ -18,6 +18,7 @@ const FAMILIES = Dict{String, Function}(
     "applications" => application_figures,
     "rheology" => rheology_figures,
     "vignettes" => vignette_figures,
+    "theory" => theory_figures,
 )
 
 function main(args)

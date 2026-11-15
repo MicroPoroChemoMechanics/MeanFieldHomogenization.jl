@@ -252,7 +252,7 @@ plots the same comparison across the whole porosity range.
 Every entry point accepts `method = :auto | :residues | :decuhr` and
 the keyword tuple `(abstol, reltol, maxiters)`; every entry point also
 differentiates through `ForwardDiff` and accepts symbolic (`SymPyPythonCall`/
-`Symbolics`) coefficients. See the in-line docstrings and the
+`Symbolics`) coefficients (`:residues` takes dual numbers but not symbolic ones). See the in-line docstrings and the
 [Tutorials](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/tutorials/)
 for details.
 

@@ -247,12 +247,13 @@ end
     dB = ForwardDiff.derivative(B_rule, 9.0)
     @test norm(ForwardDiff.derivative(B_cubature, 9.0) - dB) / norm(dB) < 1.0e-9
 
-    # The residues work in Float64 and say so, rather than failing deep inside.
-    μ = ForwardDiff.Dual(9.0, 1.0)
-    C_dual = image(TensISO{3}(3 * 20.0, 2μ))
-    @test_throws r"method = :nestedquadgk" cod_tensor(crack, C_dual; method = :residues)
-    @test_throws r"method = :nestedquadgk" cod_tensor(RibbonCrack(1.0, hcat(ℓ, m, n)), C_dual; method = :residues)
-    @test_throws r"method = :nestedquadgk" hill_tensor(Ellipsoid(1.0, 0.6, 0.3), C_dual; method = :residues)
+    # The residue sums carry the same derivative: the roots are found on the
+    # values, here a triple root moved by the transformation, and never
+    # differentiated.
+    B_residues(μ) = canonical_components(
+        cod_tensor(crack, image(TensISO{3}(3 * 20.0, 2μ)); method = :residues, abstol = 1.0e-12, reltol = 1.0e-10)
+    )
+    @test norm(ForwardDiff.derivative(B_residues, 9.0) - dB) / norm(dB) < 1.0e-9
 end
 
 @testset "Cracks — ℍ from the first-order term of the Hill tensor, by ForwardDiff" begin

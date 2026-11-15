@@ -108,7 +108,7 @@ const _HRB_TIGHT = (abstol = 1.0e-13, reltol = 1.0e-11)
                 @test canon(hill_tensor(ell, C₀)) ≈ ref rtol = 1.0e-6
             end
             if elastic && c["medium"] != "isotropic"
-                # The residue route, an independent algorithm (Float64 only).
+                # The residue route, an independent algorithm.
                 @test canon(hill_tensor(ell, TensND.Tens(A); method = :residues)) ≈ ref rtol = 1.0e-8
             end
 

@@ -37,6 +37,7 @@ earlier figures, whose origin is kept below.
 | `applications/solidifying_sphere.svg` | `applications.jl` | new, after Sanahuja (2013) |
 | `rheology/*.svg` | `rheology.jl` | the former `make_rheology_diagrams.jl` of this directory |
 | `nn/network_sketch.svg`, `fe/crack_mesh_sketch.svg` | `vignettes.jl` | new |
+| `theory/residue_derivative_poles.svg` | `theory.jl` | new |
 
 `eshelby_generalized.png` and `three_phase_model.png` are no longer used. The
 first was replaced by `layered_sphere.svg`. The second was dropped rather than

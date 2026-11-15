@@ -68,6 +68,18 @@ bcase(
     checksum = r -> Float64[r],
 )
 
+# ForwardDiff through the residue sums: the roots are found on the values and
+# the derivative is a residue sum over the same roots, doubled.
+bcase(
+    "kernels/hill.dual.residues.tri";
+    group = :kernels, tags = [:hill, :residues, :forwarddiff],
+    setup = () -> (Ellipsoid(3.0, 2.0, 1.0), C_tri()),
+    body = ctx -> FD.derivative(
+        x -> TensND.get_array(hill_tensor(ctx[1], x * ctx[2]; method = :residues))[1, 1, 1, 1], 1.0
+    ),
+    checksum = r -> Float64[r],
+)
+
 # ── COD / crack kernels ─────────────────────────────────────────────────────
 
 bcase(
@@ -83,6 +95,20 @@ bcase(
     setup = () -> (EllipticCrack(1.0, 0.3), C_tri()),
     body = ctx -> cod_tensor(ctx[1], ctx[2]; method = :nestedquadgk),
 )
+
+# The same derivative of the COD tensor through the residue sums and through
+# the nested quadratures.
+for (label, method) in (("residues", :residues), ("nqgk", :nestedquadgk))
+    bcase(
+        "kernels/cod.dual.$label.penny.tri";
+        group = :kernels, tags = [:cod, :forwarddiff],
+        setup = () -> (PennyCrack(1.0), C_tri()),
+        body = ctx -> FD.derivative(
+            x -> canonical_components(cod_tensor(ctx[1], x * ctx[2]; method = method))[3, 3], 1.0
+        ),
+        checksum = r -> Float64[r],
+    )
+end
 
 bcase(
     "kernels/H.compliance.penny.tri";
