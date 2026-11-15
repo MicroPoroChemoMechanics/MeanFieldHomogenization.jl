@@ -48,8 +48,17 @@ end
 # compile the three algorithms again; the nested derivatives below go through
 # `ForwardDiff.derivative` itself.
 _rd_seed(x) = x
+_rd_seed2(x) = x
 const _RD_TAG = typeof(ForwardDiff.Tag(_rd_seed, Float64))
 _rd_derivative(f, x::Float64) = map(d -> ForwardDiff.partials(d, 1), f(ForwardDiff.Dual{_RD_TAG}(x, 1.0)))
+# Second derivatives under two fixed tags as well, the outer one ordered after
+# the inner one as `ForwardDiff` orders its nested tags.
+const _RD_TAG2 = typeof(ForwardDiff.Tag(_rd_seed2, ForwardDiff.Dual{_RD_TAG, Float64, 1}))
+function _rd_second(f, x::Float64)
+    inner(v, dv) = ForwardDiff.Dual{_RD_TAG}(v, dv)
+    y = f(ForwardDiff.Dual{_RD_TAG2}(inner(x, 1.0), inner(1.0, 0.0)))
+    return map(d -> ForwardDiff.partials(ForwardDiff.partials(d, 1), 1), y)
+end
 
 @testset "moments of the derivatives of the inner integral" begin
     # W⁽ʲ⁾ₘ = 2 ∫₀^∞ t^(7+6j-m) vᵐ / ((1 + t²)² (t⁶ Q₀(ξ(t)))ʲ⁺¹) dt, v = (t² - 1)/2,
@@ -129,10 +138,10 @@ end
         @test _rd_derivative(λ -> _rd_hill(ell(one(λ)), λ * C₀, :residues), 1.0) ≈ -P rtol = 1.0e-9
         @test norm(_rd_derivative(s -> _rd_hill(ell(s), one(s) * C₀, :residues), 1.0)) <= 1.0e-9 * norm(P)
     end
-    # Two nested levels, through `ForwardDiff.derivative`: d²ℙ/dλ² = 2ℙ.
+    # Two nested levels: d²ℙ/dλ² = 2ℙ.
     ell = Ellipsoid(1.0, 0.6, 0.3)
     f(λ) = _rd_hill(ell, λ * C₀, :residues)
-    @test ForwardDiff.derivative(y -> ForwardDiff.derivative(f, y), 1.0) ≈ 2 * f(1.0) rtol = 1.0e-8
+    @test _rd_second(f, 1.0) ≈ 2 * f(1.0) rtol = 1.0e-8
 end
 
 @testset "Hill tensor by residues: the value under dual numbers is the Float64 one" begin
@@ -162,9 +171,14 @@ end
     for (path, scale) in paths
         d_res = _rd_derivative(x -> _rd_hill(path(x)..., :residues), 0.0)
         @test _rd_rel(d_res, _rd_derivative(x -> _rd_hill(path(x)..., :nestedquadgk), 0.0)) < 1.0e-9
-        @test _rd_rel(d_res, _rd_derivative(x -> _rd_hill_decuhr(path(x)...), 0.0)) < 1.0e-6
         @test _rd_rel(d_res, _rd_centered(x -> _rd_hill(path(x)..., :residues), 0.0, scale)) < 1.0e-7
     end
+    # The adaptive cubature, slow on dual numbers, on the stiffness path only.
+    path = first(first(paths))
+    @test _rd_rel(
+        _rd_derivative(x -> _rd_hill(path(x)..., :residues), 0.0),
+        _rd_derivative(x -> _rd_hill_decuhr(path(x)...), 0.0)
+    ) < 1.0e-6
     # Several partials at once: the columns of a Jacobian are the derivatives
     # taken one at a time.
     f(v) = vec(_rd_hill(rotated(v[1], v[2], v[3]), stiffness(v[4]), :residues))
@@ -176,8 +190,8 @@ end
     # A second derivative (two nested levels) against the centered difference of
     # the first.
     ell = Ellipsoid(1.0, 0.6, 0.3)
-    d1(x) = ForwardDiff.derivative(y -> _rd_hill(ell, stiffness(y), :residues), x)
-    @test _rd_rel(ForwardDiff.derivative(d1, 0.0), _rd_centered(d1, 0.0, 100.0)) < 1.0e-6
+    f1(x) = _rd_hill(ell, stiffness(x), :residues)
+    @test _rd_rel(_rd_second(f1, 0.0), _rd_centered(x -> _rd_derivative(f1, x), 0.0, 100.0)) < 1.0e-6
 end
 
 @testset "Hill tensor by residues: derivatives at multiple roots" begin

@@ -106,6 +106,9 @@ const TEST_PARTS = Dict(
     # Its own part since 0.23.0, whose models took `core` past the 90-minute
     # timeout of the minimum Julia version.
     "material-laws" => ("MaterialLaws",),
+    # Split from `material-laws` in 0.26.7: the part took 37 to 76 minutes on
+    # the runners and crossed the 90-minute timeout on a slow one.
+    "affine-laws" => ("AffineLaws",),
     "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
     # Its own part since 0.25.0: mostly compilation, half of `schemes`, which a slow
     # runner took past the timeout on the prerelease of Julia.
@@ -414,6 +417,12 @@ end
         include("MaterialLaws/test_frictional_strength.jl")
         include("MaterialLaws/test_uniform_fields.jl")
         include("MaterialLaws/test_incremental_tangent.jl")
+    end
+
+    # The affine and quasi-elastic linearizations, the update of the points and the
+    # coupling to a finite-element code: a group of their own so that the CI parts
+    # stay under their timeout.
+    rungroup("AffineLaws") && @testset "AffineLaws" begin
         include("MaterialLaws/test_affine.jl")
         include("MaterialLaws/test_affine_evp.jl")
         include("MaterialLaws/test_quasi_elastic.jl")
