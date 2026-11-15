@@ -226,5 +226,5 @@ function _hill_3d_aniso_nestedquadgk(
     # --- Un-permute back to original axis ordering ----------------------------
     # P[q[i], q[j], q[k], q[l]] = P_perm[i, j, k, l] with q = invperm(p), that is
     # P = P_perm[p, p, p, p].
-    return MFH_Core._tens_in(P_perm[p, p, p, p], ell.basis)
+    return MFH_Core._sym_tens_in(P_perm[p, p, p, p], ell.basis)
 end

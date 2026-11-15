@@ -11,8 +11,9 @@
 #   2. Cross-validation against the residue and DECUHR numerical backends
 #      on a true TI matrix (Sevostianov-Yilmaz-Kushch-Levin 2005 stiffness).
 #   3. Penny crack (η=1) and ribbon crack — specialized closed forms.
-#   4. Dispatcher: Analytical when TI axis = crack normal, Residue otherwise.
-#   5. ForwardDiff compatibility through the analytical branch.
+#   4. Dispatcher: Analytical when TI axis = crack normal, a cubature otherwise.
+#   5. Residues on isotropic values stored as a general tensor.
+#   6. ForwardDiff compatibility through the analytical branch.
 # =============================================================================
 
 using Test
@@ -85,9 +86,8 @@ end
     n_axis = [1.0, 0.0, 0.0]
     C_TI = ti_from_constants(2.179, 0.579, 0.689, 10.345, 1.0, n_axis)
     c = EllipticCrack(1.0, 0.5)
-    # `:auto` falls back to a CUBATURE, never to the residue algorithm: the
-    # latter degenerates on a reference that is anisotropic in type and
-    # isotropic in value, so it is reachable on `:residues` only.
+    # `:auto` falls back to a CUBATURE, the faster one; the residue algorithm is
+    # reachable on `:residues`.
     algo = MeanFieldHomogenization.Core._resolve_algo(Val(:auto), c, C_TI)
     @test algo isa Union{MeanFieldHomogenization.Core.DECUHR, MeanFieldHomogenization.Core.NestedQuadGK}
     @test MeanFieldHomogenization.Core._resolve_algo(Val(:residues), c, C_TI) isa
@@ -95,6 +95,21 @@ end
     # And the residue path still produces a finite COD tensor.
     B = cod_tensor(c, C_TI; method = :residues)
     @test all(isfinite, get_array(B))
+end
+
+@testset "COD by residues — isotropic values in a general tensor" begin
+    # The reference the self-consistent and differential schemes reach at their
+    # first step: the acoustic polynomial has a triple root, whose residues are
+    # summed as a group. The closed form of the isotropic matrix is the
+    # reference, met as closely as by the cubature.
+    C_iso = TensISO{3}(3 * 30.0, 2 * 18.0)
+    C_gen = Tens(Array(get_array(C_iso)), CanonicalBasis{3, Float64}())
+    for crack in (PennyCrack(1.0), EllipticCrack(1.0, 0.5), EllipticCrack(1.0, 0.1), RibbonCrack(1.0))
+        ref = get_array(TensND.canonical(cod_tensor(crack, C_iso)))
+        err(method) = norm(get_array(TensND.canonical(cod_tensor(crack, C_gen; method))) - ref) / norm(ref)
+        @test err(:residues) < 1.0e-9
+        @test err(:residues) < 2 * err(:nestedquadgk) + 1.0e-14
+    end
 end
 
 @testset "COD TI aligned — ForwardDiff compatibility" begin

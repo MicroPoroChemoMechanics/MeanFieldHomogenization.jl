@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.26.8 — tensors symmetric by construction infer their storage
+
+A patch release: no value changes, the types inferred for the Hill tensors do.
+
+### Fixed
+
+- **Inferred type of the numerical Hill tensors.** The Hill tensor of an
+  ellipsoid computed by quadrature (`:nestedquadgk`, `:residues`, `:decuhr`), of
+  an infinite cylinder in an anisotropic matrix and of an ellipse in 2D, a Hill
+  tensor of conduction, a shape tensor and the auxiliary tensors of `tens_IA`,
+  `tens_UA` and `tens_VA` are symmetric by construction, but their storage, 36
+  or 81 components at order 4, was decided on their values. Every caller, the
+  concentration tensors and the schemes included, inferred a `Union` of the two
+  storages and dispatched on it at run time. The storage is now the symmetric
+  one from the type alone, with the same components as before.
+
+### Documentation
+
+- The theory page of the crack opening tensor said that the residue algorithm
+  degenerates on a reference anisotropic in type and isotropic in value. It
+  does not: the residues of the coincident roots are summed as a group, and 𝐁
+  agrees there with the closed form of the isotropic matrix, which a test now
+  checks. The page gives instead the measured reason why `:auto` picks the
+  nested quadrature.
+
+### Tests
+
+- The `affine-laws` part of the test suite keeps the two affine linearizations
+  only, and the three other files it took from `material-laws` go back: it took
+  50 to 80 minutes on the runners, against 29 to 30 for `material-laws`.
+
 ## v0.26.7 — derivatives through the residue algorithm
 
 A patch release, additive: `method = :residues` accepts `ForwardDiff` dual
