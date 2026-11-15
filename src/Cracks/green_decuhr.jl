@@ -56,7 +56,9 @@ function _cod_elliptic_decuhr_direct(
             (ηp * cφ * lhat_p[3] + sφ * mhat_p[3]) * invρ,
         )
         Vs, Ks, Kns = MFH_Core._phi_cache(Carr, Tn, nhat_p, ξshat, Tp)
-        ca = cos(α); sa = sin(α)
+        # In the type of the kernel: the angle is a plain number, the stiffness
+        # or the aspect ratio may carry derivatives.
+        ca = Tp(cos(α)); sa = Tp(sin(α))
         M = MFH_Core._qnn_pair_components(A, Vs, Ks, Kns, ca, sa, ρ / (sa * sa))
         return SVector{6, Tp}(M[1, 1], M[2, 2], M[3, 3], M[1, 2], M[1, 3], M[2, 3])
     end

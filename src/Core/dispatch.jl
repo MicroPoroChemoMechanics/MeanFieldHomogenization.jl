@@ -68,10 +68,8 @@ _resolve_algo(::Val, ::AbstractEllipsoidalInclusion, ::TensND.AbstractTens{2, 2}
 # ─── 3D anisotropic elasticity ───────────────────────────────────────────────
 
 # `:auto` picks a CUBATURE, never the residue algorithm — the same choice
-# ECHOES makes with its `NUMINT` default. The residue algorithm finds the roots
-# of a polynomial, so it takes `Float64` coefficients only and carries no
-# derivative through a scheme; it is available on an explicit
-# `method = :residues`.
+# ECHOES makes with its `NUMINT` default. The residue algorithm is available
+# on an explicit `method = :residues`.
 #
 # Between the two cubatures, `NestedQuadGK` is the default. On every case
 # measured it is both the faster and the more accurate: against closed forms,

@@ -574,9 +574,12 @@ options:
   of its product with ``\log t``. Roots that coincide or nearly do, as for an
   isotropic or transversely isotropic reference along the ellipsoid axes or a
   reference close to one, are summed as a group (below), so that the sum keeps
-  the accuracy of separated roots. The method is `Float64`-only (the roots are
-  the eigenvalues of a companion matrix, which ForwardDiff does not
-  differentiate) and reachable on an explicit `method = :residues` only.
+  the accuracy of separated roots. The roots are found
+  in `Float64`, as the eigenvalues of a companion matrix, and are never
+  differentiated; the method nevertheless accepts `ForwardDiff.Dual` numbers, at
+  any nesting level (see [Derivatives of the residue sums](@ref th-hill-residue-derivatives)).
+  Symbolic numbers, complex moduli and float types other than `Float64` are
+  refused. The method is reached on an explicit `method = :residues` only.
 
 The residue algorithm is the one whose accuracy depends most on how it is
 evaluated; the next section derives it in full.
@@ -799,6 +802,295 @@ takes 285 evaluations and 0.02 s, within ``2\times10^{-16}`` of the closed form.
 For the line integral of the crack opening tensor, ``f = 1`` and the poles are
 the roots of ``Q`` themselves: the same groups, the same bound, and the
 quadrature of the same kernel when the bound exceeds the tolerance.
+
+These sums give the moments from the roots of ``Q``. The roots also give the
+derivatives of the moments, without being differentiated themselves: this is the
+object of the next section.
+
+#### [Derivatives of the residue sums](@id th-hill-residue-derivatives)
+
+Let the coefficients ``q_k`` of ``Q(\xi) = \sum_{k=0}^{6} q_k\,\xi^k`` depend on
+a parameter ``p``: a modulus of the matrix, a semi-axis or an orientation angle
+of the ellipsoid. This section gives ``\partial W_n/\partial p``, and the
+derivatives of higher order, as residue sums over the roots of ``Q`` already
+found.
+
+**The roots are not differentiable where they meet.** A simple root ``z(p)`` of
+``Q`` follows from ``Q(z(p); p) = 0``:
+
+```math
+\frac{\mathrm{d}z}{\mathrm{d}p} = -\,\frac{\partial_p Q(z)}{Q'(z)},
+\qquad \partial_p Q(\xi) = \sum_{k=0}^{6} \frac{\partial q_k}{\partial p}\,\xi^k .
+```
+
+Where two roots meet, ``Q'(z) = 0`` and this derivative does not exist: around a
+root of multiplicity ``k`` the roots vary as ``(p - p_0)^{1/k}``. This is no
+exceptional case. In an isotropic matrix ``Q`` is the cube of a polynomial of
+degree 2 and has a triple root whatever the direction, and a matrix that tends
+to an isotropic one, as that of a self-consistent or a differential scheme at
+its first step, comes as close to it as one likes. The figure below follows the
+three roots of the upper half plane for a cubic matrix of moduli
+``C_{1111} = k + 4\mu/3``, ``C_{1122} = k - 2\mu/3`` and
+``C_{2323} = \mu\,(1 + p)``, isotropic at ``p = 0``, around an ellipsoid of
+semi-axes ``1``, ``0.6`` and ``0.3``.
+
+```@setup hillresder
+using MeanFieldHomogenization, TensND, ForwardDiff, LinearAlgebra, Plots
+gr()
+
+# Cubic matrix, isotropic at p = 0, entered as a general tensor.
+function cubic_matrix(p; k = 30.0, μ = 18.0)
+    λ = k - 2μ / 3
+    g = 2μ * (1 + p)
+    KM = [
+        λ + 2μ λ λ 0 0 0;
+        λ λ + 2μ λ 0 0 0;
+        λ λ λ + 2μ 0 0 0;
+        0 0 0 g 0 0;
+        0 0 0 0 g 0;
+        0 0 0 0 0 g
+    ]
+    return TensND.from_mandel(KM, TensND.CanonicalBasis{3, typeof(p)}())
+end
+
+# The acoustic polynomial at the angle φ of the outer quadrature, around the
+# ellipsoid, and its roots of the upper half plane.
+const MC = MeanFieldHomogenization.Core
+const ell = Ellipsoid(1.0, 0.6, 0.3)
+function acoustic(p; φ = 0.6)
+    C = Array(TensND.components(cubic_matrix(p), TensND.CanonicalBasis{3, typeof(p)}()))
+    return MC._build_poly_system(C, [cos(φ), sin(φ) / 0.6, 0.0], [0.0, 0.0, 1 / 0.3])
+end
+
+ps = [-exp10.(range(-0.5, -6; length = 60)); exp10.(range(-6, -0.5; length = 60))]
+roots = [sort(acoustic(p).roots_uhp; by = imag) for p in ps]
+
+# dz/dp = -∂ₚQ(z)/Q'(z) at the root of largest imaginary part, the coefficients
+# of ∂ₚQ read on dual numbers.
+function root_rate(p)
+    sys = acoustic(ForwardDiff.Dual(p, 1.0))
+    q = MC.Polynomials.coeffs(sys.Q)
+    q₀, q₁ = ForwardDiff.value.(q), first.(ForwardDiff.partials.(q))
+    z = argmax(imag, sys.roots_uhp)
+    return abs(evalpoly(z, q₁) / evalpoly(z, q₀[2:end] .* (1:6)))
+end
+
+hill(p, method) = TensND.get_array(TensND.canonical(
+    hill_tensor(ell, cubic_matrix(p); method = method, abstol = 1.0e-13, reltol = 1.0e-11)
+))
+dhill(p, method) = ForwardDiff.derivative(x -> hill(x, method), p)
+
+left = plot(; xlabel = "Re z", ylabel = "Im z", title = "roots of Q, upper half plane",
+    legend = :bottomright, aspect_ratio = 1)
+for r in 1:3
+    scatter!(left, real.(getindex.(roots, r)), imag.(getindex.(roots, r));
+        marker_z = log10.(abs.(ps)), ms = 3, msw = 0, label = "", color = :viridis,
+        colorbar_title = "log₁₀ |p|")
+end
+z₀ = acoustic(0.0).roots_uhp
+scatter!(left, [sum(real, z₀) / 3], [sum(imag, z₀) / 3]; marker = :star5, ms = 9, color = :crimson, label = "p = 0: triple root")
+
+pp = exp10.(range(-6, -0.5; length = 40))
+right = plot(pp, root_rate.(pp); xscale = :log10, yscale = :log10, lw = 2,
+    xlabel = "p", label = "|dz/dp|, a root of Q", title = "rates as p → 0", legend = :right)
+plot!(right, pp, [norm(dhill(p, :residues)) for p in pp]; lw = 2, label = "‖dℙ/dp‖")
+root_figure = plot(left, right; layout = (1, 2), size = (900, 380), left_margin = 4Plots.mm, bottom_margin = 4Plots.mm)
+```
+
+```@example hillresder
+root_figure # hide
+```
+
+As ``p \to 0`` the three roots close in on one another and their rate of change grows
+without bound, while the derivative of ``\mathbb{P}`` stays finite: ``Q`` is
+positive on the real line, so that the integrand of ``W_n`` is a smooth function
+of the coefficients, and so is ``W_n``. The derivative exists; it must only not
+be reached through the roots.
+
+**The derivative as a residue sum over the same poles.** Differentiating
+``W_n`` under the integral sign,
+
+```math
+\frac{\partial W_n}{\partial p}
+= -\int_{-\infty}^{\infty} \frac{\xi^n\,\partial_p Q(\xi)\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2}
+= -\sum_{k=0}^{6} \frac{\partial q_k}{\partial p}\,W^{(1)}_{n+k},
+\qquad
+W^{(1)}_m = \int_{-\infty}^{\infty} \frac{\xi^m\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2},
+```
+
+with ``m = 0, \dots, 12``. The moments ``W^{(1)}_m`` do not involve the
+derivatives of the coefficients, and they are integrals of the kind already
+met: the substitution ``\xi = (t^2-1)/(2t)`` gives, as for ``W_n`` with
+``t^{12}`` in place of ``t^6``,
+
+```math
+W^{(1)}_m = 2\int_0^{\infty}
+\frac{t^{13-m}\bigl((t^2-1)/2\bigr)^{m}}{(1+t^2)^2\,\bigl(t^6\,Q(\xi(t))\bigr)^2}\,\mathrm{d}t .
+```
+
+The denominator has the roots of ``D`` and no other: ``\pm i``, still double,
+and the preimages of the roots of ``Q``, each of them now double. The integral
+over the half line and the sum over a group of poles apply as they are, a pole
+listed twice being a group of two with ``\delta = 0``, whose sum is the residue
+at a pole of order two. The derivative of a root never enters: the question of
+how the poles move is replaced by a higher multiplicity of poles that stay
+where they are.
+
+![The poles of the value and those of its derivative: the same positions and the same contours, one more unit of multiplicity](../assets/theory/residue_derivative_poles.svg)
+
+**Every order at once, with dual numbers.** The package differentiates with the
+dual numbers of `ForwardDiff`: each coefficient is ``q_k = q_k^0 + \delta q_k``,
+with ``q_k^0`` its value and ``\delta q_k`` the part that carries its
+derivatives, with respect to as many parameters as one likes. A product of more
+than ``d`` such parts vanishes, ``d`` being the number of nested levels of
+differentiation: ``d = 1`` for first derivatives, ``d = 2`` for a Hessian. With
+``Q = Q_0 + \delta Q``,
+
+```math
+\frac{1}{Q} = \sum_{j=0}^{d} \frac{(-\delta Q)^j}{Q_0^{\,j+1}},
+```
+
+since the product of the right-hand side with ``Q_0 + \delta Q`` telescopes to
+``1 - (-\delta Q/Q_0)^{d+1} = 1``. Carried into the definition of ``W_n``,
+
+```math
+\boxed{\;
+W_n = \sum_{j=0}^{d} (-1)^j \sum_{k=0}^{6j} \bigl(\delta Q^{\,j}\bigr)_k\,W^{(j)}_{n+k},
+\qquad
+W^{(j)}_m = 2\int_0^{\infty}
+\frac{t^{7+6j-m}\bigl((t^2-1)/2\bigr)^{m}}{(1+t^2)^2\,\bigl(t^6\,Q_0(\xi(t))\bigr)^{j+1}}\,\mathrm{d}t
+\;}
+```
+
+where ``(\delta Q^{\,j})_k`` are the coefficients of the polynomial
+``\delta Q^{\,j}`` and ``m = 0, \dots, 6(j+1)``. The term ``j = 0`` is the value,
+``W^{(0)}_n`` being the moment of the previous section for ``Q_0``; the term
+``j = 1`` is the first derivative found above.
+
+The moments ``W^{(j)}_m`` are plain numbers. They are residue sums over the
+roots of ``Q_0``, found once, in `Float64`, as the eigenvalues of its companion
+matrix; in ``W^{(j)}`` each preimage counts ``j + 1`` times. The dual numbers
+enter through the powers of ``\delta Q`` and the last sum only, so that the
+residue work does not depend on the number of parameters. The figure shows the
+poles of the two denominators for a triclinic matrix around a triaxial
+ellipsoid.
+
+```@setup hillresder
+const ME = MeanFieldHomogenization.Elasticity
+KM_tri = [
+    210.0 80.0 75.0 5.0 4.0 3.0;
+    80.0 195.0 90.0 -2.0 3.0 -1.0;
+    75.0 90.0 220.0 1.0 -2.0 2.0;
+    5.0 -2.0 1.0 60.0 2.5 1.5;
+    4.0 3.0 -2.0 2.5 65.0 -1.0;
+    3.0 -1.0 2.0 1.5 -1.0 55.0
+]
+C_tri = TensND.from_mandel(KM_tri, TensND.CanonicalBasis{3, Float64}())
+sys_tri = MC._build_poly_system(
+    Array(TensND.components(C_tri, TensND.CanonicalBasis{3, Float64}())),
+    [cos(0.6), sin(0.6) / 0.6, 0.0], [0.0, 0.0, 1 / 0.3]
+)
+function pole_panel(mult, title)
+    poles = ME._hill_poles(sys_tri.roots_uhp, mult).poles
+    distinct = unique(poles)
+    order = [count(==(w), poles) for w in distinct]
+    pl = plot(; aspect_ratio = 1, xlabel = "Re t", ylabel = "Im t", title = title,
+        legend = :outerright, xlims = (-2.6, 2.6), ylims = (-2.6, 2.6))
+    hline!(pl, [0.0]; lc = :gray, lw = 0.8, label = "")
+    plot!(pl, [0.0, 2.6], [0.0, 0.0]; lc = :black, lw = 3, label = "cut of log")
+    for (o, col) in ((1, :steelblue), (2, :darkorange), (3, :crimson))
+        sel = order .== o
+        any(sel) && scatter!(pl, real.(distinct[sel]), imag.(distinct[sel]);
+            ms = 4 + 3o, color = col, msw = 0, label = "order $o")
+    end
+    return pl
+end
+pole_figure = plot(pole_panel(1, "poles of D: the value"), pole_panel(2, "poles of the first derivative");
+    layout = (1, 2), size = (900, 360), bottom_margin = 4Plots.mm)
+```
+
+```@example hillresder
+pole_figure # hide
+```
+
+**The error bound.** Each order has its running error bound, held against the
+scale of its own moments: a derivative is asked the relative accuracy asked of
+the value. The bound grows with the order, as the residue at a pole of higher
+order adds up more terms: for the triclinic matrix of the figure, about
+``10^{-14}``, ``10^{-13}`` and ``10^{-12}`` of the scale at orders 0, 1 and 2.
+Where the sums of the value are already ill-conditioned, a root of ``Q`` close
+to ``\pm i``, those of the derivatives are more so: around a sphere in an
+isotropic matrix, where the triple root is ``i`` itself, the bound is
+``5\times10^{-11}`` at order 0 and ``3\times10^{-7}`` at order 1. When the bound
+of one order exceeds the tolerance, the weights are computed by the quadrature
+of their definition in ``t``, in which the dual coefficients of ``Q`` enter as
+they are. These bounds are read on the sums themselves:
+
+```@example hillresder
+using Printf
+# Bound of the residue sums of order j, relative to the largest of their moments.
+function relative_bound(sys, j)
+    p = ME._hill_poles(sys.roots_uhp, j + 1)
+    clusters = MC._pole_clusters(p.poles, p.nupper; logfactor = true)
+    lead = (MC.Polynomials.coeffs(sys.Q)[end] / 64)^(j + 1)
+    W, bound = ME._hill_line_sums(p, clusters, lead, 6 * (j + 1))
+    return bound / maximum(abs, W)
+end
+C_iso = TensND.from_mandel(
+    [i == j ? (i <= 3 ? 54.0 : 36.0) : (i <= 3 && j <= 3 ? 18.0 : 0.0) for i in 1:6, j in 1:6],
+    TensND.CanonicalBasis{3, Float64}())
+sys_iso = MC._build_poly_system(
+    Array(TensND.components(C_iso, TensND.CanonicalBasis{3, Float64}())),
+    [cos(0.6), sin(0.6), 0.0], [0.0, 0.0, 1.0]
+)
+for (name, sys) in (("triclinic, ellipsoid", sys_tri), ("isotropic, sphere", sys_iso))
+    @printf "%-22s" name
+    foreach(j -> @printf("  order %d: %.0e", j, relative_bound(sys, j)), 0:2)
+    println()
+end
+```
+
+**The crack kernel.** The line integral of the crack opening tensor is the
+residue sum of ``N/Q`` at the roots of ``Q``, where the numerator ``N``, of
+degree 6, depends on the parameters too
+([Crack opening displacement](@ref th-cod-tensors), section 5). The same expansion
+gives
+
+```math
+\frac{N}{Q} = \sum_{j=0}^{d} \frac{N\,(-\delta Q)^j}{Q_0^{\,j+1}},
+```
+
+a residue sum of numerators of degree ``6 + 6j``, with dual coefficients, over
+the roots of ``Q_0``, each of multiplicity ``j + 1``. Its bound is run on the
+moduli of the value and of each derivative separately, and each is compared
+with its own scale. For a penny-shaped crack in a triclinic matrix the bound of
+a first derivative is about ``10^{-10}`` of its scale, against ``10^{-13}`` for
+the value: at the default tolerances the derivatives are residue sums, and at a
+relative tolerance tighter than this bound they come from the quadrature.
+
+**Check.** On the cubic matrix and the ellipsoid of the first figure, the
+derivative of ``\mathbb{P}`` with respect to ``p`` by the residue sums is
+compared with the same derivative through the nested quadratures, which
+differentiate their integrand and find no root. The two agree to the accuracy
+asked of them down to the triple root itself, ``p = 0`` included.
+
+```@example hillresder
+checks = [0.0; exp10.(range(-8, -1; length = 8))]
+gap = [norm(dhill(p, :residues) - dhill(p, :nestedquadgk)) / norm(dhill(p, :nestedquadgk)) for p in checks]
+round.(gap; sigdigits = 2)
+```
+
+```@example hillresder
+scatter(max.(checks, 1.0e-9), max.(gap, 1.0e-17); xscale = :log10, yscale = :log10,
+    xlabel = "p  (the leftmost point is p = 0)", ylabel = "relative difference",
+    label = "dℙ/dp: residues against nested quadratures", ms = 5, ylims = (1.0e-17, 1.0e-8),
+    legend = :topright, size = (640, 340), left_margin = 4Plots.mm, bottom_margin = 4Plots.mm)
+```
+
+Symbolic coefficients have no such route: the roots are found numerically and
+sorted by comparisons, and `method = :residues` refuses them. The closed forms
+and the quadratures remain the symbolic and the generic routes (section 4,
+Dispatch).
 
 All three honor the `abstol` (default ``10^{-8}``), `reltol` (``10^{-6}``) and
 `maxiters` (``10^{6}`` evaluations) keywords of [`hill_tensor`](@ref). At these
@@ -1159,6 +1451,10 @@ geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
 | `Ellipsoid{2}, AbstractTens{4,2}` | `Analytical` (residue) | — | (Float64) |
 | `Ellipsoid{3}, AbstractTens{2,3}` | `Analytical` (``\boldsymbol{K}^{-1/2}``) | — | ✓ |
 | `Cylinder, AbstractTens{2,3}` | `Analytical` | — | ✓ |
+
+In the rows listing `:residues` among the alternatives, that alternative accepts
+`ForwardDiff.Dual` numbers as well, but not symbolic numbers or float types
+other than `Float64`.
 
 Cylinder shape traits: `CircularCylindrical` when ``b=c`` (transversely
 isotropic response, returned as `TensTI{4}` with axis

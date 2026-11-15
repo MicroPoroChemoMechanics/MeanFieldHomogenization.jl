@@ -25,6 +25,19 @@
 #  residues of a rational function, times a logarithm or not, over groups of
 #  poles ([`_cluster_weights`](@ref)).
 #
+#  Derivatives
+#  ===========
+#  The roots are found on the values of the coefficients, in `Float64`, and are
+#  never differentiated. With dual coefficients, `Q = Q₀ + δQ` where `Q₀` holds
+#  the values and `δQ` the derivatives, and
+#
+#      N / Q = Σ_{j ≥ 0} N (-δQ)ʲ / Q₀ʲ⁺¹,
+#
+#  a sum that stops at the number of nested levels of dual numbers, since a
+#  product of more factors `δQ` than that vanishes. Each term is a rational
+#  function whose poles are the roots of `Q₀`, of multiplicity `j + 1`: the
+#  same residue sums over the same roots, repeated, give every derivative.
+#
 #  The algorithm-specific numerators, and the poles they are summed over, are
 #  set by the downstream wrappers — see
 #  `Elasticity/hill_3d_aniso_residue.jl` and
@@ -36,25 +49,28 @@
 
 Build the three 3×3 coefficient matrices of
 ``\\boldsymbol{K}(z) = \\boldsymbol{A}_0 + \\boldsymbol{A}_1\\,z + \\boldsymbol{A}_2\\,z^2``
-given the stiffness `C` (Float64 `3×3×3×3` array) and the two linear
+given the stiffness `C` (a `3×3×3×3` array) and the two linear
 coefficients `α₀ζ`, `α₁ζ` of the wave-vector parametrization
 ``\\underline{\\zeta}(z) = \\underline{\\zeta}_0 + \\underline{\\zeta}_1\\,z``.
 
-Each `Aₖ` is a 3×3 matrix of real scalars ; they are assembled below
-into `ComplexF64` polynomial entries before root finding.
+Each `Aₖ` is a 3×3 matrix of real scalars, in the element type the three
+arguments promote to: derivatives carried by the stiffness or by the geometry
+go through.
 """
 function _build_acoustic_coeffs(
         C::AbstractArray{<:Real, 4},
         α₀ζ::AbstractVector{<:Real},
         α₁ζ::AbstractVector{<:Real}
     )
-    A₀ = zeros(Float64, 3, 3)
-    A₁ = zeros(Float64, 3, 3)
-    A₂ = zeros(Float64, 3, 3)
+    T = promote_type(eltype(C), eltype(α₀ζ), eltype(α₁ζ))
+    A₀ = zeros(T, 3, 3)
+    A₁ = zeros(T, 3, 3)
+    A₂ = zeros(T, 3, 3)
+    # A kernel: three sums accumulated in one pass over the stiffness.
     @inbounds for j in 1:3, i in 1:3
-        s0 = 0.0; s1 = 0.0; s2 = 0.0
+        s0 = zero(T); s1 = zero(T); s2 = zero(T)
         for k in 1:3, l in 1:3
-            cc = Float64(C[i, k, j, l])
+            cc = C[i, k, j, l]
             s0 += cc * α₀ζ[k] * α₀ζ[l]
             s1 += cc * (α₀ζ[k] * α₁ζ[l] + α₁ζ[k] * α₀ζ[l])
             s2 += cc * α₁ζ[k] * α₁ζ[l]
@@ -65,24 +81,29 @@ function _build_acoustic_coeffs(
 end
 
 """
-    _residues_in_floats(::AbstractInclusion{T}, C₀::AbstractTens) -> nothing
+    _residues_in_floats(inclusion, C₀::AbstractTens) -> nothing
 
 The residue algorithm locates the poles as the eigenvalues of a companion matrix,
-which LAPACK computes in `Float64`. A geometry or a stiffness of another element
-type (a dual number, a symbol, a complex modulus) is refused here with the way
-out, rather than met by a `MethodError` deep in the kernel: the cubature
-(`method = :nestedquadgk`, which `:auto` selects) is generic and differentiates.
+which LAPACK computes in `Float64` on the values of the coefficients; dual
+numbers, at any nesting level, are carried by the residue sums (see the head of
+this file). A geometry, an orientation or a stiffness whose values are of another
+type (a symbol, a complex modulus, an extended precision, a single precision in
+every input) is refused
+here with the way out, rather than met by a `MethodError` deep in the kernel: the
+cubature (`method = :nestedquadgk`, which `:auto` selects) is generic.
 """
-_residues_in_floats(::AbstractInclusion{T}, C₀::TensND.AbstractTens) where {T} =
-    _residues_in_floats(promote_type(T, eltype(C₀)))
-_residues_in_floats(::Type{<:Union{AbstractFloat, Integer, Rational}}) = nothing
-_residues_in_floats(::Type{T}) where {T} = throw(
-    ArgumentError(
-        "`method = :residues` evaluates the residues in Float64 (the poles are the " *
-            "eigenvalues of a companion matrix); with $T entries use the cubature, " *
-            "`method = :nestedquadgk`, which `:auto` selects and which differentiates"
+_residues_in_floats(incl::AbstractInclusion{T}, C₀::TensND.AbstractTens) where {T} =
+    _residues_in_floats(promote_type(T, eltype(C₀), eltype(incl.basis)))
+_residues_in_floats(::Type{D}) where {D <: ForwardDiff.Dual} = _residues_in_floats(ForwardDiff.valtype(D))
+# No symbolic route: the roots are found numerically and selected by comparisons.
+_residues_in_floats(::Type{T}) where {T} =
+    T <: Union{AbstractFloat, Integer, Rational} && float(T) === Float64 ? nothing : throw(
+        ArgumentError(
+            "`method = :residues` locates the poles in Float64 (they are the eigenvalues of " *
+            "a companion matrix) and carries the derivatives of dual numbers; with $T " *
+            "values use the cubature, `method = :nestedquadgk`, which `:auto` selects"
+        )
     )
-)
 
 """
     _build_poly_system(C, α₀ζ, α₁ζ) -> (adj, Q, roots_uhp)
@@ -96,7 +117,10 @@ the upper half plane, listed with their multiplicity. A reference whose
 acoustic tensor is singular along the integration, so that ``Q`` loses its
 degree or gains a real root, is refused with an `ArgumentError`.
 
-`Q` is returned as a `Polynomial` with real coefficients.
+`Q` is returned as a `Polynomial` with real coefficients, which carry the
+derivatives of dual arguments, and so does `adj`. The roots are those of the
+values of these coefficients, as `ComplexF64`: every choice made here (the
+degree, the half plane) reads values only.
 """
 function _build_poly_system(
         C::AbstractArray{<:Real, 4},
@@ -123,7 +147,8 @@ function _build_poly_system(
     # it the Hill tensor, is not defined: a reference without shear stiffness,
     # say. Dropping it to carry on with a polynomial of lower degree, as was done,
     # only turned an undefined integral into a wrong number.
-    abs(q[7]) >= 1.0e-14 * maximum(abs, q) || throw(
+    q₀ = TensND.primal.(q)
+    abs(q₀[7]) >= 1.0e-14 * maximum(abs, q₀) || throw(
         ArgumentError(
             "the acoustic tensor of the reference stiffness is singular along a " *
                 "direction of the integration: the reference is not strongly elliptic " *
@@ -139,7 +164,10 @@ function _build_poly_system(
     # which would move the centroid. (The iterative root finder used up to 0.17.2
     # returned five roots out of six far from any root of a polynomial with two
     # triple roots, that of an isotropic reference around a sphere.)
-    companion = [j == 6 ? -q[i] / q[7] : Float64(i == j + 1) for i in 1:6, j in 1:6]
+    # They are those of the values of the coefficients: a derivative moves a
+    # root of multiplicity k as a fractional power, which no dual number holds,
+    # and the residue sums need none of it (see the head of this file).
+    companion = [j == 6 ? -q₀[i] / q₀[7] : Float64(i == j + 1) for i in 1:6, j in 1:6]
     roots_all = ComplexF64.(eigvals!(companion))
 
     # `Q` has real coefficients and, for a strongly elliptic reference, no real
@@ -240,7 +268,7 @@ _cluster_radius(poles, members, c) = maximum(p -> abs(p - c), view(poles, member
 function _cluster_ratio(poles, members, logfactor::Bool)
     c = _cluster_center(poles, members)
     δ = _cluster_radius(poles, members, c)
-    return δ == 0 ? 0.0 : δ / _outer_distance(poles, members, c, logfactor)
+    return δ == 0 ? zero(δ) : δ / _outer_distance(poles, members, c, logfactor)
 end
 
 """
@@ -371,3 +399,31 @@ function _cluster_weights(
     ℓ = [_modulus(bound, log(c)); [_modulus(bound, -(-inv(c))^p / p) for p in 1:(m - 1)]]
     return c, H_one, _regroup_weights(_series_product(ℓ, g, m), h, k)
 end
+
+# ─── Error bounds of dual sums
+#
+# A sum of dual numbers has one rounding error per channel: its value and each
+# of its partials, at every nesting level. Run on operands made nonnegative in
+# every channel, the recurrences of a sum bound the moduli of the terms each
+# channel adds up, products of such numbers being nonnegative in every channel
+# too; the bound and the sum are then compared channel by channel, each
+# derivative against its own scale.
+
+# |x| in every channel.
+_abs_channels(x::Real) = abs(x)
+_abs_channels(x::ForwardDiff.Dual{Tg}) where {Tg} = ForwardDiff.Dual{Tg}(
+    _abs_channels(ForwardDiff.value(x)), map(_abs_channels, ForwardDiff.partials(x).values)
+)
+
+# max(a, b) in every channel.
+_max_channels(a::Real, b::Real) = max(a, b)
+_max_channels(a::ForwardDiff.Dual{Tg}, b::ForwardDiff.Dual{Tg}) where {Tg} = ForwardDiff.Dual{Tg}(
+    _max_channels(ForwardDiff.value(a), ForwardDiff.value(b)),
+    map(_max_channels, ForwardDiff.partials(a).values, ForwardDiff.partials(b).values)
+)
+
+# a ≤ b in every channel.
+_channels_within(a::Real, b::Real) = a <= b
+_channels_within(a::ForwardDiff.Dual{Tg}, b::ForwardDiff.Dual{Tg}) where {Tg} =
+    _channels_within(ForwardDiff.value(a), ForwardDiff.value(b)) &&
+    all(map(_channels_within, ForwardDiff.partials(a).values, ForwardDiff.partials(b).values))

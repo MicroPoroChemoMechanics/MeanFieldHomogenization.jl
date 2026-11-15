@@ -18,7 +18,7 @@ declared in `src/Core/traits.jl`. The five that exist:
 | Trait | Selected by | Nature |
 | :---- | :---------- | :----- |
 | `Analytical` | `:auto` on isotropic, 2-D, conduction, coaxial TI | closed form |
-| `Residue` | `:residues` only (explicit) on 3-D anisotropic elasticity | Cauchy residues then 1-D quadrature; `Float64` only |
+| `Residue` | `:residues` only (explicit) on 3-D anisotropic elasticity | Cauchy residues then 1-D quadrature; roots found in `Float64`, dual numbers accepted |
 | `DECUHR` | `:decuhr` (explicit), once its extension is loaded | adaptive cubature for singular integrands; AD-safe |
 | `NestedQuadGK` | `:auto` on 3-D anisotropic elasticity, or `:nestedquadgk` | nested 1-D quadrature; type-generic, the fastest and the most accurate of the three |
 | `CylinderQuadrature` | `Cylinder` with an anisotropic matrix | 1-D quadrature over the transverse circle |
@@ -77,7 +77,7 @@ The rules currently in force:
   transformation is closed-form for *any* anisotropy;
 - 3-D anisotropic elasticity → the **`NestedQuadGK` cubature** by default
   (`DECUHR` on an explicit `:decuhr`); `Residue` is reachable on an
-  explicit `:residues` only, because it takes `Float64` coefficients only;
+  explicit `:residues` only;
   a crack in a TI matrix aligned with ``\underline{n}`` → `Analytical`.
 
 ## 4. Document and test the AD story
@@ -85,10 +85,14 @@ The rules currently in force:
 State in the docstring whether the algorithm is `ForwardDiff`-compatible, and
 **back the claim with a test**: the dispatch tables in
 [Hill polarization tensors](@ref th-hill-tensors) are written from those
-claims, so an unverified one propagates straight into the manual. A polynomial
-root finder or an in-place `Float64` buffer usually makes an algorithm
-`Float64`-only — that is acceptable, but it must be stated, and `:auto` must not
-approach `Dual` inputs to it.
+claims, so an unverified one propagates straight into the manual. An in-place
+`Float64` buffer on a value that may carry a derivative makes an algorithm
+`Float64`-only. A polynomial root finder does so too, unless the roots are
+found on the values and the derivatives are obtained without differentiating
+them, as `Residue` does ([Derivatives of the residue
+sums](@ref th-hill-residue-derivatives)). An algorithm that stays `Float64`-only
+is acceptable, but it must be stated, and `:auto` must not approach `Dual`
+inputs to it.
 
 If the algorithm sits behind a weak dependency, as `DECUHR` does, remember it
 only exists once the extension loads: `import DECUHR, Integrals` is required in

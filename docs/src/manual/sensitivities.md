@@ -189,6 +189,10 @@ Sensitivities on RVEs that carry a `symmetrize` keyword work the same way:
 `derivative` / `gradient` / `jacobian` propagate Duals through the
 projection automatically.
 
+The three algorithms for an anisotropic matrix (nested quadratures, DECUHR and
+residues) carry dual numbers, at any nesting level; see [Derivatives of the
+residue sums](@ref th-hill-residue-derivatives) for the residue algorithm.
+
 ## Limitations
 
 - **No `Complex{T}` autodiff.** ForwardDiff doesn't mix Dual + Complex

@@ -7,22 +7,25 @@
 #  t over (0, ∞) (Masson's Eq. (18)); the inner one is evaluated exactly by
 #  residues and the outer one by quadrature. The generic polynomial bookkeeping
 #  (acoustic tensor, adjugate, determinant, root finding) and the residue sums
-#  over groups of poles are in `Core.green_residue.jl`. Float64 only.
+#  over groups of poles are in `Core.green_residue.jl`. The roots are found in
+#  Float64 on the values of the coefficients; the derivatives of dual numbers are
+#  carried by the residue sums.
 # =============================================================================
 
 # Eₙ(t) = t^(7-n) vⁿ, v = (t² - 1)/2, n = 0, …, 6, which is t⁷ ξⁿ with
-# ξ(t) = (t² - 1)/(2t): a numerator p of degree ≤ 6 in ξ becomes
-# t⁷ p(ξ(t)) = Σₙ pₙ Eₙ(t). Their first `M` Taylor coefficients at `c`, as the
-# columns of a matrix, from the factored form: for a flat or a long ellipsoid
-# the poles lie near t = ±1 or near 0, where the expanded polynomials lose every
-# digit to cancellation. `v₀ = (c² - 1)/2` is passed in, computed without
-# cancellation.
-function _joukowski_taylor(c::Number, v₀::Number, M::Int)
+# ξ(t) = (t² - 1)/(2t): a numerator p of degree ≤ N in ξ becomes
+# t^(N+1) p(ξ(t)) = Σₙ pₙ Eₙ(t), Eₙ(t) = t^(N+1-n) vⁿ with v = (t² - 1)/2. Their
+# first `M` Taylor coefficients at `c`, as the columns of a matrix, from the
+# factored form: for a flat or a long ellipsoid the poles lie near t = ±1 or
+# near 0, where the expanded polynomials lose every digit to cancellation.
+# `v₀ = (c² - 1)/2` is passed in, computed without cancellation. N = 6 for the
+# weights themselves, 6(j + 1) for their derivatives of order j.
+function _joukowski_taylor(c::Number, v₀::Number, M::Int, N::Int = 6)
     # A lone pole, by far the most frequent, needs the values Eₙ(c) alone.
-    M == 1 && return reshape(c .^ (7:-1:1) .* v₀ .^ (0:6), 1, 7)
-    v = MFH_Core._series_powers([v₀, c, one(c) / 2], 6, M)      # vⁿ
-    t = MFH_Core._series_powers([c, one(c)], 7, M)              # (c + t)ᵏ
-    return reduce(hcat, [MFH_Core._series_product(v[n + 1], t[8 - n], M) for n in 0:6])
+    M == 1 && return reshape(c .^ ((N + 1):-1:1) .* v₀ .^ (0:N), 1, N + 1)
+    v = MFH_Core._series_powers([v₀, c, one(c) / 2], N, M)      # vⁿ
+    t = MFH_Core._series_powers([c, one(c)], N + 1, M)          # (c + t)ᵏ
+    return reduce(hcat, [MFH_Core._series_product(v[n + 1], t[N + 2 - n], M) for n in 0:N])
 end
 
 # v - 1 and v + 1 at a preimage v of z: (v - 1)(v + 1) = 2 z v gives the smaller
@@ -36,38 +39,41 @@ end
 # then the two preimages of each root, the larger directly and the other as its
 # inverse (their product is -1), each with its offsets from ±1. All of them, the
 # conjugates included, in `poles`. `1 + z²` is formed as `(z - i)(z + i)`, free
-# of the cancellation the sum has near z = ±i.
-function _hill_poles(roots_uhp::AbstractVector{<:Complex})
+# of the cancellation the sum has near z = ±i. Each preimage is listed `mult`
+# times, its multiplicity as a root of the power `mult` of t⁶ Q(ξ(t)), the
+# denominator of the derivatives of order `mult - 1` (see `_hill_line_weights`).
+function _hill_poles(roots_uhp::AbstractVector{<:Complex}, mult::Int = 1)
     i = one(eltype(roots_uhp)) * im
     s = @. sqrt((roots_uhp - i) * (roots_uhp + i))
     w = @. ifelse(abs(roots_uhp + s) >= abs(roots_uhp - s), roots_uhp + s, roots_uhp - s)
     z = repeat(roots_uhp; inner = 2)
     v = vec(permutedims([w -inv.(w)]))      # w₁, -1/w₁, w₂, -1/w₂, …
-    offs = _unit_offsets.(z, v)
-    upper = [i; i; v]
+    offs = repeat(_unit_offsets.(z, v); inner = mult)
+    upper = [i; i; repeat(v; inner = mult)]
     return (;
         poles = [upper; conj.(upper)], nupper = length(upper),
         wm1 = [i - 1; i - 1; first.(offs)], wp1 = [i + 1; i + 1; last.(offs)],
     )
 end
 
-# The seven weights by sums over `clusters`, and the running error bound of
-# that evaluation.
-function _hill_line_sums(p, clusters, lead::Real)
+# The N + 1 weights 2∫₀^∞ Eₙ/D dt, n = 0, …, N, by sums over `clusters` of the
+# poles `p` of D, of leading coefficient `lead`, and the running error bound of
+# that evaluation. N = 6 and D = (1 + t²)² t⁶ Q(ξ(t)) for the weights themselves.
+function _hill_line_sums(p, clusters, lead::Real, N::Int = 6)
     T = real(eltype(p.poles))
     leadc = Complex{T}(lead)
     two_pi = 2 * T(π)
-    W = zeros(T, 7)
+    W = zeros(T, N + 1)
     err = zero(T)
     for members in clusters
         c, H_one, H_log = MFH_Core._cluster_weights(p.poles, members, leadc; logfactor = true)
-        M = min(length(H_one), 14)
+        M = min(length(H_one), 2N + 2)      # Eₙ is of degree N + 1 + n ≤ 2N + 1
         v₀ = sum(view(p.wm1, members)) * sum(view(p.wp1, members)) / (2 * length(members)^2)
-        E = transpose(_joukowski_taylor(c, v₀, M))       # 7 × M
+        E = transpose(_joukowski_taylor(c, v₀, M, N))       # (N + 1) × M
         W .-= 2 .* (2 .* real.(E * view(H_log, 1:M)) .+ two_pi .* imag.(E * view(H_one, 1:M)))
         # The same sums on moduli bound the terms they add up (`_cluster_weights`).
         _, B_one, B_log = MFH_Core._cluster_weights(p.poles, members, leadc; logfactor = true, bound = Val(true))
-        Eb = transpose(_joukowski_taylor(abs(c), abs(v₀), M))
+        Eb = transpose(_joukowski_taylor(abs(c), abs(v₀), M, N))
         err += MFH_Core._RESIDUE_ROUNDING * eps(T) *
             maximum(2 .* (2 .* (Eb * view(B_log, 1:M)) .+ two_pi .* (Eb * view(B_one, 1:M))))
     end
@@ -90,7 +96,7 @@ function _hill_line_weights_quadrature(Q::Polynomial, rtol::Real, atol::Real)
 end
 
 """
-    _hill_line_weights(Q, roots_uhp; rtol = 64eps()) -> Vector{Float64}
+    _hill_line_weights(Q, roots_uhp; rtol = 64eps()) -> Vector
 
 The seven integrals ``W_n = 2 \\int_0^\\infty E_n(t) / D(t)\\,\\mathrm{d}t``, with
 ``E_n(t) = t^{7-n} \\bigl((t^2 - 1)/2\\bigr)^n``,
@@ -117,15 +123,42 @@ it: the representation by residues is ill-conditioned there, although the
 integrals themselves are not. The running error bound of the sums detects it
 (see `_cluster_weights`), and the integrals are then computed by quadrature of
 their definition, to `rtol` of the scale the sums give.
+
+The roots are those of the values ``Q_0`` of the coefficients of ``Q``. When
+these coefficients are dual numbers, ``Q = Q_0 + \\delta Q`` and the weights
+carry their derivatives through
+```math
+W_n = \\sum_{j \\ge 0} (-1)^j \\sum_k \\bigl(\\delta Q^j\\bigr)_k\\, W^{(j)}_{n+k}, \\qquad
+W^{(j)}_m = 2 \\int_0^\\infty \\frac{t^{7+6j-m}\\,\\bigl((t^2 - 1)/2\\bigr)^m}
+{(1 + t^2)^2\\,\\bigl(t^6\\, Q_0(\\xi(t))\\bigr)^{j+1}}\\,\\mathrm{d}t ,
+```
+``(\\delta Q^j)_k`` the coefficients of the power ``j`` of ``\\delta Q``, a sum
+that stops at the number of nested levels of dual numbers. The ``W^{(j)}_m`` are
+plain numbers, given by the same residue sums over the same poles, each
+preimage counted ``j + 1`` times, and held to the same error bound.
 """
 function _hill_line_weights(Q::Polynomial, roots_uhp::AbstractVector{ComplexF64}; rtol::Real = 64 * eps())
+    q = SVector{7}(coeffs(Q))
+    q₀ = TensND.primal.(q)
     p = _hill_poles(roots_uhp)
     clusters = MFH_Core._pole_clusters(p.poles, p.nupper; logfactor = true)
-    lead = coeffs(Q)[end] / 64        # leading coefficient of D
-    W, err = _hill_line_sums(p, clusters, lead)
-    scale = maximum(abs, W)
-    err <= rtol * scale && return W
-    return _hill_line_weights_quadrature(Q, rtol, rtol * scale)
+    lead = q₀[7] / 64        # leading coefficient of D
+    W₀, err = _hill_line_sums(p, clusters, lead)
+    scale = maximum(abs, W₀)
+    err <= rtol * scale || return _hill_line_weights_quadrature(Q, rtol, rtol * scale)
+    W = convert(Vector{eltype(q)}, W₀)
+    δq = Vector(q - q₀)
+    δqʲ = δq
+    # A recurrence on the powers of δQ, one order of derivation per pass.
+    for j in 1:TensND.dual_depth(eltype(q))
+        N = 6 * (j + 1)
+        pⱼ = _hill_poles(roots_uhp, j + 1)
+        Wⱼ, errⱼ = _hill_line_sums(pⱼ, MFH_Core._pole_clusters(pⱼ.poles, pⱼ.nupper; logfactor = true), lead^(j + 1), N)
+        errⱼ <= rtol * maximum(abs, Wⱼ) || return _hill_line_weights_quadrature(Q, rtol, rtol * scale)
+        W .+= (isodd(j) ? -1 : 1) .* [sum(δqʲ[k + 1] * Wⱼ[n + k + 1] for k in 0:(6j)) for n in 0:6]
+        δqʲ = MFH_Core._series_product(δqʲ, δq, N + 1)
+    end
+    return W
 end
 
 """
@@ -138,16 +171,14 @@ Cauchy residue theorem of [masson2008](@citet): at each angle ``\\varphi``
 the inner integral is a finite sum of residues at the roots of the
 determinant of the acoustic tensor (`_hill_line_weights`).
 
-!!! note "Float64 only, by design"
-    The residue algorithm finds polynomial roots (the eigenvalues of a
-    companion matrix, by LAPACK) and therefore only accepts `Float64` coefficients — it does NOT propagate
-    `ForwardDiff.Dual`, `Complex`, or symbolic element types.  For those,
-    use the `NestedQuadGK` backend (`method = :nestedquadgk`), which is
-    type-generic and AD-compatible.  The `:auto` dispatch already picks
-    `NestedQuadGK` automatically whenever `eltype(C₀) !== Float64`
-    (see `Core/dispatch.jl`); an explicit `method = :residues` under a
-    non-`Float64` matrix or geometry is refused with an `ArgumentError` that
-    says so.
+!!! note "Derivatives"
+    The roots of the determinant are found on the values of its coefficients,
+    as the eigenvalues of a companion matrix in `Float64`, and are never
+    differentiated: the derivatives carried by `ForwardDiff.Dual` semi-axes,
+    orientation or stiffness, at any nesting level, come from residue sums over
+    the same roots (`_hill_line_weights`). A symbolic or a complex stiffness
+    has no route here and is refused with an `ArgumentError`; the `NestedQuadGK`
+    backend (`method = :nestedquadgk`, which `:auto` selects) is generic.
 """
 function _hill_3d_aniso_residue(
         ell::Ellipsoid{3}, C₀;
@@ -155,19 +186,19 @@ function _hill_3d_aniso_residue(
         reltol::Float64 = 1.0e-6,
         maxiters::Int = 100_000
     )
-    η = Float64(ell.semi_axes[2] / ell.semi_axes[1])
-    ω = Float64(ell.semi_axes[3] / ell.semi_axes[1])
+    η = float(ell.semi_axes[2] / ell.semi_axes[1])
+    ω = float(ell.semi_axes[3] / ell.semi_axes[1])
 
-    # Components in the ellipsoid's frame, in `Float64`: this route finds
-    # polynomial roots and is `Float64`-only by design (see the note above).
-    C = Float64.(Array(TensND.components(C₀, ell.basis)))
+    # Components in the ellipsoid's frame, as floats or duals of floats.
+    C = float.(Array(TensND.components(C₀, ell.basis)))
+    T = promote_type(typeof(η), typeof(ω), eltype(C))
 
     function hill_at_phi(φ::Float64)
         m1 = cos(φ)
         m2 = sin(φ) / η
         # ζ(z) = (m1, m2, z/ω) = α₀ + α₁·z with α₀=(m1,m2,0), α₁=(0,0,1/ω).
-        α₀ζ = [m1, m2, 0.0]
-        α₁ζ = [0.0, 0.0, 1.0 / ω]
+        α₀ζ = [m1, m2, zero(m1)]
+        α₁ζ = [zero(ω), zero(ω), inv(ω)]
 
         sys = MFH_Core._build_poly_system(C, α₀ζ, α₁ζ)
         # The inner sums an order and more below the tolerance of the outer
@@ -202,7 +233,7 @@ function _hill_3d_aniso_residue(
 
     P_vals = P_vals / π
 
-    P_arr = _fill_hill21!(zeros(Float64, 3, 3, 3, 3), P_vals)
+    P_arr = _fill_hill21!(zeros(T, 3, 3, 3, 3), P_vals)
 
     return MFH_Core._tens_in(P_arr, ell.basis)
 end

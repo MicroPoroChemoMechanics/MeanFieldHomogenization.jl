@@ -199,10 +199,10 @@ end
 
 # ═══════════════════════════════════════════════════════════════════════════
 println("\n", "="^70)
-println("  § 5  ANISOTROPIC MATRIX — shape AD via :decuhr")
+println("  § 5  ANISOTROPIC MATRIX — shape AD through the three algorithms")
 println("="^70)
-println("  :residues does NOT support ForwardDiff.Dual geometry.")
-println("  :decuhr integrates numerically with Dual-valued ζ inside the integrand.")
+println("  :nestedquadgk and :decuhr integrate with Dual-valued ζ inside the integrand.")
+println("  :residues finds the roots on values and sums residues at poles of higher order.")
 
 let
     # Build anisotropic (cubic) stiffness
@@ -218,19 +218,23 @@ let
     end
     C_cubic = Tens(C_arr)
 
-    f_η_aniso = η -> hill_tensor(
-        Ellipsoid(1.0, η, η), C_cubic;
-        method = :decuhr, abstol = 1.0e-6, reltol = 1.0e-4
-    )[1, 1, 1, 1]
+    f_η_aniso(method; kw...) = η -> hill_tensor(Ellipsoid(1.0, η, η), C_cubic; method = method, kw...)[1, 1, 1, 1]
 
     η₀ = 0.5
-    dP_AD = ForwardDiff.derivative(f_η_aniso, η₀)
-    dP_FD = fd_deriv(f_η_aniso, η₀; h = 1.0e-4)
+    # The reference: a centered difference of the residue algorithm in Float64,
+    # with the step that balances truncation and rounding, h = ε^(1/3) η₀.
+    dP_FD = fd_deriv(f_η_aniso(:residues; abstol = 1.0e-14, reltol = 1.0e-12), η₀; h = cbrt(eps()) * η₀)
 
     @printf "\n  Cubic matrix, Ellipsoid(1,η,η), η₀=%.2f:\n" η₀
-    @printf "  ∂P[1111]/∂η:  AD (decuhr) = %12.6e\n" dP_AD
-    @printf "                FD           = %12.6e\n" dP_FD
-    @printf "                Error        = %.3e\n" abs(dP_AD - dP_FD)
+    @printf "  ∂P[1111]/∂η:  FD (residues, Float64) = %12.6e\n" dP_FD
+    for (method, kw) in (
+            (:nestedquadgk, (abstol = 1.0e-12, reltol = 1.0e-10)),
+            (:residues, (abstol = 1.0e-12, reltol = 1.0e-10)),
+            (:decuhr, (abstol = 1.0e-6, reltol = 1.0e-4)),
+        )
+        dP_AD = ForwardDiff.derivative(f_η_aniso(method; kw...), η₀)
+        @printf "                AD (%-12s)      = %12.6e   error = %.1e\n" method dP_AD abs(dP_AD - dP_FD)
+    end
 end
 
 println()
