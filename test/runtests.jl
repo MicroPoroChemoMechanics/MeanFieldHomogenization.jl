@@ -107,7 +107,9 @@ const TEST_PARTS = Dict(
     # timeout of the minimum Julia version.
     "material-laws" => ("MaterialLaws",),
     # Split from `material-laws` in 0.26.7: the part took 37 to 76 minutes on
-    # the runners and crossed the 90-minute timeout on a slow one.
+    # the runners and crossed the 90-minute timeout on a slow one. Split with
+    # the quasi-elastic and finite-element files, `affine-laws` took 50 to 80
+    # minutes and `material-laws` 29 to 30: those three files went back.
     "affine-laws" => ("AffineLaws",),
     "schemes" => ("Schemes", "Assemblies", "CustomInclusions"),
     # Its own part since 0.25.0: mostly compilation, half of `schemes`, which a slow
@@ -417,18 +419,17 @@ end
         include("MaterialLaws/test_frictional_strength.jl")
         include("MaterialLaws/test_uniform_fields.jl")
         include("MaterialLaws/test_incremental_tangent.jl")
-    end
-
-    # The affine and quasi-elastic linearizations, the update of the points and the
-    # coupling to a finite-element code: a group of their own so that the CI parts
-    # stay under their timeout.
-    rungroup("AffineLaws") && @testset "AffineLaws" begin
-        include("MaterialLaws/test_affine.jl")
-        include("MaterialLaws/test_affine_evp.jl")
         include("MaterialLaws/test_quasi_elastic.jl")
         include("MaterialLaws/test_update_points.jl")
         # The coupling to a finite-element code, through the Ferrite adapter.
         HAS_FERRITE && include("MaterialLaws/test_fe_coupling.jl")
+    end
+
+    # The affine linearizations, elastic and elasto-viscoplastic: a group of their
+    # own so that the CI parts stay under their timeout.
+    rungroup("AffineLaws") && @testset "AffineLaws" begin
+        include("MaterialLaws/test_affine.jl")
+        include("MaterialLaws/test_affine_evp.jl")
     end
 
     # Single crystals and polycrystals (Taylor, Kröner, Berveiller–Zaoui, Hill, the
