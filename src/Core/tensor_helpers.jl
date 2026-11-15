@@ -28,6 +28,15 @@ Kronecker delta ``\\delta_{ij}`` in element type `T` — returns `one(T)` when
 @inline _tens_in(arr::AbstractArray{T, order}, basis::TensND.AbstractBasis{dim}) where {T, order, dim} =
     TensND.Tens(TensND._static_tensor(arr, Val(dim), Val(order)), basis)
 
+# The same for an array symmetric by construction (the transpose for order 2, the
+# minor symmetries for order 4), stored as a `SymmetricTensor`. `_tens_in` decides
+# the storage on the values, symmetric up to rounding or not, so that its type is
+# a `Union` of the two storages; here the storage, hence the type, is known before
+# the values. The components are those `_tens_in` gives a symmetric array, the
+# mean over the symmetries, without the comparison that decided the storage.
+@inline _sym_tens_in(arr::AbstractArray{T, order}, basis::TensND.AbstractBasis{dim}) where {T, order, dim} =
+    TensND.Tens(TensND.Tensors.symmetric(TensND.Tensors.Tensor{order, dim, T}(arr)), basis)
+
 """
     _fill_sym4!(A, i, j, k, l, v)
 

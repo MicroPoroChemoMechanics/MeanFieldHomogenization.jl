@@ -1225,10 +1225,17 @@ algorithm traits:
 
 `method = :auto` picks `NestedQuadGK`, whatever the coefficient type and
 whatever else is loaded: it is the fastest and the most accurate of the three
-(see [Hill polarization tensors](@ref th-hill-tensors)). `Residue` degenerates
-when the reference is anisotropic in *type* and isotropic in *value*, a case the
-self-consistent and differential schemes reach at their first step, so it is
-available on explicit `method = :residues` only (`src/Core/dispatch.jl`).
+(see [Hill polarization tensors](@ref th-hill-tensors)). `Residue` is available
+on an explicit `method = :residues` (`src/Core/dispatch.jl`). On a circular
+crack in a triclinic matrix, a first derivative of ``\mathbb{B}`` takes about
+3 ms by residues and 0.65 ms by `NestedQuadGK` (cases
+`kernels/cod.dual.residues.penny.tri` and `kernels/cod.dual.nqgk.penny.tri` of
+`scripts/bench/bench_suite.jl`). The residue sums also hold where the roots of
+the acoustic polynomial coincide, as for a reference anisotropic in *type* and
+isotropic in *value*, which the self-consistent and differential schemes reach
+at their first step: the residues of coincident poles are summed together
+([Residue sums over groups of poles](@ref th-hill-residue-groups)), and
+``\mathbb{B}`` agrees with the closed form of the isotropic matrix.
 
 **Derivatives.** All three carry the dual numbers of `ForwardDiff`, in the
 stiffness and in the geometry of the crack. The two cubatures differentiate

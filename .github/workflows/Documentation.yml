@@ -93,12 +93,18 @@ jobs:
       # it. Without it the `ExpandTemplates` stage, where every `@example` block
       # runs and nearly all the time goes, prints nothing, and a build working
       # normally cannot be told from one that hangs.
+      # The VitePress step renders the whole site in one Node process, whose
+      # default heap limit (about 2 GB) the site reaches: the build of the tag
+      # v0.26.7 died there ("JavaScript heap out of memory") while the same
+      # commit built on `main`. The runner has 16 GB; 6 GB leaves Julia, still
+      # alive during that step, its share.
       - name: Build and deploy
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
             JULIA_DEBUG: Documenter
             OPENBLAS_NUM_THREADS: '1'
+            NODE_OPTIONS: --max-old-space-size=6144
         run: julia --project=docs/ docs/make.jl
 
   # Pull requests, part one: the draft build of the WHOLE page tree, with every

@@ -96,13 +96,12 @@ const _KM_TRI_B = [
     end
 
     @testset "the bundle costs strictly less than the two separate calls" begin
-        # `@inferred` is deliberately NOT used here: `hill_tensor` resolves its
-        # algorithm at run time (`_resolve_algo(Val(method), incl, C₀)`), so the
-        # whole concentration chain is inferrably `Any` BY DESIGN — that predates
-        # these bundles and is what makes `:auto` work.  What must hold is that
-        # bundling does not make things worse: the tuple return must not add
-        # allocation on top of the work it saves.
+        # Bundling must not make things worse: the tuple return must not add
+        # allocation on top of the work it saves, and it infers as the two
+        # separate calls do.
         geom = Ellipsoid(3.0, 2.0, 1.0)
+        @test @inferred(MFHC_B.concentration_and_contribution(geom, C_i, C_tri)) isa
+            NTuple{2, TensND.AbstractTens{4, 3, Float64}}
         pair() = (
             gradient_gradient_concentration(geom, C_i, C_tri),
             property_contribution(geom, C_i, C_tri),

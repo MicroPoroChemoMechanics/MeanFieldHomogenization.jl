@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using Random
 import ForwardDiff
+import DECUHR, Integrals   # the `:decuhr` route lives in an extension
 
 # After a warm-up call, the bytes `f(args...)` allocates.
 _allocs(f, args...) = (f(args...); @allocated f(args...))
@@ -44,6 +45,52 @@ end
         @test @inferred(MeanFieldHomogenization.Core._basis_axis(g.basis, 1)) isa NTuple{3, Float64}
     end
     @test @inferred(laminate_normal(Laminate(; normal = (0.0, 0.6, 0.8)))) isa NTuple{3, Float64}
+end
+
+# The method as a literal in a caller, as a scheme passes it.
+_hp_hill_residues(g, C) = hill_tensor(g, C; method = :residues)
+_hp_hill_nestedquadgk(g, C) = hill_tensor(g, C; method = :nestedquadgk)
+_hp_hill_decuhr(g, C) = hill_tensor(g, C; method = :decuhr)
+
+@testset "Hot paths: tensors symmetric by construction infer their storage" begin
+    # A numerical Hill tensor, a conductivity one, a shape tensor or an auxiliary
+    # tensor is symmetric by construction, but its storage (36 or 81 components
+    # at order 4) used to be decided on its values, so that every caller
+    # inferred a `Union` of the two.
+    KM = [
+        210.0 80.0 75.0 5.0 4.0 3.0;
+        80.0 195.0 90.0 -2.0 3.0 -1.0;
+        75.0 90.0 220.0 1.0 -2.0 2.0;
+        5.0 -2.0 1.0 60.0 2.5 1.5;
+        4.0 3.0 -2.0 2.5 65.0 -1.0;
+        3.0 -1.0 2.0 1.5 -1.0 55.0
+    ]
+    C = TensND.from_mandel(KM, TensND.CanonicalBasis{3, Float64}())
+    D = ForwardDiff.Dual{:hp}(1.0, 1.0)
+    C_dual = TensND.from_mandel(KM .* D, TensND.CanonicalBasis{3, typeof(D)}())
+    ellipsoids = (Ellipsoid(1.0, 0.6, 0.3), Ellipsoid(1.0, 0.6, 0.3; euler_angles = (0.4, 1.1, -0.7)))
+    for g in ellipsoids, f in (hill_tensor, _hp_hill_residues, _hp_hill_nestedquadgk, _hp_hill_decuhr)
+        @test @inferred(f(g, C)) isa TensND.AbstractTens{4, 3, Float64}
+    end
+    for f in (hill_tensor, _hp_hill_residues, _hp_hill_nestedquadgk)
+        @test @inferred(f(first(ellipsoids), C_dual)) isa TensND.AbstractTens{4, 3, typeof(D)}
+    end
+    cyl, ellipse = Cylinder(1.0, 0.5), Ellipsoid(1.0, 0.4)
+    @test @inferred(hill_tensor(cyl, C)) isa TensND.AbstractTens{4, 3, Float64}
+    C2 = TensND.from_mandel([10.0 3.0 0.5; 3.0 8.0 0.2; 0.5 0.2 4.0], TensND.CanonicalBasis{2, Float64}())
+    @test @inferred(hill_tensor(ellipse, C2)) isa TensND.AbstractTens{4, 2, Float64}
+    @test @inferred(hill_tensor(ellipse, TensISO{2}(20.0, 8.0))) isa TensND.AbstractTens{4, 2, Float64}
+    K = TensND.Tens([3.0 0.4 0.2; 0.4 2.0 -0.3; 0.2 -0.3 1.5])
+    for g in (ellipsoids..., cyl)
+        @test @inferred(hill_tensor(g, K)) isa TensND.AbstractTens{2, 3, Float64}
+    end
+    @test @inferred(hill_tensor(ellipse, TensND.Tens([3.0 0.4; 0.4 2.0]))) isa TensND.AbstractTens{2, 2, Float64}
+    for g in (first(ellipsoids), cyl, ellipse)
+        @test @inferred(MeanFieldHomogenization.shape_tensor(g)) isa TensND.AbstractTens{2}
+        @test @inferred(tens_IA(g)) isa TensND.AbstractTens{2}
+    end
+    @test @inferred(tens_UA(ellipse)) isa TensND.AbstractTens{4, 2}
+    @test @inferred(tens_VA(ellipse)) isa TensND.AbstractTens{4, 2}
 end
 
 @testset "Hot paths: shapes are built without allocating a sort" begin
