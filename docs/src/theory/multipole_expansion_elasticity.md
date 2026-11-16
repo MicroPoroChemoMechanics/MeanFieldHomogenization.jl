@@ -312,6 +312,7 @@ round.(((M[1, 1] + 2M[1, 2]) / 3k₀, (M[1, 1] - M[1, 2]) / 2, M[4, 4] / 2); dig
 The degree 4 gives the bulk modulus and misses the last digits of the two shear
 moduli, which the degree 6 recovers.
 
-The periodic assembly, whose sums over the images involve more than the lattice
+The application [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
+gives the convergence of the three moduli. The periodic assembly, whose sums over the images involve more than the lattice
 harmonics of conduction, and the fields of each sphere are listed in the
 [roadmap](@ref dev-roadmap).

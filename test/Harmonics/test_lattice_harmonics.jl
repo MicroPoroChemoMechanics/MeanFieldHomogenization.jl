@@ -1,6 +1,7 @@
 using Test
 using MeanFieldHomogenization
 using ForwardDiff
+using JSON
 
 # =============================================================================
 #  Harmonics of a periodic array of sources (Ewald sums).
@@ -15,10 +16,12 @@ using ForwardDiff
     @test real(h[0, 0]) ≈ -2.83729747948062 rtol = 1.0e-13
     # cubic symmetry leaves no harmonic of degree 2, and none of odd degree
     @test abs(h[2, 0]) < 1.0e-13 && abs(h[2, 2]) < 1.0e-13 && abs(h[3, 2]) < 1.0e-12
-    for (t, s, ref) in (
-            (4, 0, 3.10822668269944), (4, 4, 1.85752072772946),
-            (6, 0, 0.573329289434499), (6, 4, -1.07260088543324), (8, 0, 3.25929309334983),
-        )
+    # Kushch (2013), Table A.1; the degree 2, conditionally convergent, is a
+    # matter of convention and is treated apart
+    file = joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2013.json")
+    for row in JSON.parsefile(file)["tables"]["lattice_sums_sc"]
+        t, s, ref = row["t"], row["s"], row["Y_over_N"]
+        t > 2 || continue
         @test real(h[t, s]) / harmonic_norm(t, s) ≈ ref rtol = 1.0e-12
         @test abs(imag(h[t, s])) < 1.0e-9
     end

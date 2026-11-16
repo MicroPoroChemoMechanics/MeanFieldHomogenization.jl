@@ -321,4 +321,6 @@ being closer and their interaction stronger: for perfectly conducting spheres
 at the fraction 0.5, where the gap between neighbors is 1.5 % of the period,
 ``t_{\max} = 9`` still misses the converged value 5.891 by more than 1 %. The
 manual page [Particle assemblies and N-body schemes](@ref man-assemblies) gives
-the syntax of the scheme and of the assemblies it acts on.
+the syntax of the scheme and of the assemblies it acts on, and the application
+[Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
+follows these convergences against the published tables.

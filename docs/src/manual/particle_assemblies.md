@@ -211,7 +211,8 @@ The boundary of the assembly decides how the far field is closed:
 | [`PeriodicBox`](@ref) | the conductivity of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used. In conduction only |
 | [`MixedBC`](@ref)`(shape)` | the finite assembly in the infinite matrix, replaced by the homogeneous inclusion of the same `shape` sending the same far field ([Maxwell](@ref th-scheme-maxwell)) |
 
-The degree to ask for is found by raising it until the estimate settles. It grows
+The application [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
+compares the scheme with published tables. The degree to ask for is found by raising it until the estimate settles. It grows
 as the spheres come closer: a few units for a dilute assembly, more than twenty for
 spheres nearly in contact with a high contrast.
 

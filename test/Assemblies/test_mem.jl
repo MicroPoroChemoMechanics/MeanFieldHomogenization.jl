@@ -3,6 +3,10 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+using JSON
+
+# Published values: data/literature/kushch2013.json and kushch2014.json.
+_mem_literature(key) = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", key * ".json"))
 
 # =============================================================================
 #  Multipole expansion method — conduction, finite assemblies of spheres.
@@ -42,9 +46,10 @@ end
 
 @testset "MEM conduction — finite cluster of Kushch (2013), appendix A.1" begin
     # 27 equal spheres on a 3×3×3 cubic block, fraction 0.2, contrast 10
-    asm = _mem_cubic_cluster(3, 0.2, TensISO{3}(10.0))
+    q = _mem_literature("kushch2013")["quantities"]
+    asm = _mem_cubic_cluster(3, q["fcm_volume_fraction"]["value"], TensISO{3}(q["fcm_conductivity_contrast"]["value"]))
     K = canonical_components(homogenize(asm, MultipoleExpansion(; tmax = 7), :K))
-    @test K[1, 1] ≈ 1.53345 atol = 5.0e-6
+    @test K[1, 1] ≈ q["fcm_conductivity"]["value"] atol = 5.0e-6
     @test K ≈ K[1, 1] * I(3) rtol = 1.0e-12
     # the dipoles alone already differ from the one-site estimate
     K₁ = canonical_components(homogenize(asm, MultipoleExpansion(; tmax = 1), :K))[1, 1]
@@ -127,12 +132,22 @@ end
         K = canonical_components(homogenize(asm, MultipoleExpansion(; tmax = 1), :K))
         @test K ≈ canonical_components(homogenize(asm, MoriTanaka(), :K)) rtol = 1.0e-12
     end
-    # Kushch & Sevostianov (2014), Table 2: simple cubic array, three decimals
-    for (c, k₁, ref) in ((0.1, 0.0, 0.857), (0.3, 10.0, 1.888), (0.4, 100.0, 3.133), (0.2, 1000.0, 1.753))
-        @test Kzz(cubic_lattice(:sc, M, P(k₁); fraction = c), 9) ≈ ref atol = 5.0e-4
+    # Kushch & Sevostianov (2014), Table 2: simple cubic array, three decimals.
+    # The columns are the contrasts 0, 10, 100, 1000 and infinity.
+    contrasts = (0.0, 10.0, 100.0, 1000.0)
+    for row in _mem_literature("kushch2014")["tables"]["conductivity_sc"], k₁ in contrasts
+        c = row["c"]
+        (c ≤ 0.3 || (c ≤ 0.4 && k₁ ≤ 100)) || continue        # what the degree 9 resolves to three decimals
+        @test Kzz(cubic_lattice(:sc, M, P(k₁); fraction = c), 9) ≈ row["contrast_$(Int(k₁))"] atol = 6.0e-4
     end
-    # Kushch (2013), Tables 3.1 to 3.3: body- and face-centered arrays
-    @test Kzz(cubic_lattice(:bcc, M, P(1.0e8); fraction = 0.65), 21) ≈ 9.027 atol = 2.0e-3
+    # Kushch (2013), Tables 3.2 and 3.3: body- and face-centered arrays
+    book = _mem_literature("kushch2013")["tables"]
+    for (kind, name) in ((:bcc, "conductivity_bcc"), (:fcc, "conductivity_fcc")), row in book[name]
+        row["c"] ≤ 0.4 || continue
+        @test Kzz(cubic_lattice(kind, M, P(100.0); fraction = row["c"]), 9) ≈ row["contrast_100"] atol = 6.0e-4
+    end
+    densest = last(book["conductivity_bcc"])                    # c = 0.65, infinite contrast
+    @test Kzz(cubic_lattice(:bcc, M, P(1.0e8); fraction = densest["c"]), 21) ≈ densest["contrast_infinity"] atol = 2.0e-3
     # the same array described by a larger cell: 8 spheres in the cube of side 2
     one_cell = cubic_lattice(:sc, M, P(10.0); fraction = 0.3, period = 1.0)
     R = particle_geometry(one_cell, :p1).semi_axes[1]

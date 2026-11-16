@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
+using JSON
 
 # =============================================================================
 #  Multipole expansion method — elasticity, finite assemblies of spheres.
@@ -43,12 +44,16 @@ end
 @testset "MEM elasticity — finite cluster of Kushch (2013), appendix A.3" begin
     # 27 nearly rigid spheres on a 3×3×3 cubic block, fraction 0.2, ν = 0.3:
     # k*/k₀ = 1.4064, μ₁*/μ₀ = 1.6568 (C₁₁₁₁ − C₁₁₂₂)/2, μ₂*/μ₀ = 1.4719 (C₁₂₁₂)
-    asm = _mel_cubic_cluster(3, 0.2, _mel_C(1.0e6, 0.3))
-    k₀ = 2 * 1.3 / (3 * 0.4)
+    q = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2013.json"))["quantities"]
+    value(name) = q[name]["value"]
+    ν = value("fcm_poisson_ratio")
+    @test _MEL_C0 == _mel_C(1.0, ν)
+    asm = _mel_cubic_cluster(3, value("fcm_volume_fraction"), _mel_C(value("fcm_shear_contrast"), ν))
+    k₀ = 2 * (1 + ν) / (3 * (1 - 2ν))
     M = _mel_mandel(homogenize(asm, MultipoleExpansion(; tmax = 5), :C))
-    @test (M[1, 1] + 2 * M[1, 2]) / (3 * k₀) ≈ 1.4064 atol = 1.0e-4
-    @test (M[1, 1] - M[1, 2]) / 2 ≈ 1.6568 atol = 6.0e-4
-    @test M[4, 4] / 2 ≈ 1.4719 atol = 2.0e-4
+    @test (M[1, 1] + 2 * M[1, 2]) / (3 * k₀) ≈ value("fcm_bulk_modulus") atol = 1.0e-4
+    @test (M[1, 1] - M[1, 2]) / 2 ≈ value("fcm_shear_modulus_1") atol = 6.0e-4
+    @test M[4, 4] / 2 ≈ value("fcm_shear_modulus_2") atol = 2.0e-4
     # cubic symmetry of the block, which a one-site estimate does not see
     @test M[1, 1] ≈ M[2, 2] ≈ M[3, 3] && M[4, 4] ≈ M[5, 5] ≈ M[6, 6]
     @test M ≈ transpose(M) rtol = 1.0e-13

@@ -1,0 +1,71 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "kushch2014",
+  "doi": "10.1016/j.ijengsci.2013.08.002",
+  "citation": "Kushch, Volodymyr I., Sevostianov, Igor (2014). Dipole moments, property contribution tensors and effective conductivity of anisotropic particulate composites. International Journal of Engineering Science 74, 15-34.",
+  "location": "Table 2, p. 29"
+ },
+ "transcription": {
+  "from": "the published article (PDF), Table 2, read on the page text",
+  "checked_against_source": true,
+  "note": "The table is identical to Table 3.1 of Kushch (2013)."
+ },
+ "quantities": {},
+ "tables": {
+  "conductivity_sc": [
+   {
+    "c": 0.1,
+    "contrast_0": 0.857,
+    "contrast_10": 1.243,
+    "contrast_100": 1.323,
+    "contrast_1000": 1.332,
+    "contrast_infinity": 1.334
+   },
+   {
+    "c": 0.2,
+    "contrast_0": 0.727,
+    "contrast_10": 1.532,
+    "contrast_100": 1.728,
+    "contrast_1000": 1.753,
+    "contrast_infinity": 1.756
+   },
+   {
+    "c": 0.3,
+    "contrast_0": 0.606,
+    "contrast_10": 1.888,
+    "contrast_100": 2.275,
+    "contrast_1000": 2.327,
+    "contrast_infinity": 2.333
+   },
+   {
+    "c": 0.4,
+    "contrast_0": 0.49,
+    "contrast_10": 2.364,
+    "contrast_100": 3.133,
+    "contrast_1000": 3.249,
+    "contrast_infinity": 3.263
+   },
+   {
+    "c": 0.45,
+    "contrast_0": 0.433,
+    "contrast_10": 2.69,
+    "contrast_100": 3.863,
+    "contrast_1000": 4.06,
+    "contrast_infinity": 4.083
+   },
+   {
+    "c": 0.5,
+    "contrast_0": 0.374,
+    "contrast_10": 3.145,
+    "contrast_100": 5.349,
+    "contrast_1000": 5.831,
+    "contrast_infinity": 5.891
+   }
+  ]
+ },
+ "notes": [
+  "Table conductivity_sc: Table 2, p. 29. Effective conductivity of the simple cubic array of spherical inclusions, over that of the matrix.",
+  "The columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres."
+ ]
+}
