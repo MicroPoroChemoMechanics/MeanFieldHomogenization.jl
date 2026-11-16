@@ -299,7 +299,7 @@ function _remote_field(
     ) where {p}
     N_Σ = _accumulate_contributions(rve, P₀, p, m; kw...)
     P_d = hill_tensor(distribution_shape_of(distribution_shape(rve, scheme)), P₀; kw...)
-    return inv(one(P₀) - _compose(P_d, N_Σ))
+    return _maxwell_remote_field(P₀, N_Σ, P_d)
 end
 
 # Asymmetric self-consistent: the inclusions solve their dilute problem in the

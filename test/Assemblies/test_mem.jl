@@ -200,8 +200,105 @@ end
     add_matrix!(plane, Dict(:K => TensISO{2}(1.0)))
     add_particle!(plane, :p, (0.0, 0.0), Ellipsoid(0.5, 0.5), Dict(:K => TensISO{2}(5.0)))
     @test_throws ArgumentError homogenize(plane, MultipoleExpansion(), :K)
+    # the schemes of one polarization per inclusion have no use for a layered sphere
+    layered = base()
+    add_particle!(layered, :p, (0.0, 0.0, 0.0), LayeredSphere((0.5,), (TensISO{3}(5.0),)), Dict{Symbol, Any}())
+    @test_throws ArgumentError homogenize(layered, ClusterModel(), :K)
+    @test_throws ArgumentError homogenize(layered, EquivalentInclusion(), :K)
     # a dense system the machine cannot hold is refused before it is allocated
     check = MeanFieldHomogenization.Assemblies._check_system_size
     @test check(10, ComplexF64, 1, 2) === nothing
     @test_throws ArgumentError check(100_000, ComplexF64, 4000, 4; available = 2^30)
+end
+
+@testset "MEM conduction — concentration tensors" begin
+    M = Dict(:K => _MEM_K0)
+    rel(a, b) = norm(canonical_components(a) - canonical_components(b)) / norm(canonical_components(b))
+    Id = TensISO{3}(1.0)
+    # a finite assembly with a plain ball, a resisting sphere, a surface-conducting
+    # one and a ball of the matrix conductivity; and a periodic cell
+    finite = ParticleAssembly(; boundary = MixedBC(3.0))
+    add_matrix!(finite, M)
+    add_particle!(finite, :ball, _MEM_CENTERS[1], Ellipsoid(0.5), Dict(:K => TensISO{3}(8.0)))
+    add_particle!(
+        finite, :kapitza, _MEM_CENTERS[2],
+        LayeredSphere((0.35,), (TensISO{3}(6.0),); interfaces = (KapitzaInterface(0.3),)), Dict{Symbol, Any}()
+    )
+    add_particle!(
+        finite, :surface, _MEM_CENTERS[3],
+        LayeredSphere((0.3, 0.6), (TensISO{3}(0.2), TensISO{3}(4.0)); interfaces = (PerfectInterface{Float64}(), SurfaceConductiveInterface(0.7))),
+        Dict{Symbol, Any}()
+    )
+    add_particle!(finite, :silent, _MEM_CENTERS[4], Ellipsoid(0.4), Dict(:K => _MEM_K0))
+    periodic = ParticleAssembly(; boundary = PeriodicBox(1.0))
+    add_matrix!(periodic, M)
+    add_particle!(periodic, :a, [0.0, 0.0, 0.0], Ellipsoid(0.25), Dict(:K => TensISO{3}(12.0)))
+    add_particle!(periodic, :b, [0.4, 0.45, 0.5], Ellipsoid(0.2), Dict(:K => TensISO{3}(0.1)))
+    for asm in (finite, periodic)
+        scheme = MultipoleExpansion(; tmax = 4)
+        ct = concentration_tensors(asm, scheme, :K)
+        @test first(keys(ct)) === :matrix
+        @test rel(ct.effective, homogenize(asm, scheme, :K)) < 1.0e-13
+        # the averages over the phases are the macroscopic ones
+        @test rel(sum(ct.weights[n] * ct.strain[n] for n in keys(ct)), Id) < 1.0e-12
+        @test rel(sum(ct.weights[n] * ct.stress[n] for n in keys(ct)), ct.effective) < 1.0e-12
+        # the matrix, whose averages are what the particles leave, obeys its own
+        # law: the dipoles and the flux averages of the spheres are consistent
+        @test rel(ct.stress[:matrix], _MEM_K0 ⋅ ct.strain[:matrix]) < 1.0e-11
+    end
+    ct = concentration_tensors(finite, MultipoleExpansion(; tmax = 4), :K)
+    # a homogeneous ball obeys its law too, a silent one included
+    @test rel(ct.stress[:ball], TensISO{3}(8.0) ⋅ ct.strain[:ball]) < 1.0e-12
+    @test rel(ct.stress[:silent], ct.strain[:silent]) < 1.0e-12
+    @test !(canonical_components(ct.strain[:silent]) ≈ I(3))      # yet it feels its neighbors
+    @test haskey(ct.properties, :ball) && !haskey(ct.properties, :kapitza)
+    # one ball in a ball: the concentration of Mori-Tanaka
+    one_ball = ParticleAssembly(; boundary = MixedBC(2.0))
+    add_matrix!(one_ball, M)
+    add_particle!(one_ball, :p, (0.0, 0.0, 0.0), Ellipsoid(1.1), Dict(:K => TensISO{3}(10.0)))
+    f, a = (1.1 / 2.0)^3, 3 / (10.0 + 2)
+    @test rel(concentration_tensors(one_ball, MultipoleExpansion(), :K).strain[:p], TensISO{3}(a / (1 - f + f * a))) < 1.0e-12
+end
+
+@testset "MEM conduction — coefficients of the expansion" begin
+    # one ball: the dipole of the uniform gradient and nothing else
+    k₁, R = 10.0, 1.1
+    asm = ParticleAssembly(; boundary = MixedBC(2.0))
+    add_matrix!(asm, Dict(:K => _MEM_K0))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(R), Dict(:K => TensISO{3}(k₁)))
+    c = multipole_coefficients(asm; scheme = MultipoleExpansion(; tmax = 3))
+    b₁ = -(k₁ - 1) * R^3 / (k₁ + 2)
+    @test c[:p, 1, 0] ≈ [0, 0, b₁]                      # A₁₀ = b₁ G₃
+    @test c[:p, 1, 1] ≈ [b₁ / 2, -im * b₁ / 2, 0]       # A₁₁ = b₁ (G₁ − i G₂)/2
+    @test c[:p, 1, -1] ≈ [-b₁ / 2, -im * b₁ / 2, 0]
+    @test all(iszero, c[:p, 2, 1]) && all(iszero, c[:p, 3, -2])
+    @test c.names == [:p] && c.tmax == 3
+    @test sprint(show, c) == "MultipoleCoefficients(1 particles, tmax = 3)"
+    @test_throws KeyError c[:q, 1, 0]
+    @test_throws BoundsError c[:p, 4, 0]
+    @test_throws BoundsError c[:p, 1, 2]
+    # two perfectly conducting balls: the temperature rebuilt from the series
+    # is uniform on the surface of each, whatever the remote gradient
+    pair = ParticleAssembly(; boundary = MixedBC(3.0))
+    add_matrix!(pair, Dict(:K => _MEM_K0))
+    centers = Dict(:a => [0.0, 0.1, 1.0], :b => [0.2, 0.0, -1.0])
+    radii = Dict(:a => 0.6, :b => 0.5)
+    for n in (:a, :b)
+        add_particle!(pair, n, centers[n], Ellipsoid(radii[n]), Dict(:K => TensISO{3}(1.0e12)))
+    end
+    tmax = 12
+    cp = multipole_coefficients(pair; scheme = MultipoleExpansion(; tmax))
+    function temperature(x, i)
+        T = x[i]
+        for n in (:a, :b)
+            Y = irregular_harmonics(x - centers[n], tmax)
+            T += real(sum(cp[n, t, s][i] * Y[t, s] for t in 1:tmax for s in (-t):t))
+        end
+        return T
+    end
+    directions = ([0, 0, 1.0], [0, 0, -1.0], [1.0, 0, 0], [0, -1.0, 0], [0.6, 0, 0.8], [0, 0.8, -0.6])
+    for n in (:a, :b), i in 1:3
+        Ts = [temperature(centers[n] + radii[n] * d, i) for d in directions]
+        @test maximum(Ts) - minimum(Ts) < 1.0e-6
+    end
 end

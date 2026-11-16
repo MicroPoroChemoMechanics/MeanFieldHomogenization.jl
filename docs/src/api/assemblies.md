@@ -64,6 +64,8 @@ MultipoleExpansion
 eim_bound_type
 eim_polarizations
 cluster_concentrations
+multipole_coefficients
+MultipoleCoefficients
 ```
 
 ## Parameter lenses

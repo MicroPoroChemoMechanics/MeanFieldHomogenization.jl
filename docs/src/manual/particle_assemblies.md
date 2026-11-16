@@ -237,6 +237,23 @@ end
 The resistance is high enough here for the spheres, a hundred times more
 conducting than the matrix, to lower the conductivity of the array.
 
+### Fields of the particles
+
+[`concentration_tensors`](@ref) gives the mean gradient and the mean flux of
+every particle per unit macroscopic gradient, the matrix taking the rest of the
+two averages, and [`multipole_coefficients`](@ref) the coefficients of the
+series themselves, from which the field is rebuilt at any point of the matrix:
+
+```@example mem_manual
+ct = concentration_tensors(asm, MultipoleExpansion(; tmax = 5), :K)
+canonical_components(ct.strain[:p1])[1, 1], canonical_components(ct.strain[:matrix])[1, 1]
+```
+
+```@example mem_manual
+c = multipole_coefficients(asm; scheme = MultipoleExpansion(; tmax = 5))
+c[:p1, 1, 0]        # the dipole along e₃, under the three unit gradients
+```
+
 ## Interaction back-ends
 
 `interaction_tensor` selects a back-end automatically; pass `method` to override, and

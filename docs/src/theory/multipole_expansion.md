@@ -217,6 +217,13 @@ For one sphere, ``\boldsymbol{D} = b_1\,\boldsymbol{1}`` and
 relate ``\underline{G}`` to the average gradient, which depends on what
 surrounds the assembly.
 
+The same regular field gives the averages over each sphere. The harmonics of
+degree other than 1 have a zero mean gradient over a ball, so the mean gradient
+and the mean flux of sphere ``q`` are those of the sphere alone under the
+uniform gradient ``\underline{G}^{(q)}`` it receives, with
+``\underline{d}^{(q)} = b_1^{(q)}\,\underline{G}^{(q)}``:
+[`concentration_tensors`](@ref) returns them, layers and interfaces included.
+
 **Finite assembly.** Under [`MixedBC`](@ref), the spheres lie in a domain
 ``\Omega`` of volume ``V``, itself in the infinite matrix. Following
 [Maxwell](@ref th-scheme-maxwell), the domain filled with the effective medium

@@ -47,7 +47,15 @@ tensor `P_d` of the domain that holds the inclusions, at either tensor order.
 The sum may come from an `RVE` (one inclusion at a time) or from a resolved
 assembly, whose contributions account for the interactions.
 """
-_maxwell_closure(P₀, Σ, P_d) = P₀ + _compose(Σ, inv(one(P₀) - _compose(P_d, Σ)))
+_maxwell_closure(P₀, Σ, P_d) = P₀ + _compose(Σ, _maxwell_remote_field(P₀, Σ, P_d))
+
+"""
+    _maxwell_remote_field(P₀, Σ, P_d) -> AbstractTens
+
+Remote field of the inclusions per unit macroscopic one in Maxwell's scheme,
+``(\\mathbb{I} - \\mathbb{P}_{\\mathrm{d}} : \\boldsymbol{\\Sigma})^{-1}``.
+"""
+_maxwell_remote_field(P₀, Σ, P_d) = inv(one(P₀) - _compose(P_d, Σ))
 
 # Helpers — shared with PCW and SC.
 

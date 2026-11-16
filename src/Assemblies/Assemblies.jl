@@ -87,6 +87,7 @@ export cubic_lattice, random_assembly, max_packing_fraction
 
 # ── Scheme-specific queries ─────────────────────────────────────────────────
 export eim_bound_type, eim_polarizations, cluster_concentrations
+export multipole_coefficients, MultipoleCoefficients
 
 # ── Parameter lenses ────────────────────────────────────────────────────────
 export CenterParameter, RadiusParameter, center_param, radius_param

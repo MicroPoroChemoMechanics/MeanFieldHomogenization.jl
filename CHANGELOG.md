@@ -27,10 +27,16 @@
   sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.
   All accept `ForwardDiff` numbers, so an effective conductivity differentiates
   with respect to a position, a radius, a contrast or an interface parameter.
+- `concentration_tensors` under `MultipoleExpansion`, the mean gradient and
+  flux of every sphere following from the uniform part of the field it
+  receives, and `multipole_coefficients`, the coefficients of the series.
 - `box_periods(::PeriodicBox)`.
 
 ### Changed
 
+- `ClusterModel` and `EquivalentInclusion` refuse a `LayeredSphere` particle
+  with a message naming the scheme that takes it; they need a Hill tensor,
+  which a layered sphere does not have.
 - The closure of the Maxwell scheme is one function, shared by the `RVE` and by
   the finite assemblies of the multipole expansion. No value changes.
 

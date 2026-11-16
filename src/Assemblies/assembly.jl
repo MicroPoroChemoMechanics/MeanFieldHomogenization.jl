@@ -434,6 +434,21 @@ _bounding_radius(incl::MFH_Core.AbstractInclusion) = throw(
 
 MFH_Core.validate_cell(asm::ParticleAssembly) = validate_assembly(asm)
 
+# The two schemes built on one uniform polarization per inclusion need the Hill
+# tensor of each particle, which a layered sphere does not have.
+function MFH_Core.validate_cell(asm::ParticleAssembly, scheme::Union{ClusterModel, EquivalentInclusion})
+    validate_assembly(asm)
+    for nm in asm.particle_names
+        asm.particles[nm].geometry isa LayeredSpheres.LayeredSphere && throw(
+            ArgumentError(
+                "$(nameof(typeof(scheme))): particle :$(nm) is a LayeredSphere, which has no Hill " *
+                    "tensor; use MultipoleExpansion, which takes layered spheres and their interfaces"
+            )
+        )
+    end
+    return asm
+end
+
 MFH_Core.cell_member_names(asm::ParticleAssembly) =
     Symbol[asm.matrix_name; asm.particle_names...]
 

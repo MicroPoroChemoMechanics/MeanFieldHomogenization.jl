@@ -22,28 +22,32 @@
 #
 #       (t−s)! (t+s)! A_ts^(q) = ρ_t^(q) [ c_ts^(q) + Σ_{p≠q} … ] .
 #
-#  That is the linear system. Its unknowns are scaled as in kushch2013,
-#  Eq. (2.52), x_ts^(q) = N_ts A_ts^(q) / R_q^{t+1} with N_ts = √((t−s)!(t+s)!)
-#  and R_q the radius, and its rows by R_q^t / N_ts, which leaves
+#  That is the linear system. It is solved for the amplitudes each particle
+#  RECEIVES, ĉ_ts^(q) = c_ts^(q) + Σ_{p≠q} …, rather than for those it sends,
+#  A_ts = ρ_t ĉ_ts / [(t−s)!(t+s)!]: a particle without contrast (ρ = 0) then
+#  keeps a defined received field, which is what its mean gradient needs.
+#  The unknowns are scaled as in kushch2013, Eq. (2.52),
+#  e_ts^(q) = R_q^t ĉ_ts^(q) / N_ts with N_ts = √((t−s)!(t+s)!) and R_q the radius:
 #
-#       x_ts^(q) − ρ̂_t^(q) Σ_{p≠q} Σ_{k,l} W_{ts,kl}^{qp} x_kl^(p) = ρ̂_t^(q) R_q^t c_ts^(q) / N_ts ,
+#       e_ts^(q) − Σ_{p≠q} Σ_{k,l} W_{ts,kl}^{qp} ρ̂_k^(p) e_kl^(p) = R_q^t c_ts^(q) / N_ts ,
 #
 #       ρ̂_t = ρ_t / R^{2t+1} ,
 #       W_{ts,kl}^{qp} = (−1)^{t+s} R_q^t R_p^{k+1} Y_{k+t}^{l−s}(X_q − X_p) / (N_ts N_kl) ,
 #
-#  with entries of order one at every degree, and a particle without contrast
-#  (ρ̂ = 0) simply silent.
+#  with entries of order one at every degree.
 #
-#  EFFECTIVE PROPERTY.  Far from particle q its series reduces to the dipole
-#  d^(q)·x/r³, d^(q) = (A_11 − A_1,−1, i (A_11 + A_1,−1), A_10), and the average
-#  flux of a volume V holding the particles is −k₀ G + (4π k₀ / V) Σ_q d^(q)
-#  (kushch2013, Eq. (2.12)). Solving for the three unit gradients gives the
-#  tensor 𝐃 = Σ_q 𝐃^(q), d^(q) = 𝐃^(q)·G, hence the contribution per unit volume
+#  EFFECTIVE PROPERTY.  The degree 1 received by particle q is a uniform
+#  gradient G^(q) = 𝐄^(q)·G, with ĉ_10 = G₃^(q) and ĉ_11 = G₁^(q) − i G₂^(q), and
+#  the degree 1 it sends is the dipole d^(q)·x/r³ with d^(q) = ρ₁^(q) G^(q). The
+#  average flux of a volume V holding the particles is −k₀ G + (4π k₀ / V) Σ_q d^(q)
+#  (theory page, section 5), hence the contribution per unit volume
 #
-#       𝚺 = −(4π k₀ / V) 𝐃 ,
+#       𝚺 = −(4π k₀ / V) Σ_q ρ₁^(q) 𝐄^(q) ,
 #
 #  which a finite assembly closes by Maxwell's argument, `_maxwell_closure`,
-#  with the Hill tensor of its domain.
+#  with the Hill tensor of its domain. The mean gradient and the mean flux of
+#  particle q are those of the sphere alone under the uniform gradient G^(q):
+#  the harmonics of higher degree have a zero average over a ball.
 # =============================================================================
 
 # Position of the harmonic (t, s), t ≥ 1, among the unknowns of one particle.
@@ -76,15 +80,17 @@ function Schemes._evaluate(
         asm::ParticleAssembly, scheme::MultipoleExpansion, ::Val{p}; kw...
     ) where {p}
     P₀ = matrix_property(asm, p)
-    Σ = _mem_contribution(asm, P₀, p, _mem_tmax(scheme))
-    return _mem_closure(asm.boundary, P₀, Σ; kw...)
+    sol = _mem_solve(asm, P₀, p, _mem_tmax(scheme))
+    Σ = _mem_contribution(asm, P₀, sol)
+    return P₀ + Σ ⊙ _mem_remote_field(asm.boundary, P₀, Σ; kw...)
 end
 
-_mem_closure(b::MixedBC, P₀, Σ; kw...) =
-    Schemes._maxwell_closure(P₀, Σ, Elasticity.hill_tensor(b.shape, P₀; kw...))
-
-# A periodic assembly needs no closure: the average gradient is the remote one.
-_mem_closure(::PeriodicBox, P₀, Σ; kw...) = P₀ + Σ
+# Remote field per unit macroscopic one. A finite assembly is closed as in
+# Maxwell's scheme, with the Hill tensor of its domain; in a periodic one the
+# average gradient is the remote one.
+_mem_remote_field(b::MixedBC, P₀, Σ; kw...) =
+    Schemes._maxwell_remote_field(P₀, Σ, Elasticity.hill_tensor(b.shape, P₀; kw...))
+_mem_remote_field(::PeriodicBox, P₀, Σ; kw...) = one(P₀)
 
 # ─── The spheres of the assembly ─────────────────────────────────────────────
 
@@ -125,17 +131,27 @@ end
 # ─── Conduction ──────────────────────────────────────────────────────────────
 
 """
-    _mem_contribution(asm, K₀, prop, tmax) -> AbstractTens
+    MultipoleSolution
 
-Sum ``\\boldsymbol{\\Sigma}`` of the contributions of the particles per unit
-volume of the assembly, interactions included: the tensor such that the average
-flux is ``-(\\boldsymbol{K}_0 + \\boldsymbol{\\Sigma})\\cdot\\underline{G}`` under the
-remote gradient ``\\underline{G}``.
+Solution of the multipole expansion of an assembly in conduction: for each
+particle, in the order of `names`, the layered sphere it stands for (`spheres`),
+its radius (`radii`), its responses ``b_t/R^{2t+1}`` (`responses`, one row per
+particle), and the scaled amplitudes it receives under the three unit remote
+gradients (`received`, one column per gradient).
 """
-function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop::Symbol, tmax::Int)
-    k₀ = _mem_matrix_scalar(K₀)
+struct MultipoleSolution{T, C}
+    names::Vector{Symbol}
+    spheres::Vector{Any}
+    radii::Vector{T}
+    responses::Matrix{T}
+    received::Matrix{C}
+    tmax::Int
+end
+
+function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop::Symbol, tmax::Int)
+    _mem_matrix_scalar(K₀)
     names = particle_names(asm)
-    spheres = [_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]
+    spheres = Any[_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]
     # Particles differ in their number types (one radius or one center carrying
     # a derivative, the others not): each array is brought to its common type.
     R = _common_eltype([LayeredSpheres.outer_radius(s) for s in spheres])
@@ -145,17 +161,18 @@ function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3
     centers = [particle_center(asm, nm) for nm in names]
     TX = mapreduce(eltype, promote_type, centers)
     X = [SVector{3, TX}(c) for c in centers]
-    D = _mem_scalar_dipoles(R, ρ̂, X, asm.boundary, tmax)
-    return TensND.Tens((-4π * k₀ / assembly_volume(asm)) .* (D .+ transpose(D)) ./ 2)
+    T = float(promote_type(eltype(R), eltype(ρ̂), TX))
+    e = _mem_scalar_system(convert(Vector{T}, R), convert(Matrix{T}, ρ̂), X, asm.boundary, tmax)
+    return MultipoleSolution(copy(names), spheres, convert(Vector{T}, R), convert(Matrix{T}, ρ̂), e, tmax)
 end
 
 # An array of numbers of different types, in the type that holds them all.
 _common_eltype(v::AbstractArray) = convert(AbstractArray{mapreduce(typeof, promote_type, v)}, v)
 
 # Function barrier: radii, responses and centers arrive with their concrete
-# element types, whatever the particles were.
-function _mem_scalar_dipoles(R::Vector, ρ̂::Matrix, X::Vector, boundary, tmax::Int)
-    T = float(promote_type(eltype(R), eltype(ρ̂), eltype(eltype(X))))
+# element types, whatever the particles were. Returns the scaled amplitudes
+# received by every particle, one column per unit remote gradient.
+function _mem_scalar_system(R::Vector{T}, ρ̂::Matrix{T}, X::Vector, boundary, tmax::Int) where {T}
     N, n = length(R), _mem_block(tmax)
     _check_system_size(N * n, Complex{T}, N, tmax)
     M = zeros(Complex{T}, N * n, N * n)
@@ -163,57 +180,76 @@ function _mem_scalar_dipoles(R::Vector, ρ̂::Matrix, X::Vector, boundary, tmax:
     norms = [harmonic_norm(t, s) for t in 1:tmax for s in (-t):t]
     for q in 1:N
         oq = (q - 1) * n
-        for t in 1:tmax, s in (-t):t
-            M[oq + _mem_index(t, s), oq + _mem_index(t, s)] = one(T)
+        for i in 1:n
+            M[oq + i, oq + i] = one(T)
         end
-        _mem_remote_gradient!(B, oq, ρ̂[q, 1] * R[q])
+        _mem_remote_gradient!(B, oq, R[q])
         for p in 1:N
             Y = _mem_translation(boundary, X[q] - X[p], p == q, 2 * tmax)
             Y === nothing && continue
-            _mem_couple!(M, oq, (p - 1) * n, Y, R[q], R[p], view(ρ̂, q, :), norms, tmax)
-            _mem_background!(M, oq, (p - 1) * n, boundary, ρ̂[q, 1] * R[q] * R[p]^2)
+            _mem_couple!(M, oq, (p - 1) * n, Y, R[q], R[p], view(ρ̂, p, :), norms, tmax)
+            _mem_background!(M, oq, (p - 1) * n, boundary, ρ̂[p, 1] * R[q] * R[p]^2)
         end
     end
-    x = M \ B
-    D = zeros(T, 3, 3)
-    for q in 1:N
-        oq = (q - 1) * n
-        s = R[q]^2
-        for i in 1:3
-            a₀ = x[oq + _mem_index(1, 0), i] * s
-            a₊ = x[oq + _mem_index(1, 1), i] * s / sqrt(T(2))
-            a₋ = x[oq + _mem_index(1, -1), i] * s / sqrt(T(2))
-            D[1, i] += real(a₊ - a₋)
-            D[2, i] += real(im * (a₊ + a₋))
-            D[3, i] += real(a₀)
-        end
-    end
-    return D
+    return M \ B
+end
+
+"""
+    _mem_received_gradient(sol, q) -> Matrix
+
+Uniform gradient received by particle `q` per unit remote gradient: the tensor
+``\\boldsymbol{E}^{(q)}`` such that the degree-1 part of the regular field about
+its center is ``(\\boldsymbol{E}^{(q)}\\cdot\\underline{G})\\cdot\\underline{x}``.
+"""
+function _mem_received_gradient(sol::MultipoleSolution{T}, q::Int) where {T}
+    oq = (q - 1) * _mem_block(sol.tmax)
+    # ĉ₁ₛ = e₁ₛ N₁ₛ / R, with ĉ₁₀ = G₃ and ĉ₁₁ = G₁ − i G₂
+    c₀ = view(sol.received, oq + _mem_index(1, 0), :) ./ sol.radii[q]
+    c₁ = view(sol.received, oq + _mem_index(1, 1), :) .* (sqrt(T(2)) / sol.radii[q])
+    return permutedims(hcat(real.(c₁), -imag.(c₁), real.(c₀)))
+end
+
+"""
+    _mem_contribution(asm, K₀, sol) -> AbstractTens
+
+Sum ``\\boldsymbol{\\Sigma}`` of the contributions of the particles per unit
+volume of the assembly, interactions included: the tensor such that the average
+flux is ``-(\\boldsymbol{K}_0 + \\boldsymbol{\\Sigma})\\cdot\\underline{G}`` under the
+remote gradient ``\\underline{G}``.
+"""
+function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, sol::MultipoleSolution)
+    k₀ = _mem_matrix_scalar(K₀)
+    D = sum(
+        sol.responses[q, 1] * sol.radii[q]^3 * _mem_received_gradient(sol, q)
+            for q in eachindex(sol.names)
+    )
+    # symmetric by reciprocity; the rounding of the solve is taken off
+    return TensND.Tens((-4π * k₀ / assembly_volume(asm)) .* (D .+ transpose(D)) ./ 2)
 end
 
 # Right-hand side of the three unit gradients on the degree-1 rows of one
 # particle: G·x = G₃ y₁⁰ + (G₁ − iG₂) y₁¹ − (G₁ + iG₂) y₁⁻¹, scaled by
-# ρ̂₁ R / N₁ₛ with N₁₀ = 1 and N₁,±₁ = √2.
-function _mem_remote_gradient!(B::Matrix{Complex{T}}, oq::Int, ρR) where {T}
-    h = ρR / sqrt(T(2))
+# R / N₁ₛ with N₁₀ = 1 and N₁,±₁ = √2.
+function _mem_remote_gradient!(B::Matrix{Complex{T}}, oq::Int, R) where {T}
+    h = R / sqrt(T(2))
     B[oq + _mem_index(1, 1), 1] = h
     B[oq + _mem_index(1, -1), 1] = -h
     B[oq + _mem_index(1, 1), 2] = -im * h
     B[oq + _mem_index(1, -1), 2] = -im * h
-    B[oq + _mem_index(1, 0), 3] = ρR
+    B[oq + _mem_index(1, 0), 3] = R
     return B
 end
 
 # Block of the field particle p sends to particle q, from the table `Y` of the
-# decaying harmonics of the vector joining p to q.
-function _mem_couple!(M::Matrix, oq::Int, op::Int, Y, Rq, Rp, ρ̂q, norms, tmax::Int)
+# decaying harmonics of the vector joining p to q and the responses `ρ̂p` of p.
+function _mem_couple!(M::Matrix, oq::Int, op::Int, Y, Rq, Rp, ρ̂p, norms, tmax::Int)
     for t in 1:tmax, s in (-t):t
         i = _mem_index(t, s)
-        row = ρ̂q[t] * Rq^t / norms[i]
+        row = Rq^t / norms[i]
         isodd(t + s) && (row = -row)
         for k in 1:tmax, l in (-k):k
             j = _mem_index(k, l)
-            M[oq + i, op + j] -= row * Rp^(k + 1) * Y[k + t, l - s] / norms[j]
+            M[oq + i, op + j] -= row * ρ̂p[k] * Rp^(k + 1) * Y[k + t, l - s] / norms[j]
         end
     end
     return M
@@ -233,7 +269,7 @@ _mem_translation(b::PeriodicBox, r, self::Bool, tmax::Int) =
 # so a dipole of the lattice sends to every particle, on top of the degree-2
 # harmonics, the field −(4π/3V) × (its moment), the same in the three
 # directions. In the scaled unknowns it is one term on the three degree-1
-# entries of the block, `w` being ρ̂₁ R_q R_p².
+# entries of the block, `w` being ρ̂₁^(p) R_q R_p².
 _mem_background!(M, oq::Int, op::Int, ::MixedBC, w) = M
 function _mem_background!(M, oq::Int, op::Int, b::PeriodicBox, w)
     g = 4π / (3 * prod(box_periods(b)))
@@ -255,4 +291,97 @@ function _check_system_size(n::Int, ::Type{C}, N::Int, tmax::Int; available = Sy
         )
     )
     return nothing
+end
+
+# ─── Concentration tensors and coefficients ──────────────────────────────────
+
+function Schemes._concentration_tensors(
+        asm::ParticleAssembly, scheme::MultipoleExpansion, ::Val{p}; kw...
+    ) where {p}
+    P₀ = matrix_property(asm, p)
+    sol = _mem_solve(asm, P₀, p, _mem_tmax(scheme))
+    Σ = _mem_contribution(asm, P₀, sol)
+    𝔼 = _mem_remote_field(asm.boundary, P₀, Σ; kw...)
+    P_hom = P₀ + Σ ⊙ 𝔼
+    names = sol.names
+    weights = Dict(n => particle_volume_fraction(asm, n) for n in names)
+    strain = Dict{Symbol, TensND.AbstractTens}()
+    stress = Dict{Symbol, TensND.AbstractTens}()
+    properties = Dict{Symbol, TensND.AbstractTens}()
+    for (q, n) in enumerate(names)
+        # the sphere alone, under the uniform gradient it receives
+        A, B = MFH_Core.concentration_and_flux_average(sol.spheres[q], P₀, P₀)
+        received = TensND.Tens(_mem_received_gradient(sol, q)) ⊙ 𝔼
+        strain[n] = A ⊙ received
+        stress[n] = B ⊙ received
+        _mem_declared_property!(properties, asm, n, p)
+    end
+    return _with_assembly_matrix(asm, P₀, P_hom, names, strain, stress, weights, properties)
+end
+
+# The property a homogeneous particle declares; a layered sphere has no single one.
+function _mem_declared_property!(properties, asm::ParticleAssembly, name::Symbol, prop::Symbol)
+    haskey(asm.particles[name].properties, prop) &&
+        (properties[name] = particle_property(asm, name, prop))
+    return properties
+end
+
+"""
+    MultipoleCoefficients
+
+Coefficients of the series of decaying harmonics of every particle of an
+assembly, as [`multipole_coefficients`](@ref) returns them. `c[name, t, s]` is
+the coefficient ``A_{ts}`` of ``Y_t^s(\\underline{x} - \\underline{X})`` for the
+particle `name`, as three values: one per unit remote gradient
+``\\underline{e}_1``, ``\\underline{e}_2``, ``\\underline{e}_3``. `c.names` lists
+the particles and `c.tmax` is the truncation degree.
+"""
+struct MultipoleCoefficients{C <: Complex}
+    names::Vector{Symbol}
+    tmax::Int
+    values::Vector{Matrix{C}}
+end
+
+function Base.getindex(c::MultipoleCoefficients, name::Symbol, t::Integer, s::Integer)
+    q = findfirst(==(name), c.names)
+    q === nothing && throw(KeyError(name))
+    1 ≤ t ≤ c.tmax && abs(s) ≤ t || throw(BoundsError(c, (name, t, s)))
+    return c.values[q][_mem_index(t, s), :]
+end
+
+Base.show(io::IO, c::MultipoleCoefficients) =
+    print(io, "MultipoleCoefficients(", length(c.names), " particles, tmax = ", c.tmax, ")")
+
+"""
+    multipole_coefficients(asm, prop = :K; scheme = MultipoleExpansion()) -> MultipoleCoefficients
+
+Coefficients of the multipole expansion of every particle of `asm`
+([`MultipoleExpansion`](@ref)): in the matrix, under the remote gradient
+``\\underline{G}``, the field is
+
+```math
+T(\\underline{x}) = \\underline{G}\\cdot\\underline{x}
+  + \\sum_p \\sum_{t \\ge 1} \\sum_{|s| \\le t} A_{ts}^{(p)}\\,Y_t^s(\\underline{x} - \\underline{X}_p) ,
+```
+
+with ``Y_t^s`` the decaying solid harmonics of [`irregular_harmonics`](@ref)
+(their sums over the images in a periodic assembly, [`lattice_harmonics`](@ref)).
+The result is indexed as `c[name, t, s]`.
+"""
+function multipole_coefficients(
+        asm::ParticleAssembly, prop::Symbol = :K;
+        scheme::MultipoleExpansion = MultipoleExpansion()
+    )
+    MFH_Core.validate_cell(asm, scheme)
+    sol = _mem_solve(asm, matrix_property(asm, prop), prop, _mem_tmax(scheme))
+    n = _mem_block(sol.tmax)
+    # A_ts = ρ̂_t R^(t+1) e_ts / N_ts
+    scale(q) = [
+        sol.responses[q, t] * sol.radii[q]^(t + 1) / harmonic_norm(t, s)
+            for t in 1:sol.tmax for s in (-t):t
+    ]
+    values = [
+        scale(q) .* sol.received[((q - 1) * n + 1):(q * n), :] for q in eachindex(sol.names)
+    ]
+    return MultipoleCoefficients(sol.names, sol.tmax, values)
 end

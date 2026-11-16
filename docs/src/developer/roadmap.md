@@ -160,8 +160,8 @@ certify the field that produces them. So:
 matrix ([theory](@ref th-mem)). What the works of Kushch contain beyond that,
 in the order in which it is to be added:
 
-- **Concentration tensors and local fields** of each sphere, from the regular
-  field it receives.
+- **Local fields** at a point of a sphere, from the regular field it receives,
+  and the parameter lens of a radius for a layered sphere.
 - **Elasticity of spheres**: the three families of vector solutions of the Lamé
   equation at any degree, their translation, the spring and membrane interfaces
   [kushch2013](@cite). The transfer matrices of the layered sphere are to be

@@ -371,6 +371,7 @@ export particle_volume, particle_volume_fraction, inclusion_volume_fraction
 export assembly_volume, validate_assembly
 export cubic_lattice, random_assembly, max_packing_fraction
 export eim_bound_type, eim_polarizations, cluster_concentrations
+export multipole_coefficients, MultipoleCoefficients
 export CenterParameter, RadiusParameter, center_param, radius_param
 
 # ── Schemes : scheme types + entry point ─────────────────────────────────────
