@@ -65,6 +65,10 @@ every page and in every docstring:
 
 ## Operators
 
+The differential operators are written by their names. The symbol nabla is kept
+for the rare places where the gradient is handled as an algebraic object, a
+polynomial of the three partial derivatives for instance.
+
 | Operator | Meaning |
 | :------- | :------ |
 | ``\underline{u}\cdot\underline{v}``, ``\boldsymbol{A}\cdot\underline{u}`` | simple contraction (one index) |
@@ -73,6 +77,11 @@ every page and in every docstring:
 | ``\underline{u}\stackrel{s}{\otimes}\boldsymbol{A}\stackrel{s}{\otimes}\underline{u}`` | symmetrized tensor product (order 4, both symmetries) |
 | ``\boldsymbol{A}\stackrel{s}{\boxtimes}\boldsymbol{B}`` | symmetrized box product |
 | ``\boldsymbol{A}^{\!T}`` | transpose |
+| ``\underline{\operatorname{grad}}\,T`` | gradient of a scalar field (a vector) |
+| ``\operatorname{\mathbf{grad}}\,\underline{u}``, ``\operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline{u}`` | gradient of a vector field (a second-order tensor), and its symmetric part |
+| ``\operatorname{div}\,\underline{q}``, ``\underline{\operatorname{div}}\,\boldsymbol{\sigma}`` | divergence of a vector field (a scalar) and of a second-order tensor field (a vector) |
+| ``\underline{\operatorname{curl}}\,\underline{u}`` | curl of a vector field |
+| ``\Delta T`` | Laplacian; ``\operatorname{div}_S``, ``\underline{\operatorname{grad}}_S``, ``\Delta_S`` on a surface |
 | ``[\![\,\underline{u}\,]\!]`` | jump across an interface, ``\underline{u}^+-\underline{u}^-`` |
 | ``\langle\,\cdot\,\rangle_\Omega`` | volume average over ``\Omega`` |
 | ``\mathrm{d}S_\xi`` | surface element in the ``\underline{\xi}`` parametrization |

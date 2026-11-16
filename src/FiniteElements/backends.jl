@@ -440,7 +440,7 @@ Stiffness over the whole dof numbering, over the matrix region:
 Conduction, with `material` a ``3\\times 3`` matrix:
 
 ```math
-K = \\int \\nabla v\\cdot\\boldsymbol{K}\\cdot\\nabla u\\,\\mathrm{d}\\Omega
+K = \\int \\underline{\\operatorname{grad}}\\,v\\cdot\\boldsymbol{K}\\cdot\\underline{\\operatorname{grad}}\\,u\\,\\mathrm{d}\\Omega
 ```
 
 Elasticity, with `material` a `SymmetricTensor{4,3}`:
@@ -460,7 +460,7 @@ fe_cell_stiffness(b::FEBackend, space, material) =
 """
     fe_cell_mean_gradient(backend, space, u, V) -> NTuple{3}
 
-``\\langle \\nabla T \\rangle`` over the **inclusion**, as the surface integral
+``\\langle \\underline{\\operatorname{grad}}\\,T \\rangle`` over the **inclusion**, as the surface integral
 ``\\frac{1}{V}\\int_{\\partial\\mathcal I} T\\,\\underline n\\,\\mathrm dS``,
 with `V` the volume of the inclusion.
 

@@ -191,7 +191,7 @@ T(\\underline{x}) = \\frac{\\partial G}{\\partial x_k}(\\underline{x})\\, M_k
 
 `M` has the dimension of a flux times a volume: an inclusion of volume
 ``V_{\\mathcal{I}}`` carrying a uniform polarization ``\\underline{\\pi}`` (that is,
-``\\underline{q} = -\\boldsymbol{K}_0\\cdot\\nabla T + \\underline{\\pi}`` inside
+``\\underline{q} = -\\boldsymbol{K}_0\\cdot\\underline{\\operatorname{grad}}\\,T + \\underline{\\pi}`` inside
 it) radiates with ``\\underline{M} = V_{\\mathcal{I}}\\,\\underline{\\pi}``.
 
 **On the sign.** It is the one that follows from the two definitions above, and

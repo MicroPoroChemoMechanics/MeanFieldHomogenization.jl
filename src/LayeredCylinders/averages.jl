@@ -24,7 +24,7 @@ layer_gradient_average(cyl::LayeredCylinder, P₀::_Order, X∞, layer::Int) =
 
 Average over the material of layer `layer` of the stress
 ``\\mathbb C_k:\\boldsymbol\\varepsilon`` under the remote strain `X∞`, or of
-``\\boldsymbol k_k\\cdot\\nabla T`` under the remote gradient `X∞`.
+``\\boldsymbol k_k\\cdot\\underline{\\operatorname{grad}}\\,T`` under the remote gradient `X∞`.
 """
 layer_flux_average(cyl::LayeredCylinder, P₀::_Order, X∞, layer::Int) =
     _apply(flux_gradient_concentration(cyl, P₀; layer), X∞)
@@ -51,7 +51,7 @@ end
     cylinder_flux_average(cyl, P₀, X∞)
 
 Average over the material of the whole cylinder of the stress under the remote
-strain `X∞`, or of ``\\boldsymbol k\\cdot\\nabla T`` under the remote gradient `X∞`:
+strain `X∞`, or of ``\\boldsymbol k\\cdot\\underline{\\operatorname{grad}}\\,T`` under the remote gradient `X∞`:
 ``\\sum_k f_k\\,\\langle\\cdot\\rangle_k``, without the surface stress (or flux) of the
 membranes (or conducting surfaces), which
 [`flux_gradient_concentration`](@ref)`(cyl, P₁, P₀)` includes. Name in

@@ -162,7 +162,7 @@ end
 
 Per-layer gradient concentrations of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) in an isotropic
 aging reference: the ``n\\times n`` Volterra matrices ``\\alpha_k`` with
-``\\langle\\nabla T\\rangle_k = \\alpha_k\\circ\\nabla T^{\\infty}``, averaged over the material of
+``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_k = \\alpha_k\\circ\\underline{\\operatorname{grad}}\\,T^{\\infty}``, averaged over the material of
 layer ``k`` (the conduction twin of [`bulk_concentration_alv`](@ref)). For a
 non-aging problem they are the elastic ones of
 [`gradient_gradient_concentration`](@ref) at every time step.

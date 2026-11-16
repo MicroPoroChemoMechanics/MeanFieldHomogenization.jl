@@ -134,8 +134,8 @@ get_array(homogenize(rve, MoriTanaka(), :K))
 # ```
 # where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 # volume-averaged gradient and flux concentration tensors of the particle,
-# ``\langle\nabla T\rangle_\Omega = \boldsymbol{A}_\Omega\cdot\underline{H}`` and
-# ``\langle\boldsymbol{K}\cdot\nabla T\rangle_\Omega =
+# ``\langle\underline{\operatorname{grad}}\,T\rangle_\Omega = \boldsymbol{A}_\Omega\cdot\underline{H}`` and
+# ``\langle\boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T\rangle_\Omega =
 # \boldsymbol{B}_\Omega\cdot\underline{H}``. We compute the effective
 # conductivity **both ways** and check that the curves coincide.
 

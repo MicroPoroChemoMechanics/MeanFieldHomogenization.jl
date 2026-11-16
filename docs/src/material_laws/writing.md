@@ -168,7 +168,7 @@ are ``\partial\boldsymbol\sigma/\partial\boldsymbol\varepsilon``,
 ``\partial\boldsymbol\sigma/\partial p``, ``\partial\phi/\partial\boldsymbol\varepsilon``
 and ``\partial\phi/\partial p``. A thermo-hydro-mechanical law adds the
 temperature and the entropy the same way, `gradients = (ε = 6, p = 1, T = 1)`;
-a field of another size, a temperature gradient ``\nabla T`` of size 3 with the
+a field of another size, a temperature gradient ``\underline{\operatorname{grad}}\,T`` of size 3 with the
 heat flux, is declared by its size too. The residual approach takes the same
 `gradients` and `flux_names`, with `fluxes = (g, y, p) -> (σ = …, φ = …)` in
 place of `stress`.

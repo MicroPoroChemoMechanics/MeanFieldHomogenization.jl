@@ -65,7 +65,7 @@ end
 
 Whole-inclusion **gradient concentration tensor**
 ``\\boldsymbol{A}_\\Omega = \\alpha_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\alpha_a\\,\\underline{n}\\otimes\\underline{n}`` (``\\underline{n}`` the spheroid's axis), such that
-``\\langle\\nabla T\\rangle_\\Omega = \\boldsymbol{A}_\\Omega\\cdot\\nabla T^{\\infty}``. `K₁` is ignored (see the module docstring).
+``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = \\boldsymbol{A}_\\Omega\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``. `K₁` is ignored (see the module docstring).
 """
 function gradient_gradient_concentration(
         s::LayeredSpheroid{T, N},
@@ -83,7 +83,7 @@ end
 
 Whole-inclusion **average flux** per unit remote gradient,
 ``\\boldsymbol{B}_\\Omega = k_0\\,\\bigl(\\beta_t\\,(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n}) + \\beta_a\\,\\underline{n}\\otimes\\underline{n}\\bigr)``,
-``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega = \\boldsymbol{B}_\\Omega\\cdot\\nabla T^{\\infty}``, `K₁` ignored.
+``\\langle\\boldsymbol{K}\\cdot\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = \\boldsymbol{B}_\\Omega\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``, `K₁` ignored.
 
 Consistency: `property_contribution = flux_gradient_concentration - K₀ ⋅
 gradient_gradient_concentration`, verified in the test suite
@@ -106,7 +106,7 @@ end
 
 Size-independent **conductivity contribution tensor**
 ``\\boldsymbol{N}_K = \\boldsymbol{B}_\\Omega - \\boldsymbol{K}_0\\cdot\\boldsymbol{A}_\\Omega``, i.e.
-``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega - \\boldsymbol{K}_0\\cdot\\langle\\nabla T\\rangle_\\Omega`` per unit remote
+``\\langle\\boldsymbol{K}\\cdot\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega - \\boldsymbol{K}_0\\cdot\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega`` per unit remote
 gradient, assembled from the whole-inclusion
 average (the spheroid is heterogeneous, so ``(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)\\cdot\\boldsymbol{A}`` does not
 apply). `K₁` is ignored (see [`gradient_gradient_concentration`](@ref)).

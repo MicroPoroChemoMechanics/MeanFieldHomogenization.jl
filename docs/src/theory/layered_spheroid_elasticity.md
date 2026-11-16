@@ -54,20 +54,20 @@ into ``\underline\varphi = (\varphi_1,\varphi_2,\varphi_3)`` and writing
 ``\Phi = \varphi_0 + \underline x\cdot\underline\varphi``:
 
 ```math
-2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi .
+2\mu\,\underline u = \underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\underline\varphi .
 ```
 
 **The stress follows in closed form, and this is what makes the three elementary
 problems share one implementation.** Each ``\varphi_i`` being harmonic,
-``\nabla^2\Phi = 2\operatorname{div}\underline\varphi``, so the trace collapses
+``\Delta\Phi = 2\operatorname{div}\,\underline\varphi``, so the trace collapses
 and
 
 ```math
 \operatorname{tr}\boldsymbol\varepsilon
-   = -\frac{1-2\nu}{\mu}\operatorname{div}\underline\varphi,
+   = -\frac{1-2\nu}{\mu}\operatorname{div}\,\underline\varphi,
 \qquad
-\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\underline\varphi)\,\boldsymbol 1
- + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}(\nabla\underline\varphi).\;}
+\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\,\underline\varphi)\,\boldsymbol 1
+ + \operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\operatorname{sym}(\operatorname{\mathbf{grad}}\,\underline\varphi).\;}
 ```
 
 Nothing in either statement refers to a particular case. Checked for four
@@ -193,7 +193,7 @@ u_q &= \frac{\bar q}{2\mu\,c\,w}\Big[\partial_q\varphi_0
 ```
 
 The ``c`` in the denominator is the Lamé coefficient's — ``\chi_p = c\,w/\bar p``,
-so ``(\nabla f)_p = (\bar p / c\,w)\,\partial_p f``. Dropping it costs a factor
+so ``(\underline{\operatorname{grad}}\,f)_p = (\bar p / c\,w)\,\partial_p f``. Dropping it costs a factor
 ``c`` that no dimensional argument would catch, since the two terms in the
 bracket stay mutually consistent either way.
 
@@ -246,27 +246,27 @@ at_point.([uc[2] - u_p_ref, uc[3] - u_q_ref])
 
 Written out in the chart, ``\sigma_{qq}`` runs to ten lines. The structure
 behind it is one. Because ``\varphi_3`` is harmonic,
-``\nabla^2\Phi = 2\,\partial_z\varphi_3``, so the trace collapses:
+``\Delta\Phi = 2\,\partial_z\varphi_3``, so the trace collapses:
 
 ```math
 \begin{gathered}
 \operatorname{tr}\boldsymbol\varepsilon = -\frac{1-2\nu}{\mu}\,\partial_z\varphi_3,
 \\
 \boxed{\;\boldsymbol\sigma = -2\nu\,(\partial_z\varphi_3)\,\boldsymbol 1
- + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\nabla\varphi_3\right).\;}
+ + \operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\underline{\operatorname{grad}}\,\varphi_3\right).\;}
 \end{gathered}
 ```
 
 Every spheroidal component is a projection of that single equation:
 
 ```math
-\sigma_{qq} = -2\nu\,\partial_z\varphi_3 + (\nabla\nabla\Phi)_{qq}
-              - 4(1-\nu)\,(\underline e_3\!\cdot\!\underline e_q)(\nabla\varphi_3)_q,
+\sigma_{qq} = -2\nu\,\partial_z\varphi_3 + (\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi)_{qq}
+              - 4(1-\nu)\,(\underline e_3\!\cdot\!\underline e_q)(\underline{\operatorname{grad}}\,\varphi_3)_q,
 ```
 ```math
-\sigma_{pq} = (\nabla\nabla\Phi)_{pq}
-   - 2(1-\nu)\Big[(\underline e_3\!\cdot\!\underline e_p)(\nabla\varphi_3)_q
-                + (\underline e_3\!\cdot\!\underline e_q)(\nabla\varphi_3)_p\Big],
+\sigma_{pq} = (\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi)_{pq}
+   - 2(1-\nu)\Big[(\underline e_3\!\cdot\!\underline e_p)(\underline{\operatorname{grad}}\,\varphi_3)_q
+                + (\underline e_3\!\cdot\!\underline e_q)(\underline{\operatorname{grad}}\,\varphi_3)_p\Big],
 ```
 
 with the three geometric factors
@@ -388,16 +388,16 @@ quoted — the expression is *linear* in the derivatives of ``F``, so each
 coefficient is unambiguous:
 
 ```math
-(\nabla F)_p = \frac{\bar p\,F_{,p}}{c\,w},\qquad
-(\nabla F)_q = \frac{\bar q\,F_{,q}}{c\,w},\qquad
-(\nabla\nabla F)_{\varphi\varphi} = \frac{q F_{,q} - p F_{,p}}{c^2 w^2},
+(\underline{\operatorname{grad}}\,F)_p = \frac{\bar p\,F_{,p}}{c\,w},\qquad
+(\underline{\operatorname{grad}}\,F)_q = \frac{\bar q\,F_{,q}}{c\,w},\qquad
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{\varphi\varphi} = \frac{q F_{,q} - p F_{,p}}{c^2 w^2},
 ```
 ```math
 \begin{aligned}
-(\nabla\nabla F)_{qq} &= \frac{\bar q^2 F_{,qq}}{c^2 w^2}
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{qq} &= \frac{\bar q^2 F_{,qq}}{c^2 w^2}
    + \frac{\bar p^2\,(q F_{,q} - p F_{,p})}{c^2 w^4},
 \\
-(\nabla\nabla F)_{pq} &= \frac{\bar p\,\bar q}{c^2}
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{pq} &= \frac{\bar p\,\bar q}{c^2}
    \left[\frac{F_{,pq}}{w^2} + \frac{p F_{,q} - q F_{,p}}{w^4}\right].
 \end{aligned}
 ```
@@ -422,7 +422,7 @@ T_p = w^2 \Phi_{,pq} + p\Phi_{,q} - q\Phi_{,p}
       - 2(1-\nu)\,c\,w^2\big(q\varphi_{3,q} + p\varphi_{3,p}\big).
 ```
 
-Both hold for harmonic potentials; ``T_q`` uses ``\nabla^2\Phi = 2\partial_z\varphi_3``
+Both hold for harmonic potentials; ``T_q`` uses ``\Delta\Phi = 2\partial_z\varphi_3``
 and would be false without it.
 
 **The conditions themselves.** A confocal interface shares its geometry, so
@@ -553,18 +553,18 @@ left out of it; with the right ``\varphi_0`` added, it moves nothing at all.
 Papkovich–Neuber is redundant in a precise way: for **any** harmonic ``\zeta``,
 
 ```math
-\underline\varphi = \nabla\zeta,\qquad
-\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\nabla\zeta
+\underline\varphi = \underline{\operatorname{grad}}\,\zeta,\qquad
+\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\underline{\operatorname{grad}}\,\zeta
 \quad\Longrightarrow\quad
 \Phi = \varphi_0 + \underline x\cdot\underline\varphi = 4(1-\nu)\,\zeta,
 \qquad
-2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
+2\mu\,\underline u = \underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
 ```
 
-The four potentials are harmonic, as they must be: ``\nabla\zeta`` is, and
-``\Delta(\underline x\cdot\nabla\zeta) = 2\,\Delta\zeta + \underline x\cdot\nabla\Delta\zeta = 0``.
+The four potentials are harmonic, as they must be: ``\underline{\operatorname{grad}}\,\zeta`` is, and
+``\Delta(\underline x\cdot\underline{\operatorname{grad}}\,\zeta) = 2\,\Delta\zeta + \underline x\cdot\underline{\operatorname{grad}}\,\Delta\zeta = 0``.
 
-The families of a case admit such a ``\zeta`` only when ``\nabla\zeta`` has no
+The families of a case admit such a ``\zeta`` only when ``\underline{\operatorname{grad}}\,\zeta`` has no
 component outside the active potentials and their degrees:
 
 - **case I** keeps ``\varphi_3`` alone, so ``\zeta`` depends on ``z`` only, and a

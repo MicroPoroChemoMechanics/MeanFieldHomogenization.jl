@@ -104,7 +104,7 @@ property_contribution_alv(
 Volterra block matrix of the average flux of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per unit
 remote gradient history, against the isotropic aging reference `ref`: in
 elasticity the average stress per unit remote strain, in conduction the average
-of ``k\\,\\nabla T`` per unit remote gradient. Without `layer`, the whole sphere,
+of ``k\\,\\underline{\\operatorname{grad}}\\,T`` per unit remote gradient. Without `layer`, the whole sphere,
 ``\\sum_k f_k\\,\\widetilde{\\mathbb C}_k\\circ\\widetilde{\\mathbb A}_k`` plus the surface stress
 (flux) of its membranes (conducting surfaces), that of the outer one when
 `external`: [`property_contribution_alv`](@ref) is this operator minus

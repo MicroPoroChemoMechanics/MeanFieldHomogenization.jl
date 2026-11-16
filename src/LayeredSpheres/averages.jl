@@ -202,16 +202,16 @@ end
 """
     layer_gradient_average(sphere, K₀, ∇T∞, layer) -> Vec{3}
 
-Volume-averaged temperature gradient ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}`` inside the
+Volume-averaged temperature gradient ``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_k = \\alpha_k\\,\\underline{\\operatorname{grad}}\\,T^{\\infty}`` inside the
 `layer`-th layer of a `LayeredSphere` in an isotropic matrix `K₀`.
 
 The conduction method.  The average is a scalar
 multiple of the remote gradient, and that scalar is **constant inside a
-layer**: with ``\\nabla T = [f'\\,\\underline{n}\\otimes\\underline{n} + (f/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})]\\cdot\\nabla T^{\\infty}`` and ``f = \\tilde A r + \\tilde B/r^2``, the
+layer**: with ``\\underline{\\operatorname{grad}}\\,T = [f'\\,\\underline{n}\\otimes\\underline{n} + (f/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})]\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` and ``f = \\tilde A r + \\tilde B/r^2``, the
 directional averages ``\\langle\\underline{n}\\otimes\\underline{n}\\rangle = \\boldsymbol{1}/3`` give
 
 ```math
-\\langle\\nabla T\\rangle_{\\mathrm{dir}} = \\Big[\\frac{f'}{3} + \\frac{2}{3}\\,\\frac{f}{r}\\Big]\\nabla T^{\\infty} = \\tilde A\\,\\nabla T^{\\infty},
+\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_{\\mathrm{dir}} = \\Big[\\frac{f'}{3} + \\frac{2}{3}\\,\\frac{f}{r}\\Big]\\underline{\\operatorname{grad}}\\,T^{\\infty} = \\tilde A\\,\\underline{\\operatorname{grad}}\\,T^{\\infty},
 ```
 
 the ``\\tilde B/r^3`` terms of ``f'`` and ``f/r`` canceling exactly.  The decaying ``1/r^2``
@@ -234,7 +234,7 @@ end
     sphere_gradient_average(sphere, K₀, ∇T∞) -> Vec{3}
 
 Volume-averaged temperature gradient over the whole composite sphere,
-``\\langle\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``.
+``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = \\big(\\sum_k f_k\\,\\alpha_k\\big)\\,\\underline{\\operatorname{grad}}\\,T^{\\infty}``.
 
 As in elasticity, an average over the material: the
 temperature jump across a [`KapitzaInterface`](@ref) is left out, and
@@ -255,7 +255,7 @@ end
 """
     layer_flux_average(sphere, K₀, ∇T∞, layer) -> Vec{3}
 
-Volume-averaged flux ``\\langle\\underline{q}\\rangle_k = -k_k\\,\\langle\\nabla T\\rangle_k`` inside the `layer`-th
+Volume-averaged flux ``\\langle\\underline{q}\\rangle_k = -k_k\\,\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_k`` inside the `layer`-th
 layer, with the Fourier / Fick sign convention.
 """
 function layer_flux_average(

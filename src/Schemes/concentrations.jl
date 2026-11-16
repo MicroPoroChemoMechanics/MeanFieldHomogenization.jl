@@ -485,7 +485,7 @@ _from_flat(M::AbstractMatrix, ::TensND.AbstractTens{2, 3}) = TensND.TensCanonica
 
 Gradient concentration tensor ``\\mathbb{A}_r`` of phase `name` under the scheme
 of `ct`: ``\\langle\\boldsymbol{\\varepsilon}\\rangle_r = \\mathbb{A}_r:\\boldsymbol{E}`` in elasticity,
-``\\langle\\nabla T\\rangle_r = \\boldsymbol{A}_r\\cdot\\nabla T`` in conduction. Per unit density for a crack
+``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_r = \\boldsymbol{A}_r\\cdot\\underline{\\operatorname{grad}}\\,T`` in conduction. Per unit density for a crack
 family.
 """
 MFH_Core.gradient_gradient_concentration(ct::ConcentrationTensors, name::Symbol) = _strain(ct, name)
@@ -629,7 +629,7 @@ In elasticity the eigengradients are eigenstrains (free strains)
 ``\\mathbb{B}_r`` being the flux (stress) concentration tensor of the phase
 ([`flux_flux_concentration`](@ref)). In conduction they are vectors
 ``\\underline{g}^\\ast_r``, the gradients at which the phases conduct no flux,
-``\\underline{q} = -\\boldsymbol{K}_r\\cdot(\\nabla T - \\underline{g}^\\ast_r)``, and the composite obeys
+``\\underline{q} = -\\boldsymbol{K}_r\\cdot(\\underline{\\operatorname{grad}}\\,T - \\underline{g}^\\ast_r)``, and the composite obeys
 ``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot(\\underline{G} - \\underline{G}^\\ast)`` with
 ``\\underline{G}^\\ast = \\sum_r f_r\\,\\underline{g}^\\ast_r\\cdot\\boldsymbol{B}_r``.
 
@@ -660,7 +660,7 @@ In elasticity the pre-fluxes are prestresses ``\\boldsymbol{\\sigma}^\\ast_r``: 
 ```
 
 ``\\mathbb{A}_r`` being the gradient (strain) concentration tensor of the phase. In
-conduction, ``\\underline{q} = -\\boldsymbol{K}_r\\cdot\\nabla T + \\underline{q}^\\ast_r`` gives
+conduction, ``\\underline{q} = -\\boldsymbol{K}_r\\cdot\\underline{\\operatorname{grad}}\\,T + \\underline{q}^\\ast_r`` gives
 ``\\underline{Q} = -\\boldsymbol{K}^{\\mathrm{hom}}\\cdot\\underline{G} + \\underline{Q}^\\ast`` with
 ``\\underline{Q}^\\ast = \\sum_r f_r\\,\\underline{q}^\\ast_r\\cdot\\boldsymbol{A}_r``.
 

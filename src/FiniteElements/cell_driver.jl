@@ -92,7 +92,7 @@ The gradient concentration tensor of the cavity, corrected and uncorrected, as a
 ``3\\times 3`` in the cell's frame.
 
 Six solves on one factorization: three with the remote gradient
-``\\nabla T = \\underline e_i`` and three with a unit-moment dipole. `sign`
+``\\underline{\\operatorname{grad}}\\,T = \\underline e_i`` and three with a unit-moment dipole. `sign`
 selects the sign of the polarization factor and exists so that a test can flip
 it and watch the factor of two appear.
 """

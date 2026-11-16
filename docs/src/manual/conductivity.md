@@ -25,7 +25,7 @@ hill_tensor(Ellipsoid(1.0), K₀)       # order-2 Hill tensor 𝐏
 !!! note "The stress analog is minus the flux"
     Fourier's and Fick's laws carry a minus sign that Hooke's does not, so the
     package takes ``\boldsymbol{\sigma} \equiv -\underline{q} =
-    \boldsymbol{K}\cdot\nabla T`` as the stress analog: on a surface of
+    \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T`` as the stress analog: on a surface of
     normal ``\underline{n}``, ``\boldsymbol{\sigma}\cdot\underline{n}`` is then
     in *both* theories what the exterior transmits to the interior. That is why
     one implementation serves both physics with no sign anywhere, and why the

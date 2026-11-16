@@ -217,7 +217,7 @@ direction of the flux,
 [\\![T]\\!] = T^+ - T^- = -\\rho\\,q_n,
 ```
 
-with ``\\underline{q} = -k\\,\\nabla T`` the flux and ``q_n = \\underline{q}\\cdot\\underline{n}``, the normal pointing from the
+with ``\\underline{q} = -k\\,\\underline{\\operatorname{grad}}\\,T`` the flux and ``q_n = \\underline{q}\\cdot\\underline{n}``, the normal pointing from the
 inner side ``-`` to the outer side ``+``. Primal analog of [`SpringInterface`](@ref):
 in the dictionary ``\\boldsymbol\\sigma \\equiv -\\underline{q}`` it reads ``[\\![T]\\!] = \\rho\\,\\sigma_n``, as
 ``[\\![u_n]\\!] = s_n\\,\\sigma_{nn}``.

@@ -189,7 +189,7 @@ Td
 # In conduction the temperature of the mode is ``T = (A r + B/r^2)\cos\theta``.
 # A **Kapitza resistance** makes it jump, ``[\![T]\!] = -\rho\,q_r``, the flux
 # being continuous; a **conducting surface** carries the flux
-# ``-k^{\mathrm s}\nabla^{\mathrm s}T``, whose surface divergence the normal flux
+# ``-k^{\mathrm s}\,\underline{\operatorname{grad}}_{\mathrm s}\,T``, whose surface divergence the normal flux
 # balances, ``[\![q_r]\!] = -\operatorname{div}^{\mathrm s}\underline{q}^{\mathrm s}``:
 
 ks, T₀ = symbols("k_s T_0", positive = true)

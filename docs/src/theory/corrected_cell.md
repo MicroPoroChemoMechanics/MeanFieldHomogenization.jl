@@ -80,23 +80,23 @@ The exact infinite-medium solution is
 
 ```math
 \underline u(\underline x) = \boldsymbol E\cdot\underline x
-  + \int_{\mathcal D}\nabla\boldsymbol G(\underline x - \underline x') : \boldsymbol\tau(\underline x')\,\mathrm d\Omega',
+  + \int_{\mathcal D}\operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x - \underline x') : \boldsymbol\tau(\underline x')\,\mathrm d\Omega',
 \qquad \boldsymbol\tau = \boldsymbol\sigma - \mathbb C_0 : \boldsymbol\varepsilon ,
 ```
 
 where ``\boldsymbol G`` is the Green tensor of the reference medium and
 ``\boldsymbol\tau`` the polarization. Since
-``\nabla\boldsymbol G(\underline x-\underline x') \to \nabla\boldsymbol G(\underline x)`` when
+``\operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x-\underline x') \to \operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x)`` when
 ``\|\underline x\| \gg a``, the far field collapses to a single **force dipole**:
 
 ```math
 \begin{gathered}
 \underline u(\underline x) \;\approx\; \boldsymbol E\cdot\underline x
-  + \nabla\boldsymbol G(\underline x) : \bigl(V_{\mathcal D}\,\bar{\boldsymbol\tau}\bigr),
+  + \operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x) : \bigl(V_{\mathcal D}\,\bar{\boldsymbol\tau}\bigr),
 \qquad
 \bar{\boldsymbol\tau} = \langle\boldsymbol\tau\rangle_{\mathcal D},
 \\
-\frac{\bigl\|V_{\mathcal D}\,\nabla\boldsymbol G(\underline x):\bar{\boldsymbol\tau}\bigr\|}
+\frac{\bigl\|V_{\mathcal D}\,\operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x):\bar{\boldsymbol\tau}\bigr\|}
      {\|\boldsymbol E\cdot\underline x\|} = O\!\left(\frac{V_{\mathcal D}}{\|\underline x\|^{3}}\right).
 \end{gathered}
 ```
@@ -114,7 +114,7 @@ first loaded by the remote field and the second by the dipole:
   &&\Longrightarrow&
   \langle\boldsymbol\varepsilon^{\mathrm E}\rangle_{\mathcal D} &= \mathbb A^{\mathrm E} : \boldsymbol E, &
   \langle\boldsymbol\sigma^{\mathrm E}\rangle_{\mathcal D} &= \mathbb B^{\mathrm E} : \boldsymbol E, \\
-\underline u|_{\partial\Omega} &= \nabla\boldsymbol G(\underline x) : (V_{\mathcal D}\,\bar{\boldsymbol\tau})
+\underline u|_{\partial\Omega} &= \operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x) : (V_{\mathcal D}\,\bar{\boldsymbol\tau})
   &&\Longrightarrow&
   \langle\boldsymbol\varepsilon^{\tau}\rangle_{\mathcal D} &= \mathbb A^{\tau} : \bar{\boldsymbol\tau}, &
   \langle\boldsymbol\sigma^{\tau}\rangle_{\mathcal D} &= \mathbb B^{\tau} : \bar{\boldsymbol\tau} .
@@ -198,7 +198,7 @@ T(\underline{x}) = \frac{\partial G}{\partial x_k}(\underline{x})\,M_k
 These are [`green_gradient_iso`](@ref MeanFieldHomogenization.Core.green_gradient_iso) and
 [`dipole_displacement_iso`](@ref MeanFieldHomogenization.Core.dipole_displacement_iso).
 They are also why the reference medium must be **isotropic**: for arbitrary
-anisotropy ``\nabla\boldsymbol G`` would come from the Willis integral, or
+anisotropy ``\operatorname{\mathbf{grad}}\,\boldsymbol G`` would come from the Willis integral, or
 from the Pan–Chou closed form in the transversely isotropic case, neither of
 which is implemented.
 
@@ -247,11 +247,11 @@ inclusion and lets the package's exact identities collapse to ``\mathbb N =
 it should not. It is structural. Elasticity pairs
 ``\boldsymbol\sigma = +\,\mathbb C_0 : \boldsymbol\varepsilon``
 with a polarization ``\boldsymbol\tau``, while transport pairs
-``\underline q = -\,k_0 \nabla T``: splitting the flux as
-``\underline q = -k_0\nabla T + \underline{\pi}`` makes the polarization of the
+``\underline q = -\,k_0 \underline{\operatorname{grad}}\,T``: splitting the flux as
+``\underline q = -k_0\underline{\operatorname{grad}}\,T + \underline{\pi}`` makes the polarization of the
 analogy ``\boldsymbol\sigma \equiv -\underline q`` the opposite one,
 ``\underline\tau_q = -\underline{\pi}``, and it is ``\underline\tau_q`` that
-belongs with the temperature ``T = \nabla G\cdot \underline M``.
+belongs with the temperature ``T = \underline{\operatorname{grad}}\,G\cdot \underline M``.
 
 The failure mode is worth remembering, because it does not look like a sign
 error. **A wrong sign leaves exactly twice the truncation bias instead of
@@ -286,7 +286,7 @@ macroscopic loading excites exactly one of them:
 | ``\boldsymbol\varepsilon = (\underline e_1\otimes\underline e_1 + \underline e_2\otimes\underline e_2)/\sqrt2``, ``\underline e_3\otimes\underline e_3`` | 0 | a ``2\times2`` block |
 | ``\boldsymbol\varepsilon = \underline e_1 \stackrel{s}{\otimes} \underline e_3`` | 1 | a scalar |
 | ``\boldsymbol\varepsilon = \underline e_1\otimes\underline e_1 - \underline e_2\otimes\underline e_2`` | 2 | a scalar |
-| ``\nabla T = \underline e_3`` / ``\underline e_1`` | 0 / 1 | a scalar each |
+| ``\underline{\operatorname{grad}}\,T = \underline e_3`` / ``\underline e_1`` | 0 / 1 | a scalar each |
 
 Three from the ``2\times2`` block, one from mode 1, one from mode 2: exactly the
 **five** constants of a transversely isotropic compliance contribution, with
@@ -437,7 +437,7 @@ so the *correct* far field is
 ```math
 \underline{u}(\underline{x})\;\underset{\|\underline{x}\|\to\infty}{\approx}\;
   \boldsymbol{E}\cdot\underline{x}
-  \;-\; b\,S_f\,\bigl(\nabla\boldsymbol G(\underline{x}):\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{U} .
+  \;-\; b\,S_f\,\bigl(\operatorname{\mathbf{grad}}\,\boldsymbol G(\underline{x}):\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{U} .
 ```
 
 The idea of [adessinaIJES2017](@citet) is to put that second term **into the boundary data**.
@@ -453,7 +453,7 @@ three problems on the same mesh:
 | Family | Boundary condition | Yields |
 |:--|:--|:--|
 | **traction**, ``\boldsymbol\Sigma^{(i)}\cdot\underline{n} = \underline{e}_i`` | ``\underline{u}\big\|_{\partial\Omega} = (\mathbb S_0:\boldsymbol\Sigma^{(i)})\cdot\underline{x}`` | columns of ``\boldsymbol{B}_s`` |
-| **dipole**, unit intensity ``\underline{e}_m`` | ``\underline{u}\big\|_{\partial\Omega} = -b\,S_f\bigl(\nabla\boldsymbol G:\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{e}_m`` | columns of ``\boldsymbol{B}_u`` |
+| **dipole**, unit intensity ``\underline{e}_m`` | ``\underline{u}\big\|_{\partial\Omega} = -b\,S_f\bigl(\operatorname{\mathbf{grad}}\,\boldsymbol G:\mathbb C_0\cdot\underline{n}\bigr)\cdot\underline{e}_m`` | columns of ``\boldsymbol{B}_u`` |
 
 ``\boldsymbol{B}_s`` is the COD tensor of the *truncated* cell; ``\boldsymbol{B}_u`` is
 its response to the crack's own far field. Superposing,

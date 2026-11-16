@@ -125,7 +125,7 @@ The minus sign of the Kapitza matrix is that of the dictionary
 ``\boldsymbol\sigma \equiv -\underline q`` of [Conventions](@ref th-notation-sigma-q). The Kapitza law is
 the exact analog of the spring law ``[\![u_r]\!] = s_n\,\sigma_{rr}``, namely
 ``[\![T]\!] = \rho\,\sigma_n``, and the state carries the physical outward normal flux
-``\hat q_n``, with ``\underline q = -k\,\nabla T``: hence ``[\![T]\!] = -\rho\,q_n``. Heat crossing the
+``\hat q_n``, with ``\underline q = -k\,\underline{\operatorname{grad}}\,T``: hence ``[\![T]\!] = -\rho\,q_n``. Heat crossing the
 resistance outward leaves the inner side hotter than the outer one. With ``+\rho``
 the interface would be a negative resistance, raising the conductance of the
 sphere it is meant to lower.
@@ -403,8 +403,8 @@ contribute nothing pointwise, and mode 2 contributes
 amplitudes, so the pointwise and averaged approaches cannot drift apart.
 
 The transport problem is the ``Y_1`` analog: ``T = f(r)\,(\underline
-n\cdot\nabla T^\infty)`` and
-``\nabla T = [\,f'\,\boldsymbol p + (f/r)\,\boldsymbol q\,]\cdot\nabla T^\infty``,
+n\cdot\underline{\operatorname{grad}}\,T^\infty)`` and
+``\underline{\operatorname{grad}}\,T = [\,f'\,\boldsymbol p + (f/r)\,\boldsymbol q\,]\cdot\underline{\operatorname{grad}}\,T^\infty``,
 a second-order transversely isotropic tensor.
 
 Everything is validated pointwise against the C++ reference (Echoes'

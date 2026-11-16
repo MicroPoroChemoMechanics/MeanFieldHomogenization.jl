@@ -24,7 +24,7 @@ complementary:
   Moves the *out-of-plane* response and leaves the in-plane one untouched.
 - **dual** (`MembraneInterface`, `SurfaceConductiveInterface`) — a surface
   stiffness. The interfaces being planar,
-  ``\mathrm{div}_s\,\boldsymbol\sigma^s = 0``: there is *no traction jump at
+  ``\underline{\operatorname{div}}_s\,\boldsymbol\sigma^s = 0``: there is *no traction jump at
   all*, and only the *in-plane* response moves.
 
 Both enter with the weight `1/L`, an interface **density**: at fixed volume

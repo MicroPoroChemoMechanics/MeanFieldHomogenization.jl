@@ -278,7 +278,7 @@ end
 Real axial/transverse gradient-concentration scalars
 ``\\alpha_a = 1 + (b/a)|_a\\,\\mathcal{T}_a(q_N)``, ``\\alpha_t = 1 + (b/a)|_t\\,\\mathcal{T}_t(q_N)``
 (eq:avgradTN/eq:transavgradTN, unit remote field), such that
-``\\langle\\nabla T\\rangle_\\Omega = \\mathrm{diag}(\\alpha_t, \\alpha_t, \\alpha_a)\\cdot\\nabla T^{\\infty}`` in the spheroid's own (axis-aligned)
+``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = \\mathrm{diag}(\\alpha_t, \\alpha_t, \\alpha_a)\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` in the spheroid's own (axis-aligned)
 frame.
 """
 function spheroid_gradient_gradient(s::LayeredSpheroid{T, N}, k₀) where {T, N}
@@ -295,7 +295,7 @@ end
 Real axial/transverse flux-concentration scalars
 ``\\beta_a = 1 + (b/a)|_a\\,\\mathcal{U}_a(q_N)``, ``\\beta_t = 1 + (b/a)|_t\\,\\mathcal{U}_t(q_N)``
 (eq:avuN/eq:transavuN), such that
-``\\langle\\boldsymbol{K}\\cdot\\nabla T\\rangle_\\Omega = k_0\\,\\mathrm{diag}(\\beta_t, \\beta_t, \\beta_a)\\cdot\\nabla T^{\\infty}`` in the spheroid's own frame
+``\\langle\\boldsymbol{K}\\cdot\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = k_0\\,\\mathrm{diag}(\\beta_t, \\beta_t, \\beta_a)\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` in the spheroid's own frame
 (before any surface-conductive-interface flux correction — none is
 needed here: the HC surface-flux term is already folded into ``(b/a)``
 through the transfer-matrix recurrence, unlike `LayeredSphere` where it

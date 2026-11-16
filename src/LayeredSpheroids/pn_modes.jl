@@ -259,7 +259,7 @@ end
     _chart_grad(j, p, q, c) -> (gφ, gp, gq)
 
 Physical gradient components of a jet in the orthonormal chart frame:
-``(\\nabla F)_\\varphi = F_\\varphi/(c\\,\\bar p\\,\\bar q)``, ``(\\nabla F)_p = \\bar p\\,F_p/(c\\,w)``, ``(\\nabla F)_q = \\bar q\\,F_q/(c\\,w)``,
+``(\\underline{\\operatorname{grad}}\\,F)_\\varphi = F_\\varphi/(c\\,\\bar p\\,\\bar q)``, ``(\\underline{\\operatorname{grad}}\\,F)_p = \\bar p\\,F_p/(c\\,w)``, ``(\\underline{\\operatorname{grad}}\\,F)_q = \\bar q\\,F_q/(c\\,w)``,
 with ``w = \\sqrt{q^2-p^2}``.
 """
 @inline function _chart_grad(j::Jet2{T}, p, q, c) where {T}

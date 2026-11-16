@@ -385,8 +385,8 @@ See also [`local_flux_gradient_concentration`](@ref), [`local_gradient_flux_conc
 
 In conduction, with a second-order matrix conductivity `K₀`:
 Pointwise gradient-gradient concentration ``\\boldsymbol{A}(\\underline{x})``, so that the local
-temperature gradient under a remote uniform gradient ``\\nabla T^{\\infty}`` is
-``\\nabla T(\\underline{x}) = \\boldsymbol{A}(\\underline{x})\\cdot\\nabla T^{\\infty}``. Valid in any layer and in the matrix, with perfect,
+temperature gradient under a remote uniform gradient ``\\underline{\\operatorname{grad}}\\,T^{\\infty}`` is
+``\\underline{\\operatorname{grad}}\\,T(\\underline{x}) = \\boldsymbol{A}(\\underline{x})\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``. Valid in any layer and in the matrix, with perfect,
 Kapitza or surface-conductive interfaces.
 
 ``\\boldsymbol{A}(\\underline{x}) = f'(r)\\,\\underline{n}\\otimes\\underline{n} + (f(r)/r)(\\boldsymbol{1} - \\underline{n}\\otimes\\underline{n})`` is transversely isotropic about
@@ -450,8 +450,8 @@ Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conv
 
 In conduction, with a second-order matrix conductivity `K₀`:
 Pointwise flux-gradient concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(\\underline{x})``: the local flux under a
-remote uniform gradient ``\\nabla T^{\\infty}`` is `q(x) = local_flux_gradient_concentration(…) · ∇T∞`,
-with the Fourier / Fick sign convention ``\\underline{q} = -k\\,\\nabla T``.
+remote uniform gradient ``\\underline{\\operatorname{grad}}\\,T^{\\infty}`` is `q(x) = local_flux_gradient_concentration(…) · ∇T∞`,
+with the Fourier / Fick sign convention ``\\underline{q} = -k\\,\\underline{\\operatorname{grad}}\\,T``.
 """
 function local_flux_gradient_concentration end
 
@@ -469,7 +469,7 @@ Twin of [`local_gradient_gradient_concentration`](@ref); same arguments and conv
 
 In conduction, with a second-order matrix conductivity `K₀`:
 Pointwise gradient-flux concentration ``-\\boldsymbol{A}(\\underline{x})\\cdot\\boldsymbol{K}_0^{-1}`` (the remote
-gradient of a remote flux is ``\\nabla T^{\\infty} = -\\boldsymbol{K}_0^{-1}\\cdot\\underline{q}^{\\infty}``): the local gradient
+gradient of a remote flux is ``\\underline{\\operatorname{grad}}\\,T^{\\infty} = -\\boldsymbol{K}_0^{-1}\\cdot\\underline{q}^{\\infty}``): the local gradient
 under a remote uniform **flux** ``\\underline{q}^{\\infty}`` is `∇T(x) = local_gradient_flux_concentration(…) · q∞`.
 """
 function local_gradient_flux_concentration end
@@ -554,7 +554,7 @@ the point (the matrix `C₀` outside the composite sphere).
 
 In conduction, with a second-order matrix conductivity `K₀`:
 Local flux at `x` under the remote uniform gradient `∇T∞`, with the
-Fourier / Fick convention ``\\underline{q} = -k(\\underline{x})\\,\\nabla T(\\underline{x})``, ``k(\\underline{x})`` the conductivity of the
+Fourier / Fick convention ``\\underline{q} = -k(\\underline{x})\\,\\underline{\\operatorname{grad}}\\,T(\\underline{x})``, ``k(\\underline{x})`` the conductivity of the
 region containing the point (the matrix outside).
 """
 function local_flux end
@@ -672,7 +672,7 @@ end
 
 Precomputed pointwise transport (thermal / electric / Darcy) solution of a
 [`LayeredSphere`](@ref) in the isotropic matrix `K₀`: the per-region
-amplitudes ``(\\tilde A, \\tilde B)`` of ``T = (\\tilde A r + \\tilde B/r^2)\\,(\\underline{n}\\cdot\\nabla T^{\\infty})``, for ``k = 1, \\dots, N`` the layers
+amplitudes ``(\\tilde A, \\tilde B)`` of ``T = (\\tilde A r + \\tilde B/r^2)\\,(\\underline{n}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty})``, for ``k = 1, \\dots, N`` the layers
 and ``k = N+1`` the matrix, under a unit remote gradient.
 
 Transport twin of [`LayeredSphereFields`](@ref).
@@ -776,7 +776,7 @@ end
     local_temperature(f_or_sphere, [K₀,] x, ∇T∞; side = :outer) -> Number
 
 Local temperature (or pressure / potential) at `x` under the remote uniform
-gradient `∇T∞`: ``T = f(r)\\,(\\underline{n}\\cdot\\nabla T^{\\infty})``, normalized so that ``T \\to \\nabla T^{\\infty}\\cdot\\underline{x}`` at
+gradient `∇T∞`: ``T = f(r)\\,(\\underline{n}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty})``, normalized so that ``T \\to \\underline{\\operatorname{grad}}\\,T^{\\infty}\\cdot\\underline{x}`` at
 infinity and ``T(\\underline{0}) = 0``.
 
 Discontinuous across a [`KapitzaInterface`](@ref); use `side` to pick the

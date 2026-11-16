@@ -136,7 +136,7 @@ end
 """
     flux_gradient_concentration(cyl::LayeredCylinder, K₁, K₀; external = true) -> TensTI{2}
 
-Average of ``\\boldsymbol{k}\\cdot\\nabla T`` over the whole cylinder per unit remote
+Average of ``\\boldsymbol{k}\\cdot\\underline{\\operatorname{grad}}\\,T`` over the whole cylinder per unit remote
 gradient, plus the flux carried by the
 [`SurfaceConductiveInterface`](@ref)s, that of the outer one when `external` is
 `true`. `K₁` is ignored.

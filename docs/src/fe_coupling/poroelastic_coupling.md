@@ -20,7 +20,7 @@ Unknowns are the skeleton displacement ``\underline{u}`` and the pore pressure
 \qquad
 \dot{\varphi} + \operatorname{div}\underline{q} = 0,
 \qquad
-\underline{q} = -\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p ,
+\underline{q} = -\frac{\boldsymbol{K}}{\mu}\cdot\underline{\operatorname{grad}}\,p ,
 ```
 
 closed by the material, which returns **both** fluxes and the permeability:
@@ -70,13 +70,13 @@ dualized by a test pair ``(\delta\underline{u}, \delta p)``:
 
 ```math
 \begin{aligned}
-\int_\Omega \boldsymbol{\Sigma}_{n+1} : \nabla^{\mathrm{s}}\delta\underline{u}
+\int_\Omega \boldsymbol{\Sigma}_{n+1} : \operatorname{\mathbf{grad}}^{\mathrm{s}}\,\delta\underline{u}
    \,\mathrm{d}\Omega
 &= \int_{\Gamma_T} \underline{T}^{\mathrm{g}}\cdot\delta\underline{u}\,\mathrm{d}S ,
 \\[2pt]
 \int_\Omega (\varphi_{n+1} - \varphi_n)\,\delta p \,\mathrm{d}\Omega
- + \Delta t \int_\Omega \underline{\nabla}\delta p \cdot
-   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p_{n+1}\right)\mathrm{d}\Omega
+ + \Delta t \int_\Omega \underline{\operatorname{grad}}\,\delta p \cdot
+   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\operatorname{grad}}\,p_{n+1}\right)\mathrm{d}\Omega
 &= -\,\Delta t \int_{\Gamma_Q} q^{\mathrm{g}}\,\delta p \,\mathrm{d}S .
 \end{aligned}
 ```
@@ -90,16 +90,16 @@ plus the Darcy term:
 
 ```math
 \begin{bmatrix}
-\displaystyle\int \nabla^{\mathrm{s}}\delta\underline{u} : \mathbb{C}^{\mathrm{hom}}
-   : \nabla^{\mathrm{s}}\underline{u}
+\displaystyle\int \operatorname{\mathbf{grad}}^{\mathrm{s}}\,\delta\underline{u} : \mathbb{C}^{\mathrm{hom}}
+   : \operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline{u}
 &
--\displaystyle\int (\nabla^{\mathrm{s}}\delta\underline{u} : \boldsymbol{B})\, p
+-\displaystyle\int (\operatorname{\mathbf{grad}}^{\mathrm{s}}\,\delta\underline{u} : \boldsymbol{B})\, p
 \\[6pt]
-\displaystyle\int \delta p\,(\boldsymbol{B} : \nabla^{\mathrm{s}}\underline{u})
+\displaystyle\int \delta p\,(\boldsymbol{B} : \operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline{u})
 &
 \displaystyle\int \frac{\delta p\, p}{M}
- + \Delta t \int \underline{\nabla}\delta p \cdot
-   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\nabla} p\right)
+ + \Delta t \int \underline{\operatorname{grad}}\,\delta p \cdot
+   \left(\frac{\boldsymbol{K}}{\mu}\cdot\underline{\operatorname{grad}}\,p\right)
 \end{bmatrix}
 ```
 

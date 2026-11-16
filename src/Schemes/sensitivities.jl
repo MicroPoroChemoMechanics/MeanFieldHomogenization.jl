@@ -128,7 +128,7 @@ or perturbs an RVE, runs `homogenize`, and returns a scalar (or a tensor).
 
 `kind`:
 - `:derivative` — scalar `x₀`, scalar output; returns ``f'(x_0)``.
-- `:gradient`   — vector `x₀`, scalar output; returns ``\\nabla f(x_0)``.
+- `:gradient`   — vector `x₀`, scalar output; returns ``\\underline{\\operatorname{grad}}\\,f(x_0)``.
 - `:jacobian`   — vector `x₀`, tensor output; returns the flattened Jacobian.
 - `:auto` (default) — pick one of the above from the types of `x₀` and `f(x₀)`.
 

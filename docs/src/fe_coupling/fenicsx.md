@@ -169,7 +169,7 @@ change of ``\phi`` over the step and Darcy's flow,
 \int_\Omega \boldsymbol\sigma : \boldsymbol\varepsilon(\underline{v})\,\mathrm{d}\Omega = \text{(loads)},
 \qquad
 \int_\Omega (\phi - \phi_{\mathrm{old}})\,q\,\mathrm{d}\Omega
-+ \Delta t \int_\Omega \frac{k}{\mu}\,\nabla p\cdot\nabla q\,\mathrm{d}\Omega = 0 .
++ \Delta t \int_\Omega \frac{k}{\mu}\,\underline{\operatorname{grad}}\,p\cdot\underline{\operatorname{grad}}\,q\,\mathrm{d}\Omega = 0 .
 ```
 
 ```python

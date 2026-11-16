@@ -202,7 +202,7 @@ Dilute **gradient-gradient concentration tensor** ``\\boldsymbol{A}_{\\nabla\\na
 order transport problem:
 
 ```math
-\\nabla T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\nabla T^{\\infty},
+\\underline{\\operatorname{grad}}\\,T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty},
 \\qquad
 \\boldsymbol{A}_{\\nabla\\nabla} = [\\boldsymbol{1} + \\boldsymbol{P}(\\mathrm{incl}, \\boldsymbol{K}_0)\\cdot(\\boldsymbol{K}_1 - \\boldsymbol{K}_0)]^{-1}.
 ```
@@ -226,10 +226,10 @@ end
     flux_gradient_concentration(incl, K₁, K₀; kw...) -> Tens{2,3}
 
 Dilute **flux-gradient concentration tensor** ``\\boldsymbol{A}_{q\\nabla}``:
-``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{q\\nabla}\\cdot\\nabla T^{\\infty}``,
-with ``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}\\cdot\\nabla T`` the stress analog of the package (see the sign note
+``\\boldsymbol{\\sigma}_{\\mathrm{inc}} = \\boldsymbol{A}_{q\\nabla}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``,
+with ``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}\\cdot\\underline{\\operatorname{grad}}\\,T`` the stress analog of the package (see the sign note
 above this block, and the notation page). It is ``\\boldsymbol{A}_{q\\nabla} = \\boldsymbol{K}_1\\cdot\\boldsymbol{A}_{\\nabla\\nabla}``, so the
-quantity it produces is ``\\boldsymbol{K}_1\\cdot\\nabla T_{\\mathrm{inc}}``, i.e. minus the flux — exactly what
+quantity it produces is ``\\boldsymbol{K}_1\\cdot\\underline{\\operatorname{grad}}\\,T_{\\mathrm{inc}}``, i.e. minus the flux — exactly what
 makes this conduction method the elastic one symbol for symbol.
 
 !!! warning "The generic method assumes a homogeneous inclusion"
@@ -252,8 +252,8 @@ end
 
 Dilute **gradient-flux concentration tensor**
 ``\\boldsymbol{A}_{\\nabla q} = \\boldsymbol{A}_{\\nabla\\nabla}\\cdot\\boldsymbol{K}_0^{-1}``:
-``\\nabla T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla q}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
-``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}`` the stress
+``\\underline{\\operatorname{grad}}\\,T_{\\mathrm{inc}} = \\boldsymbol{A}_{\\nabla q}\\cdot\\boldsymbol{\\sigma}^{\\infty}``, with
+``\\boldsymbol{\\sigma} \\equiv -\\underline{q} = \\boldsymbol{K}_0\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` the stress
 analog of the package: the elastic formula symbol for symbol.
 """
 function gradient_flux_concentration(

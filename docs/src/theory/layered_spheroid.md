@@ -191,14 +191,14 @@ axisymmetric.
 
 Three interface types are available. Writing ``[\![\cdot]\!]`` for the jump
 across the interface, outer side minus inner side, and
-``q_n = \underline q\cdot\underline n`` for the normal flux, ``\underline q = -k\,\nabla T`` and
+``q_n = \underline q\cdot\underline n`` for the normal flux, ``\underline q = -k\,\underline{\operatorname{grad}}\,T`` and
 ``\underline n`` pointing outward:
 
 | type | condition | `MeanFieldHomogenization` | effect on degrees |
 | :--- | :-------- | :------------- | :---------------- |
 | **perfect** | ``[\![T]\!]=0``, ``[\![q_n]\!]=0`` | [`PerfectInterface`](@ref) | diagonal |
 | **LC** (low-conducting) | ``[\![T]\!] = -\rho\,q_n``, flux continuous | [`KapitzaInterface`](@ref)`(ρ)` | couples all degrees |
-| **HC** (highly-conducting) | ``[\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(kₛ)` | couples all degrees |
+| **HC** (highly-conducting) | ``[\![q_n]\!] = k^{\mathrm s}\,\operatorname{div}_S(\underline{\operatorname{grad}}_S\,T)``, temperature continuous | [`SurfaceConductiveInterface`](@ref)`(kₛ)` | couples all degrees |
 
 The LC model is the Kapitza thermal contact resistance [kapitza1941, benveniste1986](@cite); the HC model is a highly conducting surface layer
 [miloh1999](@cite). Both are the imperfect-interface models used by
@@ -270,10 +270,10 @@ flux, under a remote gradient ``\underline{H}``:
 
 ```math
 \boxed{\;
-\bigl\langle \nabla T \bigr\rangle_\Omega
+\bigl\langle \underline{\operatorname{grad}}\,T \bigr\rangle_\Omega
 = \boldsymbol{A}_\Omega\cdot\underline{H},
 \qquad
-\bigl\langle \boldsymbol{K}\cdot\nabla T \bigr\rangle_\Omega
+\bigl\langle \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T \bigr\rangle_\Omega
 = \boldsymbol{B}_\Omega\cdot\underline{H}.
 \;}
 ```
@@ -281,7 +281,7 @@ flux, under a remote gradient ``\underline{H}``:
 ``\boldsymbol{A}_\Omega`` is the **concentration tensor** — how much of the
 remote gradient the particle actually sees — and ``\boldsymbol{B}_\Omega`` the
 corresponding **flux** average. Note which flux: the averaged quantity is
-``\boldsymbol{K}\cdot\nabla T = \boldsymbol{\sigma} \equiv -\underline{q}``, the
+``\boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T = \boldsymbol{\sigma} \equiv -\underline{q}``, the
 stress analog of the package (see
 [Elasticity and transport: one set of formulas](@ref th-notation-sigma-q)), so
 ``\boldsymbol{B}_\Omega`` is the exact twin of the elastic

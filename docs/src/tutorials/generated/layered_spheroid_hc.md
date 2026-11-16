@@ -24,7 +24,7 @@ conductance ``k^{\mathrm s}``:
 ```math
 \text{LC:}\quad [\![T]\!] = -\rho\,q_n
 \qquad\text{vs.}\qquad
-\text{HC:}\quad [\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T).
+\text{HC:}\quad [\![q_n]\!] = k^{\mathrm s}\,\operatorname{div}_S(\underline{\operatorname{grad}}_S\,T).
 ```
 with ``q_n`` the outward normal flux. The two are duals: LC impedes the normal
 flux, HC adds a tangential short-circuit. Both are the imperfect-interface models of
@@ -39,8 +39,8 @@ interface, the **equivalent particle conductivity**
 ```
 where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 volume-averaged concentration tensors of the particle, defined by
-``\langle\nabla T\rangle_\Omega = \boldsymbol{A}_\Omega\cdot\underline{H}``
-and ``\langle\boldsymbol{K}\cdot\nabla T\rangle_\Omega =
+``\langle\underline{\operatorname{grad}}\,T\rangle_\Omega = \boldsymbol{A}_\Omega\cdot\underline{H}``
+and ``\langle\boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T\rangle_\Omega =
 \boldsymbol{B}_\Omega\cdot\underline{H}`` under a remote gradient
 ``\underline{H}``. Its transverse and axial components are traced against the
 aspect ratio ``\omega = \rho_a/\rho_t``, over the oblate (``\omega<1``) and

@@ -124,7 +124,7 @@ end
 Per-layer gradient-gradient concentration tensor for an isotropic
 `LayeredSphere` embedded in an isotropic matrix of conductivity `K₀`.
 Returns the scalar ``\\alpha_k`` packed as `TensISO{3}(α_k)` (isotropic
-2-tensor), satisfying ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}``.
+2-tensor), satisfying ``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_k = \\alpha_k\\,\\underline{\\operatorname{grad}}\\,T^{\\infty}``.
 
 `external` and `internal` add the temperature jumps across the outer and inner
 boundaries of the layer (nonzero across a [`KapitzaInterface`](@ref) only), as

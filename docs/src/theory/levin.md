@@ -265,8 +265,8 @@ second-order tensors. A phase conducting no flux under the gradient
 ``\underline g^\ast_r``, its eigengradient,
 
 ```math
-\underline q = -\,\boldsymbol K_r\cdot(\nabla T - \underline g^\ast_r)
-  = -\,\boldsymbol K_r\cdot\nabla T + \underline q^\ast_r ,
+\underline q = -\,\boldsymbol K_r\cdot(\underline{\operatorname{grad}}\,T - \underline g^\ast_r)
+  = -\,\boldsymbol K_r\cdot\underline{\operatorname{grad}}\,T + \underline q^\ast_r ,
 \qquad
 \underline q^\ast_r = \boldsymbol K_r\cdot\underline g^\ast_r ,
 ```

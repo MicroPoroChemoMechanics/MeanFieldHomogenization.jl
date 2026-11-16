@@ -47,7 +47,7 @@ package already does is described in the [manual](@ref man-index) and the
 - **Finite-element inclusions**, behind the `FEBackend` interface (see
   [FE inclusions](@ref man-fe-inclusions)):
   - an **anisotropic reference medium**. The corrected boundary data needs
-    ``\nabla\mathbb G``, which `green_function_aniso` does not expose — the
+    ``\operatorname{\mathbf{grad}}\,\mathbb G``, which `green_function_aniso` does not expose — the
     Pan-Chou closed form in the transversely isotropic case, or a differentiated
     Barnett-Willis integral, would.
   - more than one inclusion, or a **non-spherical envelope**, in the

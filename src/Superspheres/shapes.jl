@@ -280,7 +280,7 @@ surface_point(s::AbstractSuperShape, n) = radial_distance(s, n) .* n
 """
     outward_normal(s, x) -> n
 
-Unit outward normal at a **surface** point, from ``\\nabla f``.
+Unit outward normal at a **surface** point, from ``\\underline{\\operatorname{grad}}\\,f``.
 
 ```math
 \\partial_i f = \\operatorname{sign}(x_i)\\,|x_i/a_i|^{2p-1}/a_i
