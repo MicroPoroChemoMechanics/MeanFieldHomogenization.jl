@@ -99,7 +99,7 @@ end
 # testset checks.
 const TEST_PARTS = Dict(
     "core" => (
-        "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
+        "Aqua", "Elliptic", "Harmonics", "Core", "Elasticity", "Cracks", "Conductivity",
         "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
         "Documentation",
     ),
@@ -210,6 +210,11 @@ end
     # `Interactions` sits between the one-inclusion kernels it builds on and
     # the N-body schemes that consume it: the pair tensors must be trusted
     # before either scheme is exercised.
+    rungroup("Harmonics") && @testset "Harmonics" begin
+        include("Harmonics/test_solid_harmonics.jl")
+        include("Harmonics/test_lattice_harmonics.jl")
+    end
+
     rungroup("Interactions") && @testset "Interactions" begin
         include("Interactions/test_pair_tensors.jl")
     end
@@ -221,6 +226,7 @@ end
         include("Assemblies/test_assembly.jl")
         include("Assemblies/test_cluster_model.jl")
         include("Assemblies/test_eim.jl")
+        include("Assemblies/test_mem.jl")
         include("Assemblies/test_as_rve.jl")
         include("Assemblies/test_multiscale.jl")
     end
@@ -339,6 +345,7 @@ end
         include("LayeredSpheres/test_interface_jumps.jl")
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
+        include("LayeredSpheres/test_harmonic_response.jl")
         include("LayeredSpheres/test_christensen.jl")
         include("LayeredSpheres/test_local_fields.jl")
         include("LayeredSpheres/test_generic.jl")

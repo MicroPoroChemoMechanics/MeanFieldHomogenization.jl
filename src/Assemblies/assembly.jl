@@ -78,6 +78,13 @@ struct PeriodicBox{T} <: AbstractAssemblyBoundary
     cutoff::T
 end
 
+"""
+    box_periods(b::PeriodicBox) -> NTuple{3}
+
+Periods of the cell along the three axes.
+"""
+box_periods(b::PeriodicBox) = (b.period, b.period, b.period)
+
 function PeriodicBox(period::Real; cutoff::Union{Nothing, Real} = nothing)
     period > 0 || throw(ArgumentError("PeriodicBox: the period must be positive"))
     c = cutoff === nothing ? 3 * period : cutoff
@@ -410,6 +417,12 @@ function _check_no_overlap(asm::ParticleAssembly)
 end
 
 _bounding_radius(ell::Elasticity.Ellipsoid) = maximum(ell.semi_axes)
+_bounding_radius(sphere::LayeredSpheres.LayeredSphere) = LayeredSpheres.outer_radius(sphere)
+
+# A layered sphere occupies its outer ball: that is the region the fractions
+# and the overlap check are about.
+Interactions._inclusion_volume(sphere::LayeredSpheres.LayeredSphere) =
+    4 * π * LayeredSpheres.outer_radius(sphere)^3 / 3
 _bounding_radius(incl::MFH_Core.AbstractInclusion) = throw(
     ArgumentError(
         "ParticleAssembly: no bounding radius is defined for a " *

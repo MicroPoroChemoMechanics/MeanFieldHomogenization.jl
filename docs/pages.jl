@@ -82,6 +82,7 @@ pages = [
             "theory/laminate.md",
             "theory/cluster_model.md",
             "theory/eim.md",
+            "theory/multipole_expansion.md",
             # Not a scheme: what every scheme's concentration tensors give
             # beyond the effective stiffness.
             "theory/levin.md",

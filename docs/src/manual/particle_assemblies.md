@@ -2,15 +2,16 @@
 
 !!! info "Before this page"
     [Two-inclusion interaction tensors](@ref th-interaction),
-    [The cluster model](@ref th-cluster) and
-    [The equivalent inclusion method](@ref th-eim), where the two schemes of this
+    [The cluster model](@ref th-cluster),
+    [The equivalent inclusion method](@ref th-eim) and
+    [The multipole expansion method](@ref th-mem), where the schemes of this
     page are derived, and [Homogenization schemes](@ref man-schemes) for the
     `RVE` an assembly is compared with throughout.
 
-Two schemes of the package resolve the interaction between individual inclusions
-instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref). Both
-need to know *where* the inclusions are, so both act on a
-[`ParticleAssembly`](@ref) rather than on an `RVE`.
+Three schemes of the package resolve the interaction between individual inclusions
+instead of averaging it: [`ClusterModel`](@ref), [`EquivalentInclusion`](@ref) and
+[`MultipoleExpansion`](@ref). They need to know *where* the inclusions are, so they
+act on a [`ParticleAssembly`](@ref) rather than on an `RVE`.
 
 ![Positioned particles: the interaction of each pair, such as the one marked, enters the scheme](../assets/schemes/particle_assembly.svg)
 
@@ -183,6 +184,58 @@ asm = cubic_lattice(:sc, Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(20.0
                     fraction = 0.25)
 homogenize(asm, ClusterModel(), :K)
 ```
+
+## Multipole expansion
+
+[`MultipoleExpansion`](@ref) expands the field around every sphere in solid
+harmonics up to the degree `tmax` ([theory](@ref th-mem)). The first two schemes
+keep one uniform polarization per inclusion; this one tends to the exact field
+of the assembly as `tmax` grows, at the price of ``N\,t_{\max}(t_{\max}+2)``
+unknowns for ``N`` spheres. It treats conduction, in an isotropic matrix.
+
+```@example mem_manual
+using MeanFieldHomogenization, TensND
+
+matrix, spheres = Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(100.0))
+asm = cubic_lattice(:fcc, matrix, spheres; fraction = 0.4)
+k(scheme) = canonical_components(homogenize(asm, scheme, :K))[1, 1]
+(mori_tanaka = k(MoriTanaka()), dipoles = k(MultipoleExpansion(; tmax = 1)),
+    converged = k(MultipoleExpansion(; tmax = 9)))
+```
+
+The boundary of the assembly decides how the far field is closed:
+
+| boundary | what the scheme computes |
+| :-- | :-- |
+| [`PeriodicBox`](@ref) | the conductivity of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used |
+| [`MixedBC`](@ref)`(shape)` | the finite assembly in the infinite matrix, replaced by the homogeneous inclusion of the same `shape` sending the same far field ([Maxwell](@ref th-scheme-maxwell)) |
+
+The degree to ask for is found by raising it until the estimate settles. It grows
+as the spheres come closer: a few units for a dilute assembly, more than twenty for
+spheres nearly in contact with a high contrast.
+
+### Spheres with layers and interfaces
+
+A particle is a ball, an `Ellipsoid` of equal semi-axes with an isotropic
+property, or a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere).
+As in an `RVE`, a layered sphere carries its constituents in the geometry, and
+the dictionary of properties is left empty. It brings its interface models with
+it: here a resistance of Kapitza at the surface of each sphere of a simple cubic
+array.
+
+```@example mem_manual
+function array(interface)
+    asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
+    add_matrix!(asm, matrix)
+    sphere = LayeredSphere((0.45,), (TensISO{3}(100.0),); interfaces = (interface,))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), sphere, Dict{Symbol, Any}())
+    return canonical_components(homogenize(asm, MultipoleExpansion(; tmax = 9), :K))[1, 1]
+end
+(perfect = array(PerfectInterface{Float64}()), resisting = array(KapitzaInterface(0.5)))
+```
+
+The resistance is high enough here for the spheres, a hundred times more
+conducting than the matrix, to lower the conductivity of the array.
 
 ## Interaction back-ends
 

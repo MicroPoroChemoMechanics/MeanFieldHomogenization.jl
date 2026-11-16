@@ -113,6 +113,7 @@ decides when the iteration stops.
 | `:asymmetric_self_consistent` | `:asc`, `:ASC` |
 | `:differential` | `:diff`, `:DIFF` |
 | `:cluster` | `:cluster_model`, `:ClusterModel`, `:CLUSTER` |
+| `:mem` | `:MEM`, `:multipole_expansion`, `:MultipoleExpansion` |
 | `:eim` | `:EIM`, `:equivalent_inclusion` |
 
 !!! note "The last two act on a different cell"

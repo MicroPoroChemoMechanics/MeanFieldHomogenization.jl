@@ -84,6 +84,7 @@ module MeanFieldHomogenization
 using TensND
 
 include("Elliptic/Elliptic.jl")
+include("Harmonics/Harmonics.jl")
 include("Core/Core.jl")
 include("Elasticity/Elasticity.jl")
 include("Cracks/Cracks.jl")
@@ -112,6 +113,7 @@ include("Poromechanics/Poromechanics.jl")
 include("Viscoelasticity/Viscoelasticity.jl")
 
 using .Elliptic
+using .Harmonics
 using .Core
 using .Elasticity
 using .Cracks
@@ -134,7 +136,7 @@ import .Core: gradient_gradient_concentration, flux_gradient_concentration,
     gradient_flux_concentration, flux_flux_concentration, property_contribution,
     inverse_property_contribution, delta_property, delta_inverse_property,
     concentration_and_contribution, concentration_and_flux_average,
-    inverse_and_property_contribution, is_homogeneous_inclusion
+    inverse_and_property_contribution, is_homogeneous_inclusion, harmonic_response
 import .Core: strain_strain_concentration, stress_strain_concentration,
     strain_stress_concentration, stress_stress_concentration, stiffness_contribution,
     compliance_contribution, conductivity_contribution, resistivity_contribution,
@@ -259,6 +261,7 @@ export validate_surrogate, report_surrogate, component_labels
 
 # ── Concentration & contribution (Eshelby dilute, Kachanov-Sevostianov) ───────
 export gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration
+export harmonic_response
 export gradient_gradient_concentration, flux_gradient_concentration
 export gradient_flux_concentration, flux_flux_concentration
 export property_contribution, inverse_property_contribution
@@ -311,6 +314,10 @@ export LayeredSpheroidTransportFields
 # ── Elliptic integrals (type-generic) ────────────────────────────────────────
 export ell_K, ell_E, ell_F, ell_RF, ell_RD
 
+# ── Solid harmonics ──────────────────────────────────────────────────────────
+export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
+export lattice_harmonics
+
 # ── Schemes : RVE + amounts + distribution shape + symmetrize ───────────────
 export AbstractAmount, VolumeFraction, CrackDensity, Remainder
 export AbstractFractionClosure, StrictFractions, ComplementFraction, RescaledFractions
@@ -355,7 +362,7 @@ export ThicknessParameter, InterfaceParameter, thickness, interface_param
 
 # ── Assemblies : the positional cell of the N-body schemes ──────────────────
 export ParticleAssembly, Particle
-export AbstractAssemblyBoundary, MixedBC, PeriodicBox
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods
 export add_matrix!, add_particle!
 export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry
@@ -370,7 +377,7 @@ export CenterParameter, RadiusParameter, center_param, radius_param
 export HomogenizationScheme
 export Voigt, Reuss, Laminated, Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis
 export SelfConsistent, AsymmetricSelfConsistent
-export ClusterModel, EquivalentInclusion
+export ClusterModel, EquivalentInclusion, MultipoleExpansion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path

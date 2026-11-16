@@ -123,6 +123,7 @@ export laminate_flux_gradient_concentration, laminate_gradient_flux_concentratio
 # the explicit names of elasticity and conduction, each restricted to its order.
 export gradient_gradient_concentration, flux_gradient_concentration
 export gradient_flux_concentration, flux_flux_concentration
+export harmonic_response
 export property_contribution, inverse_property_contribution
 export delta_property, delta_inverse_property
 export strain_strain_concentration, stress_strain_concentration

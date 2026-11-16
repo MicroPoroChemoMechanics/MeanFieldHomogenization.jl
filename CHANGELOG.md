@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased — the multipole expansion method
+
+### Added
+
+- **`MultipoleExpansion`, a third scheme on a `ParticleAssembly`.** The cluster
+  model and the equivalent inclusion method keep one uniform polarization per
+  inclusion. The multipole expansion method of Kushch expands the field around
+  every sphere in solid harmonics up to the degree `tmax`, carries each
+  expansion to the center of the other spheres, and tends to the exact field of
+  the assembly as `tmax` grows. This release treats conduction in an isotropic
+  matrix: a periodic assembly (`PeriodicBox`) gives the conductivity of the
+  periodic medium, a finite one (`MixedBC`) is closed by Maxwell's argument.
+  The dipoles alone (`tmax = 1`) on a cubic array are Mori–Tanaka exactly, and
+  the published values of simple cubic, body-centered and face-centered arrays
+  are recovered.
+- **Spheres with layers and interfaces as particles.** A particle of an
+  assembly may be a `LayeredSphere`: its layers, its Kapitza resistances and
+  its surface conductances enter the multipole expansion through
+  `harmonic_response(sphere, K₀, n)`, the response of the sphere to the
+  harmonic of degree `n`. The transfer matrices of the layered sphere in
+  conduction are now written at any degree, the uniform gradient being the
+  degree 1.
+- **Solid harmonics.** `regular_harmonics`, `irregular_harmonics` and
+  `lattice_harmonics` (the harmonics of a periodic array of sources, by Ewald
+  sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.
+  All accept `ForwardDiff` numbers, so an effective conductivity differentiates
+  with respect to a position, a radius, a contrast or an interface parameter.
+- `box_periods(::PeriodicBox)`.
+
+### Changed
+
+- The closure of the Maxwell scheme is one function, shared by the `RVE` and by
+  the finite assemblies of the multipole expansion. No value changes.
+
 ## v0.26.8 — tensors symmetric by construction infer their storage
 
 A patch release: no value changes, the types inferred for the Hill tensors do.

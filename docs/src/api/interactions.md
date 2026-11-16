@@ -18,6 +18,17 @@ lattice_interaction_tensor
 periodic_images
 ```
 
+## Solid harmonics
+
+```@docs
+MeanFieldHomogenization.Harmonics
+HarmonicTable
+regular_harmonics
+irregular_harmonics
+harmonic_norm
+lattice_harmonics
+```
+
 ## Real-space Green operator
 
 ```@docs

@@ -148,11 +148,13 @@ then has its page, with its figure, its assumption and its equations.
 | [Laminate](@ref th-laminate) | a periodic stack solved exactly: no inclusion at all, the interface algebra replaces the Hill tensor |
 | [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
 | [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+| [The multipole expansion method](@ref th-mem) | the whole field around each sphere, as a series of harmonics carried from one center to the next [kushch2013](@cite) |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
-The cluster model and the equivalent inclusion method drop the one-site
-assumption: instead of averaging the interaction between inclusions, they
-resolve it pair by pair, and therefore need to know *where* the inclusions are.
+The cluster model, the equivalent inclusion method and the multipole expansion
+method drop the one-site assumption: instead of averaging the interaction
+between inclusions, they resolve it, and therefore need to know *where* the
+inclusions are.
 Every scheme also estimates the concentration tensors of the phases, and the
 last page draws from them what the effective stiffness alone does not give.
 

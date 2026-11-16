@@ -154,6 +154,26 @@ certify the field that produces them. So:
   `test/LayeredSpheroids/test_legendre_stability.jl` is the *original* upward
   recurrence at 600 bits, where the instability does not bite.
 
+## Multipole expansion method — remaining pieces
+
+[`MultipoleExpansion`](@ref) treats conduction for spheres in an isotropic
+matrix ([theory](@ref th-mem)). What the works of Kushch contain beyond that,
+in the order in which it is to be added:
+
+- **Concentration tensors and local fields** of each sphere, from the regular
+  field it receives.
+- **Elasticity of spheres**: the three families of vector solutions of the Lamé
+  equation at any degree, their translation, the spring and membrane interfaces
+  [kushch2013](@cite). The transfer matrices of the layered sphere are to be
+  written at any degree first, as they now are in conduction.
+- **Aging viscoelasticity**, at both tensor orders, the response of a sphere
+  becoming a Volterra operator.
+- **Spheroids** in conduction [kushch2015](@cite) and then in elasticity, on
+  lattices whose periods follow the aspect ratio, and **ellipsoids** in a
+  finite assembly.
+- **Anisotropic conduction** by an affine map [kushch2014](@cite), a
+  transversely isotropic elastic matrix, and fiber composites in 2D.
+
 ## N-body schemes — remaining pieces
 
 This is the detail of what the references of the equivalent inclusion method

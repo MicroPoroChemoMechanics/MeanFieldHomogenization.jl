@@ -1466,7 +1466,7 @@ tex = '\rho'
 label = "ρ"
 name = "thermal resistance of a Kapitza interface"
 unit = ""
-pages = ["theory/layered_sphere.md", "theory/layered_spheroid.md", "theory/laminate.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/layered_spheroid_effective.md"]
+pages = ["theory/multipole_expansion.md", "theory/layered_sphere.md", "theory/layered_spheroid.md", "theory/laminate.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/layered_spheroid_effective.md"]
 
 [[symbol]]
 group = "Interfaces and layered inclusions"
@@ -2250,3 +2250,24 @@ label = "RH"
 name = "relative humidity"
 unit = "1"
 pages = ["applications/aging_basic_creep.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'y'
+label = "y"
+name = "regular solid harmonic of degree t and order s"
+pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'Y'
+label = "Y"
+name = "decaying solid harmonic of degree t and order s"
+pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\chi'
+label = "χ"
+name = "surface harmonic of degree t and order s"
+pages = ["theory/multipole_expansion.md"]
