@@ -42,6 +42,7 @@ const _VH_X = [0.3, -0.7, 0.45]
         @test Y1(x) ≈ grad(v -> Yt(v, t)[t, s]) rtol = 1.0e-11
         @test y1(x) ≈ grad(v -> yt(v, t)[t, s]) rtol = 1.0e-11
         @test Y2(x) ≈ cross(Y1(x), x) / t rtol = 1.0e-12          # a rotation field
+        @test y2(x) ≈ -cross(y1(x), x) / (t + 1) rtol = 1.0e-12
         @test abs(_vh_div(Y2, x)) < 1.0e-9 && abs(_vh_div(y2, x)) < 1.0e-11
         @test _vh_div(Y3, x) ≈ -Yt(x, t)[t, s] rtol = 1.0e-10
         @test _vh_div(y3, x) ≈ -yt(x, t)[t, s] rtol = 1.0e-10

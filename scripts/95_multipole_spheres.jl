@@ -7,7 +7,7 @@
 #     assemblies it acts on.
 #
 # The multipole expansion method resolves the field around every sphere of an
-# assembly, up to a degree `tmax` of the harmonics. This page computes with
+# assembly, up to a degree `nmax` of the harmonics. This page computes with
 # [`MultipoleExpansion`](@ref) the reference results of the method on spheres:
 # the conductivity of the three cubic arrays tabulated by
 # [kushch2013](@citet) and [kushch2014](@citet), and the conductivity and the
@@ -52,25 +52,25 @@ nothing #hide
 
 matrix = Dict(:K => TensISO{3}(1.0))
 spheres(k₁) = Dict(:K => TensISO{3}(k₁))
-conductivity(asm, tmax) = canonical_components(homogenize(asm, MultipoleExpansion(; tmax), :K))[3, 3]
+conductivity(asm, nmax) = canonical_components(homogenize(asm, MultipoleExpansion(; nmax), :K))[3, 3]
 nothing #hide
 
 # The table of [kushch2014](@citet) gives the conductivity to three decimals for
 # five contrasts, the last being perfectly conducting spheres, represented here
-# by ``k_1 = 10^8``. Each cell below shows the value computed at `tmax = 15`
+# by ``k_1 = 10^8``. Each cell below shows the value computed at `nmax = 15`
 # and, in parentheses, the published one.
 
 contrasts = (0.0, 10.0, 100.0, 1000.0, 1.0e8)
 columns = ("contrast_0", "contrast_10", "contrast_100", "contrast_1000", "contrast_infinity")
 headers = ("0", "10", "100", "1000", "∞")
 
-function comparison(kind, rows; tmax = 15)
+function comparison(kind, rows; nmax = 15)
     io = IOBuffer()
     println(io, "| ``c`` | ", join(("``k_1/k_0 = $(h)``" for h in headers), " | "), " |")
     println(io, "| :-- | ", join(fill(":--", length(headers)), " | "), " |")
     for row in rows
         cells = map(zip(contrasts, columns)) do (k₁, column)
-            k = conductivity(cubic_lattice(kind, matrix, spheres(k₁); fraction = row["c"]), tmax)
+            k = conductivity(cubic_lattice(kind, matrix, spheres(k₁); fraction = row["c"]), nmax)
             @sprintf("%.3f (%.3f)", k, row[column])
         end
         println(io, "| ", row["c"], " | ", join(cells, " | "), " |")
@@ -84,17 +84,17 @@ comparison(:sc, paper["tables"]["conductivity_sc"])
 # and a high contrast the degree 15 is not enough: the spheres almost touch (the
 # fraction of contact is ``\pi/6 \approx 0.524``), and the field in the gap
 # between two neighbors needs harmonics of high degree.
-# The convergence is monotonic, and starts at `tmax = 1` from the estimate of
+# The convergence is monotonic, and starts at `nmax = 1` from the estimate of
 # Maxwell and Mori–Tanaka, which the dipoles alone give exactly:
 
 degrees = 1:2:25
 p_conv = plot(;
-    xlabel = "tmax", ylabel = "k / k₀", legend = :right,
+    xlabel = "nmax", ylabel = "k / k₀", legend = :right,
     title = "Simple cubic array, perfectly conducting spheres"
 )
 for c in (0.3, 0.4, 0.5)
     asm = cubic_lattice(:sc, matrix, spheres(1.0e8); fraction = c)
-    plot!(p_conv, degrees, [conductivity(asm, t) for t in degrees]; marker = :circle, ms = 3, label = "c = $c")
+    plot!(p_conv, degrees, [conductivity(asm, n) for n in degrees]; marker = :circle, ms = 3, label = "c = $c")
     k_mt = canonical_components(homogenize(asm, MoriTanaka(), :K))[1, 1]
     scatter!(p_conv, [1], [k_mt]; marker = :star5, ms = 7, color = :black, label = c == 0.3 ? "Mori–Tanaka" : "")
 end
@@ -103,7 +103,7 @@ hline!(p_conv, [published]; ls = :dash, color = :gray, label = "published, c = 0
 p_conv
 
 # The value printed by the sample code of [kushch2013](@citet) for the fraction
-# 0.5, with five decimals, is reached at `tmax = 25`, the degree that code uses:
+# 0.5, with five decimals, is reached at `nmax = 25`, the degree that code uses:
 
 asm = cubic_lattice(:sc, matrix, spheres(1.0e8); fraction = 0.5)
 (computed = conductivity(asm, 25), published = book["quantities"]["periodic_conductivity_sc"]["value"])
@@ -124,7 +124,7 @@ p_arrays = plot(;
 for (kind, name, color) in ((:sc, "conductivity_sc", 1), (:bcc, "conductivity_bcc", 2), (:fcc, "conductivity_fcc", 3))
     cs = fractions(kind)
     ks = [conductivity(cubic_lattice(kind, matrix, spheres(100.0); fraction = c), 11) for c in cs]
-    plot!(p_arrays, cs, ks; color, label = "$(kind), tmax = 11")
+    plot!(p_arrays, cs, ks; color, label = "$(kind), nmax = 11")
     rows = book["tables"][name]
     scatter!(p_arrays, getindex.(rows, "c"), getindex.(rows, "contrast_100"); color, marker = :diamond, label = "$(kind), published")
 end
@@ -178,7 +178,7 @@ cluster_scene(cluster; uid = "mem-cluster-27")
 #
 # The published value is that of the code, with five decimals:
 
-[(tmax = t, k = round(conductivity(cluster, t); digits = 5)) for t in (1, 3, 5, 7)]
+[(nmax = n, k = round(conductivity(cluster, n); digits = 5)) for n in (1, 3, 5, 7)]
 
 #-
 
@@ -204,7 +204,7 @@ function moduli(scheme)
 end
 
 rows = [("Mori–Tanaka", moduli(MoriTanaka()))]
-append!(rows, [("multipole expansion, tmax = $t", moduli(MultipoleExpansion(; tmax = t))) for t in (2, 4, 6)])
+append!(rows, [("multipole expansion, nmax = $n", moduli(MultipoleExpansion(; nmax = n))) for n in (2, 4, 6)])
 push!(rows, ("published", (q("fcm_bulk_modulus"), q("fcm_shear_modulus_1"), q("fcm_shear_modulus_2"))))
 io = IOBuffer()
 println(io, "| | ``k/k_0`` | ``\\mu_1/\\mu_0`` | ``\\mu_2/\\mu_0`` |\n| :-- | :-- | :-- | :-- |")
@@ -226,20 +226,20 @@ Markdown.parse(String(take!(io)))
 # coefficients for the three unit gradients, and the temperature follows by
 # summing the decaying harmonics of each sphere.
 
-centers = Dict(:a => [0.0, 0.0, 0.55], :b => [0.0, 0.0, -0.55])
+centers = Dict(:upper => [0.0, 0.0, 0.55], :lower => [0.0, 0.0, -0.55])
 pair = ParticleAssembly(; boundary = MixedBC(3.0))
 add_matrix!(pair, matrix)
 for (name, X) in centers
     add_particle!(pair, name, X, Ellipsoid(0.5), spheres(10.0))
 end
-tmax = 12
-A = multipole_coefficients(pair; scheme = MultipoleExpansion(; tmax))
+nmax = 12
+b = multipole_coefficients(pair; scheme = MultipoleExpansion(; nmax))
 
 function temperature(x; gradient = 3)
     T = x[gradient]
     for (name, X) in centers
-        Y = irregular_harmonics(x - X, tmax)
-        T += real(sum(A[name, t, s][gradient] * Y[t, s] for t in 1:tmax for s in (-t):t))
+        Y = irregular_harmonics(x - X, nmax)
+        T += real(sum(b[name, n, m][gradient] * Y[n, m] for n in 1:nmax for m in (-n):n))
     end
     return T
 end
@@ -269,10 +269,10 @@ gap_gradient = (temperature([0.0, 0.0, 0.04]) - temperature([0.0, 0.0, -0.04])) 
 #
 # | result | source | recovered |
 # | :-- | :-- | :-- |
-# | conductivity of the simple cubic array | [kushch2014](@cite), Table 2 | to the third decimal up to ``c = 0.45`` at `tmax = 15`; ``c = 0.5`` at `tmax = 25` |
+# | conductivity of the simple cubic array | [kushch2014](@cite), Table 2 | to the third decimal up to ``c = 0.45`` at `nmax = 15`; ``c = 0.5`` at `nmax = 25` |
 # | conductivity of the body-centered and face-centered arrays | [kushch2013](@cite), Tables 3.2 and 3.3 | on the published points, short of contact |
-# | conductivity of the cluster of 27 spheres | [kushch2013](@cite), appendix A.1 | five decimals at `tmax = 5` |
-# | bulk and shear moduli of the cluster of 27 rigid spheres | [kushch2013](@cite), appendix A.3 | four decimals at `tmax = 6` |
+# | conductivity of the cluster of 27 spheres | [kushch2013](@cite), appendix A.1 | five decimals at `nmax = 5` |
+# | bulk and shear moduli of the cluster of 27 rigid spheres | [kushch2013](@cite), appendix A.3 | four decimals at `nmax = 6` |
 #
 #md # ```@raw html
 #md # <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>

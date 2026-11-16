@@ -171,7 +171,7 @@ function _cond_interface_T(::Integer, intf::KapitzaInterface, k_iso, r)
     return T[one(T) -T(intf.resistance); zero(T) one(T)]
 end
 
-# The surface current kˢ ∇ₛT has the surface divergence -n(n+1) kˢ T̂ / r² on
+# The surface current kˢ gradₛ T has the surface divergence -n(n+1) kˢ T̂ / r² on
 # the degree-n harmonic, which the normal flux balances.
 function _cond_interface_T(n::Integer, intf::SurfaceConductiveInterface, k_iso, r)
     T = promote_type(eltype(intf), typeof(k_iso), typeof(r))
@@ -239,15 +239,13 @@ end
     harmonic_response(sphere::LayeredSphere, K₀, n) -> Number
 
 Response of a layered sphere to the harmonic of degree `n` in a matrix of
-isotropic conductivity `K₀`: the ratio ``B_\\infty / A_\\infty`` of the two
-amplitudes of the field in the matrix,
-
-```math
-T = \\big(A_\\infty\\,r^n + B_\\infty\\,r^{-(n+1)}\\big)\\,Y_n(\\theta, \\varphi),
-```
-
-with ``Y_n`` any surface harmonic of degree `n`: the sphere is isotropic, so
-the ratio does not depend on the order. For a homogeneous sphere of radius
+isotropic conductivity `K₀`. Around the sphere the field of the matrix is a sum
+of terms ``a_n^m\\,y_n^m + b_n^m\\,Y_n^m``, the regular and decaying solid
+harmonics of [`regular_harmonics`](@ref MeanFieldHomogenization.Harmonics.regular_harmonics) and
+[`irregular_harmonics`](@ref MeanFieldHomogenization.Harmonics.irregular_harmonics); the function returns
+``\\zeta_n`` such that ``(n-m)!\\,(n+m)!\\;b_n^m = \\zeta_n\\,a_n^m``, that is, the
+ratio of the radial functions ``r^{-(n+1)}`` and ``r^n``. The sphere is
+isotropic, so ``\\zeta_n`` does not depend on the order ``m``. For a homogeneous sphere of radius
 ``R`` and conductivity ``k_1`` behind a perfect interface it is
 ``-n\\,(k_1 - k_0)\\,R^{2n+1} / (n\\,k_1 + (n+1)\\,k_0)``. The layers and the
 interface models enter through the same transfer matrices as for the uniform
@@ -294,11 +292,11 @@ end
 Extra macroscopic flux carried **tangentially along the surface-conductive
 interfaces** of the composite sphere, per unit remote gradient.  A
 `SurfaceConductiveInterface(kₛ)` at radius ``r`` supports a surface current
-``k^{\\mathrm s}\\,\\nabla_{\\mathrm s} T``; its contribution to the volume-averaged flux of the whole sphere
+``k^{\\mathrm s}\\,\\underline{\\operatorname{grad}}_{\\mathrm s}\\,T``; its contribution to the volume-averaged flux of the whole sphere
 (radius ``R_N``) is, per unit ``A_\\infty``,
 
 ```math
-\\frac{1}{V}\\oint k^{\\mathrm s}\\,\\nabla_{\\mathrm s} T\\,\\mathrm{d}S = \\frac{2k^{\\mathrm s}\\,\\hat T(r)\\,r}{R_N^3},
+\\frac{1}{V}\\oint k^{\\mathrm s}\\,\\underline{\\operatorname{grad}}_{\\mathrm s}\\,T\\,\\mathrm{d}S = \\frac{2k^{\\mathrm s}\\,\\hat T(r)\\,r}{R_N^3},
 ```
 
 with ``\\hat T(r)`` the (continuous) temperature amplitude at the interface.  For a

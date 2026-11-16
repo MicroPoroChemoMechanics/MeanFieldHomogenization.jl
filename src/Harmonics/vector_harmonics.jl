@@ -5,26 +5,26 @@
 #  In the complex Cartesian basis e₁ = (i₁ + i i₂)/2, e₂ = conj(e₁), e₃ = i₃,
 #  the three families of harmonic vectors are (kushch2013, Eqs. (4.14), (4.15))
 #
-#    Y⁽¹⁾_ts = e₁ Y_{t+1}^{s−1} − e₂ Y_{t+1}^{s+1} − e₃ Y_{t+1}^s            ( = ∇Y_t^s )
-#    Y⁽²⁾_ts = (i/t) [ e₁ (t+s) Y_t^{s−1} + e₂ (t−s) Y_t^{s+1} − e₃ s Y_t^s ]
-#    Y⁽³⁾_ts = [ e₁ (t+s−1)(t+s) Y_{t−1}^{s−1} − e₂ (t−s−1)(t−s) Y_{t−1}^{s+1}
-#                + e₃ (t−s)(t+s) Y_{t−1}^s ] / [t(2t−1)]
+#    Y⁽¹⁾_nm = e₁ Y_{n+1}^{m−1} − e₂ Y_{n+1}^{m+1} − e₃ Y_{n+1}^m            ( = grad Y_n^m )
+#    Y⁽²⁾_nm = (i/n) [ e₁ (n+m) Y_n^{m−1} + e₂ (n−m) Y_n^{m+1} − e₃ m Y_n^m ]
+#    Y⁽³⁾_nm = [ e₁ (n+m−1)(n+m) Y_{n−1}^{m−1} − e₂ (n−m−1)(n−m) Y_{n−1}^{m+1}
+#                + e₃ (n−m)(n+m) Y_{n−1}^m ] / [n(2n−1)]
 #
-#    y⁽¹⁾_ts = e₁ y_{t−1}^{s−1} − e₂ y_{t−1}^{s+1} + e₃ y_{t−1}^s            ( = ∇y_t^s )
-#    y⁽²⁾_ts = (i/(t+1)) [ −e₁ (t−s+1) y_t^{s−1} − e₂ (t+s+1) y_t^{s+1} + e₃ s y_t^s ]
-#    y⁽³⁾_ts = [ e₁ (t−s+1)(t−s+2) y_{t+1}^{s−1} − e₂ (t+s+1)(t+s+2) y_{t+1}^{s+1}
-#                − e₃ (t−s+1)(t+s+1) y_{t+1}^s ] / [(t+1)(2t+3)]
+#    y⁽¹⁾_nm = e₁ y_{n−1}^{m−1} − e₂ y_{n−1}^{m+1} + e₃ y_{n−1}^m            ( = grad y_n^m )
+#    y⁽²⁾_nm = (i/(n+1)) [ −e₁ (n−m+1) y_n^{m−1} − e₂ (n+m+1) y_n^{m+1} + e₃ m y_n^m ]
+#    y⁽³⁾_nm = [ e₁ (n−m+1)(n−m+2) y_{n+1}^{m−1} − e₂ (n+m+1)(n+m+2) y_{n+1}^{m+1}
+#                − e₃ (n−m+1)(n+m+1) y_{n+1}^m ] / [(n+1)(2n+3)]
 #
-#  The first is a gradient, the second a rotation field (Y⁽²⁾_ts = ∇Y_t^s × x / t),
-#  both divergence-free; the third has the divergence −Y_t^s (resp. −y_t^s).
+#  The first is a gradient, the second a rotation field (Y⁽²⁾_nm = grad Y_n^m × x / n),
+#  both divergence-free; the third has the divergence −Y_n^m (resp. −y_n^m).
 #
 #  The solutions of the Lamé equation of an isotropic solid of Poisson ratio ν
 #  are the first two families as they are, and a third one that is the
 #  Papkovich-Neuber field of the third harmonic vector:
 #
-#    U⁽¹⁾ = Y⁽¹⁾ ,  U⁽²⁾ = Y⁽²⁾ ,  U⁽³⁾ = 4(1−ν) Y⁽³⁾ − ∇(x·Y⁽³⁾) ,
+#    U⁽¹⁾ = Y⁽¹⁾ ,  U⁽²⁾ = Y⁽²⁾ ,  U⁽³⁾ = 4(1−ν) Y⁽³⁾ − grad(x·Y⁽³⁾) ,
 #
-#  with x·Y⁽³⁾_ts = r² Y_t^s/(2t−1) and x·y⁽³⁾_ts = −r² y_t^s/(2t+3). This is the
+#  with x·Y⁽³⁾_nm = r² Y_n^m/(2n−1) and x·y⁽³⁾_nm = −r² y_n^m/(2n+3). This is the
 #  third solution of kushch2013, Eq. (4.27), written without a biharmonic
 #  function; the Poisson ratio enters it through the factor 4(1−ν) alone.
 # =============================================================================
@@ -33,85 +33,85 @@
 @inline _complex_cartesian(a, b, c) = SVector((a + b) / 2, im * (a - b) / 2, c)
 
 # A harmonic of a table, zero outside the degrees it holds.
-@inline function _entry(h::HarmonicTable{C}, t::Integer, s::Integer) where {C}
-    return 0 ≤ t ≤ h.tmax ? h[t, s] : zero(C)
+@inline function _entry(h::HarmonicTable{C}, n::Integer, m::Integer) where {C}
+    return 0 ≤ n ≤ h.nmax ? h[n, m] : zero(C)
 end
 
 """
-    vector_irregular_harmonic(i, t, s, Y::HarmonicTable) -> SVector{3}
+    vector_irregular_harmonic(i, n, m, Y::HarmonicTable) -> SVector{3}
 
 Cartesian components of the decaying vector solid harmonic
-``\\underline{Y}^{(i)}_{ts}`` (``i = 1, 2, 3``, ``t \\ge 1`` for ``i > 1``) from the
+``\\underline{Y}^{(i)}_{nm}`` (``i = 1, 2, 3``, ``n \\ge 1`` for ``i > 1``) from the
 table `Y` of the decaying scalar harmonics at the point, which must reach the
-degree ``t + 1``.
+degree ``n + 1``.
 """
-function vector_irregular_harmonic(i::Integer, t::Integer, s::Integer, Y::HarmonicTable)
-    i == 1 && return _complex_cartesian(_entry(Y, t + 1, s - 1), -_entry(Y, t + 1, s + 1), -_entry(Y, t + 1, s))
-    i == 2 && return (im / t) * _complex_cartesian(
-        (t + s) * _entry(Y, t, s - 1), (t - s) * _entry(Y, t, s + 1), -s * _entry(Y, t, s)
+function vector_irregular_harmonic(i::Integer, n::Integer, m::Integer, Y::HarmonicTable)
+    i == 1 && return _complex_cartesian(_entry(Y, n + 1, m - 1), -_entry(Y, n + 1, m + 1), -_entry(Y, n + 1, m))
+    i == 2 && return (im / n) * _complex_cartesian(
+        (n + m) * _entry(Y, n, m - 1), (n - m) * _entry(Y, n, m + 1), -m * _entry(Y, n, m)
     )
     i == 3 || throw(ArgumentError("vector solid harmonics: the family is 1, 2 or 3, got $i"))
     return _complex_cartesian(
-        (t + s - 1) * (t + s) * _entry(Y, t - 1, s - 1), -(t - s - 1) * (t - s) * _entry(Y, t - 1, s + 1),
-        (t - s) * (t + s) * _entry(Y, t - 1, s)
-    ) / (t * (2t - 1))
+        (n + m - 1) * (n + m) * _entry(Y, n - 1, m - 1), -(n - m - 1) * (n - m) * _entry(Y, n - 1, m + 1),
+        (n - m) * (n + m) * _entry(Y, n - 1, m)
+    ) / (n * (2n - 1))
 end
 
 """
-    vector_regular_harmonic(i, t, s, y::HarmonicTable) -> SVector{3}
+    vector_regular_harmonic(i, n, m, y::HarmonicTable) -> SVector{3}
 
 Cartesian components of the regular vector solid harmonic
-``\\underline{y}^{(i)}_{ts}`` (``i = 1, 2, 3``) from the table `y` of the regular
-scalar harmonics at the point, which must reach the degree ``t + 1``.
+``\\underline{y}^{(i)}_{nm}`` (``i = 1, 2, 3``) from the table `y` of the regular
+scalar harmonics at the point, which must reach the degree ``n + 1``.
 """
-function vector_regular_harmonic(i::Integer, t::Integer, s::Integer, y::HarmonicTable)
-    i == 1 && return _complex_cartesian(_entry(y, t - 1, s - 1), -_entry(y, t - 1, s + 1), _entry(y, t - 1, s))
-    i == 2 && return (im / (t + 1)) * _complex_cartesian(
-        -(t - s + 1) * _entry(y, t, s - 1), -(t + s + 1) * _entry(y, t, s + 1), s * _entry(y, t, s)
+function vector_regular_harmonic(i::Integer, n::Integer, m::Integer, y::HarmonicTable)
+    i == 1 && return _complex_cartesian(_entry(y, n - 1, m - 1), -_entry(y, n - 1, m + 1), _entry(y, n - 1, m))
+    i == 2 && return (im / (n + 1)) * _complex_cartesian(
+        -(n - m + 1) * _entry(y, n, m - 1), -(n + m + 1) * _entry(y, n, m + 1), m * _entry(y, n, m)
     )
     i == 3 || throw(ArgumentError("vector solid harmonics: the family is 1, 2 or 3, got $i"))
     return _complex_cartesian(
-        (t - s + 1) * (t - s + 2) * _entry(y, t + 1, s - 1), -(t + s + 1) * (t + s + 2) * _entry(y, t + 1, s + 1),
-        -(t - s + 1) * (t + s + 1) * _entry(y, t + 1, s)
-    ) / ((t + 1) * (2t + 3))
+        (n - m + 1) * (n - m + 2) * _entry(y, n + 1, m - 1), -(n + m + 1) * (n + m + 2) * _entry(y, n + 1, m + 1),
+        -(n - m + 1) * (n + m + 1) * _entry(y, n + 1, m)
+    ) / ((n + 1) * (2n + 3))
 end
 
 """
-    lame_irregular(i, t, s, x, ν) -> SVector{3}
+    lame_irregular(i, n, m, x, ν) -> SVector{3}
 
-Decaying solution ``\\underline{U}^{(i)}_{ts}`` of the Lamé equation at the
+Decaying solution ``\\underline{U}^{(i)}_{nm}`` of the Lamé equation at the
 point `x`, for the Poisson ratio `ν`: the vector harmonics
-``\\underline{Y}^{(1)}_{ts}`` and ``\\underline{Y}^{(2)}_{ts}``, and
-``\\underline{U}^{(3)}_{ts} = 4(1-\\nu)\\,\\underline{Y}^{(3)}_{ts}
-- \\underline{\\nabla}(\\underline{x}\\cdot\\underline{Y}^{(3)}_{ts})``
+``\\underline{Y}^{(1)}_{nm}`` and ``\\underline{Y}^{(2)}_{nm}``, and
+``\\underline{U}^{(3)}_{nm} = 4(1-\\nu)\\,\\underline{Y}^{(3)}_{nm}
+- \\underline{\\operatorname{grad}}\\,(\\underline{x}\\cdot\\underline{Y}^{(3)}_{nm})``
 [kushch2013](@cite).
 """
-function lame_irregular(i::Integer, t::Integer, s::Integer, x::AbstractVector, ν)
-    Y = irregular_harmonics(x, t + 1)
-    i < 3 && return vector_irregular_harmonic(i, t, s, Y)
+function lame_irregular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν)
+    Y = irregular_harmonics(x, n + 1)
+    i < 3 && return vector_irregular_harmonic(i, n, m, Y)
     r² = sum(abs2, x)
-    # ∇(x·Y⁽³⁾) = ∇(r² Y_t^s)/(2t−1) = (2 x Y_t^s + r² Y⁽¹⁾_ts)/(2t−1)
-    grad = (2 * Y[t, s] * SVector{3}(x) + r² * vector_irregular_harmonic(1, t, s, Y)) / (2t - 1)
-    return 4 * (1 - ν) * vector_irregular_harmonic(3, t, s, Y) - grad
+    # grad(x·Y⁽³⁾) = grad(r² Y_n^m)/(2n−1) = (2 x Y_n^m + r² Y⁽¹⁾_nm)/(2n−1)
+    grad = (2 * Y[n, m] * SVector{3}(x) + r² * vector_irregular_harmonic(1, n, m, Y)) / (2n - 1)
+    return 4 * (1 - ν) * vector_irregular_harmonic(3, n, m, Y) - grad
 end
 
 """
-    lame_regular(i, t, s, x, ν) -> SVector{3}
+    lame_regular(i, n, m, x, ν) -> SVector{3}
 
-Regular solution ``\\underline{u}^{(i)}_{ts}`` of the Lamé equation at the point
+Regular solution ``\\underline{u}^{(i)}_{nm}`` of the Lamé equation at the point
 `x`, for the Poisson ratio `ν`: the counterpart of [`lame_irregular`](@ref) on
 the regular vector harmonics. The solutions of the lowest degrees are the
 dilatation ``\\underline{u}^{(3)}_{00}``, the translations
-``\\underline{u}^{(1)}_{1s}``, the rotations ``\\underline{u}^{(2)}_{1s}`` and
-the uniform deviatoric strains ``\\underline{u}^{(1)}_{2s}``.
+``\\underline{u}^{(1)}_{1m}``, the rotations ``\\underline{u}^{(2)}_{1m}`` and
+the uniform deviatoric strains ``\\underline{u}^{(1)}_{2m}``.
 """
-function lame_regular(i::Integer, t::Integer, s::Integer, x::AbstractVector, ν)
-    y = regular_harmonics(x, t + 1)
-    i < 3 && return vector_regular_harmonic(i, t, s, y)
+function lame_regular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν)
+    y = regular_harmonics(x, n + 1)
+    i < 3 && return vector_regular_harmonic(i, n, m, y)
     r² = sum(abs2, x)
-    # ∇(x·y⁽³⁾) = −∇(r² y_t^s)/(2t+3) = −(2 x y_t^s + r² y⁽¹⁾_ts)/(2t+3)
-    grad = -(2 * y[t, s] * SVector{3}(x) + r² * vector_regular_harmonic(1, t, s, y)) / (2t + 3)
-    return 4 * (1 - ν) * vector_regular_harmonic(3, t, s, y) - grad
+    # grad(x·y⁽³⁾) = −grad(r² y_n^m)/(2n+3) = −(2 x y_n^m + r² y⁽¹⁾_nm)/(2n+3)
+    grad = -(2 * y[n, m] * SVector{3}(x) + r² * vector_regular_harmonic(1, n, m, y)) / (2n + 3)
+    return 4 * (1 - ν) * vector_regular_harmonic(3, n, m, y) - grad
 end
 
 # ─── Translation ─────────────────────────────────────────────────────────────
@@ -119,71 +119,71 @@ end
 #  About a center at R from the first one, a decaying vector harmonic expands
 #  on the regular ones (kushch2013, Eq. (4.85)):
 #
-#    Y⁽ⁱ⁾_ts(r + R) = Σ_{j ≤ i} Σ_{k,l} (−1)^{k+l} α⁽ⁱ⁾⁽ʲ⁾_tksl(R) y⁽ʲ⁾_kl(r) ,
+#    Y⁽ⁱ⁾_n′m′(r + R) = Σ_{j ≤ i} Σ_{n,m} (−1)^{n+m} α⁽ⁱ⁾⁽ʲ⁾_n′nm′m(R) y⁽ʲ⁾_nm(r) ,
 #
-#    α⁽¹⁾⁽¹⁾ = α⁽²⁾⁽²⁾ = α⁽³⁾⁽³⁾ = Y_{t+k}^{s−l} ,
-#    α⁽²⁾⁽¹⁾ = i (l/k + s/t) Y_{t+k−1}^{s−l} ,          α⁽³⁾⁽²⁾ = −α⁽²⁾⁽¹⁾ ,
-#    α⁽³⁾⁽¹⁾ = [1 + ls/(kt) − (t²−s²)/(t(2t−1)) − (k²−l²)/(k(2k−1))] Y_{t+k−2}^{s−l} .
+#    α⁽¹⁾⁽¹⁾ = α⁽²⁾⁽²⁾ = α⁽³⁾⁽³⁾ = Y_{n′+n}^{m′−m} ,
+#    α⁽²⁾⁽¹⁾ = i (m/n + m′/n′) Y_{n′+n−1}^{m′−m} ,          α⁽³⁾⁽²⁾ = −α⁽²⁾⁽¹⁾ ,
+#    α⁽³⁾⁽¹⁾ = [1 + m m′/(n n′) − (n′²−m′²)/(n′(2n′−1)) − (n²−m²)/(n(2n−1))] Y_{n′+n−2}^{m′−m} .
 #
 #  The translation of the Lamé solutions follows from the Papkovich-Neuber form
 #  of the third one. With x = r + R the position from the first center,
 #
-#    U⁽³⁾ = [4(1−ν) B − ∇(r·B)] − ∇(R·B) ,     B = Y⁽³⁾_ts(r + R) ,
+#    U⁽³⁾ = [4(1−ν) B − grad(r·B)] − grad(R·B) ,     B = Y⁽³⁾_n′m′(r + R) ,
 #
 #  and, B being expanded as above, the bracket is term by term a regular Lamé
-#  solution: u⁽³⁾_kl for y⁽³⁾_kl, 4(1−ν) u⁽²⁾_kl for y⁽²⁾_kl (which is tangent to
-#  the spheres, r·y⁽²⁾ = 0) and (4(1−ν) − k) u⁽¹⁾_kl for y⁽¹⁾_kl = ∇y_k^l
-#  (r·∇y_k^l = k y_k^l). The last term is the gradient of the harmonic function
-#  R·B, whose components are scalar harmonics of degree t − 1 that translate as
+#  solution: u⁽³⁾_nm for y⁽³⁾_nm, 4(1−ν) u⁽²⁾_nm for y⁽²⁾_nm (which is tangent to
+#  the spheres, r·y⁽²⁾ = 0) and (4(1−ν) − n) u⁽¹⁾_nm for y⁽¹⁾_nm = grad y_n^m
+#  (r·grad y_n^m = n y_n^m). The last term is the gradient of the harmonic function
+#  R·B, whose components are scalar harmonics of degree n′ − 1 that translate as
 #  such:
 #
-#    R·Y⁽³⁾_ts(r + R) = Σ_{k,l} (−1)^{k+l} H_tksl(R) y_k^l(r) ,
-#    H_tksl = [ (R·e₁)(t+s−1)(t+s) Y_{t−1+k}^{s−1−l} − (R·e₂)(t−s−1)(t−s) Y_{t−1+k}^{s+1−l}
-#               + R₃ (t−s)(t+s) Y_{t−1+k}^{s−l} ] / [t(2t−1)] .
+#    R·Y⁽³⁾_n′m′(r + R) = Σ_{n,m} (−1)^{n+m} H_n′nm′m(R) y_n^m(r) ,
+#    H_n′nm′m = [ (R·e₁)(n′+m′−1)(n′+m′) Y_{n′−1+n}^{m′−1−m} − (R·e₂)(n′−m′−1)(n′−m′) Y_{n′−1+n}^{m′+1−m}
+#               + R₃ (n′−m′)(n′+m′) Y_{n′−1+n}^{m′−m} ] / [n′(2n′−1)] .
 #
-#  Hence U⁽ⁱ⁾_ts(r + R) = Σ_{j ≤ i} Σ_{k,l} (−1)^{k+l} η⁽ⁱ⁾⁽ʲ⁾_tksl u⁽ʲ⁾_kl(r), with
+#  Hence U⁽ⁱ⁾_n′m′(r + R) = Σ_{j ≤ i} Σ_{n,m} (−1)^{n+m} η⁽ⁱ⁾⁽ʲ⁾_n′nm′m u⁽ʲ⁾_nm(r), with
 #  η = α for i < 3 and
 #
-#    η⁽³⁾⁽³⁾ = α⁽³⁾⁽³⁾ ,   η⁽³⁾⁽²⁾ = 4(1−ν) α⁽³⁾⁽²⁾ ,   η⁽³⁾⁽¹⁾ = (4(1−ν) − k) α⁽³⁾⁽¹⁾ − H .
+#    η⁽³⁾⁽³⁾ = α⁽³⁾⁽³⁾ ,   η⁽³⁾⁽²⁾ = 4(1−ν) α⁽³⁾⁽²⁾ ,   η⁽³⁾⁽¹⁾ = (4(1−ν) − n) α⁽³⁾⁽¹⁾ − H .
 #
 #  Each coefficient is affine in 4(1−ν): `lame_translation` returns the two
-#  parts, (a, b) with η = a + 4(1−ν) b. At k = 0 only j = 3 exists (u⁽¹⁾_00 and
+#  parts, (a, b) with η = a + 4(1−ν) b. At n = 0 only j = 3 exists (u⁽¹⁾_00 and
 #  u⁽²⁾_00 vanish).
 
 """
-    lame_translation(i, j, t, k, s, l, Y::HarmonicTable, R) -> (a, b)
+    lame_translation(i, j, n′, n, m′, m, Y::HarmonicTable, R) -> (a, b)
 
-Coefficient ``\\eta^{(i)(j)}_{tksl} = a + 4(1-\\nu)\\,b`` of the regular Lamé
-solution ``\\underline{u}^{(j)}_{kl}`` in the expansion of the decaying one
-``\\underline{U}^{(i)}_{ts}`` about a center at `R` from its own,
+Coefficient ``\\eta^{(i)(j)}_{n'n\\,m'm} = a + 4(1-\\nu)\\,b`` of the regular Lamé
+solution ``\\underline{u}^{(j)}_{nm}`` in the expansion of the decaying one
+``\\underline{U}^{(i)}_{n'm'}`` about a center at `R` from its own,
 
 ```math
-\\underline{U}^{(i)}_{ts}(\\underline{r} + \\underline{R}) = \\sum_{j \\le i}\\sum_{k,l}
-  (-1)^{k+l}\\,\\eta^{(i)(j)}_{tksl}(\\underline{R})\\;\\underline{u}^{(j)}_{kl}(\\underline{r}),
+\\underline{U}^{(i)}_{n'm'}(\\underline{r} + \\underline{R}) = \\sum_{j \\le i}\\sum_{n,m}
+  (-1)^{n+m}\\,\\eta^{(i)(j)}_{n'n\\,m'm}(\\underline{R})\\;\\underline{u}^{(j)}_{nm}(\\underline{r}),
 \\qquad \\|\\underline{r}\\| < \\|\\underline{R}\\| ,
 ```
 
 from the table `Y` of the decaying scalar harmonics at `R`, which must reach
-the degree ``t + k``. The two parts are separated because the Poisson ratio of
+the degree ``n' + n``. The two parts are separated because the Poisson ratio of
 the matrix is all that distinguishes one isotropic matrix from another here.
 """
 function lame_translation(
-        i::Integer, j::Integer, t::Integer, k::Integer, s::Integer, l::Integer,
+        i::Integer, j::Integer, n′::Integer, n::Integer, m′::Integer, m::Integer,
         Y::HarmonicTable{C}, R::AbstractVector
     ) where {C}
     z = zero(C)
-    (j > i || (k == 0 && j < 3)) && return (z, z)
-    i == j && return (_entry(Y, t + k, s - l), z)
+    (j > i || (n == 0 && j < 3)) && return (z, z)
+    i == j && return (_entry(Y, n′ + n, m′ - m), z)
     if i - j == 1
-        α = im * (l / k + s / t) * _entry(Y, t + k - 1, s - l)      # α⁽²⁾⁽¹⁾ = −α⁽³⁾⁽²⁾
+        α = im * (m / n + m′ / n′) * _entry(Y, n′ + n - 1, m′ - m)      # α⁽²⁾⁽¹⁾ = −α⁽³⁾⁽²⁾
         return i == 2 ? (α, z) : (z, -α)
     end
-    α = (1 + l * s / (k * t) - (t^2 - s^2) / (t * (2t - 1)) - (k^2 - l^2) / (k * (2k - 1))) *
-        _entry(Y, t + k - 2, s - l)
+    α = (1 + m * m′ / (n * n′) - (n′^2 - m′^2) / (n′ * (2n′ - 1)) - (n^2 - m^2) / (n * (2n - 1))) *
+        _entry(Y, n′ + n - 2, m′ - m)
     H = (
-        (R[1] + im * R[2]) / 2 * (t + s - 1) * (t + s) * _entry(Y, t - 1 + k, s - 1 - l) -
-            (R[1] - im * R[2]) / 2 * (t - s - 1) * (t - s) * _entry(Y, t - 1 + k, s + 1 - l) +
-            R[3] * (t - s) * (t + s) * _entry(Y, t - 1 + k, s - l)
-    ) / (t * (2t - 1))
-    return (-k * α - H, α)
+        (R[1] + im * R[2]) / 2 * (n′ + m′ - 1) * (n′ + m′) * _entry(Y, n′ - 1 + n, m′ - 1 - m) -
+            (R[1] - im * R[2]) / 2 * (n′ - m′ - 1) * (n′ - m′) * _entry(Y, n′ - 1 + n, m′ + 1 - m) +
+            R[3] * (n′ - m′) * (n′ + m′) * _entry(Y, n′ - 1 + n, m′ - m)
+    ) / (n′ * (2n′ - 1))
+    return (-n * α - H, α)
 end

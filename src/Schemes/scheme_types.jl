@@ -215,11 +215,11 @@ end
 EquivalentInclusion(; kwargs...) = EquivalentInclusion(NamedTuple(kwargs))
 
 """
-    MultipoleExpansion(; tmax = 3, kwargs...) <: HomogenizationScheme
+    MultipoleExpansion(; nmax = 3, kwargs...) <: HomogenizationScheme
 
 Multipole expansion method of [kushch2013](@citet): an N-body scheme in which
 the field around every inclusion is expanded in solid harmonics up to the
-degree `tmax`, the expansion of each inclusion being carried to the center of
+degree `nmax`, the expansion of each inclusion being carried to the center of
 the others, where it adds to the remote field they receive.
 
 Acts on a [`ParticleAssembly`](@ref MeanFieldHomogenization.Assemblies.ParticleAssembly) of spheres in an isotropic
@@ -229,13 +229,13 @@ layers and its interface models with it.
 
 Where [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref) keep one uniform
 polarization per inclusion, this scheme converges to the exact field of the
-assembly as `tmax` grows; `tmax = 1` keeps the dipoles alone. The effective
+assembly as `nmax` grows; `nmax = 1` keeps the dipoles alone. The effective
 property follows from the dipoles: a finite assembly bounded by
 [`MixedBC`](@ref MeanFieldHomogenization.Assemblies.MixedBC) is replaced by the homogeneous inclusion of the same shape
 sending the same far field, which is the argument of the scheme of
 [Maxwell](@ref th-scheme-maxwell); a periodic assembly needs no such closure.
 
-The number of unknowns is ``N\\,t_{\\max}(t_{\\max}+2)`` for ``N`` particles, and
+The number of unknowns is ``N\\,n_{\\max}(n_{\\max}+2)`` for ``N`` particles, and
 the system is dense: the degree needed grows as the particles come close to
 each other.
 """

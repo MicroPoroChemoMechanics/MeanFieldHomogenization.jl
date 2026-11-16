@@ -7,12 +7,12 @@
 - **`MultipoleExpansion`, a third scheme on a `ParticleAssembly`.** The cluster
   model and the equivalent inclusion method keep one uniform polarization per
   inclusion. The multipole expansion method of Kushch expands the field around
-  every sphere in solid harmonics up to the degree `tmax`, carries each
+  every sphere in solid harmonics up to the degree `nmax`, carries each
   expansion to the center of the other spheres, and tends to the exact field of
-  the assembly as `tmax` grows. This release treats conduction in an isotropic
+  the assembly as `nmax` grows. This release treats conduction in an isotropic
   matrix: a periodic assembly (`PeriodicBox`) gives the conductivity of the
   periodic medium, a finite one (`MixedBC`) is closed by Maxwell's argument.
-  The dipoles alone (`tmax = 1`) on a cubic array are Mori–Tanaka exactly, and
+  The dipoles alone (`nmax = 1`) on a cubic array are Mori–Tanaka exactly, and
   the published values of simple cubic, body-centered and face-centered arrays
   are recovered.
 - **Spheres with layers and interfaces as particles.** A particle of an
@@ -24,7 +24,7 @@
   degree 1.
 - **Elasticity of finite assemblies.** `MultipoleExpansion` gives the stiffness
   of a finite assembly of spheres (`MixedBC`), from three solutions of the Lamé
-  equation per harmonic. `harmonic_response(sphere, C₀, t)` is the elastic
+  equation per harmonic. `harmonic_response(sphere, C₀, n)` is the elastic
   response of a layered sphere at any degree, with its spring and membrane
   interfaces; `lame_regular`, `lame_irregular` and `lame_translation` give the
   solutions and their expansion about another center. One sphere is
@@ -39,6 +39,13 @@
   flux of every sphere following from the uniform part of the field it
   receives, and `multipole_coefficients`, the coefficients of the series.
 - `box_periods(::PeriodicBox)`.
+
+### Documentation
+
+- The differential operators are written by their names in every page, every
+  docstring and every published script: gradient, divergence, curl and
+  Laplacian, in the typography of the vectors and tensors they return, instead
+  of the symbol nabla. The Nomenclature page lists them.
 
 ### Changed
 

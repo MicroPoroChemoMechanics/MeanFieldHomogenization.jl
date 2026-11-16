@@ -37,10 +37,10 @@ end
     # Y_t^s = (t−s)! (t+s)! y_t^s / r^(2t+1): the two recurrences are independent
     x = [-0.4, 0.25, 0.8]
     r = norm(x)
-    tmax = 12
-    y = regular_harmonics(x, tmax)
-    Y = irregular_harmonics(x, tmax)
-    for t in 0:tmax, s in (-t):t
+    nmax = 12
+    y = regular_harmonics(x, nmax)
+    Y = irregular_harmonics(x, nmax)
+    for t in 0:nmax, s in (-t):t
         @test Y[t, s] ≈ harmonic_norm(t, s)^2 * y[t, s] / r^(2t + 1) rtol = 1.0e-12
     end
     @test harmonic_norm(2, 1) ≈ sqrt(6)
@@ -49,13 +49,13 @@ end
 
 @testset "solid harmonics — derivatives (Hobson) and harmonicity" begin
     x = [0.3, -0.7, 0.45]
-    tmax = 5
-    y = regular_harmonics(x, tmax + 1)
-    Y = irregular_harmonics(x, tmax + 1)
-    dy = ForwardDiff.derivative(h -> real.(regular_harmonics(x .+ h .* [0, 0, 1], tmax).values), 0.0)
-    dY = ForwardDiff.derivative(h -> imag.(irregular_harmonics(x .+ h .* [0, 0, 1], tmax).values), 0.0)
+    nmax = 5
+    y = regular_harmonics(x, nmax + 1)
+    Y = irregular_harmonics(x, nmax + 1)
+    dy = ForwardDiff.derivative(h -> real.(regular_harmonics(x .+ h .* [0, 0, 1], nmax).values), 0.0)
+    dY = ForwardDiff.derivative(h -> imag.(irregular_harmonics(x .+ h .* [0, 0, 1], nmax).values), 0.0)
     k = 0
-    for t in 0:tmax, s in 0:t
+    for t in 0:nmax, s in 0:t
         k += 1
         # ∂₃ y_t^s = y_{t−1}^s and ∂₃ Y_t^s = −Y_{t+1}^s
         @test dy[k] ≈ (t > 0 ? real(y[t - 1, s]) : 0.0) atol = 1.0e-13
@@ -70,12 +70,12 @@ end
     # Y_k^l(r + R) = Σ_{t,s} (−1)^{t+s} Y_{k+t}^{l−s}(R) y_t^s(r), ‖r‖ < ‖R‖
     R = [1.1, -0.6, 0.9]
     r = [0.15, 0.2, -0.1]
-    tmax = 30
-    YR = irregular_harmonics(R, tmax + 3)
-    yr = regular_harmonics(r, tmax)
+    nmax = 30
+    YR = irregular_harmonics(R, nmax + 3)
+    yr = regular_harmonics(r, nmax)
     direct = irregular_harmonics(R .+ r, 3)
     for (k, l) in ((1, 0), (2, -1), (3, 3))
-        series = sum((-1)^(t + s) * YR[k + t, l - s] * yr[t, s] for t in 0:tmax for s in (-t):t)
+        series = sum((-1)^(t + s) * YR[k + t, l - s] * yr[t, s] for t in 0:nmax for s in (-t):t)
         @test series ≈ direct[k, l] rtol = 1.0e-12
     end
 end

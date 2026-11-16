@@ -367,13 +367,13 @@ function scheme_mem()
     return sheet("schemes/scheme_mem", 420, 300) do
         c, w, h = Point(210, 150), 390.0, 270.0
         rve_box(c, w, h)
-        # the sender p, the receiver q and three bystanders
+        # the sender J, the receiver I and three bystanders
         pp, pq = Point(120, 185), Point(285, 120)
         rp, rq = 34.0, 42.0
         for (o, r) in ((Point(70, 70), 24.0), (Point(350, 235), 28.0), (Point(215, 250), 18.0))
             disk(o, r; fill = tint(BLUE, 0.45), stroke = nothing)
         end
-        # the ball about q in which the series of p is a regular field
+        # the ball about I in which the series of J is a regular field
         @layer begin
             box(c, w - 4, h - 4, :clip)
             disk(pq, distance(pp, pq); fill = nothing, stroke = GUIDE, lw = 1.2, dash = [5, 4])
@@ -382,11 +382,11 @@ function scheme_mem()
         disk(pp, rp; fill = BLUE, stroke = nothing)
         disk(pq, rq; fill = ORANGE, stroke = nothing)
         arrow_ab(pp, pq; color = VECTOR, lw = 1.8)
-        label(m("p"), pp + Point(-14, 12); size = 18, color = "#ffffff")
-        label(m("q"), pq + Point(14, 12); size = 18, color = "#ffffff")
-        label(m("underline(X)_q - underline(X)_p"), (pp + pq) / 2 + Point(-6, -22); size = 16, color = VECTOR, bg = MATRIX)
-        label(m("A_(k l)^((p)) Y_k^l"), pp + Point(-6, 58); size = 17)
-        label(m("y_t^s"), pq + Point(4, -62); size = 17)
+        label(m("J"), pp + Point(-14, 12); size = 18, color = "#ffffff")
+        label(m("I"), pq + Point(14, 12); size = 18, color = "#ffffff")
+        label(m("underline(X)_I - underline(X)_J"), (pp + pq) / 2 + Point(-6, -22); size = 16, color = VECTOR, bg = MATRIX)
+        label(m("b_(J,n')^(m') Y_(n')^(m')"), pp + Point(-6, 58); size = 17)
+        label(m("a_(I,n)^m y_n^m"), pq + Point(4, -62); size = 17)
     end
 end
 

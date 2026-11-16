@@ -188,9 +188,9 @@ homogenize(asm, ClusterModel(), :K)
 ## Multipole expansion
 
 [`MultipoleExpansion`](@ref) expands the field around every sphere in solid
-harmonics up to the degree `tmax` ([theory](@ref th-mem)). The first two schemes
+harmonics up to the degree `nmax` ([theory](@ref th-mem)). The first two schemes
 keep one uniform polarization per inclusion; this one tends to the exact field
-of the assembly as `tmax` grows, at the price of ``N\,t_{\max}(t_{\max}+2)``
+of the assembly as `nmax` grows, at the price of ``N\,n_{\max}(n_{\max}+2)``
 unknowns for ``N`` spheres in conduction, three times as many in elasticity
 ([theory](@ref th-mem-elasticity)). The matrix is isotropic.
 
@@ -200,8 +200,8 @@ using MeanFieldHomogenization, TensND
 matrix, spheres = Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(100.0))
 asm = cubic_lattice(:fcc, matrix, spheres; fraction = 0.4)
 k(scheme) = canonical_components(homogenize(asm, scheme, :K))[1, 1]
-(mori_tanaka = k(MoriTanaka()), dipoles = k(MultipoleExpansion(; tmax = 1)),
-    converged = k(MultipoleExpansion(; tmax = 9)))
+(mori_tanaka = k(MoriTanaka()), dipoles = k(MultipoleExpansion(; nmax = 1)),
+    converged = k(MultipoleExpansion(; nmax = 9)))
 ```
 
 The boundary of the assembly decides how the far field is closed:
@@ -231,7 +231,7 @@ function array(interface)
     add_matrix!(asm, matrix)
     sphere = LayeredSphere((0.45,), (TensISO{3}(100.0),); interfaces = (interface,))
     add_particle!(asm, :p, (0.0, 0.0, 0.0), sphere, Dict{Symbol, Any}())
-    return canonical_components(homogenize(asm, MultipoleExpansion(; tmax = 9), :K))[1, 1]
+    return canonical_components(homogenize(asm, MultipoleExpansion(; nmax = 9), :K))[1, 1]
 end
 (perfect = array(PerfectInterface{Float64}()), resisting = array(KapitzaInterface(0.5)))
 ```
@@ -252,7 +252,7 @@ function pair(interface)
     sphere = LayeredSphere((0.6,), (C(50.0, 0.2),); interfaces = (interface,))
     add_particle!(asm, :a, (0.0, 0.0, 0.7), sphere, Dict{Symbol, Any}())
     add_particle!(asm, :b, (0.0, 0.0, -0.7), sphere, Dict{Symbol, Any}())
-    M = mandel(homogenize(asm, MultipoleExpansion(; tmax = 4), :C), CanonicalBasis{3, Float64}())
+    M = mandel(homogenize(asm, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
     return (C1111 = M[1, 1], C3333 = M[3, 3])
 end
 (perfect = pair(PerfectInterface{Float64}()), spring = pair(SpringInterface(; sn = 0.5, st = 0.5)))
@@ -271,12 +271,12 @@ two averages, and [`multipole_coefficients`](@ref) the coefficients of the
 series themselves, from which the field is rebuilt at any point of the matrix:
 
 ```@example mem_manual
-ct = concentration_tensors(asm, MultipoleExpansion(; tmax = 5), :K)
+ct = concentration_tensors(asm, MultipoleExpansion(; nmax = 5), :K)
 canonical_components(ct.strain[:p1])[1, 1], canonical_components(ct.strain[:matrix])[1, 1]
 ```
 
 ```@example mem_manual
-c = multipole_coefficients(asm; scheme = MultipoleExpansion(; tmax = 5))
+c = multipole_coefficients(asm; scheme = MultipoleExpansion(; nmax = 5))
 c[:p1, 1, 0]        # the dipole along e₃, under the three unit gradients
 ```
 

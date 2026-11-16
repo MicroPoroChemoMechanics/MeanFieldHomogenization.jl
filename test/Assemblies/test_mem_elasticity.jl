@@ -16,11 +16,11 @@ _mel_rel(a, b) = norm(_mel_mandel(a) - _mel_mandel(b)) / norm(_mel_mandel(b))
 const _MEL_C0 = _mel_C(1.0, 0.3)
 
 @testset "MEM elasticity — one sphere is Maxwell and Mori-Tanaka at any degree" begin
-    for C₁ in (_mel_C(100.0, 0.2), _mel_C(0.05, 0.4), TensISO{3}(0.0, 0.0)), tmax in (2, 4)
+    for C₁ in (_mel_C(100.0, 0.2), _mel_C(0.05, 0.4), TensISO{3}(0.0, 0.0)), nmax in (2, 4)
         asm = ParticleAssembly(; boundary = MixedBC(2.0))
         add_matrix!(asm, Dict(:C => _MEL_C0))
         add_particle!(asm, :p, (0.3, -0.2, 0.1), Ellipsoid(1.1), Dict(:C => C₁))
-        C = homogenize(asm, MultipoleExpansion(; tmax), :C)
+        C = homogenize(asm, MultipoleExpansion(; nmax), :C)
         @test _mel_rel(C, homogenize(asm, MoriTanaka(), :C)) < 1.0e-11
     end
 end
@@ -50,7 +50,7 @@ end
     @test _MEL_C0 == _mel_C(1.0, ν)
     asm = _mel_cubic_cluster(3, value("fcm_volume_fraction"), _mel_C(value("fcm_shear_contrast"), ν))
     k₀ = 2 * (1 + ν) / (3 * (1 - 2ν))
-    M = _mel_mandel(homogenize(asm, MultipoleExpansion(; tmax = 5), :C))
+    M = _mel_mandel(homogenize(asm, MultipoleExpansion(; nmax = 5), :C))
     @test (M[1, 1] + 2 * M[1, 2]) / (3 * k₀) ≈ value("fcm_bulk_modulus") atol = 1.0e-4
     @test (M[1, 1] - M[1, 2]) / 2 ≈ value("fcm_shear_modulus_1") atol = 6.0e-4
     @test M[4, 4] / 2 ≈ value("fcm_shear_modulus_2") atol = 2.0e-4
@@ -74,7 +74,7 @@ end
 const _MEL_CENTERS = ([0.0, 0.0, 0.0], [1.0, 0.2, -0.1], [-0.3, 1.2, 0.4])
 
 @testset "MEM elasticity — frame indifference and silent spheres" begin
-    scheme = MultipoleExpansion(; tmax = 3)
+    scheme = MultipoleExpansion(; nmax = 3)
     C = homogenize(_mel_three_spheres(_MEL_CENTERS), scheme, :C)
     θ, φ = 0.7, -1.2
     Q = [cos(φ) -sin(φ) 0; sin(φ) cos(φ) 0; 0 0 1] * [1 0 0; 0 cos(θ) -sin(θ); 0 sin(θ) cos(θ)]
@@ -116,7 +116,7 @@ end
         f = (0.9 / 2.0)^3
         N = property_contribution(sphere, _MEL_C0)
         maxwell = _MEL_C0 + (f * N) ⊡ inv(one(_MEL_C0) - hill_tensor(Ellipsoid(1.0), _MEL_C0) ⊡ (f * N))
-        @test _mel_rel(homogenize(asm, MultipoleExpansion(; tmax = 3), :C), maxwell) < 1.0e-10
+        @test _mel_rel(homogenize(asm, MultipoleExpansion(; nmax = 3), :C), maxwell) < 1.0e-10
     end
 end
 
@@ -127,7 +127,7 @@ end
         add_matrix!(a, Dict(:C => _MEL_C0))
         add_particle!(a, :a, [0.0, 0.0, z], Ellipsoid(0.8), Dict(:C => _mel_C(μ, 0.2)))
         add_particle!(a, :b, [0.0, 0.3, -0.9], Ellipsoid(0.7), Dict(:C => _mel_C(0.1, 0.4)))
-        return mandel(homogenize(a, MultipoleExpansion(; tmax = 3), :C), CanonicalBasis{3, typeof(z * μ)}())[3, 3]
+        return mandel(homogenize(a, MultipoleExpansion(; nmax = 3), :C), CanonicalBasis{3, typeof(z * μ)}())[3, 3]
     end
     @test ForwardDiff.derivative(z -> pair(z, 12.0), 0.9) ≈ (pair(0.9 + h, 12.0) - pair(0.9 - h, 12.0)) / 2h rtol = 1.0e-6
     @test ForwardDiff.derivative(μ -> pair(0.9, μ), 12.0) ≈ (pair(0.9, 12.0 + h) - pair(0.9, 12.0 - h)) / 2h rtol = 1.0e-6

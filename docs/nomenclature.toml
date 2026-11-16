@@ -2256,18 +2256,53 @@ group = "Poromechanics and N-body models"
 tex = 'y'
 label = "y"
 name = "regular solid harmonic of degree t and order s"
-pages = ["theory/multipole_expansion.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = 'Y'
 label = "Y"
 name = "decaying solid harmonic of degree t and order s"
-pages = ["theory/multipole_expansion.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = '\chi'
 label = "χ"
 name = "surface harmonic of degree t and order s"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'a'
+label = "a"
+name = "coefficient of a regular solid harmonic, or of a regular Lamé solution, in the field a sphere receives"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'b'
+label = "b"
+name = "coefficient of a decaying solid harmonic, or of a decaying Lamé solution, in the field a sphere sends"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\zeta'
+label = "ζ"
+name = "response of a sphere to the harmonic of degree n in conduction"
 pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\underline{H}'
+label = "H"
+name = "remote temperature gradient"
+pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbf{Z}'
+label = "Z"
+name = "response of a sphere to the harmonic of degree n in elasticity (3 × 3 matrix)"
+pages = ["theory/multipole_expansion_elasticity.md"]
