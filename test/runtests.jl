@@ -213,6 +213,7 @@ end
     rungroup("Harmonics") && @testset "Harmonics" begin
         include("Harmonics/test_solid_harmonics.jl")
         include("Harmonics/test_lattice_harmonics.jl")
+        include("Harmonics/test_vector_harmonics.jl")
     end
 
     rungroup("Interactions") && @testset "Interactions" begin
@@ -227,6 +228,7 @@ end
         include("Assemblies/test_cluster_model.jl")
         include("Assemblies/test_eim.jl")
         include("Assemblies/test_mem.jl")
+        include("Assemblies/test_mem_elasticity.jl")
         include("Assemblies/test_as_rve.jl")
         include("Assemblies/test_multiscale.jl")
     end
@@ -346,6 +348,7 @@ end
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
         include("LayeredSpheres/test_harmonic_response.jl")
+        include("LayeredSpheres/test_harmonic_response_elastic.jl")
         include("LayeredSpheres/test_christensen.jl")
         include("LayeredSpheres/test_local_fields.jl")
         include("LayeredSpheres/test_generic.jl")

@@ -118,14 +118,15 @@ _mem_not_a_sphere(name::Symbol, geom) = throw(
     )
 )
 
-function _mem_matrix_scalar(P₀)
+# The matrix property, checked to be isotropic.
+function _mem_isotropic(P₀)
     P₀ isa TensND.TensISO || throw(
         ArgumentError(
             "MultipoleExpansion: the matrix property is a $(nameof(typeof(P₀))); the " *
                 "expansion in solid harmonics is written for an isotropic matrix (TensISO)"
         )
     )
-    return LayeredSpheres._iso_scalar(P₀)
+    return P₀
 end
 
 # ─── Conduction ──────────────────────────────────────────────────────────────
@@ -149,7 +150,7 @@ struct MultipoleSolution{T, C}
 end
 
 function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop::Symbol, tmax::Int)
-    _mem_matrix_scalar(K₀)
+    _mem_isotropic(K₀)
     names = particle_names(asm)
     spheres = Any[_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]
     # Particles differ in their number types (one radius or one center carrying
@@ -218,7 +219,7 @@ flux is ``-(\\boldsymbol{K}_0 + \\boldsymbol{\\Sigma})\\cdot\\underline{G}`` und
 remote gradient ``\\underline{G}``.
 """
 function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, sol::MultipoleSolution)
-    k₀ = _mem_matrix_scalar(K₀)
+    k₀ = LayeredSpheres._iso_scalar(_mem_isotropic(K₀))
     D = sum(
         sol.responses[q, 1] * sol.radii[q]^3 * _mem_received_gradient(sol, q)
             for q in eachindex(sol.names)
@@ -299,6 +300,7 @@ function Schemes._concentration_tensors(
         asm::ParticleAssembly, scheme::MultipoleExpansion, ::Val{p}; kw...
     ) where {p}
     P₀ = matrix_property(asm, p)
+    _mem_conduction_only(P₀, "the concentration tensors")
     sol = _mem_solve(asm, P₀, p, _mem_tmax(scheme))
     Σ = _mem_contribution(asm, P₀, sol)
     𝔼 = _mem_remote_field(asm.boundary, P₀, Σ; kw...)
@@ -318,6 +320,13 @@ function Schemes._concentration_tensors(
     end
     return _with_assembly_matrix(asm, P₀, P_hom, names, strain, stress, weights, properties)
 end
+
+# What follows from the field received by each sphere is written in conduction;
+# in elasticity the effective stiffness alone is available.
+_mem_conduction_only(::TensND.AbstractTens{2, 3}, what::AbstractString) = nothing
+_mem_conduction_only(::TensND.AbstractTens, what::AbstractString) = throw(
+    ArgumentError("MultipoleExpansion: $what are available in conduction only")
+)
 
 # The property a homogeneous particle declares; a layered sphere has no single one.
 function _mem_declared_property!(properties, asm::ParticleAssembly, name::Symbol, prop::Symbol)
@@ -373,6 +382,7 @@ function multipole_coefficients(
         scheme::MultipoleExpansion = MultipoleExpansion()
     )
     MFH_Core.validate_cell(asm, scheme)
+    _mem_conduction_only(matrix_property(asm, prop), "the coefficients of the series")
     sol = _mem_solve(asm, matrix_property(asm, prop), prop, _mem_tmax(scheme))
     n = _mem_block(sol.tmax)
     # A_ts = ρ̂_t R^(t+1) e_ts / N_ts

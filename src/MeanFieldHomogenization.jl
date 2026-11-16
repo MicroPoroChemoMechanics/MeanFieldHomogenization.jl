@@ -317,6 +317,8 @@ export ell_K, ell_E, ell_F, ell_RF, ell_RD
 # ── Solid harmonics ──────────────────────────────────────────────────────────
 export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
 export lattice_harmonics
+export vector_regular_harmonic, vector_irregular_harmonic
+export lame_regular, lame_irregular, lame_translation
 
 # ── Schemes : RVE + amounts + distribution shape + symmetrize ───────────────
 export AbstractAmount, VolumeFraction, CrackDensity, Remainder

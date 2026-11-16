@@ -149,6 +149,7 @@ then has its page, with its figure, its assumption and its equations.
 | [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
 | [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
 | [The multipole expansion method](@ref th-mem) | the whole field around each sphere, as a series of harmonics carried from one center to the next [kushch2013](@cite) |
+| [The multipole expansion method in elasticity](@ref th-mem-elasticity) | the three solutions of the Lamé equation per harmonic, the response of a sphere as a matrix, and their translation |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
 The cluster model, the equivalent inclusion method and the multipole expansion

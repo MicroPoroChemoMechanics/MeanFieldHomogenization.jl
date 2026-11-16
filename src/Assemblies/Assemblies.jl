@@ -53,7 +53,7 @@ import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
     MultipoleExpansion, AbstractParameter, MoriTanaka
 import ..LayeredSpheres
-using ..Harmonics: irregular_harmonics, lattice_harmonics, harmonic_norm
+using ..Harmonics: irregular_harmonics, lattice_harmonics, harmonic_norm, lame_translation
 using ..Core: harmonic_response
 
 # `add_matrix!`, `matrix_property` and `matrix_volume_fraction` are declared
@@ -68,6 +68,7 @@ include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
 include("mem.jl")
+include("mem_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")
 include("parameters.jl")

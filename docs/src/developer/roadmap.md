@@ -156,16 +156,21 @@ certify the field that produces them. So:
 
 ## Multipole expansion method — remaining pieces
 
-[`MultipoleExpansion`](@ref) treats conduction for spheres in an isotropic
-matrix ([theory](@ref th-mem)). What the works of Kushch contain beyond that,
-in the order in which it is to be added:
+[`MultipoleExpansion`](@ref) treats spheres in an isotropic matrix: conduction
+on finite and periodic assemblies ([theory](@ref th-mem)), elasticity on finite
+ones ([theory](@ref th-mem-elasticity)). What the works of Kushch contain beyond
+that, in the order in which it is to be added:
 
 - **Local fields** at a point of a sphere, from the regular field it receives,
   and the parameter lens of a radius for a layered sphere.
-- **Elasticity of spheres**: the three families of vector solutions of the Lamé
-  equation at any degree, their translation, the spring and membrane interfaces
-  [kushch2013](@cite). The transfer matrices of the layered sphere are to be
-  written at any degree first, as they now are in conduction.
+- **Periodic elasticity**: the sums of the Lamé solutions over the images. The
+  third solution holds the position of the source, so its sum involves the
+  lattice sums of ``r^2\,Y_t^s`` next to those of ``Y_t^s``, with their own
+  conditionally convergent terms [kushch2013](@cite).
+- **Concentration tensors in elasticity**: unlike in conduction, a regular
+  solution other than the uniform strain (the third one at the degree 2) has a
+  non-zero mean strain over a ball, so the averages need the field inside each
+  sphere and not the received uniform strain alone.
 - **Aging viscoelasticity**, at both tensor orders, the response of a sphere
   becoming a Volterra operator.
 - **Spheroids** in conduction [kushch2015](@cite) and then in elasticity, on

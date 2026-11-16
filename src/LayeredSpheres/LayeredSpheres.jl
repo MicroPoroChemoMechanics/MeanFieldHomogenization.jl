@@ -33,6 +33,7 @@ include("interface_transfer.jl") # interface jump matrices (bulk + shear)
 include("bulk_recurrence.jl")    # bulk state-vector transfer + concentration
 include("shear_recurrence.jl")   # multi-layer shear stub
 include("conductivity.jl")       # Y₁-harmonic conductivity state-vector
+include("harmonic_transfer.jl")  # elastic response to the harmonic of any degree
 include("averages.jl")
 include("localfields.jl")     # pointwise u, ε, σ, T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes

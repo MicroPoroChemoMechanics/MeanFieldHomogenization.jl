@@ -191,7 +191,8 @@ homogenize(asm, ClusterModel(), :K)
 harmonics up to the degree `tmax` ([theory](@ref th-mem)). The first two schemes
 keep one uniform polarization per inclusion; this one tends to the exact field
 of the assembly as `tmax` grows, at the price of ``N\,t_{\max}(t_{\max}+2)``
-unknowns for ``N`` spheres. It treats conduction, in an isotropic matrix.
+unknowns for ``N`` spheres in conduction, three times as many in elasticity
+([theory](@ref th-mem-elasticity)). The matrix is isotropic.
 
 ```@example mem_manual
 using MeanFieldHomogenization, TensND
@@ -207,7 +208,7 @@ The boundary of the assembly decides how the far field is closed:
 
 | boundary | what the scheme computes |
 | :-- | :-- |
-| [`PeriodicBox`](@ref) | the conductivity of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used |
+| [`PeriodicBox`](@ref) | the conductivity of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used. In conduction only |
 | [`MixedBC`](@ref)`(shape)` | the finite assembly in the infinite matrix, replaced by the homogeneous inclusion of the same `shape` sending the same far field ([Maxwell](@ref th-scheme-maxwell)) |
 
 The degree to ask for is found by raising it until the estimate settles. It grows
@@ -237,7 +238,31 @@ end
 The resistance is high enough here for the spheres, a hundred times more
 conducting than the matrix, to lower the conductivity of the array.
 
+### Elasticity
+
+The same scheme gives the stiffness of a finite assembly. A layered sphere
+brings its spring and membrane interfaces:
+
+```@example mem_manual
+C(μ, ν) = TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)        # (3k, 2μ)
+function pair(interface)
+    asm = ParticleAssembly(; boundary = MixedBC(2.0))
+    add_matrix!(asm, Dict(:C => C(1.0, 0.3)))
+    sphere = LayeredSphere((0.6,), (C(50.0, 0.2),); interfaces = (interface,))
+    add_particle!(asm, :a, (0.0, 0.0, 0.7), sphere, Dict{Symbol, Any}())
+    add_particle!(asm, :b, (0.0, 0.0, -0.7), sphere, Dict{Symbol, Any}())
+    M = mandel(homogenize(asm, MultipoleExpansion(; tmax = 4), :C), CanonicalBasis{3, Float64}())
+    return (C1111 = M[1, 1], C3333 = M[3, 3])
+end
+(perfect = pair(PerfectInterface{Float64}()), spring = pair(SpringInterface(; sn = 0.5, st = 0.5)))
+```
+
+The pair is aligned with ``\underline{e}_3``, and the stiffness along it differs
+from the transverse one: an effect of the arrangement.
+
 ### Fields of the particles
+
+The fields of this section are available in conduction.
 
 [`concentration_tensors`](@ref) gives the mean gradient and the mean flux of
 every particle per unit macroscopic gradient, the matrix taking the rest of the

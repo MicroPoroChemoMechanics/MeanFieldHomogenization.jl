@@ -19,7 +19,8 @@ isotropic matrix.
 
 ![The series of decaying harmonics of sphere p is a regular field in the ball about the center of sphere q that reaches the center of p; it is rewritten there on the regular harmonics.](../assets/schemes/scheme_mem.svg)
 
-This page treats conduction: the temperature ``T`` is harmonic in each phase
+This page treats conduction, and
+[the next one](@ref th-mem-elasticity) elasticity: the temperature ``T`` is harmonic in each phase
 and the flux is ``\underline{q} = -k\,\underline{\nabla}T``, with ``k_0`` the
 conductivity of the matrix.
 

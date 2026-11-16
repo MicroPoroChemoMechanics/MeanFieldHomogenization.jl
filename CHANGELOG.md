@@ -22,6 +22,14 @@
   harmonic of degree `n`. The transfer matrices of the layered sphere in
   conduction are now written at any degree, the uniform gradient being the
   degree 1.
+- **Elasticity of finite assemblies.** `MultipoleExpansion` gives the stiffness
+  of a finite assembly of spheres (`MixedBC`), from three solutions of the Lamé
+  equation per harmonic. `harmonic_response(sphere, C₀, t)` is the elastic
+  response of a layered sphere at any degree, with its spring and membrane
+  interfaces; `lame_regular`, `lame_irregular` and `lame_translation` give the
+  solutions and their expansion about another center. One sphere is
+  Mori–Tanaka exactly, and the 27 rigid spheres of Kushch (2013) are recovered
+  with their cubic anisotropy.
 - **Solid harmonics.** `regular_harmonics`, `irregular_harmonics` and
   `lattice_harmonics` (the harmonics of a periodic array of sources, by Ewald
   sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.

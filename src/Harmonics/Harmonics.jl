@@ -17,16 +17,22 @@ Contents
                           [kushch2013](@citet)
 - `lattice_sums.jl`    : `lattice_harmonics`, the harmonics of a periodic array
                           of sources, by Ewald sums
+- `vector_harmonics.jl`: the vector solid harmonics, the solutions of the Lamé
+                          equation built on them and their translation
 """
 module Harmonics
 
 using SpecialFunctions: logfactorial, erfc
+using StaticArrays: SVector
 using TensND: primal
 
 include("solid_harmonics.jl")
 include("lattice_sums.jl")
+include("vector_harmonics.jl")
 
 export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
 export lattice_harmonics
+export vector_regular_harmonic, vector_irregular_harmonic
+export lame_regular, lame_irregular, lame_translation
 
 end # module

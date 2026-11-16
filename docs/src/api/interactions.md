@@ -27,6 +27,11 @@ regular_harmonics
 irregular_harmonics
 harmonic_norm
 lattice_harmonics
+vector_regular_harmonic
+vector_irregular_harmonic
+lame_regular
+lame_irregular
+lame_translation
 ```
 
 ## Real-space Green operator
