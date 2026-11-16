@@ -140,8 +140,8 @@ receiving the regular solutions with the amplitudes ``c^{(j)}_{ts}``,
 ```
 
 in the matrix, ``\\underline{u}^{(j)}_{ts}`` and ``\\underline{U}^{(i)}_{ts}`` being
-the solutions of the Lamé equation of [`lame_regular`](@ref) and
-[`lame_irregular`](@ref). The sphere is isotropic, so the response does not
+the solutions of the Lamé equation of [`lame_regular`](@ref MeanFieldHomogenization.Harmonics.lame_regular) and
+[`lame_irregular`](@ref MeanFieldHomogenization.Harmonics.lame_irregular). The sphere is isotropic, so the response does not
 depend on the order ``s``. At the degree 0 the only regular solution is the
 dilatation and the only decaying one the center of dilatation: the response
 reduces to its entry `[1, 3]`.
