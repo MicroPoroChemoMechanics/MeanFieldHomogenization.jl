@@ -185,9 +185,10 @@ function _radial_frame(x)
     return r, (v[1] / r, v[2] / r, v[3] / r)
 end
 
+# 𝐞_r is the last of the unit vectors (𝐞_θ, 𝐞_φ, 𝐞_r) of the spherical chart of TensND.
 function _radial_frame(r, θ, φ)
-    sθ, cθ = sin(θ), cos(θ)
-    return r, (sθ * cos(φ), sθ * sin(φ), cθ)
+    E = TensND.unit_vectors(TensND.SphericalChart(), (θ, φ, r))
+    return r, (E[1, 3], E[2, 3], E[3, 3])
 end
 
 # ── Cached solution: elasticity ──────────────────────────────────────────────

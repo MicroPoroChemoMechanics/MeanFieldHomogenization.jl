@@ -59,17 +59,16 @@ function get_layer(s::LayeredSpheroid{T, N}, q; side::Symbol = :outer) where {T,
     return k
 end
 
-@inline function _base_fond(q::Qx, p, φ) where {Qx}
-    qb = sqrt(q^2 - 1)
-    pb = sqrt(1 - p^2)
-    qp = sqrt(q^2 - p^2)
-    eR = (cos(φ), sin(φ), zero(φ))
-    ephi = (-sin(φ), cos(φ), zero(φ))
-    ez = (zero(φ), zero(φ), one(φ))
-    e_p = ((-p * qb) .* eR .+ (q * pb) .* ez) ./ qp
-    e_q = ((pb * q) .* eR .+ (p * qb) .* ez) ./ qp
-    return e_q, e_p, ephi
+# The unit vectors (e_q, e_p, e_φ) of the confocal coordinates at (q, p, φ), from
+# the charts of TensND, which order them (e_φ, e_p, e_q): q real for a prolate
+# spheroid, q = i τ for an oblate one. They do not depend on the focal
+# distance, and the chart is taken of unit focal distance.
+@inline function _base_fond(q, p, φ)
+    E = _confocal_unit_vectors(q, p, φ)
+    return (E[1, 3], E[2, 3], E[3, 3]), (E[1, 2], E[2, 2], E[3, 2]), (E[1, 1], E[2, 1], E[3, 1])
 end
+_confocal_unit_vectors(q::Complex, p, φ) = TensND.unit_vectors(TensND.OblateSpheroidalChart(one(real(q))), (φ, p, imag(q)))
+_confocal_unit_vectors(q, p, φ) = TensND.unit_vectors(TensND.ProlateSpheroidalChart(one(q)), (φ, p, q))
 
 """
     _spheroid_field_coeffs(s, k₀) -> (Xa, Xt)

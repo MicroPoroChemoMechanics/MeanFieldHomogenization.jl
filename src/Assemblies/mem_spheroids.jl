@@ -273,11 +273,8 @@ function _mem_prolate(x, f)
     return φ, p, complex(q)
 end
 function _mem_oblate(x, f)
-    φ, _, τ = TensND.cartesian_to_coords(TensND.OblateSpheroidalChart(f), x)
-    # p from x₃ = f p τ: the chart forms it as a square root, whose derivative
-    # is undefined on the equatorial plane, where this quotient is smooth (τ > 0
-    # outside the focal disk, where the harmonics are evaluated)
-    return φ, x[3] / (f * τ), complex(zero(τ), τ)
+    φ, p, τ = TensND.cartesian_to_coords(TensND.OblateSpheroidalChart(f), x)
+    return φ, p, complex(zero(τ), τ)
 end
 
 # Coefficients η of the regular expansion about particle q of the decaying

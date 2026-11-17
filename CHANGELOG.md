@@ -126,6 +126,11 @@
   which a layered sphere does not have.
 - The closure of the Maxwell scheme is one function, shared by the `RVE` and by
   the finite assemblies of the multipole expansion. No value changes.
+- The local fields of `LayeredSphere`, `LayeredCylinder` and `LayeredSpheroid`
+  read their frames (spherical, cylindrical, confocal) on the charts of TensND,
+  and the multipole expansion its spheroidal and ellipsoidal coordinates,
+  instead of formulas of their own; TensND 0.12.2 or later is required. No
+  value changes.
 
 ## v0.26.8 — tensors symmetric by construction infer their storage
 

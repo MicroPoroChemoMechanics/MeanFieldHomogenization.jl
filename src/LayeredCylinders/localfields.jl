@@ -88,12 +88,15 @@ end
 # reading them at r = 0 changes them by O(r²), below rounding.
 _on_axis(r, z) = is_hard_numeric(typeof(r)) && r ≤ 8 * eps(typeof(r)) * abs(z)
 
+# The unit vectors (𝐞_r, 𝐞_θ, 𝐞_z) of the cylindrical chart of TensND, read in the
+# frame (𝐭₁, 𝐭₂, 𝐧) of the axis.
 function _cylindrical_frame(cyl::LayeredCylinder, r, θ, z)
     n = cyl.axis
     t₁ = _transverse_direction(n)
     t₂ = _cross(n, t₁)
-    s, c = sincos(θ)
-    return r, z, _frame_matrix(c .* t₁ .+ s .* t₂, n)
+    U = TensND.unit_vectors(TensND.CylindricalChart(), (r, θ, z))
+    axis_frame = [t₁[1] t₂[1] n[1]; t₁[2] t₂[2] n[2]; t₁[3] t₂[3] n[3]]
+    return r, z, axis_frame * U
 end
 
 function _frame_matrix(eᵣ, n)
