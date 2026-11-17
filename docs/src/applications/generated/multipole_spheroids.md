@@ -19,7 +19,8 @@ EditURL = "../../../../scripts/99_multipole_spheroids.jl"
 lattices, with a perfect interface, a low-conducting (Kapitza) one and a
 highly conducting one. This page computes the same quantities with
 [`MultipoleExpansion`](@ref) and sets them beside the published values, read
-from the file below.
+from the files below, and ends with the stiffness of spheroids bonded by a
+spring [kushch2018](@cite).
 
 ````@example multipole_spheroids
 using MeanFieldHomogenization
@@ -41,6 +42,10 @@ quantity(name) = paper["quantities"][name]["value"]
 nothing #hide
 
 Main.show_literature("kushch2015") # hide
+````
+
+````@example multipole_spheroids
+Main.show_literature("kushch2018") # hide
 ````
 
 ## 1. The lattices
@@ -233,6 +238,55 @@ it overestimates ``k_{11}`` and underestimates ``k_{33}``, the two curves of
 ``k_{33}`` crossing only near ``\tilde h_c = 3``, and the gap grows with
 ``\tilde h_c``.
 
+## 5. Elastic spheroids with a spring interface
+
+[kushch2018](@citet) treats one spheroid with a spring interface of equal
+normal and tangential stiffnesses ``D_s``, of parameter
+``\tilde D = D_s \max(l_1, l_3)/\mu_0``, and gives the Maxwell estimate of aligned
+spheroids at the fraction 0.3, ``\mu_1/\mu_0 = 100``, ``\nu_0 = 0.3``,
+``\nu_1 = 0.2``. For aligned spheroids that estimate is Mori–Tanaka, computed
+here on the [elastic layered spheroid](@ref th-spheroid-imperfect). Each cell
+gives ``(C_{11}, C_{33}, C_{44})/\mu_0``, computed and, in parentheses, published.
+
+````@example multipole_spheroids
+elastic = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2018.json"))
+iso(μ, ν) = TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)
+eq(name) = elastic["quantities"][name]["value"]
+C₀ = iso(1.0, eq("nu0"))
+C₁ = iso(eq("mu_ratio"), eq("nu1"))
+function spring_estimate(e, D̃)
+    D = D̃ / max(1.0, e)
+    spheroid = LayeredSpheroid((e,), (1.0,), (C₁,); interfaces = (SpringInterface(D, D),))
+    s = cbrt(eq("fraction"))
+    asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid(1 / s, 1 / s, e / s)))
+    add_matrix!(asm, Dict(:C => C₀))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), spheroid, Dict(:C => C₁))
+    M = mandel(homogenize(asm, MoriTanaka(), :C), CanonicalBasis{3, Float64}())
+    return (M[1, 1], M[3, 3], M[4, 4] / 2)
+end
+function spring_table()
+    io = IOBuffer()
+    println(io, "| ``\\tilde D`` | ``e = 1/3`` | ``e = 3`` |")
+    println(io, "| :-- | :-- | :-- |")
+    rows = elastic["tables"]["maxwell_aligned"]
+    for D̃ in (1.0e-6, 1.0, 10.0, 1.0e6)
+        cells = map((1 / 3, 3.0)) do e
+            row = only(r for r in rows if r["e"] ≈ e && r["D"] == D̃)
+            C = spring_estimate(e, D̃)
+            @sprintf("%.4f, %.4f, %.4f (%.4f, %.4f, %.4f)", C..., row["C11"], row["C33"], row["C44"])
+        end
+        println(io, "| ", D̃, " | ", join(cells, " | "), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+spring_table()
+````
+
+Through a soft spring (``\tilde D = 10^{-6}``) spheroids a hundred times stiffer
+than the matrix lower all its moduli (``C_{11} = C_{33} = 3.5\,\mu_0`` and
+``C_{44} = \mu_0`` in the matrix alone); through a stiff one they act as
+perfectly bonded.
+
 ## Summary
 
 | result | source | recovered |
@@ -241,6 +295,7 @@ it overestimates ``k_{11}`` and underestimates ``k_{33}``, the two curves of
 | Maxwell estimate, low-conducting interface | [kushch2015](@cite), Table 1 | Mori–Tanaka on the layered spheroid, to the third decimal |
 | three lattices, perfect interface | [kushch2015](@cite), Table 4 | to the third decimal at `nmax = 7` up to ``c = 0.2``; ``c = 0.3`` on the simple lattice at `nmax = 13` |
 | low- and highly conducting interfaces | [kushch2015](@cite), Tables 6 and 8 | to the third decimal at `nmax = 5`, ``c = 0.2`` |
+| elastic spheroids with a spring interface, Maxwell estimate | [kushch2018](@cite), Table 2 | to the fourth decimal |
 
 ```@raw html
 <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>

@@ -168,8 +168,10 @@ that, in the order in which it is to be added:
   solution other than the uniform strain (the third one at the degree 2) has a
   non-zero mean strain over a ball, so the averages need the field inside each
   sphere and not the received uniform strain alone.
-- **Spheroids in elasticity**, with spring interfaces, and **ellipsoids** in a
-  finite assembly; the fields of each spheroid in conduction.
+- **Assemblies of spheroids in elasticity** (the spheroidal Lamé solutions and
+  their translation, kushch2013, chapter 7; one spheroid with a spring interface
+  is in), and **ellipsoids** in a finite assembly; the fields of each spheroid
+  in conduction.
 - **Anisotropic conduction** by an affine map [kushch2014](@cite), a
   transversely isotropic elastic matrix, and fiber composites in 2D.
 

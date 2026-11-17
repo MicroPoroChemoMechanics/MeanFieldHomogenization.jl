@@ -24,9 +24,9 @@ matched, and the solver those add up to.
     ones written out here; cases II and III reuse them unchanged and differ
     only in their mode lists.
 
-    **Perfect interfaces only**, and the default axis ``\underline e_3``. The
-    interface restriction is not a gap to be filled:
-    [it is structural](@ref th-spheroid-imperfect).
+    **Perfect and spring interfaces**, and the default axis ``\underline e_3``.
+    A spring does not fit the exact projection of a perfect interface; it is
+    solved by a truncated one, [whose convergence is measured](@ref th-spheroid-imperfect).
 
 ## 1. Why this is a derivation and not a transcription
 
@@ -722,31 +722,39 @@ surface integral on a confocal boundary:
 
 With perfect interfaces ``\underline u`` is continuous, so the *interior*
 boundaries cancel in pairs and only the outer surface survives — whatever
-``N`` is, and with no volume integral anywhere. A **single layer's** average is
-the difference of the two moments on its own boundaries, which is what a
-stiffness contribution tensor needs:
+``N`` is, and with no volume integral anywhere. Across a spring the boundaries
+do not cancel: they leave the opening ``[\![\underline u]\!]`` of the spring, and
+the moment taken on the side of the matrix of the outer surface counts all the
+openings, which is the convention of the package for a particle with
+imperfect interfaces. A **single layer's** average is the difference of the two
+moments on its own boundaries, and the stiffness contribution tensor follows
+from the average stress of the layers and the average strain of the whole
+particle,
 
 ```math
-\mathbb N_C = \sum_k f_k\,(\mathbb C_k - \mathbb C_0):\mathbb A_k ,
+\mathbb N_C = \sum_k f_k\,\mathbb C_k:\mathbb A_k - \mathbb C_0:\mathbb A ,
 ```
 
-irrecoverable from the total alone, the layers having different moduli. The
-inner term drops out on its own for the core: the confocal surface degenerates
-to the focal segment there and ``\mathrm dS \propto \bar q`` vanishes with it.
+which reduces to ``\sum_k f_k\,(\mathbb C_k - \mathbb C_0):\mathbb A_k`` with perfect
+interfaces; the layers having different moduli, it is irrecoverable from the
+total alone. The inner term drops out on its own for the core: the confocal
+surface degenerates to the focal segment there and ``\mathrm dS \propto \bar q``
+vanishes with it.
 
-The two approaches — layers from differences of their own boundary moments, the
-total from one moment on the outer boundary — are independent, so
-``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a restatement. It
-holds to the truncation accuracy.
+With perfect interfaces the two approaches — layers from differences of their
+own boundary moments, the total from one moment on the outer boundary — are
+independent, so ``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a
+restatement. It holds to the truncation accuracy.
 
-## [10. Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
+## [10. The spring interface](@id th-spheroid-imperfect)
 
 The conduction solver takes a Kapitza resistance or a surface conductance
-directly. The elastic one does not, and the reason is structural rather than a
-missing feature.
+directly, because the jump they impose projects exactly on the harmonics of the
+interface. The elastic spring does not, and the difference is worth stating
+before the remedy.
 
-Take a spring law, `[u_q] = s_n\,\sigma_{qq}`. Substituting the two verified
-forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
+Take the normal part of a spring law, `[u_q] = s_n\,\sigma_{qq}`. Substituting the
+two verified forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
 
 ```math
 \frac{U_q^{+}}{\mu^{+}} - \frac{U_q^{-}}{\mu^{-}}
@@ -757,13 +765,50 @@ forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
 rearrangement removes it: clearing it from one side plants it on the other. The
 condition therefore stops being a polynomial identity in ``p``, and with it go
 both the exactness of the Gauss projection and
-[the banding](@ref th-spheroid-banding) that makes truncation legitimate. A
-perfect interface escapes this because every geometric factor there is *shared*
-and cancels; a compliance is a new length scale that does not.
+[the banding](@ref th-spheroid-banding). A perfect interface escapes this
+because every geometric factor there is *shared* and cancels; a compliance is a
+new length scale that does not.
 
-**The approach that does work is a thin interphase** — an extra confocal layer,
-which the solver already handles. But the two are not interchangeable, and the
-difference is worth seeing. The normal thickness of a confocal shell is
+What remains is what [kushch2018](@citet) does: expand the interface conditions
+on the surface harmonics and truncate the infinite system that results. Here
+the spring law ``[\![\underline u]\!] = \mathbf{S}\cdot\underline t``, with
+``\mathbf{S} = s_n\,\underline e_q\otimes\underline e_q + s_t\,(\boldsymbol{1} - \underline e_q\otimes\underline e_q)``
+and the traction ``\underline t = \boldsymbol\sigma\cdot\underline e_q`` continuous,
+enters the displacement rows of the matching on the side of the matrix, as
+``\underline u - \mathbf{S}\cdot\underline t``, and the rows are projected as before.
+The projection is now a truncated one, which converges geometrically with the
+number ``D`` of degrees per family. The exact contribution tensor has the major
+symmetry, so its asymmetry measures the truncation:
+
+```@example spheroid_elastic
+using MeanFieldHomogenization: LayeredSpheroid, SpringInterface, property_contribution, mandel, CanonicalBasis
+iso(μ, ν) = TensND.TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)
+C₀, C₁ = iso(1.0, 0.3), iso(100.0, 0.2)
+oblate = LayeredSpheroid((1 / 3,), (1.0,), (C₁,); interfaces = (SpringInterface(10.0, 10.0),))
+asymmetry(D) = (N = mandel(property_contribution(oblate, C₁, C₀; D), CanonicalBasis{3, Float64}());
+    round(LinearAlgebra.norm(N - transpose(N)) / LinearAlgebra.norm(N); sigdigits = 2))
+[(D, asymmetry(D)) for D in (6, 10, 16)]
+```
+
+The default is ``D = 16`` when an interface is a spring, 6 otherwise. With
+``\mu_1/\mu_0 = 100``, ``\nu_0 = 0.3``, ``\nu_1 = 0.2``, a fraction 0.3 and equal normal and
+tangential stiffnesses ``D_s = 10\,\mu_0/l_1``, [kushch2018](@citet) reports for
+aligned oblate spheroids of aspect ratio 1/3 the Maxwell estimate
+``C_{11}/\mu_0 = 4.9851`` and ``C_{33}/\mu_0 = 3.1216``; Mori–Tanaka on the
+same spheroid, which is that estimate for aligned spheroids, gives
+
+```@example spheroid_elastic
+using MeanFieldHomogenization: ParticleAssembly, MixedBC, Ellipsoid, add_matrix!, add_particle!, homogenize, MoriTanaka
+asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid(1 / cbrt(0.3), 1 / cbrt(0.3), 1 / (3 * cbrt(0.3)))))
+add_matrix!(asm, Dict(:C => C₀))
+add_particle!(asm, :p, (0.0, 0.0, 0.0), oblate, Dict(:C => C₁))
+M = mandel(homogenize(asm, MoriTanaka(), :C), CanonicalBasis{3, Float64}())
+round.((M[1, 1], M[3, 3]); digits = 4)
+```
+
+**A thin interphase** — an extra confocal layer — is the other way to model an
+imperfect bond. But the two are not interchangeable, and the difference is
+worth seeing. The normal thickness of a confocal shell is
 ``\chi_q\,\mathrm dq`` with ``\chi_q = c\,w/\bar q``, so
 
 ```math
@@ -824,8 +869,7 @@ runs into. Both relations, checked:
 
 ## 12. What is left to implement
 
-Not cases II and III — they are in. What is left is smaller and none of it is
-obstructed the way an imperfect interface is:
+Not cases II and III — they are in. What is left is smaller:
 
 - **Pointwise fields.** The solver returns the harmonic amplitudes, so
   ``\underline u``, ``\boldsymbol\varepsilon`` and ``\boldsymbol\sigma`` at a

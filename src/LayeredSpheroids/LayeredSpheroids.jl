@@ -32,7 +32,7 @@ That path into the schemes works in **elasticity** too, prolate and oblate
 alike: [`spheroid_strain_concentration`](@ref) assembles the full transversely
 isotropic concentration tensor from the three elementary problems, and
 `gradient_gradient_concentration` / `property_contribution` hand it to the schemes. Only
-perfect interfaces, and only the default axis ``\\underline{e}_3``.
+perfect or spring interfaces, and only the default axis ``\\underline{e}_3``.
 """
 module LayeredSpheroids
 
@@ -45,7 +45,7 @@ import ..Core
 using ..Core
 const MFH_Core = Core
 
-import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface,
+import ..LayeredSpheres: PerfectInterface, KapitzaInterface, SurfaceConductiveInterface, SpringInterface,
     AbstractInterface, interfaces_eltype,
     layer_property_average, layer_inverse_property_average,
     layer_conductivity_average, layer_resistivity_average,

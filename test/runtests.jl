@@ -388,6 +388,7 @@ end
         include("LayeredSpheroids/test_coupling.jl")
         include("LayeredSpheroids/test_conductivity.jl")
         include("LayeredSpheroids/test_harmonic_response.jl")
+        include("LayeredSpheroids/test_spring_spheroid.jl")
         include("LayeredSpheroids/test_scheme_integration.jl")
         include("LayeredSpheroids/test_legendre_stability.jl")
         include("LayeredSpheroids/test_local_fields.jl")

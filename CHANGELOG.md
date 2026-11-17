@@ -44,6 +44,14 @@
   projection on the receiving surface. The tables of Kushch et al. (2015) for
   the SP, BCP and FCP lattices of oblate spheroids are recovered to the third
   decimal, and their convergence table digit for digit.
+- **Elastic spheroids with a spring interface.** `LayeredSpheroid` in
+  elasticity takes `SpringInterface`: the spring law enters the matching on the
+  side of the matrix, the projection then being truncated and converging with
+  the number of degrees (16 by default with a spring). The average strain of
+  the particle counts the openings of its springs, and the contribution tensor
+  is that of the average stress of the layers and the average strain of the
+  particle. The Maxwell estimates of Kushch (2018), Table 2, for aligned oblate
+  and prolate spheroids, are recovered to the fourth decimal.
 - `harmonic_response(spheroid, K₀, m, nmax)`, the response of a layered
   spheroid to the spheroidal harmonics of any degree and order; the Legendre
   functions and the transfer matrices of `LayeredSpheroid` are written at any

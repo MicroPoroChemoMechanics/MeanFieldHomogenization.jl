@@ -207,54 +207,60 @@ end
 #  `elastic_cases.jl` and not before.
 
 """
-    gradient_gradient_concentration(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
+    gradient_gradient_concentration(s::LayeredSpheroid, C₁, C₀; D, kw...) -> Tens{4,3}
 
 Volume-averaged strain concentration tensor ``\\mathbb{A}`` of an elastic `n`-layer
 confocal spheroid, ``\\langle\\boldsymbol{\\varepsilon}\\rangle = \\mathbb{A}:\\boldsymbol{E}``, ready for a mean-field scheme.
 
 `C₁` is accepted for signature compatibility and **ignored**. `D` is the number
-of degrees kept per harmonic family; a single homogeneous spheroid is exact at
-any `D` and reproduces Eshelby, a layered one converges geometrically.
+of degrees kept per harmonic family, 6 by default and 16 when an interface is a
+spring; a single homogeneous spheroid with a perfect interface is exact at any
+`D` and reproduces Eshelby, a layered one or a spring converges geometrically.
 
 Prolate and oblate alike, an oblate spheroid going through the complex
-substitution ``q = \\mathrm{i}\\tau``. Only the default axis ``\\underline{e}_3`` and perfect interfaces are
-supported — see [`spheroid_strain_concentration`](@ref).
+substitution ``q = \\mathrm{i}\\tau``. Only the default axis ``\\underline{e}_3`` and perfect or spring
+interfaces are supported — see [`spheroid_strain_concentration`](@ref); the
+average strain counts the openings of the springs.
 """
 function gradient_gradient_concentration(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
-        D::Int = 6, kw...,
+        D::Int = _default_degrees(s), kw...,
     ) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     return spheroid_strain_concentration(s, C₀; D, kw...).A
 end
 
 """
-    property_contribution(s::LayeredSpheroid, C₁, C₀; D = 6, kw...) -> Tens{4,3}
+    property_contribution(s::LayeredSpheroid, C₁, C₀; D, kw...) -> Tens{4,3}
 
 Size-independent **stiffness contribution tensor** of a composite spheroid,
 
 ```math
-\\mathbb{N} = \\sum_k f_k\\,(\\mathbb{C}_k - \\mathbb{C}_0) : \\mathbb{A}_k .
+\\mathbb{N} = \\sum_k f_k\\,\\mathbb{C}_k : \\mathbb{A}_k - \\mathbb{C}_0 : \\mathbb{A} ,
 ```
 
-Assembled layer by layer, because a composite spheroid is heterogeneous and the
-``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}`` of a homogeneous inhomogeneity does not apply. The per-layer
-``\\mathbb{A}_k`` come from [`spheroid_layer_strain_concentration`](@ref); the total ``\\mathbb{A}``
-alone cannot give this, the layers having different moduli. `C₁` is ignored.
+the average stress over the particle being that of its layers, and its average
+strain ``\\mathbb{A}:\\boldsymbol{E}`` counting the openings of its spring
+interfaces. With perfect interfaces ``\\mathbb{A} = \\sum_k f_k\\,\\mathbb{A}_k`` and
+``\\mathbb{N} = \\sum_k f_k\\,(\\mathbb{C}_k - \\mathbb{C}_0):\\mathbb{A}_k``. Assembled layer by
+layer, because a composite spheroid is heterogeneous and the
+``(\\mathbb{C}_1 - \\mathbb{C}_0):\\mathbb{A}`` of a homogeneous inhomogeneity does not apply; the
+``\\mathbb{A}_k`` and ``\\mathbb{A}`` come from
+[`spheroid_layer_strain_concentration`](@ref). `C₁` is ignored.
 """
 function MFH_Core.property_contribution(
         s::LayeredSpheroid{T, N},
         ::TensND.AbstractTens{4, 3},
         C₀::TensND.TensISO{4, 3};
-        D::Int = 6, kw...,
+        D::Int = _default_degrees(s), kw...,
     ) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     r = spheroid_layer_strain_concentration(s, C₀; D, kw...)
-    acc = layer_volume_fraction(s, 1) * ((layer_modulus(s, 1) - C₀) ⊡ r.layers[1])
+    acc = layer_volume_fraction(s, 1) * (layer_modulus(s, 1) ⊡ r.layers[1]) - C₀ ⊡ r.A
     for k in 2:N
-        acc += layer_volume_fraction(s, k) * ((layer_modulus(s, k) - C₀) ⊡ r.layers[k])
+        acc += layer_volume_fraction(s, k) * (layer_modulus(s, k) ⊡ r.layers[k])
     end
     return acc
 end
