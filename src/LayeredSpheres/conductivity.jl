@@ -241,8 +241,8 @@ end
 Response of a layered sphere to the harmonic of degree `n` in a matrix of
 isotropic conductivity `K₀`. Around the sphere the field of the matrix is a sum
 of terms ``a_n^m\\,y_n^m + b_n^m\\,Y_n^m``, the regular and decaying solid
-harmonics of [`regular_solid_harmonics`](@ref MeanFieldHomogenization.regular_solid_harmonics) and
-[`irregular_solid_harmonics`](@ref MeanFieldHomogenization.irregular_solid_harmonics); the function returns
+harmonics of [`regular_solid_harmonics`](@extref TensND TensND.regular_solid_harmonics) and
+[`irregular_solid_harmonics`](@extref TensND TensND.irregular_solid_harmonics); the function returns
 ``\\zeta_n`` such that ``(n-m)!\\,(n+m)!\\;b_n^m = \\zeta_n\\,a_n^m``, that is, the
 ratio of the radial functions ``r^{-(n+1)}`` and ``r^n``. The sphere is
 isotropic, so ``\\zeta_n`` does not depend on the order ``m``. For a homogeneous sphere of radius

@@ -141,8 +141,8 @@ sending the decaying ones with the coefficients ``b^{(i)}_{nm}``,
 ```
 
 in the matrix, ``\\underline{u}^{(j)}_{nm}`` and ``\\underline{U}^{(i)}_{nm}`` being
-the solutions of the Lamé equation of [`lame_regular`](@ref MeanFieldHomogenization.regular_lame_solution) and
-[`lame_irregular`](@ref MeanFieldHomogenization.irregular_lame_solution). The sphere is isotropic, so the response does not
+the solutions of the Lamé equation of [`regular_lame_solution`](@extref TensND TensND.regular_lame_solution) and
+[`irregular_lame_solution`](@extref TensND TensND.irregular_lame_solution). The sphere is isotropic, so the response does not
 depend on the order ``m``. At the degree 0 the only regular solution is the
 dilatation and the only decaying one the center of dilatation: the response
 reduces to its entry `[1, 3]`.
