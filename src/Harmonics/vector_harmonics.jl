@@ -150,8 +150,20 @@ end
 #  parts, (a, b) with η = a + 4(1−ν) b. At n = 0 only j = 3 exists (u⁽¹⁾_00 and
 #  u⁽²⁾_00 vanish).
 
+#  Over the images of a periodic array the harmonics Y_N^M(R) are replaced by
+#  the lattice sums Y*_N^M = 𝒟_N^M S and the products R_k Y_N^M(R) of the term H
+#  by their periodic counterparts. These follow from the identities
+#
+#    (x₁ + i x₂)/2 · Y_N^M = [ r² Y_{N+1}^{M+1} − (N−M)(N−M−1) Y_{N−1}^{M+1} ] / [2(2N+1)] ,
+#    (x₁ − i x₂)/2 · Y_N^M = [ −r² Y_{N+1}^{M−1} + (N+M)(N+M−1) Y_{N−1}^{M−1} ] / [2(2N+1)] ,
+#    x₃ · Y_N^M          = [ r² Y_{N+1}^M + (N−M)(N+M) Y_{N−1}^M ] / (2N+1) ,
+#
+#  in which r² Y_K^μ = −(2K−1) 𝒟_K^μ r becomes −(2K−1) B*_K^μ, with B* = 𝒟 ρ the
+#  table of `lattice_biharmonics`.
+
 """
     lame_translation(i, j, n′, n, m′, m, Y::HarmonicTable, R) -> (a, b)
+    lame_translation(i, j, n′, n, m′, m, Y::HarmonicTable, B::HarmonicTable) -> (a, b)
 
 Coefficient ``\\eta^{(i)(j)}_{n'n\\,m'm} = a + 4(1-\\nu)\\,b`` of the regular Lamé
 solution ``\\underline{u}^{(j)}_{nm}`` in the expansion of the decaying one
@@ -166,10 +178,15 @@ solution ``\\underline{u}^{(j)}_{nm}`` in the expansion of the decaying one
 from the table `Y` of the decaying scalar harmonics at `R`, which must reach
 the degree ``n' + n``. The two parts are separated because the Poisson ratio of
 the matrix is all that distinguishes one isotropic matrix from another here.
+
+With the tables `Y` and `B` of [`lattice_biharmonics`](@ref) in place of `Y` and
+`R`, the coefficient is that of the sum of ``\\underline{U}^{(i)}_{n'm'}`` over
+the images of a periodic array, apart from the uniform terms its background
+adds at the lowest degrees.
 """
 function lame_translation(
         i::Integer, j::Integer, n′::Integer, n::Integer, m′::Integer, m::Integer,
-        Y::HarmonicTable{C}, R::AbstractVector
+        Y::HarmonicTable{C}, W::Union{AbstractVector, HarmonicTable}
     ) where {C}
     z = zero(C)
     (j > i || (n == 0 && j < 3)) && return (z, z)
@@ -180,10 +197,24 @@ function lame_translation(
     end
     α = (1 + m * m′ / (n * n′) - (n′^2 - m′^2) / (n′ * (2n′ - 1)) - (n^2 - m^2) / (n * (2n - 1))) *
         _entry(Y, n′ + n - 2, m′ - m)
+    N = n′ - 1 + n
     H = (
-        (R[1] + im * R[2]) / 2 * (n′ + m′ - 1) * (n′ + m′) * _entry(Y, n′ - 1 + n, m′ - 1 - m) -
-            (R[1] - im * R[2]) / 2 * (n′ - m′ - 1) * (n′ - m′) * _entry(Y, n′ - 1 + n, m′ + 1 - m) +
-            R[3] * (n′ - m′) * (n′ + m′) * _entry(Y, n′ - 1 + n, m′ - m)
+        (n′ + m′ - 1) * (n′ + m′) * _weighted_plus(W, Y, N, m′ - 1 - m) -
+            (n′ - m′ - 1) * (n′ - m′) * _weighted_minus(W, Y, N, m′ + 1 - m) +
+            (n′ - m′) * (n′ + m′) * _weighted_3(W, Y, N, m′ - m)
     ) / (n′ * (2n′ - 1))
     return (-n * α - H, α)
 end
+
+# (R₁ + i R₂)/2 · Y_N^M, (R₁ − i R₂)/2 · Y_N^M and R₃ Y_N^M at the point R of a
+# single source, and their sums over the images of a periodic array.
+_weighted_plus(R::AbstractVector, Y, N, M) = (R[1] + im * R[2]) / 2 * _entry(Y, N, M)
+_weighted_minus(R::AbstractVector, Y, N, M) = (R[1] - im * R[2]) / 2 * _entry(Y, N, M)
+_weighted_3(R::AbstractVector, Y, N, M) = R[3] * _entry(Y, N, M)
+
+_weighted_plus(B::HarmonicTable, Y, N, M) =
+    -(_entry(B, N + 1, M + 1) + (N - M) * (N - M - 1) * _entry(Y, N - 1, M + 1) / (2N + 1)) / 2
+_weighted_minus(B::HarmonicTable, Y, N, M) =
+    (_entry(B, N + 1, M - 1) + (N + M) * (N + M - 1) * _entry(Y, N - 1, M - 1) / (2N + 1)) / 2
+_weighted_3(B::HarmonicTable, Y, N, M) =
+    -_entry(B, N + 1, M) + (N - M) * (N + M) * _entry(Y, N - 1, M) / (2N + 1)

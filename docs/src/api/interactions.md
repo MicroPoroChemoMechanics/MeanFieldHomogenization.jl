@@ -27,6 +27,7 @@ regular_harmonics
 irregular_harmonics
 harmonic_norm
 lattice_harmonics
+lattice_biharmonics
 vector_regular_harmonic
 vector_irregular_harmonic
 lame_regular

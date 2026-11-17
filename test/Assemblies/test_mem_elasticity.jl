@@ -6,7 +6,7 @@ using ForwardDiff
 using JSON
 
 # =============================================================================
-#  Multipole expansion method — elasticity, finite assemblies of spheres.
+#  Multipole expansion method — elasticity, finite and periodic assemblies of spheres.
 # =============================================================================
 
 _mel_C(μ, ν) = TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)        # (3k, 2μ)
@@ -120,6 +120,51 @@ end
     end
 end
 
+# C₁₁₂₂/2μ₀, C₁₁₁₁/2μ₀ and C₁₂₁₂/μ₀ of a cubic array, the columns of kushch2013, Tables 5.1 to 5.3.
+function _mel_cubic_moduli(asm, nmax)
+    C = homogenize(asm, MultipoleExpansion(; nmax), :C)
+    M = _mel_mandel(C)
+    return (M[1, 2] / 2, M[1, 1] / 2, M[6, 6] / 2)
+end
+
+@testset "MEM elasticity — periodic arrays of Kushch (2013), Tables 5.1 to 5.3 and appendix A.4" begin
+    lit = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2013.json"))
+    ν = lit["quantities"]["fcm_poisson_ratio"]["value"]           # ν₀ = ν₁ = 0.3 in chapter 5 too
+    M = Dict(:C => _mel_C(1.0, ν))
+    for (kind, name) in ((:sc, "stiffness_sc"), (:bcc, "stiffness_bcc"), (:fcc, "stiffness_fcc")), row in lit["tables"][name]
+        c = row["c"]
+        c ≤ 0.4 || continue
+        for μ₁ in (0, 10, 1000)
+            kind === :sc && c == 0.4 && μ₁ == 1000 && continue     # resolved below at a higher degree
+            asm = cubic_lattice(kind, M, Dict(:C => _mel_C(float(μ₁), ν)); fraction = c)
+            ref = (row["c1122_contrast_$μ₁"], row["c1111_contrast_$μ₁"], row["c1212_contrast_$μ₁"])
+            @test all(abs.(_mel_cubic_moduli(asm, 8) .- ref) .< 6.5e-4)
+        end
+    end
+    # appendix A.4: simple cubic array, c = 0.4, μ₁/μ₀ = 1000, five decimals
+    q = lit["quantities"]
+    asm = cubic_lattice(:sc, M, Dict(:C => _mel_C(1000.0, ν)); fraction = 0.4)
+    C = _mel_mandel(homogenize(asm, MultipoleExpansion(; nmax = 12), :C))
+    @test C[1, 3] / 2 ≈ q["ruc_c1133"]["value"] rtol = 2.0e-5
+    @test C[3, 3] / 2 ≈ q["ruc_c3333"]["value"] rtol = 2.0e-5
+    @test C[6, 6] / 2 ≈ q["ruc_c1212"]["value"] rtol = 2.0e-5
+    # cubic symmetry: the three directions and the three shears are alike
+    @test C[1, 1] ≈ C[2, 2] rtol = 1.0e-12
+    @test C[1, 1] ≈ C[3, 3] rtol = 1.0e-12
+    @test C[4, 4] ≈ C[5, 5] rtol = 1.0e-12
+    @test C[4, 4] ≈ C[6, 6] rtol = 1.0e-12
+    @test norm(C[1:3, 4:6]) < 1.0e-12 * norm(C)
+    # the same array described by a larger cell: 8 spheres in the cube of side 2
+    one_cell = cubic_lattice(:sc, M, Dict(:C => _mel_C(10.0, ν)); fraction = 0.3, period = 1.0)
+    R = particle_geometry(one_cell, :p1).semi_axes[1]
+    big = ParticleAssembly(; boundary = PeriodicBox(2.0))
+    add_matrix!(big, M)
+    for i in 0:1, j in 0:1, k in 0:1
+        add_particle!(big, Symbol(:p, i, j, k), (0.3 + i, -0.2 + j, 0.1 + k), Ellipsoid(R), Dict(:C => _mel_C(10.0, ν)))
+    end
+    @test _mel_rel(homogenize(big, MultipoleExpansion(; nmax = 4), :C), homogenize(one_cell, MultipoleExpansion(; nmax = 4), :C)) < 1.0e-10
+end
+
 @testset "MEM elasticity — derivatives" begin
     h = 1.0e-5
     function pair(z, μ)
@@ -131,6 +176,14 @@ end
     end
     @test ForwardDiff.derivative(z -> pair(z, 12.0), 0.9) ≈ (pair(0.9 + h, 12.0) - pair(0.9 - h, 12.0)) / 2h rtol = 1.0e-6
     @test ForwardDiff.derivative(μ -> pair(0.9, μ), 12.0) ≈ (pair(0.9, 12.0 + h) - pair(0.9, 12.0 - h)) / 2h rtol = 1.0e-6
+    # periodic array: the stiffness is homogeneous of degree 1 in the moduli and
+    # does not depend on the size of the cell at a fixed fraction
+    function lattice(λ, a)
+        asm = cubic_lattice(:bcc, Dict(:C => λ * _MEL_C0), Dict(:C => λ * _mel_C(7.0, 0.2)); fraction = 0.3, period = a)
+        return mandel(homogenize(asm, MultipoleExpansion(; nmax = 3), :C), CanonicalBasis{3, typeof(λ * a)}())
+    end
+    @test ForwardDiff.derivative(λ -> lattice(λ, 1.0), 1.0) ≈ lattice(1.0, 1.0) rtol = 1.0e-10
+    @test norm(ForwardDiff.derivative(a -> lattice(1.0, a), 1.3)) < 1.0e-10 * norm(lattice(1.0, 1.3))
 end
 
 @testset "MEM elasticity — refusals" begin
@@ -139,9 +192,8 @@ end
     add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5), Dict(:C => _mel_C(5.0, 0.2)))
     @test_throws ArgumentError concentration_tensors(asm, MultipoleExpansion(), :C)
     @test_throws ArgumentError multipole_coefficients(asm, :C)
-    # the periodic sums of the Lamé solutions are not written
-    periodic = cubic_lattice(:sc, Dict(:C => _MEL_C0), Dict(:C => _mel_C(5.0, 0.2)); fraction = 0.2)
-    @test_throws ArgumentError homogenize(periodic, MultipoleExpansion(), :C)
+    # the dipoles of elasticity are of degree 2
+    @test_throws ArgumentError homogenize(asm, MultipoleExpansion(; nmax = 1), :C)
     # an incompressible matrix
     incompressible = ParticleAssembly(; boundary = MixedBC(3.0))
     add_matrix!(incompressible, Dict(:C => TensISO{3}(Inf, 2.0)))

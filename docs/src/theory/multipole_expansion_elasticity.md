@@ -355,6 +355,112 @@ round.(((M[1, 1] + 2M[1, 2]) / 3k₀, (M[1, 1] - M[1, 2]) / 2, M[4, 4] / 2); dig
 The degree 4 gives the bulk modulus and misses the last digits of the two shear
 moduli, which the degree 6 recovers. The application
 [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
-gives the convergence of the three moduli. The periodic assembly, whose sums
-over the images involve more than the lattice harmonics of conduction, and the
-fields of each sphere are listed in the [roadmap](@ref dev-roadmap).
+gives the convergence of the three moduli.
+
+## 7. Periodic arrays
+
+In a periodic assembly each sphere stands for the lattice of its images, as in
+[conduction](@ref th-mem), and each decaying solution is replaced by its sum
+over the lattice. The first two families are made of decaying harmonics and
+are summed by the lattice harmonics ``Y_n^{*m} = \mathcal{D}_n^m S`` of
+conduction. The third one is not: it holds
+``\underline{x}\cdot\underline{Y}^{(3)}_{n'm'} = r^2\,Y_{n'}^{m'}/(2n'-1)``,
+which decreases one degree slower than ``Y_{n'}^{m'}``.
+
+The way out is to see every decaying solution as a differential operator with
+constant coefficients applied to the two functions ``1/r`` and ``r``. The
+harmonic polynomial ``\mathcal{D}_n^m`` of the partial derivatives acts on a
+radial function as ``(1/r)\,\mathrm{d}/\mathrm{d}r`` applied ``n`` times
+(Hobson's theorem), so that
+
+```math
+\mathcal{D}_n^m\,r = -\frac{r^2\,Y_n^m}{2n-1} ,
+\qquad\text{hence}\qquad
+\underline{U}^{(3)}_{n'm'} = 4(1-\nu_0)\,\underline{Y}^{(3)}_{n'm'}
+  + \underline{\operatorname{grad}}\,\mathcal{D}_{n'}^{m'}\,r ,
+```
+
+the components of ``\underline{Y}^{(3)}_{n'm'}`` being harmonics of degree
+``n'-1``, that is derivatives of ``1/r``. The only property of the pair
+``(1/r, r)`` the Lamé equation uses away from the source is
+``\Delta(1/r) = 0`` and ``\Delta r = 2/r``. Its periodic counterpart is the pair
+``(S, \rho)``, with ``\rho`` the periodic function of zero mean such that
+
+```math
+\Delta\rho = 2S ,
+```
+
+and the sum over the images of a decaying solution is the same operator
+applied to ``S`` and ``\rho``. The derivatives ``B_n^{*m} = \mathcal{D}_n^m\rho``
+replace ``-r^2\,Y_n^m/(2n-1)`` and are returned with the lattice harmonics by
+[`lattice_biharmonics`](@ref). They are computed by Ewald's splitting of
+``r``: the short-range part
+``\psi(r) = r\,\operatorname{erfc}(\alpha r) - e^{-\alpha^2 r^2}/(\alpha\sqrt{\pi})``,
+for which ``(1/r)\,\mathrm{d}\psi/\mathrm{d}r = \operatorname{erfc}(\alpha r)/r``
+is the short-range part of ``1/r``, and the long-range part, the Fourier series
+of coefficients
+``-8\pi\,(1 + k^2/4\alpha^2)\,e^{-k^2/4\alpha^2}/(V k^4)``, ``k \ne 0``.
+Both converge as a Gaussian, and the result does not depend on ``\alpha``.
+
+In the translation of section 4, the harmonics ``Y_N^M`` taken at
+``\underline{R}`` become ``Y_N^{*M}``, and the products of ``H_{n'n\,m'm}`` by the
+components of ``\underline{R}`` become their periodic counterparts through the
+identities
+
+```math
+\begin{aligned}
+\frac{x_1 + \mathrm{i}x_2}{2}\,Y_N^M &= \frac{r^2\,Y_{N+1}^{M+1} - (N-M)(N-M-1)\,Y_{N-1}^{M+1}}{2(2N+1)} , \qquad
+\frac{x_1 - \mathrm{i}x_2}{2}\,Y_N^M = \frac{-r^2\,Y_{N+1}^{M-1} + (N+M)(N+M-1)\,Y_{N-1}^{M-1}}{2(2N+1)} ,\\
+x_3\,Y_N^M &= \frac{r^2\,Y_{N+1}^M + (N-M)(N+M)\,Y_{N-1}^M}{2N+1} ,
+\end{aligned}
+```
+
+in which ``r^2\,Y_K^\mu`` becomes ``-(2K-1)\,B_K^{*\mu}``.
+
+The background adds uniform terms, as the dipoles did in conduction. About any
+point, ``\Delta S = 4\pi/V`` off the sources, so ``S`` differs from a harmonic
+function by ``c\,|\underline{y}|^2`` with ``c = 2\pi/(3V)``, and ``\rho`` differs
+from a function with the properties of ``r`` by ``d\,|\underline{y}|^4`` with
+``d = \pi/(15V)``. The operators of the decaying solutions applied to these two
+polynomials give, by Hobson's theorem again, fields of degree at most 1, and
+only at the lowest degrees. The sphere ``I`` thus receives, from every sphere
+``J`` of the cell, itself included, on top of the translated series,
+
+```math
+\begin{aligned}
+&\frac{4\pi}{3V}\,b^{(1)}_{J,00}\,\boldsymbol{1}
+  &&\text{(a uniform dilatation, from the center of dilatation)},\\
+&\frac{8\pi\,(5\nu_0 - 4)}{45\,V}\,(2-m)!\,(2+m)!\;b^{(3)}_{J,2m}\,\underline{u}^{(1)}_{2m}
+  &&\text{(a uniform deviatoric strain, from the five dipoles of degree 2)},
+\end{aligned}
+```
+
+the first one written as the strain it imposes, and a translation and a
+rotation from the solutions of degree 1, to which no sphere responds. A sphere
+in equilibrium sends no ``\underline{U}^{(3)}_{1m}``, the field of a point
+force, which would add a quadratic field.
+
+The mean strain of the periodic sums vanishes, the mean strain is the applied
+``\boldsymbol{E}``, and the polarization of section 6 gives the stiffness
+without closure,
+
+```math
+\mathbb{C}^{\mathrm{hom}} = \mathbb{C}_0 + \boldsymbol{\Sigma} .
+```
+
+For the simple cubic array at ``c = 0.4``, with ``\mu_1/\mu_0 = 1000`` and
+``\nu_0 = \nu_1 = 0.3``, [kushch2013](@citet) reports
+``C^{\mathrm{hom}}_{1133}/(2\mu_0) = 1.12681``,
+``C^{\mathrm{hom}}_{3333}/(2\mu_0) = 4.79979`` and
+``C^{\mathrm{hom}}_{1212}/\mu_0 = 2.24677`` at the degree 20:
+
+```@example mem_el
+asm = cubic_lattice(:sc, Dict(:C => C(1.0, 0.3)), Dict(:C => C(1000.0, 0.3)); fraction = 0.4)
+for nmax in (4, 8, 12)
+    M = mandel(homogenize(asm, MultipoleExpansion(; nmax), :C), CanonicalBasis{3, Float64}())
+    println("nmax = ", nmax, ": ", round.((M[1, 3] / 2, M[3, 3] / 2, M[6, 6] / 2); digits = 5))
+end
+```
+
+The fields of each sphere in elasticity are listed in the
+[roadmap](@ref dev-roadmap).

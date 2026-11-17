@@ -50,6 +50,12 @@
 #
 #  Solved for the six unit strains, they give 𝚺 such that ⟨τ⟩ = 𝚺 : E, closed
 #  as in conduction.
+#
+#  PERIODIC ARRAYS.  Each decaying solution is an operator with constant
+#  coefficients applied to (1/r, r) (U⁽³⁾ through 𝒟_n^m r = −r² Y_n^m/(2n−1));
+#  its sum over the images is the same operator applied to (S, ρ), Δρ = 2S
+#  (`lattice_biharmonics`), plus the uniform terms of `_mem_vector_background!`.
+#  The images of a sphere act on it, and ℂ = ℂ₀ + 𝚺 without closure.
 # =============================================================================
 
 # Position of the solution (j, n, m) among the unknowns of one sphere: the
@@ -80,7 +86,13 @@ end
 
 function _mem_solve(asm::ParticleAssembly, C₀::TensND.AbstractTens{4, 3}, prop::Symbol, nmax::Int)
     _mem_isotropic(C₀)
-    _mem_elastic_boundary(asm.boundary)
+    # the dipoles of elasticity, from which the stiffness follows, are of degree 2
+    nmax ≥ 2 || throw(
+        ArgumentError(
+            "MultipoleExpansion: elasticity needs `nmax` at least 2, the degree of the " *
+                "dipoles that give the stiffness; got $nmax"
+        )
+    )
     κ₀, μ₀ = TensND.k_mu(C₀)
     ν₀ = LayeredSpheres._lame_poisson(κ₀, μ₀)
     2 * ν₀ < 1 || throw(
@@ -107,16 +119,6 @@ function _mem_solve(asm::ParticleAssembly, C₀::TensND.AbstractTens{4, 3}, prop
     return ElasticMultipoleSolution(copy(names), Rᵀ, Ẑ, â, nmax)
 end
 
-# The sums of the Lamé solutions over the images of a periodic assembly hold
-# more than the lattice harmonics of conduction: they are not written yet.
-_mem_elastic_boundary(::MixedBC) = nothing
-_mem_elastic_boundary(::PeriodicBox) = throw(
-    ArgumentError(
-        "MultipoleExpansion: elasticity is available on a finite assembly (MixedBC); the " *
-            "periodic one (PeriodicBox) is available in conduction only"
-    )
-)
-
 # Function barrier, as in conduction. Returns the scaled coefficients received
 # by every sphere, one column per unit strain of the Kelvin-Mandel basis.
 function _mem_vector_system(
@@ -134,10 +136,10 @@ function _mem_vector_system(
         end
         _mem_remote_strain!(rhs, oq, R[q], ν₀)
         for p in 1:N
-            p == q && continue
-            r = X[q] - X[p]
-            Y = _mem_translation(boundary, r, false, 2 * nmax)
-            _mem_couple_vector!(M, oq, (p - 1) * n, Y, r, R[q], R[p], Ẑ[p], ν₀, norms, nmax)
+            W = _mem_vector_translation(boundary, X[q] - X[p], p == q, 2 * nmax)
+            W === nothing && continue
+            _mem_couple_vector!(M, oq, (p - 1) * n, W..., R[q], R[p], Ẑ[p], ν₀, norms, nmax)
+            _mem_vector_background!(M, oq, (p - 1) * n, boundary, R[q], R[p], Ẑ[p], ν₀)
         end
     end
     return M \ rhs
@@ -190,6 +192,55 @@ function _mem_couple_vector!(M::Matrix, oq::Int, op::Int, Y, r, Rq, Rp, Ẑp, ν
                 M[row, op + _mem_eindex(j′, n′, m′)] -= w * Ẑp[n′ + 1][i, j′]
             end
         end
+    end
+    return M
+end
+
+# Tables of the translation from sphere p to sphere q: the harmonics at the
+# separation and the separation itself for a finite assembly; the lattice sums of
+# S and ρ for a periodic one, where the images of sphere q act on it as well.
+_mem_vector_translation(::MixedBC, r, self::Bool, nmax::Int) =
+    self ? nothing : (irregular_harmonics(r, nmax), r)
+_mem_vector_translation(b::PeriodicBox, r, self::Bool, nmax::Int) =
+    lattice_biharmonics(r, box_periods(b), nmax)
+
+# Uniform terms of the background of a periodic array. About any point, S and ρ
+# differ from functions to which the free translation applies by
+# c |y|² and d |y|⁴, c = 2π/(3V), d = π/(15V) (ΔS = 4π/V off the sources,
+# Δρ = 2S). The operators that build the decaying solutions from (1/r, r) give
+# on these polynomials (𝒴_n^m(y) = (−1)^n N_nm² y_n^m/(2n−1)!!):
+#   U⁽¹⁾_00 → 2c y              = (2c/γ₀) u⁽³⁾_00 ,   γ₀ = (4ν₀ − 2)/3 ,
+#   U⁽¹⁾_1m → 2c grad 𝒴_1^m     = −2c N_1m² u⁽¹⁾_1m   (a translation),
+#   U⁽²⁾_1m →                     4c N_1m² u⁽²⁾_1m   (a rotation),
+#   U⁽³⁾_2m → [8d/3 − 4c(1−ν₀)/3] N_2m² u⁽¹⁾_2m = (8π/45V)(5ν₀ − 4) N_2m² u⁽¹⁾_2m ,
+# and nothing at higher degrees. U⁽³⁾_1m, a point force, would add a quadratic
+# field: a sphere in equilibrium never sends it (its response is zero there).
+_mem_vector_background!(M, oq::Int, op::Int, ::MixedBC, Rq, Rp, Ẑp, ν₀) = M
+function _mem_vector_background!(M, oq::Int, op::Int, b::PeriodicBox, Rq, Rp, Ẑp, ν₀)
+    V = prod(box_periods(b))
+    c = 2π / (3 * V)
+    γ₀ = (4 * ν₀ - 2) / 3
+    # (sent i, n′; received j, n; factor without N²): the order m is kept
+    _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 1, 0, 3, 0, 0, 2 * c / γ₀)
+    for m in -1:1
+        N² = harmonic_norm(1, m)^2
+        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 1, 1, 1, 1, m, -2 * c * N²)
+        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 2, 1, 2, 1, m, 4 * c * N²)
+    end
+    for m in -2:2
+        N² = harmonic_norm(2, m)^2
+        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 3, 2, 1, 2, m, 8π / (45 * V) * (5 * ν₀ - 4) * N²)
+    end
+    return M
+end
+
+# The received coefficient a⁽ʲ⁾_nm of sphere q gains β b⁽ⁱ⁾_nm of sphere p, in the
+# scaled unknowns of `_mem_vector_system`.
+function _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, i, n′, j, n, m, β)
+    N = harmonic_norm(n, m)
+    w = β * Rq^(n - 2 + j) * Rp^(n′ + 3 - i) / (N * N)
+    for j′ in _mem_received(n′)
+        M[oq + _mem_eindex(j, n, m), op + _mem_eindex(j′, n′, m)] -= w * Ẑp[n′ + 1][i, j′]
     end
     return M
 end

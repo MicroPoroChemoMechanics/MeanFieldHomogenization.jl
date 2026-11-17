@@ -4,12 +4,12 @@
   "key": "kushch2013",
   "doi": "10.1016/C2012-0-03565-X",
   "citation": "Kushch, Volodymyr I. (2013). Micromechanics of Composites: Multipole Expansion Approach. Elsevier. ISBN 9780124076839.",
-  "location": "Tables 3.1 to 3.3 (p. 67); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
+  "location": "Tables 3.1 to 3.3 (p. 67) and 5.1 to 5.3 (pp. 149-150); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
  },
  "transcription": {
   "from": "the published book (PDF), read on the page text",
   "checked_against_source": true,
-  "note": "Conductivities are divided by that of the matrix, the contrast being the conductivity of the spheres over that of the matrix. The values of the appendix are the printouts the sample codes give as correct."
+  "note": "Conductivities are divided by that of the matrix, the contrast being the conductivity of the spheres over that of the matrix. The values of the appendix are the printouts the sample codes give as correct. Stiffnesses are divided by the shear modulus of the matrix as in the printed tables, the contrast being mu1/mu0."
  },
  "quantities": {
   "fcm_conductivity": {
@@ -333,6 +333,276 @@
     "Y_over_N": 1.86744362272512,
     "Z_over_N": 0.131255397458449
    }
+  ],
+  "stiffness_sc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.558,
+    "c1122_contrast_10": 0.843,
+    "c1122_contrast_1000": 0.854,
+    "c1111_contrast_0": 1.399,
+    "c1111_contrast_10": 2.051,
+    "c1111_contrast_1000": 2.124,
+    "c1212_contrast_0": 0.812,
+    "c1212_contrast_10": 1.173,
+    "c1212_contrast_1000": 1.214
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.413,
+    "c1122_contrast_10": 0.94,
+    "c1122_contrast_1000": 0.956,
+    "c1111_contrast_0": 1.131,
+    "c1111_contrast_10": 2.444,
+    "c1111_contrast_1000": 2.654,
+    "c1212_contrast_0": 0.64,
+    "c1212_contrast_10": 1.363,
+    "c1212_contrast_1000": 1.455
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.301,
+    "c1122_contrast_10": 1.05,
+    "c1122_contrast_1000": 1.049,
+    "c1111_contrast_0": 0.909,
+    "c1111_contrast_10": 2.964,
+    "c1111_contrast_1000": 3.443,
+    "c1212_contrast_0": 0.49,
+    "c1212_contrast_10": 1.593,
+    "c1212_contrast_1000": 1.764
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.21,
+    "c1122_contrast_10": 1.194,
+    "c1122_contrast_1000": 1.127,
+    "c1111_contrast_0": 0.713,
+    "c1111_contrast_10": 3.686,
+    "c1111_contrast_1000": 4.8,
+    "c1212_contrast_0": 0.36,
+    "c1212_contrast_10": 1.907,
+    "c1212_contrast_1000": 2.247
+   },
+   {
+    "c": 0.45,
+    "c1122_contrast_0": 0.17,
+    "c1122_contrast_10": 1.303,
+    "c1122_contrast_1000": 1.16,
+    "c1111_contrast_0": 0.62,
+    "c1111_contrast_10": 4.176,
+    "c1111_contrast_1000": 6.047,
+    "c1212_contrast_0": 0.301,
+    "c1212_contrast_10": 2.13,
+    "c1212_contrast_1000": 2.665
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.131,
+    "c1122_contrast_10": 1.475,
+    "c1122_contrast_1000": 1.197,
+    "c1111_contrast_0": 0.524,
+    "c1111_contrast_10": 4.823,
+    "c1111_contrast_1000": 8.888,
+    "c1212_contrast_0": 0.243,
+    "c1212_contrast_10": 2.463,
+    "c1212_contrast_1000": 3.57
+   }
+  ],
+  "stiffness_bcc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.566,
+    "c1122_contrast_10": 0.852,
+    "c1122_contrast_1000": 0.87,
+    "c1111_contrast_0": 1.385,
+    "c1111_contrast_10": 2.032,
+    "c1111_contrast_1000": 2.093,
+    "c1212_contrast_0": 0.828,
+    "c1212_contrast_10": 1.19,
+    "c1212_contrast_1000": 1.24
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.434,
+    "c1122_contrast_10": 0.979,
+    "c1122_contrast_1000": 1.023,
+    "c1111_contrast_0": 1.094,
+    "c1111_contrast_10": 2.365,
+    "c1111_contrast_1000": 2.514,
+    "c1212_contrast_0": 0.683,
+    "c1212_contrast_10": 1.426,
+    "c1212_contrast_1000": 1.559
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.335,
+    "c1122_contrast_10": 1.136,
+    "c1122_contrast_1000": 1.223,
+    "c1111_contrast_0": 0.857,
+    "c1111_contrast_10": 2.772,
+    "c1111_contrast_1000": 3.054,
+    "c1212_contrast_0": 0.552,
+    "c1212_contrast_10": 1.73,
+    "c1212_contrast_1000": 2.005
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.257,
+    "c1122_contrast_10": 1.336,
+    "c1122_contrast_1000": 1.491,
+    "c1111_contrast_0": 0.66,
+    "c1111_contrast_10": 3.289,
+    "c1111_contrast_1000": 3.792,
+    "c1212_contrast_0": 0.431,
+    "c1212_contrast_10": 2.131,
+    "c1212_contrast_1000": 2.6782
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.191,
+    "c1122_contrast_10": 1.603,
+    "c1122_contrast_1000": 1.888,
+    "c1111_contrast_0": 0.495,
+    "c1111_contrast_10": 3.983,
+    "c1111_contrast_1000": 4.896,
+    "c1212_contrast_0": 0.318,
+    "c1212_contrast_10": 2.679,
+    "c1212_contrast_1000": 3.808
+   },
+   {
+    "c": 0.55,
+    "c1122_contrast_0": 0.161,
+    "c1122_contrast_10": 1.779,
+    "c1122_contrast_1000": 2.188,
+    "c1111_contrast_0": 0.421,
+    "c1111_contrast_10": 4.439,
+    "c1111_contrast_1000": 5.722,
+    "c1212_contrast_0": 0.265,
+    "c1212_contrast_10": 3.031,
+    "c1212_contrast_1000": 4.731
+   },
+   {
+    "c": 0.6,
+    "c1122_contrast_0": 0.133,
+    "c1122_contrast_10": 2.001,
+    "c1122_contrast_1000": 2.648,
+    "c1111_contrast_0": 0.353,
+    "c1111_contrast_10": 5.017,
+    "c1111_contrast_1000": 6.954,
+    "c1212_contrast_0": 0.215,
+    "c1212_contrast_10": 3.458,
+    "c1212_contrast_1000": 6.203
+   },
+   {
+    "c": 0.65,
+    "c1122_contrast_0": 0.104,
+    "c1122_contrast_10": 2.297,
+    "c1122_contrast_1000": 3.623,
+    "c1111_contrast_0": 0.287,
+    "c1111_contrast_10": 5.808,
+    "c1111_contrast_1000": 9.404,
+    "c1212_contrast_0": 0.163,
+    "c1212_contrast_10": 3.993,
+    "c1212_contrast_1000": 9.357
+   }
+  ],
+  "stiffness_fcc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.566,
+    "c1122_contrast_10": 0.852,
+    "c1122_contrast_1000": 0.869,
+    "c1111_contrast_0": 1.385,
+    "c1111_contrast_10": 2.032,
+    "c1111_contrast_1000": 2.094,
+    "c1212_contrast_0": 0.828,
+    "c1212_contrast_10": 1.189,
+    "c1212_contrast_1000": 1.239
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.434,
+    "c1122_contrast_10": 0.978,
+    "c1122_contrast_1000": 1.023,
+    "c1111_contrast_0": 1.094,
+    "c1111_contrast_10": 2.365,
+    "c1111_contrast_1000": 2.515,
+    "c1212_contrast_0": 0.683,
+    "c1212_contrast_10": 1.425,
+    "c1212_contrast_1000": 1.557
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.337,
+    "c1122_contrast_10": 1.135,
+    "c1122_contrast_1000": 1.22,
+    "c1111_contrast_0": 0.854,
+    "c1111_contrast_10": 2.773,
+    "c1111_contrast_1000": 3.058,
+    "c1212_contrast_0": 0.555,
+    "c1212_contrast_10": 1.727,
+    "c1212_contrast_1000": 1.998
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.261,
+    "c1122_contrast_10": 1.332,
+    "c1122_contrast_1000": 1.481,
+    "c1111_contrast_0": 0.654,
+    "c1111_contrast_10": 3.291,
+    "c1111_contrast_1000": 3.801,
+    "c1212_contrast_0": 0.439,
+    "c1212_contrast_10": 2.123,
+    "c1212_contrast_1000": 2.65
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.198,
+    "c1122_contrast_10": 1.589,
+    "c1122_contrast_1000": 1.842,
+    "c1111_contrast_0": 0.483,
+    "c1111_contrast_10": 3.983,
+    "c1111_contrast_1000": 4.912,
+    "c1212_contrast_0": 0.333,
+    "c1212_contrast_10": 2.654,
+    "c1212_contrast_1000": 3.686
+   },
+   {
+    "c": 0.6,
+    "c1122_contrast_0": 0.144,
+    "c1122_contrast_10": 1.956,
+    "c1122_contrast_1000": 2.419,
+    "c1111_contrast_0": 0.337,
+    "c1111_contrast_10": 4.978,
+    "c1111_contrast_1000": 6.849,
+    "c1212_contrast_0": 0.238,
+    "c1212_contrast_10": 3.388,
+    "c1212_contrast_1000": 5.569
+   },
+   {
+    "c": 0.65,
+    "c1122_contrast_0": 0.119,
+    "c1122_contrast_10": 2.218,
+    "c1122_contrast_1000": 2.913,
+    "c1111_contrast_0": 0.27,
+    "c1111_contrast_10": 5.676,
+    "c1111_contrast_1000": 8.599,
+    "c1212_contrast_0": 0.194,
+    "c1212_contrast_10": 3.87,
+    "c1212_contrast_1000": 7.295
+   },
+   {
+    "c": 0.7,
+    "c1122_contrast_0": 0.094,
+    "c1122_contrast_10": 2.579,
+    "c1122_contrast_1000": 3.871,
+    "c1111_contrast_0": 0.204,
+    "c1111_contrast_10": 6.627,
+    "c1111_contrast_1000": 12.06,
+    "c1212_contrast_0": 0.15,
+    "c1212_contrast_10": 4.478,
+    "c1212_contrast_1000": 10.72
+   }
   ]
  },
  "notes": [
@@ -342,6 +612,10 @@
   "Table conductivity_bcc: Table 3.2, p. 67. Effective conductivity of the body-centered cubic array of spheres, over that of the matrix.",
   "Table conductivity_fcc: Table 3.3, p. 67. Effective conductivity of the face-centered cubic array of spheres, over that of the matrix.",
   "Table lattice_sums_sc: Table A.1, p. 465. First rows of the lattice sums of the simple cubic lattice of unit period, divided by N_ts = sqrt((t-s)!(t+s)!): harmonic Y_ts(0) and biharmonic Z_ts(0). The harmonic sum of degree 2, conditionally convergent, is given in the convention of the book.",
-  "In the conductivity tables the columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres."
+  "In the conductivity tables the columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres.",
+  "Table stiffness_sc: Table 5.1, p. 149. Effective stiffness of the simple cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Table stiffness_bcc: Table 5.2, p. 150. Effective stiffness of the body-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Table stiffness_fcc: Table 5.3, p. 150. Effective stiffness of the face-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Tables stiffness_bcc: the entries 2.6782 (c = 0.4, C1212, contrast 1000) and 6.2030 (c = 0.6, same column) are printed with four decimals in the book; they are transcribed as printed."
  ]
 }

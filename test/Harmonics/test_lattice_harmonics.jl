@@ -91,3 +91,37 @@ end
     @test_throws ArgumentError lattice_harmonics([0.1, 0.2], L, 2)
     @test_throws ArgumentError lattice_harmonics(x, (1.0, 1.0), 2)
 end
+
+@testset "lattice biharmonics — Ewald parameter, direct sums, derivatives" begin
+    x = [0.2, -0.1, 0.35]
+    L = (1.0, 1.3, 0.8)
+    # the sums do not depend on the splitting parameter, degree 0 included
+    for p in (x, zeros(3))
+        S₁, B₁ = MeanFieldHomogenization.Harmonics._lattice_sums(p, L, 6, Val(true), 2.0)
+        S₂, B₂ = MeanFieldHomogenization.Harmonics._lattice_sums(p, L, 6, Val(true), 3.5)
+        @test maximum(abs, B₁.values .- B₂.values) < 1.0e-10 * maximum(abs, B₁.values)
+        @test maximum(abs, S₁.values .- S₂.values) < 1.0e-10 * maximum(abs, S₁.values)
+    end
+    # B*_n^m = Σ −r² Y_n^m/(2n−1) over the images, absolutely convergent at n = 7
+    S, B = lattice_biharmonics(x, L, 8)
+    @test S.values == lattice_harmonics(x, L, 8).values
+    direct = zero(ComplexF64)
+    K = 12
+    for a in (-K):K, b in (-K):K, c in (-K):K
+        xn = x .+ (a * L[1], b * L[2], c * L[3])
+        direct -= sum(abs2, xn) * irregular_harmonics(xn, 7)[7, 3] / 13
+    end
+    @test B[7, 3] ≈ direct rtol = 1.0e-4
+    # ∂₃ 𝒟_n^m = −𝒟_{n+1}^m + β Δ 𝒟_{n−1}^m with Δρ = 2S:
+    # ∂₃ B*_n^m = −B*_{n+1}^m − 2(n² − m²) Y*_{n−1}^m / [(2n+1)(2n−1)]
+    d = ForwardDiff.derivative(u -> lattice_biharmonics(x .+ u .* [0, 0, 1], L, 3)[2].values, 0.0)
+    S, B = lattice_biharmonics(x, L, 4)
+    k = 0
+    for n in 0:3, m in 0:n
+        k += 1
+        n == 0 && continue
+        @test d[k] ≈ -B[n + 1, m] - 2 * (n^2 - m^2) * S[n - 1, m] / ((2n + 1) * (2n - 1)) rtol = 1.0e-9
+    end
+    @test @inferred(lattice_biharmonics(x, L, 2)) isa Tuple{HarmonicTable{ComplexF64}, HarmonicTable{ComplexF64}}
+    @test_throws ArgumentError lattice_biharmonics(x, L, -1)
+end

@@ -53,7 +53,7 @@ import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
     MultipoleExpansion, AbstractParameter, MoriTanaka
 import ..LayeredSpheres
-using ..Harmonics: irregular_harmonics, lattice_harmonics, harmonic_norm, lame_translation
+using ..Harmonics: irregular_harmonics, lattice_harmonics, lattice_biharmonics, harmonic_norm, lame_translation
 using ..Core: harmonic_response
 
 # `add_matrix!`, `matrix_property` and `matrix_volume_fraction` are declared

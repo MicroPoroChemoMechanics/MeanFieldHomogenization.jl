@@ -30,6 +30,12 @@
   solutions and their expansion about another center. One sphere is
   Mori–Tanaka exactly, and the 27 rigid spheres of Kushch (2013) are recovered
   with their cubic anisotropy.
+- **Elasticity of periodic assemblies.** On a `PeriodicBox` the scheme gives the
+  stiffness of the periodic medium. The sums of the Lamé solutions over the
+  images need, next to the lattice harmonics of conduction, those of the
+  periodic counterpart of ``r`` (``Δρ = 2S``), returned by
+  `lattice_biharmonics`. The stiffnesses of simple cubic, body-centered and
+  face-centered arrays tabulated by Kushch (2013) are recovered.
 - **Solid harmonics.** `regular_harmonics`, `irregular_harmonics` and
   `lattice_harmonics` (the harmonics of a periodic array of sources, by Ewald
   sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.

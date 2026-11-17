@@ -208,7 +208,7 @@ The boundary of the assembly decides how the far field is closed:
 
 | boundary | what the scheme computes |
 | :-- | :-- |
-| [`PeriodicBox`](@ref) | the conductivity of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used. In conduction only |
+| [`PeriodicBox`](@ref) | the conductivity or the stiffness of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used |
 | [`MixedBC`](@ref)`(shape)` | the finite assembly in the infinite matrix, replaced by the homogeneous inclusion of the same `shape` sending the same far field ([Maxwell](@ref th-scheme-maxwell)) |
 
 The application [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
@@ -241,7 +241,8 @@ conducting than the matrix, to lower the conductivity of the array.
 
 ### Elasticity
 
-The same scheme gives the stiffness of a finite assembly. A layered sphere
+The same scheme gives the stiffness of a finite or of a periodic assembly; it
+needs `nmax ≥ 2`, the degree of the dipoles of elasticity. A layered sphere
 brings its spring and membrane interfaces:
 
 ```@example mem_manual
@@ -260,6 +261,15 @@ end
 
 The pair is aligned with ``\underline{e}_3``, and the stiffness along it differs
 from the transverse one: an effect of the arrangement.
+
+A periodic array has the cubic symmetry of its lattice, with three independent
+moduli where an isotropic estimate has two:
+
+```@example mem_manual
+asm_el = cubic_lattice(:bcc, Dict(:C => C(1.0, 0.3)), Dict(:C => C(10.0, 0.3)); fraction = 0.4)
+M = mandel(homogenize(asm_el, MultipoleExpansion(; nmax = 6), :C), CanonicalBasis{3, Float64}())
+(C1122 = M[1, 2], C1111 = M[1, 1], C1212 = M[6, 6] / 2)
+```
 
 ### Fields of the particles
 
