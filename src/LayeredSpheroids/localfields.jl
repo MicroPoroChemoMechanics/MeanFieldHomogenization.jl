@@ -298,9 +298,10 @@ the canonical ``\\underline{e}_1`` one evaluated at the shifted azimuth ``\\varp
 back by ``\\varphi_0`` — which is also true, vacuously, of the axial part, so a single
 shifted evaluation carries both.
 """
+# the cylindrical coordinates (r, θ, z) of the gradient, as a point
 @inline function _split_remote_gradient(G)
-    g = TensND._extract_vec(G)
-    return g[3], hypot(g[1], g[2]), atan(g[2], g[1])
+    r, θ, z = TensND.cartesian_to_coords(TensND.CylindricalChart(), TensND._extract_vec(G))
+    return z, r, θ
 end
 
 @inline _rotz(v, φ₀) = (
