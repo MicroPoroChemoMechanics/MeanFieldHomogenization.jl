@@ -70,7 +70,7 @@ end
     # the far form, through the spherical harmonics, agrees beyond the threshold
     for R in ([0.3, -0.2, 7.5], [6.0, 5.0, 1.0])
         near = _MEL._mem_eta_near(d, d, R, 7)
-        far = _MEL._mem_eta_far(d, d, irregular_harmonics(R, _MEL._mem_far_degree(d, 7)), 7)
+        far = _MEL._mem_eta_far(d, d, irregular_solid_harmonics(R, _MEL._mem_far_degree(d, 7)), 7)
         @test norm(far - near) ≤ 1.0e-8 * norm(near)
     end
 end

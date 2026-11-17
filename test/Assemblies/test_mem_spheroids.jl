@@ -55,7 +55,7 @@ end
         # the far series converges as (2|c|/|R|)^{2r}: points beyond 1.8 × 2|c|
         for R in ([0.6, 1.0, 1.2], [0.0, 0.0, 1.6])
             near = _MSP._mem_eta_near(d, d, R, 6)
-            far = _MSP._mem_eta_far(d, d, irregular_harmonics(R, 2 * (6 + _MSP._MEM_FAR_TERMS)), 6)
+            far = _MSP._mem_eta_far(d, d, irregular_solid_harmonics(R, 2 * (6 + _MSP._MEM_FAR_TERMS)), 6)
             @test norm(near - far) ≤ 1.0e-9 * norm(far)
         end
     end

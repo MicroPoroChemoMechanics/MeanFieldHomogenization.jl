@@ -84,7 +84,6 @@ module MeanFieldHomogenization
 using TensND
 
 include("Elliptic/Elliptic.jl")
-include("Harmonics/Harmonics.jl")
 include("Core/Core.jl")
 include("Elasticity/Elasticity.jl")
 include("Cracks/Cracks.jl")
@@ -113,7 +112,6 @@ include("Poromechanics/Poromechanics.jl")
 include("Viscoelasticity/Viscoelasticity.jl")
 
 using .Elliptic
-using .Harmonics
 using .Core
 using .Elasticity
 using .Cracks
@@ -313,13 +311,6 @@ export LayeredSpheroidTransportFields
 
 # ── Elliptic integrals (type-generic) ────────────────────────────────────────
 export ell_K, ell_E, ell_F, ell_RF, ell_RD
-
-# ── Solid harmonics ──────────────────────────────────────────────────────────
-export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
-export lattice_harmonics, lattice_biharmonics
-export vector_regular_harmonic, vector_irregular_harmonic
-export lame_regular, lame_irregular, lame_translation
-export EllipsoidalGeometry, LameFunction, lame_functions, lame_value, lame_second_kind, ellipsoidal_coordinates
 
 # ── Schemes : RVE + amounts + distribution shape + symmetrize ───────────────
 export AbstractAmount, VolumeFraction, CrackDensity, Remainder

@@ -55,8 +55,6 @@ using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
     MultipoleExpansion, AbstractParameter, MoriTanaka
 import ..LayeredSpheres
 import ..LayeredSpheroids
-import ..Harmonics
-using ..Harmonics: regular_harmonics, irregular_harmonics, lattice_harmonics, lattice_biharmonics, harmonic_norm, lame_translation
 using ..Core: harmonic_response
 using SpecialFunctions: logfactorial, loggamma
 

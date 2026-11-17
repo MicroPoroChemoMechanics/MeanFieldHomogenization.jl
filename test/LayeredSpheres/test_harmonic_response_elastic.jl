@@ -26,17 +26,17 @@ end
 # under the regular solution (j, t, s): compliances (sn, st) of a spring
 # interface, zero for a perfect one.
 function _hre_residual(B, j, t, s, R, μ₀, ν₀, μ₁, ν₁; sn = 0.0, st = 0.0)
-    N² = harmonic_norm(t, s)^2
+    N² = solid_harmonic_norm(t, s)^2
     families = t == 0 ? (3,) : (1, 2, 3)
     sent = t == 0 ? (1,) : (1, 2, 3)
-    outer(x) = lame_regular(j, t, s, x, ν₀) + sum(B[i, j] / N² * lame_irregular(i, t, s, x, ν₀) for i in sent)
+    outer(x) = regular_lame_solution(j, t, s, x, ν₀) + sum(B[i, j] / N² * irregular_lame_solution(i, t, s, x, ν₀) for i in sent)
     directions = ([0.36, 0.48, 0.8], [-0.6, 0.0, 0.8], [0.0, -1.0, 0.0], [0.8, 0.36, -0.48], [-0.48, -0.6, -0.64])
     rows, rhs = Vector{ComplexF64}[], ComplexF64[]
     for d in directions
         x = R * d
         τ₀ = _hre_traction(outer, x, μ₀, ν₀)
-        inner = [lame_regular(i, t, s, x, ν₁) for i in families]
-        τ₁ = [_hre_traction(v -> lame_regular(i, t, s, v, ν₁), x, μ₁, ν₁) for i in families]
+        inner = [regular_lame_solution(i, t, s, x, ν₁) for i in families]
+        τ₁ = [_hre_traction(v -> regular_lame_solution(i, t, s, v, ν₁), x, μ₁, ν₁) for i in families]
         # the jump of displacement a traction τ gives across the spring
         jump(τ) = sn * dot(d, τ) * d + st * (τ - dot(d, τ) * d)
         for c in 1:3

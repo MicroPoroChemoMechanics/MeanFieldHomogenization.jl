@@ -8,7 +8,7 @@
 #       T = Σ a_n^m 𝔼_n^m + Σ b_n^m 𝔽_n^m ,
 #
 #  with 𝔼, 𝔽 the interior and exterior ellipsoidal harmonics of
-#  `Harmonics/ellipsoidal.jl` in the coordinates of the particle. On its surface
+#  the Lamé functions of TensND in the coordinates of the particle. On its surface
 #  ρ = a₁ they are E_n^m(a₁) S_n^m and F_n^m(a₁) S_n^m, and the continuity of the
 #  temperature and of the normal flux, harmonic by harmonic, gives the response
 #
@@ -34,9 +34,29 @@
 # below the rounding at the threshold `_MEM_NEAR` for this many degrees.
 const _MEM_ELLIPSOID_EXTRA = 30
 
+# The geometry of an ellipsoid of semi-axes a₁ > a₂ > a₃: its semi-axes, its
+# ellipsoidal chart (h₂² = a₁² − a₃², h₃² = a₁² − a₂²) and h₁² = h₂² − h₃². The
+# Lamé functions are built on eigenvalues compared with one another: plain
+# numbers.
+struct _MemEllipsoidGeometry
+    a::NTuple{3, Float64}
+    chart::TensND.EllipsoidalChart{Float64}
+    h1::Float64
+    h2::Float64
+    h3::Float64
+end
+function _mem_ellipsoid_geometry(a₁::Real, a₂::Real, a₃::Real)
+    a₁ > a₂ > a₃ > 0 || throw(
+        ArgumentError("MultipoleExpansion: the semi-axes of an ellipsoid satisfy a₁ > a₂ > a₃ > 0, got ($a₁, $a₂, $a₃)")
+    )
+    a = Float64.((a₁, a₂, a₃))
+    h₂, h₃ = sqrt(a[1]^2 - a[3]^2), sqrt(a[1]^2 - a[2]^2)
+    return _MemEllipsoidGeometry(a, TensND.EllipsoidalChart(h₂, h₃), sqrt(h₂^2 - h₃^2), h₂, h₃)
+end
+
 struct _MemEllipsoid{C, R}
-    g::Harmonics.EllipsoidalGeometry
-    lame::Vector{Harmonics.LameFunction}   # by unknown index
+    g::_MemEllipsoidGeometry
+    lame::Vector{TensND.LameFunction}   # by unknown index
     scales::Vector{R}
     Z::Matrix{C}
     Π::Matrix{C}
@@ -83,22 +103,22 @@ _mem_interface(ie::InterfacedEllipsoid) = ie.interface
 _mem_ellipsoid_axes(ie::InterfacedEllipsoid, name::Symbol) = _mem_ellipsoid_axes(ie.ellipsoid, name)
 
 function _mem_ellipsoid_data(semi, k̃, nmax::Int, far::Bool, interface = LayeredSpheres.PerfectInterface{Float64}(), k₁ = k̃)
-    g = Harmonics.EllipsoidalGeometry(semi...)
+    g = _mem_ellipsoid_geometry(semi...)
     nb = _mem_block(nmax)
     a₁ = g.a[1]
     # the interface parameter may carry a derivative of its own
     T = promote_type(typeof(k̃), typeof(k₁), eltype(interface))
     C = Complex{T}
-    lame = Vector{Harmonics.LameFunction}(undef, nb)
+    lame = Vector{TensND.LameFunction}(undef, nb)
     E₀ = zeros(nb)
     Z = zeros(C, nb, nb)
     dE, F₀, dF = zeros(nb), zeros(nb), zeros(nb)
     nodes = LayeredSpheroids.QuadGK.gauss(nmax + 24, 0.0, 1.0)
-    for n in 1:nmax, (j, E) in enumerate(Harmonics.lame_functions(g, n))
+    for n in 1:nmax, (j, E) in enumerate(lame_functions(g.chart, n))
         i = _mem_index(n, j - n - 1)
         lame[i] = E
-        E₀[i], dE[i] = Harmonics.lame_value(E, a₁, sqrt(a₁^2 - g.h3^2), sqrt(a₁^2 - g.h2^2), 1, 1)
-        F₀[i], dF[i] = Harmonics.lame_second_kind(g, E, a₁, nodes)
+        E₀[i], dE[i] = lame_value(E, a₁, sqrt(a₁^2 - g.h3^2), sqrt(a₁^2 - g.h2^2), 1, 1)
+        F₀[i], dF[i] = lame_second_kind(g.chart, E, a₁, nodes)
     end
     scales = abs.(E₀)
     Π, surface, S, w, hρ = _mem_ellipsoid_projection(g, lame, E₀, nmax)
@@ -144,7 +164,7 @@ function _mem_ellipsoid_projection(g, lame, E₀, nmax::Int)
         w[col] = wa * (2π / nβ) * (μ^2 - ν^2) / (μ * c.ν2)
         surface[:, col] .= (ρ * μ * ν / (h₂ * h₃), c.ρ3 * c.μ3 * c.ν3 / (h₁ * h₃), c.ρ2 * c.μ2 * c.ν2 / (h₁ * h₂))
         for (k, E) in enumerate(lame)
-            S[k, col] = Harmonics._lame_at_μ(E, c)[1] * Harmonics._lame_at_ν(E, c)[1]
+            S[k, col] = lame_value(E, c, 2)[1] * lame_value(E, c, 3)[1]
         end
     end
     γ = S .^ 2 * w
@@ -152,7 +172,7 @@ function _mem_ellipsoid_projection(g, lame, E₀, nmax::Int)
     # metric coefficient of ρ on the surface, ∂/∂n = (1/h_ρ) ∂/∂ρ
     hρ = [
         begin
-            c = Harmonics.ellipsoidal_coordinates(g, surface[:, col])
+            c = ellipsoidal_signed_coordinates(g.chart, surface[:, col])
             sqrt(ρ^2 - c.μ^2) * sqrt(ρ^2 - c.ν^2) / (sqrt(ρ^2 - h₃^2) * sqrt(ρ^2 - h₂^2))
         end for col in axes(surface, 2)
     ]
@@ -192,10 +212,10 @@ _mem_ellipsoid_response!(Z, intf, args...) = throw(
 # The decaying ellipsoidal harmonics 𝔽 (1 ≤ n ≤ nmax) of the ellipsoid at x.
 _mem_irregular!(F::AbstractVector, x, e::_MemEllipsoid, nmax::Int) = _mem_ellipsoidal_irregular!(F, x, e.g, e.lame, e.nodes)
 function _mem_ellipsoidal_irregular!(F::AbstractVector, x, g, lame, nodes)
-    c = Harmonics.ellipsoidal_coordinates(g, x)
+    c = ellipsoidal_signed_coordinates(g.chart, x)
     for (k, E) in enumerate(lame)
-        f, _ = Harmonics.lame_second_kind(g, E, c.ρ, nodes)
-        F[k] = f * Harmonics._lame_at_μ(E, c)[1] * Harmonics._lame_at_ν(E, c)[1]
+        f, _ = lame_second_kind(g.chart, E, c.ρ, nodes)
+        F[k] = f * lame_value(E, c, 2)[1] * lame_value(E, c, 3)[1]
     end
     return F
 end
@@ -217,7 +237,7 @@ function _mem_sphere_coefficients(f!::F, nf::Int, r₀, K::Int) where {F}
         row = (i - 1) * nφ + j
         values[row, :] .= f!(f, r₀ .* x̂)
         # χ_k^l = (k + |l|)! y_k^l on the unit sphere, the factorial canceling
-        y = regular_harmonics(x̂, K)
+        y = regular_solid_harmonics(x̂, K)
         for k in 0:K, l in (-k):k
             Y[row, k^2 + k + l + 1] = wt * 2π / nφ * r₀^(k + 1) * (2k + 1) / 4π * conj(y[k, l])
         end
@@ -240,7 +260,7 @@ function _mem_ellipsoid_far_maps(g, lame, nodes, Π, surface, nmax::Int; r₀ = 
     # ν = Π y, the regular harmonics on the points of the surface
     Ys = zeros(ComplexF64, size(surface, 2), ns)
     for col in axes(surface, 2)
-        y = regular_harmonics(surface[:, col], K)
+        y = regular_solid_harmonics(surface[:, col], K)
         for k in 1:K, l in (-k):k
             Ys[col, _mem_index(k, l)] = y[k, l]
         end

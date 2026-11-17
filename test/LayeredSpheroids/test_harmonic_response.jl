@@ -19,16 +19,9 @@ const _LSH = MeanFieldHomogenization.LayeredSpheroids
 
 @testset "Legendre functions of any order" begin
     for x in (1.05, 2.0, 7.0, 0.4im, 3.0im)
-        for (m, P, Q) in ((1, _LSH._P1_table, _LSH._Q1_table), (2, _LSH._P2_table, _LSH._Q2_table))
-            p, dp, q, dq = _LSH.legendre_order_q(x, m, 9)
-            tp, tdp = P(x, 9)
-            tq, tdq = Q(x, 9)
-            @test p ≈ tp rtol = 1.0e-14
-            @test dp[(m + 1):end] ≈ tdp[(m + 1):end] rtol = 1.0e-13
-            # the closed-form seed of Q₂² loses digits at large q (see `_Q2_table`)
-            @test q[(m + 1):end] ≈ tq[(m + 1):end] rtol = 1.0e-12
-            @test dq[(m + 1):end] ≈ tdq[(m + 1):end] rtol = 1.0e-12
-        end
+        # the closed forms of the order 1: P₁¹ = √(x²−1), Q₁¹ = √(x²−1) (arccoth x − x/(x²−1))
+        p, dp, q, dq = _LSH.legendre_order_q(x, 1, 3)
+        @test p[2] ≈ sqrt(x^2 - 1) && q[2] ≈ sqrt(x^2 - 1) * (acoth(x) - x / (x^2 - 1))
         # the Wronskian of the order m: P Q′ − P′ Q = (−1)^m (n+m)!/(n−m)!/(1 − x²)
         for m in 0:5
             p, dp, q, dq = _LSH.legendre_order_q(x, m, 8)
@@ -40,9 +33,7 @@ const _LSH = MeanFieldHomogenization.LayeredSpheroids
     end
     for x in (-0.7, 0.2, 0.95)
         p, dp = _LSH.legendre_order_p(x, 2, 8)
-        tp, tdp = _LSH._P2p_table(x, 8)
-        @test p ≈ tp rtol = 1.0e-14
-        @test dp[3:end] ≈ tdp[3:end] rtol = 1.0e-13
+        @test p[3] ≈ 3 * (1 - x^2) && dp[3] ≈ -6x       # P₂² = 3(1 − x²)
         # Ferrers' functions are orthogonal with the norm 2(n+m)!/((2n+1)(n−m)!)
         m = 3
         xs, ws = _LSH.QuadGK.gauss(20)
@@ -51,8 +42,8 @@ const _LSH = MeanFieldHomogenization.LayeredSpheroids
     end
     @test all(iszero, first(_LSH.legendre_order_q(2.0, 4, 2)))
     @test all(iszero, first(_LSH.legendre_order_p(0.3, 4, 2)))
-    @test_throws ArgumentError _LSH.legendre_order_q(2.0, -1, 3)
-    @test_throws ArgumentError _LSH.legendre_order_p(0.3, 1, -1)
+    @test_throws DomainError _LSH.legendre_order_q(2.0, -1, 3)
+    @test_throws DomainError _LSH.legendre_order_p(0.3, 1, -1)
 end
 
 @testset "spheroid response — perfect interface in closed form, transfer recurrence" begin

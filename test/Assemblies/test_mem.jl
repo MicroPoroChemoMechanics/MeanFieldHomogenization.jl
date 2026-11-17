@@ -295,7 +295,7 @@ end
     function temperature(x, i)
         T = x[i]
         for n in (:a, :b)
-            Y = irregular_harmonics(x - centers[n], nmax)
+            Y = irregular_solid_harmonics(x - centers[n], nmax)
             T += real(sum(cp[n, t, s][i] * Y[t, s] for t in 1:nmax for s in (-t):t))
         end
         return T

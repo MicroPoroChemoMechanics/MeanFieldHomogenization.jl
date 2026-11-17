@@ -37,8 +37,8 @@
 # 0 to nmax (the class j of the degree n at index n² + j) and the quadrature
 # of the functions of the second kind.
 struct _MemEllipsoidShape
-    g::Harmonics.EllipsoidalGeometry
-    lame::Vector{Harmonics.LameFunction}
+    g::_MemEllipsoidGeometry
+    lame::Vector{TensND.LameFunction}
     nodes::Tuple{Vector{Float64}, Vector{Float64}}
 end
 
@@ -64,7 +64,7 @@ function _mem_emitted(s::_MemEllipsoidShape, x, nmax::Int)
 end
 
 # The Lamé functions of the degrees 0 to nmax.
-_mem_lame_through(g, nmax::Int) = reduce(vcat, [Harmonics.lame_functions(g, n) for n in 0:nmax])
+_mem_lame_through(g, nmax::Int) = reduce(vcat, [lame_functions(g.chart, n) for n in 0:nmax])
 
 # ─── The spherical form ──────────────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ end
 # axes), of isotropic moduli (κ₁, μ₁) and bonded by `interface`, in the matrix
 # (κ₀, μ₀).
 function _mem_elastic_ellipsoid(semi, κ₀, μ₀, ν₀, κ₁, μ₁, interface, nmax::Int)
-    g = Harmonics.EllipsoidalGeometry(semi...)
+    g = _mem_ellipsoid_geometry(semi...)
     shape = _MemEllipsoidShape(g, _mem_lame_through(g, nmax), LayeredSpheroids.QuadGK.gauss(nmax + 24, 0.0, 1.0))
     higher = shape.lame[2:end]
     _, surface, _, w, _ = _mem_ellipsoid_projection(g, higher, ones(length(higher)), nmax)

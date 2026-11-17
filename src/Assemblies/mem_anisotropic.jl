@@ -113,14 +113,14 @@ function _mem_anisotropic(d, K₁::AbstractMatrix, k₀, nmax::Int)
         x = SVector{3}(view(d.surface, :, col))
         n = x ./ SVector{3}(a .^ 2)
         u = Λ \ x
-        yx, gu = regular_harmonics(x, nmax), regular_harmonics(u, nmax)
+        yx, gu = regular_solid_harmonics(x, nmax), regular_solid_harmonics(u, nmax)
         _mem_irregular!(buffer, _mem_seeded(x), d, nmax)
         for k in 1:nmax, l in (-k):k
             i = _mem_index(k, l)
             y[col, i] = yx[k, l]
-            ∂y[col, i] = transpose(n) * Harmonics.vector_regular_harmonic(1, k, l, yx)
+            ∂y[col, i] = transpose(n) * regular_vector_harmonic(1, k, l, yx)
             g[col, i] = gu[k, l]
-            ∂g[col, i] = transpose(n) * (Λ * Harmonics.vector_regular_harmonic(1, k, l, gu))
+            ∂g[col, i] = transpose(n) * (Λ * regular_vector_harmonic(1, k, l, gu))
             F[col, i], ∂F[col, i] = _mem_value_and_slope(buffer[i], n)
         end
     end
@@ -184,7 +184,7 @@ _mem_convert(d::_MemSphere, ::Type{C}) where {C} = _MemSphere{C, real(C)}(
 )
 
 function _mem_irregular!(F::AbstractVector, x, ::_MemSphere, nmax::Int)
-    Y = irregular_harmonics(x, nmax)
+    Y = irregular_solid_harmonics(x, nmax)
     for n in 1:nmax, m in (-n):n
         F[_mem_index(n, m)] = Y[n, m]
     end
@@ -217,7 +217,7 @@ function _mem_sphere_data(a::Float64, nmax::Int)
         col = (j - 1) * nφ + i
         surface[:, col] .= a .* (sqrt(1 - p^2) * cos(φ), sqrt(1 - p^2) * sin(φ), p)
         w[col] = wp * 2π / nφ
-        tab = regular_harmonics(view(surface, :, col), nmax)
+        tab = regular_solid_harmonics(view(surface, :, col), nmax)
         for n in 1:nmax, m in (-n):n
             y[col, _mem_index(n, m)] = tab[n, m]
         end

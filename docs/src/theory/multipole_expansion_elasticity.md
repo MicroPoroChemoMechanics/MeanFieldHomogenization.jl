@@ -51,7 +51,7 @@ the same way on ``y_n^m``: ``\underline{y}^{(1)}_{nm} =
 and ``\underline{y}^{(3)}_{nm}`` with the same curl and divergence relations
 and ``\underline{x}\cdot\underline{y}^{(3)}_{nm} = -r^2\,y_n^m/(2n+3)``. The
 components of all of them are combinations of scalar solid harmonics, which is
-how [`vector_regular_harmonic`](@ref) and [`vector_irregular_harmonic`](@ref)
+how [`regular_vector_harmonic`](@extref TensND TensND.regular_vector_harmonic) and [`irregular_vector_harmonic`](@extref TensND TensND.irregular_vector_harmonic)
 evaluate them.
 
 ## 2. Solutions of the Lamé equation
@@ -73,8 +73,8 @@ solves the equation, hence the three decaying solutions
 and the three regular ones ``\underline{u}^{(i)}_{nm}``, built in the same way
 on ``\underline{y}^{(i)}_{nm}``. Written in this form, the third solution is
 that of [kushch2013](@citet) without its biharmonic function, and the Poisson
-ratio enters through the factor ``4(1-\nu)`` alone. [`lame_regular`](@ref) and
-[`lame_irregular`](@ref) return the solutions at a point.
+ratio enters through the factor ``4(1-\nu)`` alone. [`regular_lame_solution`](@extref TensND TensND.regular_lame_solution) and
+[`irregular_lame_solution`](@extref TensND TensND.irregular_lame_solution) return the solutions at a point.
 
 The lowest degrees are the fields of the uniform strain and of the rigid
 motions: ``\underline{u}^{(3)}_{00}`` is the dilatation,
@@ -87,7 +87,7 @@ dilatation, ``\underline{U}^{(3)}_{1m}`` the point forces and
 ```@example mem_el
 using MeanFieldHomogenization, TensND, LinearAlgebra
 x, ν = [0.3, -0.7, 0.45], 0.3
-lame_regular(3, 0, 0, x, ν) ≈ (4ν - 2) / 3 * x, lame_regular(1, 2, 0, x, ν) ≈ [-x[1] / 2, -x[2] / 2, x[3]]
+regular_lame_solution(3, 0, 0, x, ν) ≈ (4ν - 2) / 3 * x, regular_lame_solution(1, 2, 0, x, ν) ≈ [-x[1] / 2, -x[2] / 2, x[3]]
 ```
 
 ## 3. Response of a sphere
@@ -234,19 +234,19 @@ H_{n'n\,m'm} = \frac{(R_1 + \mathrm{i}R_2)\,(n'+m'-1)(n'+m')\,Y_{n'-1+n}^{m'-1-m
 ```
 
 At ``n = 0`` the only regular solution is ``\underline{u}^{(3)}_{00}``. Every
-coefficient is affine in ``4(1-\nu_0)``; [`lame_translation`](@ref) returns its
+coefficient is affine in ``4(1-\nu_0)``; [`lame_solution_translation`](@extref TensND TensND.lame_solution_translation) returns its
 two parts. The formula is checked here against the direct evaluation of a
 solution:
 
 ```@example mem_el
 R, r, nmax = [1.1, -0.6, 0.9], [0.12, 0.2, -0.1], 24
-Y = irregular_harmonics(R, nmax + 3)
+Y = irregular_solid_harmonics(R, nmax + 3)
 series = zeros(ComplexF64, 3)
 for n in 0:nmax, m in -n:n, j in 1:3
-    a, b = lame_translation(3, j, 2, n, 1, m, Y, R)
-    global series += (-1)^(n + m) * (a + 4 * (1 - ν) * b) * lame_regular(j, n, m, r, ν)
+    a, b = lame_solution_translation(3, j, 2, n, 1, m, Y, R)
+    global series += (-1)^(n + m) * (a + 4 * (1 - ν) * b) * regular_lame_solution(j, n, m, r, ν)
 end
-series ≈ lame_irregular(3, 2, 1, R + r, ν)
+series ≈ irregular_lame_solution(3, 2, 1, R + r, ν)
 ```
 
 ## 5. The linear system
@@ -393,7 +393,7 @@ the components of ``\underline{Y}^{(3)}_{n'm'}`` being harmonics of degree
 and the sum over the images of a decaying solution is the same operator
 applied to ``S`` and ``\rho``. The derivatives ``B_n^{*m} = \mathcal{D}_n^m\rho``
 replace ``-r^2\,Y_n^m/(2n-1)`` and are returned with the lattice harmonics by
-[`lattice_biharmonics`](@ref). They are computed by Ewald's splitting of
+[`lattice_solid_biharmonics`](@extref TensND TensND.lattice_solid_biharmonics). They are computed by Ewald's splitting of
 ``r``: the short-range part
 ``\psi(r) = r\,\operatorname{erfc}(\alpha r) - e^{-\alpha^2 r^2}/(\alpha\sqrt{\pi})``,
 for which ``(1/r)\,\mathrm{d}\psi/\mathrm{d}r = \operatorname{erfc}(\alpha r)/r``

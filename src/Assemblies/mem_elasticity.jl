@@ -10,13 +10,13 @@
 #
 #       u(x) = E·x + Σ_p Σ_{n′,m′} Σ_i b⁽ⁱ⁾⁽ᵖ⁾_n′m′ U⁽ⁱ⁾_n′m′(x − X_p) ,
 #
-#  U⁽ⁱ⁾_n′m′ being the decaying solutions of `Harmonics/vector_harmonics.jl`. The
+#  U⁽ⁱ⁾_n′m′ being the decaying solutions of the Lamé equation of TensND (`irregular_lame_solution`). The
 #  degree 0 holds the center of dilatation U⁽¹⁾_00 alone; the degree 1 holds no
 #  net force and no net torque on a sphere in equilibrium, which the response
 #  of the sphere gives by itself (it sends nothing back to a rigid motion).
 #
 #  About the center of sphere q the series of the others are regular fields,
-#  expanded by `lame_translation`:
+#  expanded by `lame_solution_translation`:
 #
 #       U⁽ⁱ⁾_n′m′(x − X_p) = Σ_{j,n,m} (−1)^{n+m} η⁽ⁱ⁾⁽ʲ⁾_n′nm′m(X_q − X_p) u⁽ʲ⁾_nm(x − X_q) ,
 #
@@ -57,7 +57,7 @@
 #  PERIODIC ARRAYS.  Each decaying solution is an operator with constant
 #  coefficients applied to (1/r, r) (U⁽³⁾ through 𝒟_n^m r = −r² Y_n^m/(2n−1));
 #  its sum over the images is the same operator applied to (S, ρ), Δρ = 2S
-#  (`lattice_biharmonics`), plus the uniform terms of `_mem_vector_background!`.
+#  (`lattice_solid_biharmonics`), plus the uniform terms of `_mem_vector_background!`.
 #  The images of a sphere act on it, and ℂ = ℂ₀ + 𝚺 without closure.
 # =============================================================================
 
@@ -171,7 +171,7 @@ function _mem_vector_system(particles::Vector, X::Vector, ν₀, boundary, nmax:
     M = zeros(C, N * n, N * n)
     rhs = zeros(C, N * n, 6)
     K = maximum(d -> _mem_sent_degree(d, nmax), particles)
-    norms = [harmonic_norm(k, m) for k in 0:K for m in (-k):k]
+    norms = [solid_harmonic_norm(k, m) for k in 0:K for m in (-k):k]
     for q in 1:N
         rows = ((q - 1) * n + 1):(q * n)
         for i in rows
@@ -194,7 +194,7 @@ end
 function _mem_remote_strain!(rhs::Matrix{Complex{T}}, oq::Int, R::T, ν₀::T) where {T}
     γ₀ = (4 * ν₀ - 2) / 3
     h = sqrt(T(2)) / 2                                  # the shear of a unit Mandel strain
-    N₂ = (harmonic_norm(2, 0), harmonic_norm(2, 1), harmonic_norm(2, 2))
+    N₂ = (solid_harmonic_norm(2, 0), solid_harmonic_norm(2, 1), solid_harmonic_norm(2, 2))
     row(m) = oq + _mem_eindex(1, 2, m)
     # the dilatation: tr E = 1 for the three normal strains
     for m in 1:3
@@ -238,7 +238,7 @@ function _mem_couple_far!(M, rows, cols, boundary, W, dq, dp, ν₀, norms, nmax
 end
 
 # The scaled coefficient a⁽ʲ⁾_nm received about q per scaled coefficient b⁽ⁱ⁾_n′m′
-# sent by p, n ≤ nmax and n′ ≤ K (`lame_translation`).
+# sent by p, n ≤ nmax and n′ ≤ K (`lame_solution_translation`).
 function _mem_vector_translation_matrix(Y, r, Rq, Rp, ν₀, norms, nmax::Int, K::Int)
     T = promote_type(eltype(Y.values), typeof(ν₀), typeof(Rq), typeof(Rp))
     W = zeros(T, _mem_eblock(nmax), _mem_eblock(K))
@@ -247,7 +247,7 @@ function _mem_vector_translation_matrix(Y, r, Rq, Rp, ν₀, norms, nmax::Int, K
         wq = Rq^(n - 2 + j) / norms[_mem_norm_index(n, m)]
         isodd(n + m) && (wq = -wq)
         for n′ in 0:K, m′ in (-n′):n′, i in _mem_sent(n′)
-            a, b = lame_translation(i, j, n′, n, m′, m, Y, r)
+            a, b = lame_solution_translation(i, j, n′, n, m′, m, Y, r)
             W[row, _mem_eindex(i, n′, m′)] += wq * (a + 4 * (1 - ν₀) * b) * Rp^(n′ + 3 - i) / norms[_mem_norm_index(n′, m′)]
         end
     end
@@ -258,9 +258,9 @@ end
 # separation and the separation itself for a finite assembly; the lattice sums of
 # S and ρ for a periodic one, where the images of sphere q act on it as well.
 _mem_vector_translation(::MixedBC, r, self::Bool, nmax::Int) =
-    self ? nothing : (irregular_harmonics(r, nmax), r)
+    self ? nothing : (irregular_solid_harmonics(r, nmax), r)
 _mem_vector_translation(b::PeriodicBox, r, self::Bool, nmax::Int) =
-    lattice_biharmonics(r, box_periods(b), nmax)
+    lattice_solid_biharmonics(r, box_periods(b), nmax)
 
 # Uniform terms of the background of a periodic array. About any point, S and ρ
 # differ from functions to which the free translation applies by
@@ -281,12 +281,12 @@ function _mem_vector_background!(M, rows, cols, b::PeriodicBox, Rq, Rp, Ẑp, ν
     # (sent i, n′; received j, n; factor without N²): the order m is kept
     _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 1, 0, 3, 0, 0, 2 * c / γ₀)
     for m in -1:1
-        N² = harmonic_norm(1, m)^2
+        N² = solid_harmonic_norm(1, m)^2
         _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 1, 1, 1, 1, m, -2 * c * N²)
         _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 2, 1, 2, 1, m, 4 * c * N²)
     end
     for m in -2:2
-        N² = harmonic_norm(2, m)^2
+        N² = solid_harmonic_norm(2, m)^2
         _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 3, 2, 1, 2, m, 8π / (45 * V) * (5 * ν₀ - 4) * N²)
     end
     return M
@@ -295,7 +295,7 @@ end
 # The received coefficient a⁽ʲ⁾_nm of q gains β b⁽ⁱ⁾_n′m of p, in the scaled
 # unknowns of `_mem_vector_system`.
 function _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, i, n′, j, n, m, β)
-    N = harmonic_norm(n, m)
+    N = solid_harmonic_norm(n, m)
     w = β * Rq^(n - 2 + j) * Rp^(n′ + 3 - i) / (N * N)
     @views M[rows[_mem_eindex(j, n, m)], cols] .-= w .* Ẑp[_mem_eindex(i, n′, m), :]
     return M
@@ -317,7 +317,7 @@ function _mem_contribution(
     κ₀, μ₀ = TensND.k_mu(C₀)
     ν₀ = LayeredSpheres._lame_poisson(κ₀, μ₀)
     n = _mem_eblock(sol.nmax)
-    N₂ = (harmonic_norm(2, 0), harmonic_norm(2, 1), harmonic_norm(2, 2))
+    N₂ = (solid_harmonic_norm(2, 0), solid_harmonic_norm(2, 1), solid_harmonic_norm(2, 2))
     Σ = zeros(T, 6, 6)
     h = sqrt(T(2))
     for q in eachindex(sol.names)

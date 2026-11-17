@@ -7,7 +7,7 @@
 #       T(x) = H·x + Σ_p Σ_{n′≥1} Σ_{|m′|≤n′} b_n′m′^(p) Y_n′^m′(x − X_p) .
 #
 #  Seen from the center of particle q, the series of every other particle is a
-#  regular field: the translation formula of `Harmonics/solid_harmonics.jl`
+#  regular field: the translation formula of the solid harmonics of TensND
 #  writes it on the regular harmonics y_n^m(x − X_q),
 #
 #       Y_n′^m′(x − X_p) = Σ_{n,m} (−1)^{n+m} Y_{n′+n}^{m′−m}(X_q − X_p) y_n^m(x − X_q) .
@@ -238,7 +238,7 @@ function _mem_scalar_system(R::Vector{T}, ζ̂::Matrix{T}, X::Vector, boundary, 
     _check_system_size(N * n, Complex{T}, N, nmax)
     M = zeros(Complex{T}, N * n, N * n)
     B = zeros(Complex{T}, N * n, 3)
-    norms = [harmonic_norm(n, m) for n in 1:nmax for m in (-n):n]
+    norms = [solid_harmonic_norm(n, m) for n in 1:nmax for m in (-n):n]
     for q in 1:N
         oq = (q - 1) * n
         for i in 1:n
@@ -318,15 +318,15 @@ end
 
 # Decaying harmonics of the vector from the sender to the receiver; a particle
 # of a finite assembly sends nothing to itself.
-_mem_translation(::MixedBC, r, self::Bool, nmax::Int) = self ? nothing : irregular_harmonics(r, nmax)
+_mem_translation(::MixedBC, r, self::Bool, nmax::Int) = self ? nothing : irregular_solid_harmonics(r, nmax)
 
 # In a periodic assembly each particle also receives the harmonics of the
 # images, its own included, summed over the lattice.
 _mem_translation(b::PeriodicBox, r, self::Bool, nmax::Int) =
-    lattice_harmonics(r, box_periods(b), nmax)
+    lattice_solid_harmonics(r, box_periods(b), nmax)
 
 # Uniform field of the background that makes a periodic dipole periodic
-# (`Harmonics/lattice_sums.jl`): the regular part of S has the Laplacian 4π/V,
+# (`lattice_solid_harmonics` of TensND): the regular part of S has the Laplacian 4π/V,
 # so a dipole of the lattice sends to every particle, on top of the degree-2
 # harmonics, the field −(4π/3V) × (its moment), the same in the three
 # directions. In the scaled unknowns it is one term on the three degree-1
@@ -433,8 +433,8 @@ T(\\underline{x}) = \\underline{H}\\cdot\\underline{x}
   + \\sum_J \\sum_{n \\ge 1} \\sum_{|m| \\le n} b_{J,n}^m\\,Y_n^m(\\underline{x} - \\underline{X}_J) ,
 ```
 
-with ``Y_n^m`` the decaying solid harmonics of [`irregular_harmonics`](@ref)
-(their sums over the images in a periodic assembly, [`lattice_harmonics`](@ref)).
+with ``Y_n^m`` the decaying solid harmonics of [`irregular_solid_harmonics`](@ref)
+(their sums over the images in a periodic assembly, [`lattice_solid_harmonics`](@ref)).
 The result is indexed as `c[name, n, m]`.
 """
 function multipole_coefficients(
@@ -447,7 +447,7 @@ function multipole_coefficients(
     n = _mem_block(sol.nmax)
     # b_nm = ζ̂_n R^(n+1) â_nm / N_nm
     scale(q) = [
-        sol.responses[q, n] * sol.radii[q]^(n + 1) / harmonic_norm(n, m)
+        sol.responses[q, n] * sol.radii[q]^(n + 1) / solid_harmonic_norm(n, m)
             for n in 1:sol.nmax for m in (-n):n
     ]
     values = [

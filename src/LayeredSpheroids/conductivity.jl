@@ -240,10 +240,10 @@ end
 
 # ── Shape functions 𝒯ₐ, 𝒯ₜ, 𝒰ₐ, 𝒰ₜ (eq:TaTt, eq:VaVt) ─────────────────────
 
-@inline _shape_Ta(q) = _arccoth(q) - 1 / q
-@inline _shape_Tt(q) = _arccoth(q) - q / (q^2 - 1)
-@inline _shape_Ua(q) = _arccoth(q) - q / (q^2 - 1)
-@inline _shape_Ut(q) = _arccoth(q) + (2 - q^2) / (q * (q^2 - 1))
+@inline _shape_Ta(q) = acoth(q) - 1 / q
+@inline _shape_Tt(q) = acoth(q) - q / (q^2 - 1)
+@inline _shape_Ua(q) = acoth(q) - q / (q^2 - 1)
+@inline _shape_Ut(q) = acoth(q) + (2 - q^2) / (q * (q^2 - 1))
 
 """
     spheroid_ba_ratios(s, k₀) -> (ba_axial, ba_trans)

@@ -87,8 +87,8 @@ end
     # `m = 1` recurrence is singular at `n = 0`, so `Q₀¹` is carried as a
     # placeholder zero that the identity would otherwise pick up — a trap that
     # made an earlier version of this check report a factor-3 discrepancy.
-    Q0t = MeanFieldHomogenization.LayeredSpheroids._Q0_table
-    Q1t = MeanFieldHomogenization.LayeredSpheroids._Q1_table
+    Q0t(x, N) = MeanFieldHomogenization.LayeredSpheroids.legendre_table(:Q0, x, N)
+    Q1t(x, N) = MeanFieldHomogenization.LayeredSpheroids.legendre_table(:Q1, x, N)
     for x in (1.02, 1.5, 5.0, 50.0, im * 0.02, im * 1.5, im * 5.0, im * 50.0)
         for (tabf, m, n0) in ((Q0t, 0, 1), (Q1t, 1, 2))
             tab, dtab = tabf(x, 16)

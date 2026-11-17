@@ -52,7 +52,7 @@ function _mem_emitted(s::_MemSpheroidShape, x, nmax::Int)
     F̃ = table(x)
     np = length(F̃.values)
     J = ForwardDiff.jacobian(y -> (v = table(y).values; vcat(real.(v), imag.(v))), x)
-    ∂F̃ = ntuple(k -> Harmonics.HarmonicTable(deg, complex.(view(J, 1:np, k), view(J, (np + 1):(2np), k))), 3)
+    ∂F̃ = ntuple(k -> TensND.SolidHarmonicTable(deg, complex.(view(J, 1:np, k), view(J, (np + 1):(2np), k))), 3)
     xs = SVector{3}(x)
     C = eltype(F̃.values)
     P, Q = zeros(C, 3, _mem_eblock(nmax)), zeros(C, 3, _mem_eblock(nmax))
@@ -61,11 +61,11 @@ function _mem_emitted(s::_MemSpheroidShape, x, nmax::Int)
         if i == 1
             P[:, col] .= (∂F̃[1][n, m], ∂F̃[2][n, m], ∂F̃[3][n, m])
         elseif i == 2
-            P[:, col] .= Harmonics.vector_irregular_harmonic(2, n, m, F̃)
+            P[:, col] .= irregular_vector_harmonic(2, n, m, F̃)
         else
-            ψ = Harmonics.vector_irregular_harmonic(3, n, m, F̃)
+            ψ = irregular_vector_harmonic(3, n, m, F̃)
             # grad(x·ψ)_k = ψ_k + x·∂_kψ
-            g = ψ + SVector(ntuple(k -> transpose(xs) * Harmonics.vector_irregular_harmonic(3, n, m, ∂F̃[k]), 3))
+            g = ψ + SVector(ntuple(k -> transpose(xs) * irregular_vector_harmonic(3, n, m, ∂F̃[k]), 3))
             P[:, col] .= 4 * ψ - g
             Q[:, col] .= -4 * ψ
         end

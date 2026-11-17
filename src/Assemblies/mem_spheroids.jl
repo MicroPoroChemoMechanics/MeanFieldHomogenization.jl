@@ -242,40 +242,32 @@ end
 # far from the spheroid, for 0 ≤ t ≤ deg: the vector harmonics and the
 # solutions of the Lamé equation built on the Y_t^s then carry over to the
 # spheroid by replacing Y_t^s with F̃_t^s, which keeps the symmetry
-# F̃_t^{−s} = (−1)^s conj(F̃_t^s) of the table.
-function _mem_spheroidal_table(x, c, deg::Int)
-    ξ, η, φ = _mem_spheroidal_coordinates(x, c)
-    Q = LayeredSpheroids._legendre_q_orders(ξ, deg, deg)
-    R = real(typeof(ξ))
-    values = Vector{Complex{R}}(undef, Harmonics._packed(deg, deg))
-    for s in 0:deg
-        P = LayeredSpheroids.legendre_order_p(η, s, deg)[1]
-        for t in s:deg
-            F = LayeredSpheroids._factorial_ratio(R, t, s) * Q[t + 1, s + 1] * _mem_surface_harmonic(P[t + 1], s, φ)
-            values[Harmonics._packed(t, s)] = (isodd(s) ? -F : F) / _mem_spheroidal_scale(c, t)
-        end
-    end
-    return Harmonics.HarmonicTable(deg, values)
+# F̃_t^{−s} = (−1)^s conj(F̃_t^s) of the table. With the exterior harmonics of
+# the spheroidal chart of TensND of focal distance f = |c|, whose radial factor
+# 𝖰_t^s is real,
+#
+#     F̃_t^s = (2t+1)!! (t−s)!/(t+s)! P_t^s(p) 𝖰_t^s(ζ) e^{isφ} / f^{t+1} :
+#
+# on the oblate side the phases of Q_t^s(iτ) = i^{−(t+1)} 𝒬_t^s(τ) and of
+# c^{t+1} = (−i f)^{t+1} cancel.
+_mem_spheroidal_table(x, c, deg::Int) = _mem_spheroidal_table_on(_mem_chart(c), x, deg)
+_mem_spheroidal_table_on(chart, x, deg::Int) = _mem_spheroidal_table(chart, TensND.cartesian_to_coords(chart, x), deg)
+# the same from the coordinates (φ, p, ζ) of the point on the chart
+function _mem_spheroidal_table(chart::TensND.AbstractChart{3}, ξ, deg::Int)
+    f = chart.c
+    R = float(promote_type(typeof(f), map(typeof, Tuple(ξ))...))
+    G = [TensND.exterior_harmonics(chart, deg, s, ξ) for s in 0:deg]
+    return TensND.SolidHarmonicTable(
+        (t, s) -> LayeredSpheroids._double_factorial(R, 2t + 1) * LayeredSpheroids._factorial_ratio(R, t, s) *
+            G[s + 1][t + 1] * cis(s * ξ[1]) / f^(t + 1), deg
+    )
 end
+
+# The spheroidal chart of TensND of a focal distance c: real, a prolate one;
+# −i·f, an oblate one.
+_mem_chart(c) = iszero(imag(c)) ? TensND.ProlateSpheroidalChart(real(c)) : TensND.OblateSpheroidalChart(abs(imag(c)))
 
 _mem_spheroidal_scale(c, t::Int) = c^(t + 1) / LayeredSpheroids._double_factorial(real(typeof(c)), 2t + 1)
-
-# Confocal coordinates (ξ, η, φ) of x for the focal distance c, read on the
-# spheroidal charts of TensND, (φ, p, q) and (φ, p, τ): c real, a prolate
-# spheroid, ξ = q; c = −i f, an oblate one, ξ = i τ; η = p in both.
-function _mem_spheroidal_coordinates(x, c)
-    φ, p, ξ = _mem_confocal(x, real(c), imag(c))
-    return ξ, p, φ
-end
-_mem_confocal(x, cr, ci) = iszero(ci) ? _mem_prolate(x, cr) : _mem_oblate(x, abs(ci))
-function _mem_prolate(x, f)
-    φ, p, q = TensND.cartesian_to_coords(TensND.ProlateSpheroidalChart(f), x)
-    return φ, p, complex(q)
-end
-function _mem_oblate(x, f)
-    φ, p, τ = TensND.cartesian_to_coords(TensND.OblateSpheroidalChart(f), x)
-    return φ, p, complex(zero(τ), τ)
-end
 
 # Coefficients η of the regular expansion about particle q of the decaying
 # harmonics of particle p, centered at −R from q: by projection on the surface.
@@ -318,7 +310,7 @@ end
 function _mem_eta_total(::MixedBC, q, p, R, self::Bool, nmax::Int)
     self && return nothing
     norm(TensND.primal.(R)) < _MEM_NEAR * (_mem_focal(q) + _mem_focal(p)) && return _mem_eta_near(q, p, R, nmax)
-    return _mem_eta_far(q, p, irregular_harmonics(R, _mem_far_degree(q, nmax)), nmax)
+    return _mem_eta_far(q, p, irregular_solid_harmonics(R, _mem_far_degree(q, nmax)), nmax)
 end
 
 function _mem_eta_total(b::PeriodicBox, q, p, R, self::Bool, nmax::Int)
@@ -359,7 +351,7 @@ end
 const _MEM_EWALD_DEGREE = 8
 const _MEM_DIRECT_REACH = 8
 
-# With `Val(true)` the biharmonic sums of `lattice_biharmonics` come along, the
+# With `Val(true)` the biharmonic sums of `lattice_solid_biharmonics` come along, the
 # image at x adding 𝒟_n^m r = −r² Y_n^m/(2n−1) to them above the Ewald degree.
 _mem_far_sums(R, L, near, rn, deg::Int) = first(_mem_far_sums(R, L, near, rn, deg, Val(false)))
 function _mem_far_sums(R, L, near, rn, deg::Int, bih::Val)
@@ -369,40 +361,45 @@ function _mem_far_sums(R, L, near, rn, deg::Int, bih::Val)
         rmin = minimum(norm(TensND.primal.(R .+ (n[1] * L[1], n[2] * L[2], n[3] * L[3]))) for n in near)
         α = min(α, 1 / (2 * rmin))
     end
-    low, lowρ = Harmonics._lattice_sums(R, L, min(deg, _MEM_EWALD_DEGREE), bih, α; exclude = near)
-    values = zeros(eltype(low.values), Harmonics._packed(deg, deg))
+    low, lowρ = _mem_lattice_sums(R, L, min(deg, _MEM_EWALD_DEGREE), bih, α, near)
+    values = zeros(eltype(low.values), TensND.solid_harmonic_index(deg, deg))
     values[eachindex(low.values)] .= low.values
     ρvalues = _mem_extended(lowρ, values)
     r₂ = _MEM_DIRECT_REACH * max(rn, minimum(TensND.primal.(L)))
     reach = ntuple(i -> ceil(Int, (r₂ + abs(TensND.primal(R[i]))) / TensND.primal(L[i])), 3)
-    first_high = Harmonics._packed(_MEM_EWALD_DEGREE + 1, 0)
+    first_high = TensND.solid_harmonic_index(_MEM_EWALD_DEGREE + 1, 0)
     for n₁ in (-reach[1]):reach[1], n₂ in (-reach[2]):reach[2], n₃ in (-reach[3]):reach[3]
         x = R .+ (n₁ * L[1], n₂ * L[2], n₃ * L[3])
         r = norm(TensND.primal.(x))
         # the near images, and the particle itself
         (rn ≤ r ≤ r₂ && r > 0) || continue
-        Y = irregular_harmonics(x, deg)
+        Y = irregular_solid_harmonics(x, deg)
         values[first_high:end] .+= view(Y.values, first_high:length(values))
         _mem_add_biharmonic!(ρvalues, Y, sum(abs2, x), _MEM_EWALD_DEGREE + 1)
     end
-    return Harmonics.HarmonicTable(deg, values), _mem_table(deg, ρvalues)
+    return TensND.SolidHarmonicTable(deg, values), _mem_table(deg, ρvalues)
 end
+
+# The lattice sums of TensND with the near images left out, and the biharmonic
+# ones with `Val(true)`.
+_mem_lattice_sums(R, L, deg::Int, ::Val{false}, α, near) = (lattice_solid_harmonics(R, L, deg; α, exclude = near), nothing)
+_mem_lattice_sums(R, L, deg::Int, ::Val{true}, α, near) = lattice_solid_biharmonics(R, L, deg; α, exclude = near)
 
 # The biharmonic sums widened to the degree of `values`, or nothing.
 _mem_extended(::Nothing, values) = nothing
-function _mem_extended(low::Harmonics.HarmonicTable, values)
+function _mem_extended(low::TensND.SolidHarmonicTable, values)
     ρ = zero(values)
     ρ[eachindex(low.values)] .= low.values
     return ρ
 end
 _mem_table(deg::Int, ::Nothing) = nothing
-_mem_table(deg::Int, ρ::Vector) = Harmonics.HarmonicTable(deg, ρ)
+_mem_table(deg::Int, ρ::Vector) = TensND.SolidHarmonicTable(deg, ρ)
 
 # 𝒟_n^m r = −r² Y_n^m/(2n−1) of one image, from the degree n₀ up.
 _mem_add_biharmonic!(::Nothing, Y, r², n₀::Int) = nothing
 function _mem_add_biharmonic!(ρ::Vector, Y, r², n₀::Int)
     for n in n₀:Y.nmax, m in 0:n
-        ρ[Harmonics._packed(n, m)] -= r² * Y[n, m] / (2n - 1)
+        ρ[TensND.solid_harmonic_index(n, m)] -= r² * Y[n, m] / (2n - 1)
     end
     return ρ
 end

@@ -59,14 +59,14 @@ The negative orders are defined by
 a uniform gradient is a combination of the ``y_1^m`` and the field of a dipole
 a combination of the ``Y_1^m``.
 
-[`regular_harmonics`](@ref) and [`irregular_harmonics`](@ref) return the table
+[`regular_solid_harmonics`](@extref TensND TensND.regular_solid_harmonics) and [`irregular_solid_harmonics`](@extref TensND TensND.irregular_solid_harmonics) return the table
 of one family at a point:
 
 ```@example mem
 using MeanFieldHomogenization, TensND, LinearAlgebra
 x = [0.3, -0.7, 0.45]
-y = regular_harmonics(x, 2)
-Y = irregular_harmonics(x, 2)
+y = regular_solid_harmonics(x, 2)
+Y = irregular_solid_harmonics(x, 2)
 y[1, 0], y[1, 1], Y[1, 0] * norm(x)^3
 ```
 
@@ -137,9 +137,9 @@ inside the ball that reaches the first center:
 
 ```@example mem
 R, r = [1.1, -0.6, 0.9], [0.15, 0.2, -0.1]
-YR, yr = irregular_harmonics(R, 22), regular_harmonics(r, 20)
+YR, yr = irregular_solid_harmonics(R, 22), regular_solid_harmonics(r, 20)
 series = sum((-1)^(n + m) * YR[2 + n, 1 - m] * yr[n, m] for n in 0:20 for m in -n:n)
-series ≈ irregular_harmonics(R + r, 2)[2, 1]
+series ≈ irregular_solid_harmonics(R + r, 2)[2, 1]
 ```
 
 ## 4. The linear system
@@ -304,7 +304,7 @@ A decaying harmonic is a derivative of ``1/r``,
 ``Y_n^m = \mathcal{D}_n^m(1/r)`` with ``\mathcal{D}_n^m`` a harmonic polynomial
 of the three partial derivatives, and its periodic counterpart is the same
 derivative of ``S``, ``Y_n^{*m} = \mathcal{D}_n^m S``, returned by
-[`lattice_harmonics`](@ref). ``S`` is computed by the splitting of
+[`lattice_solid_harmonics`](@extref TensND TensND.lattice_solid_harmonics). ``S`` is computed by the splitting of
 [ewald1921](@citet) into a sum over the lattice and a sum over the reciprocal
 lattice, both converging as a Gaussian; the derivative passes through each of
 them term by term, at any degree.

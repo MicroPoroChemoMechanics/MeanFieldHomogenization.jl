@@ -99,7 +99,7 @@ end
 # testset checks.
 const TEST_PARTS = Dict(
     "core" => (
-        "Aqua", "Elliptic", "Harmonics", "Core", "Elasticity", "Cracks", "Conductivity",
+        "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
         "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
         "Documentation",
     ),
@@ -210,13 +210,6 @@ end
     # `Interactions` sits between the one-inclusion kernels it builds on and
     # the N-body schemes that consume it: the pair tensors must be trusted
     # before either scheme is exercised.
-    rungroup("Harmonics") && @testset "Harmonics" begin
-        include("Harmonics/test_solid_harmonics.jl")
-        include("Harmonics/test_lattice_harmonics.jl")
-        include("Harmonics/test_vector_harmonics.jl")
-        include("Harmonics/test_ellipsoidal.jl")
-    end
-
     rungroup("Interactions") && @testset "Interactions" begin
         include("Interactions/test_pair_tensors.jl")
     end

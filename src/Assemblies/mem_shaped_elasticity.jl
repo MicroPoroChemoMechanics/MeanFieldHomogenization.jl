@@ -65,26 +65,26 @@ end
 # The regular spherical solutions u⁽ʲ⁾_nm at x, n ≤ nmax, as u = P + ν Q:
 # columns by `_mem_eindex`, rows the three Cartesian components.
 function _mem_spherical_lame(x, nmax::Int)
-    y = regular_harmonics(x, nmax + 1)
+    y = regular_solid_harmonics(x, nmax + 1)
     C = eltype(y.values)
     P, Q = zeros(C, 3, _mem_eblock(nmax)), zeros(C, 3, _mem_eblock(nmax))
     for n in 0:nmax, m in (-n):n, j in _mem_received(n)
         col = _mem_eindex(j, n, m)
-        P[:, col] .= Harmonics.lame_regular(j, n, m, x, 0, y)
-        j == 3 && (Q[:, col] .= -4 * Harmonics.vector_regular_harmonic(3, n, m, y))
+        P[:, col] .= regular_lame_solution(j, n, m, x, 0, y)
+        j == 3 && (Q[:, col] .= -4 * regular_vector_harmonic(3, n, m, y))
     end
     return P, Q
 end
 
 # The decaying spherical solutions U⁽ⁱ⁾_nm at x, n ≤ K, as U = P + ν Q.
 function _mem_spherical_lame_decaying(x, K::Int)
-    Y = irregular_harmonics(x, K + 1)
+    Y = irregular_solid_harmonics(x, K + 1)
     C = eltype(Y.values)
     P, Q = zeros(C, 3, _mem_eblock(K)), zeros(C, 3, _mem_eblock(K))
     for n in 0:K, m in (-n):n, i in _mem_sent(n)
         col = _mem_eindex(i, n, m)
-        P[:, col] .= Harmonics.lame_irregular(i, n, m, x, 0, Y)
-        i == 3 && (Q[:, col] .= -4 * Harmonics.vector_irregular_harmonic(3, n, m, Y))
+        P[:, col] .= irregular_lame_solution(i, n, m, x, 0, Y)
+        i == 3 && (Q[:, col] .= -4 * irregular_vector_harmonic(3, n, m, Y))
     end
     return P, Q
 end
@@ -92,9 +92,9 @@ end
 # â = D a: the received coefficients scaled to a displacement at radius R, and
 # b̂ = D′ b the sent ones (`mem_elasticity.jl`, SCALING).
 _mem_received_scales(R, nmax::Int) =
-    [(n == 0 ? R : R^(n - 2 + j) / harmonic_norm(n, m)) for n in 0:nmax for m in (-n):n for j in _mem_received(n)]
+    [(n == 0 ? R : R^(n - 2 + j) / solid_harmonic_norm(n, m)) for n in 0:nmax for m in (-n):n for j in _mem_received(n)]
 _mem_sent_scales(R, K::Int) =
-    [(n == 0 ? 1 / R^2 : harmonic_norm(n, m) / R^(n + 3 - i)) for n in 0:K for m in (-n):n for i in _mem_sent(n)]
+    [(n == 0 ? 1 / R^2 : solid_harmonic_norm(n, m) / R^(n + 3 - i)) for n in 0:K for m in (-n):n for i in _mem_sent(n)]
 
 # ─── Response ────────────────────────────────────────────────────────────────
 
@@ -217,7 +217,7 @@ function _mem_couple_elastic!(M, rows, cols, b::MixedBC, dq::_MemElasticShaped, 
         @views M[rows, cols] .-= _mem_elastic_near(dq, dp, r, nmax)
         return M
     end
-    return _mem_couple_far!(M, rows, cols, b, (irregular_harmonics(r, nmax + dp.K), r), dq, dp, ν₀, norms, nmax)
+    return _mem_couple_far!(M, rows, cols, b, (irregular_solid_harmonics(r, nmax + dp.K), r), dq, dp, ν₀, norms, nmax)
 end
 
 # On a periodic cell the images closer than the threshold are read on the

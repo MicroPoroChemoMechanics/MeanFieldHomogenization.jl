@@ -26,15 +26,16 @@
   of a finite assembly of spheres (`MixedBC`), from three solutions of the Lamé
   equation per harmonic. `harmonic_response(sphere, C₀, n)` is the elastic
   response of a layered sphere at any degree, with its spring and membrane
-  interfaces; `lame_regular`, `lame_irregular` and `lame_translation` give the
-  solutions and their expansion about another center. One sphere is
+  interfaces; the solutions and their expansion about another center are those
+  of TensND (`regular_lame_solution`, `irregular_lame_solution`,
+  `lame_solution_translation`). One sphere is
   Mori–Tanaka exactly, and the 27 rigid spheres of Kushch (2013) are recovered
   with their cubic anisotropy.
 - **Elasticity of periodic assemblies.** On a `PeriodicBox` the scheme gives the
   stiffness of the periodic medium. The sums of the Lamé solutions over the
   images need, next to the lattice harmonics of conduction, those of the
-  periodic counterpart of ``r`` (``Δρ = 2S``), returned by
-  `lattice_biharmonics`. The stiffnesses of simple cubic, body-centered and
+  periodic counterpart of ``r`` (``Δρ = 2S``), returned by TensND's
+  `lattice_solid_biharmonics`. The stiffnesses of simple cubic, body-centered and
   face-centered arrays tabulated by Kushch (2013) are recovered.
 - **Spheroids in conduction.** `MultipoleExpansion` takes assemblies of
   spheroids of revolution axis e₃ (`Ellipsoid` or `LayeredSpheroid`, with Kapitza
@@ -46,9 +47,8 @@
   decimal, and their convergence table digit for digit.
 - **Ellipsoids in conduction.** `MultipoleExpansion` takes assemblies of
   ellipsoids of three different semi-axes, aligned alike, finite or periodic,
-  on the ellipsoidal harmonics built from the Lamé functions (new in
-  `Harmonics`: `EllipsoidalGeometry`, `lame_functions`, `ellipsoidal_coordinates`,
-  `lame_second_kind`). `InterfacedEllipsoid(a₁, a₂, a₃, interface)` carries a
+  on the ellipsoidal harmonics built from the Lamé functions of TensND
+  (`lame_functions`, `lame_second_kind` on its `EllipsoidalChart`). `InterfacedEllipsoid(a₁, a₂, a₃, interface)` carries a
   Kapitza interface on an ellipsoid, for this scheme alone. The normalization
   constants, the Maxwell estimates with a Kapitza interface and the
   translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
@@ -102,11 +102,13 @@
   and the equivalent inclusion method keep a cubic one), and an exact overlap
   test between ellipsoids in `validate_assembly`, which no longer rejects
   spheroids whose bounding balls overlap.
-- **Solid harmonics.** `regular_harmonics`, `irregular_harmonics` and
-  `lattice_harmonics` (the harmonics of a periodic array of sources, by Ewald
-  sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.
-  All accept `ForwardDiff` numbers, so an effective conductivity differentiates
-  with respect to a position, a radius, a contrast or an interface parameter.
+- **Solid harmonics from TensND.** The scheme is written on the solid, vector
+  and ellipsoidal harmonics of TensND 0.13 and on their sums over a periodic
+  array; all accept `ForwardDiff` numbers, so an effective conductivity
+  differentiates with respect to a position, a radius, a contrast or an
+  interface parameter. The Legendre functions of `LayeredSpheroid` are TensND's
+  too: one implementation of each function for both packages, with the
+  derivatives and the oblate focal disk it gained.
 - `concentration_tensors` under `MultipoleExpansion`, the mean gradient and
   flux of every sphere following from the uniform part of the field it
   receives, and `multipole_coefficients`, the coefficients of the series.

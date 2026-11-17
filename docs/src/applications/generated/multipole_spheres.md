@@ -328,7 +328,7 @@ b = multipole_coefficients(pair; scheme = MultipoleExpansion(; nmax))
 function temperature(x; gradient = 3)
     T = x[gradient]
     for (name, X) in centers
-        Y = irregular_harmonics(x - X, nmax)
+        Y = irregular_solid_harmonics(x - X, nmax)
         T += real(sum(b[name, n, m][gradient] * Y[n, m] for n in 1:nmax for m in (-n):n))
     end
     return T
