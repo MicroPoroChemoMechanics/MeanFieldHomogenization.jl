@@ -433,8 +433,8 @@ T(\\underline{x}) = \\underline{H}\\cdot\\underline{x}
   + \\sum_J \\sum_{n \\ge 1} \\sum_{|m| \\le n} b_{J,n}^m\\,Y_n^m(\\underline{x} - \\underline{X}_J) ,
 ```
 
-with ``Y_n^m`` the decaying solid harmonics of [`irregular_solid_harmonics`](@ref)
-(their sums over the images in a periodic assembly, [`lattice_solid_harmonics`](@ref)).
+with ``Y_n^m`` the decaying solid harmonics of [`irregular_solid_harmonics`](@extref TensND TensND.irregular_solid_harmonics)
+(their sums over the images in a periodic assembly, [`lattice_solid_harmonics`](@extref TensND TensND.lattice_solid_harmonics)).
 The result is indexed as `c[name, n, m]`.
 """
 function multipole_coefficients(
