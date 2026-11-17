@@ -161,41 +161,21 @@ end
 """
     ellipsoidal_coordinates(g, x) -> NamedTuple
 
-The ellipsoidal coordinates ``(\\rho, \\mu, \\nu)`` of the point `x` and the square
-roots that enter the Lamé functions, signed by the octant of `x` (Dassios,
-§ 1.2): ``\\nu`` carries the sign of ``x_1``, ``\\sqrt{h_3^2 - \\nu^2}`` that of ``x_2``
-and ``\\sqrt{h_2^2 - \\mu^2}`` that of ``x_3``. The squares are the roots of the
-cubic of the three confocal families.
+The ellipsoidal coordinates ``(\\rho, \\mu, \\nu)`` of the point `x`, from the
+`EllipsoidalChart` of TensND, and the square roots that enter the Lamé
+functions, signed by the octant of `x` (Dassios, § 1.2): ``\\nu`` carries the sign
+of ``x_1``, ``\\sqrt{h_3^2 - \\nu^2}`` that of ``x_2`` and ``\\sqrt{h_2^2 - \\mu^2}`` that of
+``x_3``.
 """
 function ellipsoidal_coordinates(g::EllipsoidalGeometry, x)
+    ρ, μ, ν = TensND.cartesian_to_coords(TensND.EllipsoidalChart(g.h2, g.h3), x)
     h₂², h₃² = g.h2^2, g.h3^2
-    x₁², x₂², x₃² = x[1]^2, x[2]^2, x[3]^2
-    # −t³ + c₂ t² − c₁ t + c₀ = 0
-    c₂ = h₃² + h₂² + x₁² + x₂² + x₃²
-    c₁ = h₃² * h₂² + x₁² * (h₃² + h₂²) + x₂² * h₂² + x₃² * h₃²
-    c₀ = x₁² * h₃² * h₂²
-    # roots in Float64, then two Newton steps in the type of x: the second order
-    # of the implicit-function theorem, so that duals (nested) carry the
-    # derivatives of the coordinates exactly
-    t₀ = sort(real.(eigvals(primal.([c₂ -c₁ c₀; 1 0 0; 0 1 0]))))
-    t = map(t₀) do τ
-        τ = oftype(c₂, τ)
-        for _ in 1:2
-            τ -= (-τ^3 + c₂ * τ^2 - c₁ * τ + c₀) / (-3τ^2 + 2c₂ * τ - c₁)
-        end
-        τ
-    end
-    ν² = clamp(t[1], zero(h₃²), h₃²)
-    μ² = clamp(t[2], h₃², h₂²)
-    ρ² = max(t[3], h₂²)
     sgn(v) = v < 0 ? -1.0 : 1.0
-    ρ, μ = sqrt(ρ²), sqrt(μ²)
-    ν = sgn(x[1]) * sqrt(ν²)
     return (;
         ρ, μ, ν,
-        ρ3 = sqrt(ρ² - h₃²), ρ2 = sqrt(ρ² - h₂²),
-        μ3 = sqrt(μ² - h₃²), μ2 = sgn(x[3]) * sqrt(h₂² - μ²),
-        ν3 = sgn(x[2]) * sqrt(h₃² - ν²), ν2 = sqrt(h₂² - ν²),
+        ρ3 = sqrt(ρ^2 - h₃²), ρ2 = sqrt(ρ^2 - h₂²),
+        μ3 = sqrt(μ^2 - h₃²), μ2 = sgn(x[3]) * sqrt(h₂² - μ^2),
+        ν3 = sgn(x[2]) * sqrt(h₃² - ν^2), ν2 = sqrt(h₂² - ν^2),
     )
 end
 

@@ -260,21 +260,24 @@ end
 
 _mem_spheroidal_scale(c, t::Int) = c^(t + 1) / LayeredSpheroids._double_factorial(real(typeof(c)), 2t + 1)
 
-# Confocal coordinates (ξ, η, φ) of x for the focal distance c: c real, a
-# prolate spheroid, x₃ = c ξ η; c = −i f, an oblate one, ξ = i s with
-# x₃ = f s η and ρ = f √(1+s²) η̄.
+# Confocal coordinates (ξ, η, φ) of x for the focal distance c, read on the
+# spheroidal charts of TensND, (φ, p, q) and (φ, p, τ): c real, a prolate
+# spheroid, ξ = q; c = −i f, an oblate one, ξ = i τ; η = p in both.
 function _mem_spheroidal_coordinates(x, c)
-    ρ = hypot(x[1], x[2])
-    φ = atan(x[2], x[1])
-    if iszero(imag(c))
-        f = real(c)
-        r₁, r₂ = hypot(ρ, x[3] - f), hypot(ρ, x[3] + f)
-        return complex((r₁ + r₂) / (2f)), (r₂ - r₁) / (2f), φ
-    end
-    f = abs(c)
-    a = (ρ^2 + x[3]^2) / f^2 - 1
-    s = sqrt((a + sqrt(a^2 + 4 * x[3]^2 / f^2)) / 2)
-    return complex(zero(s), s), x[3] / (f * s), φ
+    φ, p, ξ = _mem_confocal(x, real(c), imag(c))
+    return ξ, p, φ
+end
+_mem_confocal(x, cr, ci) = iszero(ci) ? _mem_prolate(x, cr) : _mem_oblate(x, abs(ci))
+function _mem_prolate(x, f)
+    φ, p, q = TensND.cartesian_to_coords(TensND.ProlateSpheroidalChart(f), x)
+    return φ, p, complex(q)
+end
+function _mem_oblate(x, f)
+    φ, _, τ = TensND.cartesian_to_coords(TensND.OblateSpheroidalChart(f), x)
+    # p from x₃ = f p τ: the chart forms it as a square root, whose derivative
+    # is undefined on the equatorial plane, where this quotient is smooth (τ > 0
+    # outside the focal disk, where the harmonics are evaluated)
+    return φ, x[3] / (f * τ), complex(zero(τ), τ)
 end
 
 # Coefficients η of the regular expansion about particle q of the decaying

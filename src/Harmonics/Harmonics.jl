@@ -24,10 +24,11 @@ Contents
 module Harmonics
 
 using SpecialFunctions: logfactorial, erfc
-using LinearAlgebra: eigen, eigvals
+using LinearAlgebra: eigen
 using QuadGK: gauss
 using StaticArrays: SVector
 using TensND: primal
+import TensND
 
 include("solid_harmonics.jl")
 include("lattice_sums.jl")
