@@ -4,7 +4,8 @@
 #     [The multipole expansion method for spheroids](@ref th-mem-spheroids)
 #     and [for ellipsoids](@ref th-mem-ellipsoids), where the scheme is derived,
 #     [with anisotropic constituents](@ref th-mem-anisotropic),
-#     [for spheroids in elasticity](@ref th-mem-spheroids-elasticity), and
+#     [for spheroids in elasticity](@ref th-mem-spheroids-elasticity),
+#     [for ellipsoids in elasticity](@ref th-mem-ellipsoids-elasticity), and
 #     [Particle assemblies and N-body schemes](@ref man-assemblies) for the
 #     assemblies it acts on.
 #
@@ -15,8 +16,9 @@
 # from the files below. It goes on with the stiffness of spheroids bonded by a
 # spring [kushch2018](@cite), with ellipsoids bonded by a Kapitza interface
 # [kushch2020](@cite), with spheroids in a transversely isotropic matrix
-# [kushch2014](@cite), and with the stiffness of lattices of spheroids
-# [kushch2013](@cite).
+# [kushch2014](@cite), with the stiffness of lattices of spheroids
+# [kushch2013](@cite), and with ellipsoids bonded by springs
+# [kushch2019a](@cite).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -52,6 +54,10 @@ nothing #hide
 #-
 
 #md Main.show_literature("kushch2014") # hide
+
+#-
+
+#md Main.show_literature("kushch2019a") # hide
 
 # ## 1. The lattices
 #
@@ -405,6 +411,48 @@ lattice_table()
 # value is also below those of ``\varepsilon = 1`` (5.930) and
 # ``\varepsilon = 0.2`` (5.737), where the computed ones fall in between.
 #
+# ## 9. Ellipsoids bonded by springs
+#
+# [kushch2019a](@citet), Table 5, gives the Maxwell estimate of ellipsoids of
+# semi-axes ``(1.5, 1, 0.5)`` at the volume fraction 0.5, with
+# ``\nu_0 = 0.3``, ``\nu_1 = 0.2``, ``\mu_1/\mu_0 = 100``, bonded by springs of
+# equal normal and tangential stiffness ``D``, from the perfect bond to the
+# cavity. One [`InterfacedEllipsoid`](@ref) in a domain of its own shape is that
+# estimate; the rows ``D = 10`` and ``D = 1`` are recovered with the stiffness
+# ``D\,\mu_0`` (the text of the article states ``D\,\mu_0/a_1``).
+
+springs = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2019a.json"))
+spring_q(k) = springs["quantities"][k]["value"]
+function ellipsoid_spring_estimate(D)
+    semi = Tuple(spring_q("semi_axes"))
+    ν_iso(μ, ν) = TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)
+    cell = ParticleAssembly(; boundary = MixedBC(Ellipsoid((semi ./ cbrt(spring_q("fraction")))...)))
+    add_matrix!(cell, Dict(:C => ν_iso(1.0, spring_q("nu0"))))
+    C₁ = D == 0 ? TensISO{3}(0.0, 0.0) : ν_iso(spring_q("mu_ratio"), spring_q("nu1"))
+    particle = D isa Number && D > 0 ? InterfacedEllipsoid(semi..., SpringInterface(D, D)) : Ellipsoid(semi...)
+    add_particle!(cell, :p, (0.0, 0.0, 0.0), particle, Dict(:C => C₁))
+    return TensND.mandel(homogenize(cell, MultipoleExpansion(; nmax = 8), :C), TensND.CanonicalBasis{3, Float64}())
+end
+function ellipsoid_spring_table()
+    io = IOBuffer()
+    entries = (("C1111", 1, 1), ("C3333", 3, 3), ("C2233", 2, 3), ("C1212", 6, 6))
+    println(io, "| ``D`` | ", join(("``C_{$(k[2:end])}/\\\\mu_0``" for (k, _, _) in entries), " | "), " |")
+    println(io, "| :-- | :-- | :-- | :-- | :-- |")
+    for row in springs["tables"]["maxwell_spring"]
+        D = row["D"] == "Infinity" ? Inf : row["D"]
+        M = ellipsoid_spring_estimate(D)
+        cells = [@sprintf("%.4f (%.4f)", M[i, j] / (i > 3 ? 2 : 1), row[k]) for (k, i, j) in entries]
+        println(io, "| ", row["D"], " | ", join(cells, " | "), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+ellipsoid_spring_table()
+
+# Each cell gives the computed value at `nmax = 8` and, in parentheses, the
+# published one. The perfect bond and the cavity are Mori–Tanaka, which the
+# expansion gives exactly; there the published ``C_{2233}`` of the cavity,
+# 0.2970, differs from that estimate, 0.2940.
+#
 # ## Summary
 #
 # | result | source | recovered |
@@ -416,6 +464,7 @@ lattice_table()
 # | elastic spheroids with a spring interface, Maxwell estimate | [kushch2018](@cite), Table 2 | to the fourth decimal |
 # | ellipsoids with a Kapitza interface, Maxwell estimate | [kushch2020](@cite), Table 2 | to the seventh decimal, degree by degree |
 # | stiffness of lattices of spheroids | [kushch2013](@cite), Table 7.6 | to within one unit of the third decimal at `nmax = 6` to 8, but for one entry printed with its digits permuted |
+# | ellipsoids bonded by springs, Maxwell estimate | [kushch2019a](@cite), Table 5 | to the fourth decimal with the stiffness ``D\,\mu_0``, but for one entry of the cavity, where the published value differs from Mori–Tanaka |
 # | spheroids in a transversely isotropic matrix, anisotropy parameter | [kushch2014](@cite), Table 5 | to the third decimal up to ``c = 0.4`` at `nmax = 8`, but for three entries at ``\kappa = 0.25`` |
 #
 #md # ```@raw html

@@ -7,7 +7,8 @@
     spheroidal harmonics.
 
 The particles are now spheroids of revolution axis ``\underline{e}_3``, all
-oriented alike, perfectly bonded or empty, in an isotropic matrix of shear
+oriented alike, bonded perfectly or by springs, or empty, in an isotropic
+matrix of shear
 modulus ``\mu_0`` and Poisson ratio ``\nu_0`` [kushch2013](@cite). Each one keeps
 the unknowns of a sphere, the coefficients of the regular spherical solutions
 it receives about its center; what changes is its response, which goes
@@ -58,16 +59,23 @@ The spheroid receives the regular spherical solutions
 ``\underline{u}^{(j)}_{nm}`` about its center, with coefficients ``a``, sends the
 ``\underline{V}^{(i)}_{nm}`` with coefficients ``b``, and holds inside a series of
 regular spherical solutions for its own Poisson ratio ``\nu_1``. On its surface,
-of unit normal ``\underline{n}``, the displacement and the traction
-``\boldsymbol{\sigma}\cdot\underline{n}`` are continuous; on a cavity the traction is
-zero. The spheroid and its phases being unchanged by a rotation about
+of unit normal ``\underline{n}``, the traction ``\boldsymbol{\sigma}\cdot\underline{n}`` is
+continuous and the displacement jumps by the compliance of the interface,
+``\underline{u}_0 - \underline{u}_1 = \mathbf{S}\cdot(\boldsymbol{\sigma}_1\cdot\underline{n})``,
+``\mathbf{S} = s_n\,\underline{n}\otimes\underline{n} + s_t\,(\boldsymbol{1} - \underline{n}\otimes\underline{n})``
+for a [`SpringInterface`](@ref) of compliances ``s_n``, ``s_t``, zero for a
+perfect bond; on a cavity the traction is zero. The spheroid and its phases being unchanged by a rotation about
 ``\underline{e}_3``, a field of order ``m`` keeps its order, and is known everywhere
 from its values on one meridian. For each order the two conditions are
 imposed by least squares at the Gauss points of the meridian ``\varphi = 0``,
 the traction brought to a displacement by the factor ``R/\mu_0``, ``R`` the
 largest semi-axis; the solution gives ``b = \mathbf{Z}\,a``. With
 ``n_{\max} = 2`` it is exact under a uniform remote strain, which the example
-checks against [`MoriTanaka`](@ref):
+checks against [`MoriTanaka`](@ref). With springs it is no longer exact, and
+converges with ``n_{\max}`` to the response of the
+[layered spheroid](@ref th-spheroid-elasticity) obtained by its own route, the
+transfer of the Papkovich–Neuber potentials: to ``3\cdot 10^{-7}`` at
+``n_{\max} = 8``.
 
 ```@example mem_sph_el
 using MeanFieldHomogenization, TensND, LinearAlgebra

@@ -153,6 +153,7 @@ then has its page, with its figure, its assumption and its equations.
 | [The multipole expansion method for spheroids](@ref th-mem-spheroids) | spheroidal harmonics, the response of a layered spheroid at any degree and order, and the translation between close spheroids |
 | [The multipole expansion method for spheroids in elasticity](@ref th-mem-spheroids-elasticity) | the solutions of the Lamé equation built on the spheroidal harmonics, the response of a spheroid by least squares on a meridian, and the reading of a close neighbor |
 | [The multipole expansion method for ellipsoids](@ref th-mem-ellipsoids) | Lamé functions and ellipsoidal harmonics, the response of an ellipsoid with a Kapitza interface, and the translation between ellipsoids |
+| [The multipole expansion method for ellipsoids in elasticity](@ref th-mem-ellipsoids-elasticity) | the Papkovich–Neuber potentials on the ellipsoidal harmonics, the response of an ellipsoid bonded by springs, and its spherical form |
 | [The multipole expansion method with anisotropic constituents](@ref th-mem-anisotropic) | the affine map that makes an orthotropic matrix isotropic, and the response of a particle of anisotropic conductivity |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 

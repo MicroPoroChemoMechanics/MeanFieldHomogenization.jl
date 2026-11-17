@@ -34,6 +34,18 @@ end
     end
 end
 
+@testset "MEM elastic spheroids — a spring interface against the layered spheroid" begin
+    # the response by least squares on a meridian against the transfer of the
+    # Papkovich-Neuber potentials of `LayeredSpheroid`, two independent routes
+    for (kn, kt) in ((2.0, 3.0), (0.2, 0.5))
+        P = _mse_iso(10.0, 6.0)
+        asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid(2.0, 2.0, 1.0)))
+        add_matrix!(asm, Dict(:C => _MSE_C0))
+        add_particle!(asm, :p, (0.0, 0.0, 0.0), LayeredSpheroid((0.5,), (1.0,), (P,); interfaces = (SpringInterface(kn, kt),)), Dict(:C => P))
+        @test _mse_C(asm, MultipoleExpansion(; nmax = 8)) ≈ _mse_C(asm, MoriTanaka()) rtol = 1.0e-6
+    end
+end
+
 @testset "MEM elastic spheroids — a pair, near and far; a lattice, one and two cells" begin
     pair(z) = begin
         asm = ParticleAssembly(; boundary = MixedBC(12.0))
@@ -44,7 +56,10 @@ end
     end
     # the near form below 2.5 times the sum of the focal distances, √3, the far one above
     rn = 2.5 * 2 * sqrt(0.75)
-    @test pair(rn - 1.0e-6) ≈ pair(rn + 1.0e-6) rtol = 1.0e-10
+    # the centers 0.3 apart across the axis: z of the threshold
+    z = sqrt(rn^2 - 0.3^2)
+    # the two forms truncate differently; they agree to that truncation
+    @test pair(z - 1.0e-6) ≈ pair(z + 1.0e-6) rtol = 1.0e-8
     P = _mse_iso(10.0, 6.0)
     one_cell = _mse_one((1.0, 1.0, 0.5), P; boundary = PeriodicBox((3.0, 3.0, 2.0)))
     two_cells = ParticleAssembly(; boundary = PeriodicBox((3.0, 3.0, 4.0)))
@@ -97,17 +112,16 @@ end
         add_particle!(asm, :p, (0.0, 0.0, 0.0), geometry, Dict(:C => P))
         asm
     end
-    # an anisotropic spheroid, semi-axes carrying a derivative, an ellipsoid
+    # an anisotropic spheroid, semi-axes carrying a derivative
     @test_throws ArgumentError homogenize(one_in(Ellipsoid(1.0, 1.0, 0.5), TensTI{4}(10.0, 6.0, 8.0, 5.0, 2.0, (0.0, 0.0, 1.0))), MultipoleExpansion(), :C)
     @test_throws ArgumentError homogenize(one_in(Ellipsoid(1.0, 1.0, ForwardDiff.Dual(0.5, 1.0))), MultipoleExpansion(), :C)
-    @test_throws ArgumentError homogenize(one_in(Ellipsoid(1.5, 1.0, 0.5)), MultipoleExpansion(), :C)
     # a layered spheroid, and one behind a spring
     layered = ParticleAssembly(; boundary = MixedBC(6.0))
     add_matrix!(layered, Dict(:C => _MSE_C0))
     add_particle!(layered, :p, (0.0, 0.0, 0.0), LayeredSpheroid((sqrt(0.06), 0.5), (0.9, 1.0), (_mse_iso(10.0, 6.0), _mse_iso(5.0, 3.0))), Dict{Symbol, Any}())
     @test_throws ArgumentError homogenize(layered, MultipoleExpansion(), :C)
-    spring = ParticleAssembly(; boundary = MixedBC(6.0))
-    add_matrix!(spring, Dict(:C => _MSE_C0))
-    add_particle!(spring, :p, (0.0, 0.0, 0.0), LayeredSpheroid((0.5,), (1.0,), (_mse_iso(10.0, 6.0),); interfaces = (SpringInterface(1.0, 1.0),)), Dict{Symbol, Any}())
-    @test_throws ArgumentError homogenize(spring, MultipoleExpansion(), :C)
+    kapitza = ParticleAssembly(; boundary = MixedBC(6.0))
+    add_matrix!(kapitza, Dict(:C => _MSE_C0))
+    add_particle!(kapitza, :p, (0.0, 0.0, 0.0), LayeredSpheroid((0.5,), (1.0,), (_mse_iso(10.0, 6.0),); interfaces = (KapitzaInterface(1.0),)), Dict{Symbol, Any}())
+    @test_throws ArgumentError homogenize(kapitza, MultipoleExpansion(), :C)
 end

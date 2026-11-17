@@ -200,6 +200,31 @@ function _mem_ellipsoidal_irregular!(F::AbstractVector, x, g, lame, nodes)
     return F
 end
 
+# The coefficients of nf functions f (decaying outside the sphere of radius r₀,
+# evaluated in place by f!(values, x)) on the decaying spherical harmonics
+# Y_k^l, 0 ≤ k ≤ K, rows k² + k + l + 1, read on that sphere where the χ_k^l are
+# orthogonal: f = Σ μ_kl Y_k^l, μ_kl = r₀^{k+1} (2k+1)/(4π (k+|l|)!) ∫ f conj(χ_k^l) dΩ.
+function _mem_sphere_coefficients(f!::F, nf::Int, r₀, K::Int) where {F}
+    nθ = K + 4
+    nφ = 2K + 4
+    xs, ws = LayeredSpheroids.QuadGK.gauss(nθ)
+    Y = zeros(ComplexF64, nθ * nφ, (K + 1)^2)
+    values = zeros(nθ * nφ, nf)
+    f = zeros(nf)
+    for (i, (t, wt)) in enumerate(zip(xs, ws)), j in 1:nφ
+        φ = 2π * (j - 1) / nφ
+        x̂ = [sqrt(1 - t^2) * cos(φ), sqrt(1 - t^2) * sin(φ), t]
+        row = (i - 1) * nφ + j
+        values[row, :] .= f!(f, r₀ .* x̂)
+        # χ_k^l = (k + |l|)! y_k^l on the unit sphere, the factorial canceling
+        y = regular_harmonics(x̂, K)
+        for k in 0:K, l in (-k):k
+            Y[row, k^2 + k + l + 1] = wt * 2π / nφ * r₀^(k + 1) * (2k + 1) / 4π * conj(y[k, l])
+        end
+    end
+    return transpose(Y) * values
+end
+
 # μ: the coefficients of 𝔽 on the decaying spherical harmonics about the
 # center, read on a sphere of radius r₀ > h₂, where χ_k^l are orthogonal (2a₁:
 # on the sphere of radius a₁, close to the focal ellipse, the quadrature loses
@@ -210,25 +235,8 @@ end
 function _mem_ellipsoid_far_maps(g, lame, nodes, Π, surface, nmax::Int; r₀ = 2 * g.a[1])
     K = nmax + _MEM_ELLIPSOID_EXTRA
     ns = _mem_block(K)
-    nθ = K + 4
-    nφ = 2K + 4
-    xs, ws = LayeredSpheroids.QuadGK.gauss(nθ)
-    # μ = Yᵀ F, the rows of Y holding w (2k+1) r₀^{k+1}/(4π) conj(y_k^l) at each point
-    Y = zeros(ComplexF64, nθ * nφ, ns)
-    F = zeros(nθ * nφ, length(lame))
-    f = zeros(length(lame))
-    for (i, (t, wt)) in enumerate(zip(xs, ws)), j in 1:nφ
-        φ = 2π * (j - 1) / nφ
-        x̂ = [sqrt(1 - t^2) * cos(φ), sqrt(1 - t^2) * sin(φ), t]
-        row = (i - 1) * nφ + j
-        F[row, :] .= _mem_ellipsoidal_irregular!(f, r₀ .* x̂, g, lame, nodes)
-        # χ_k^l = (k + |l|)! y_k^l on the unit sphere, the factorial canceling
-        y = regular_harmonics(x̂, K)
-        for k in 1:K, l in (-k):k
-            Y[row, _mem_index(k, l)] = wt * 2π / nφ * r₀^(k + 1) * (2k + 1) / 4π * conj(y[k, l])
-        end
-    end
-    μ = transpose(Y) * F
+    # the degree 0, which no 𝔽 of degree 1 or more carries, left out
+    μ = _mem_sphere_coefficients((f, x) -> _mem_ellipsoidal_irregular!(f, x, g, lame, nodes), length(lame), r₀, K)[2:end, :]
     # ν = Π y, the regular harmonics on the points of the surface
     Ys = zeros(ComplexF64, size(surface, 2), ns)
     for col in axes(surface, 2)

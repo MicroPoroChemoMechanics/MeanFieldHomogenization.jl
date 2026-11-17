@@ -234,6 +234,7 @@ end
         include("Assemblies/test_mem_anisotropic.jl")
         include("Assemblies/test_mem_elasticity.jl")
         include("Assemblies/test_mem_spheroid_elasticity.jl")
+        include("Assemblies/test_mem_ellipsoid_elasticity.jl")
         include("Assemblies/test_as_rve.jl")
         include("Assemblies/test_multiscale.jl")
     end

@@ -78,7 +78,8 @@ particle, in the order of `names`, the radius of its scaling (`radii`), its
 response (`responses[q]`), the matrix that turns the scaled coefficients it
 receives into the scaled coefficients of the decaying spherical solutions it
 sends, and the scaled coefficients it receives under the six unit strains of
-the Kelvin-Mandel basis (`received`, one column per strain).
+the Kelvin-Mandel basis (`received`, one column per strain), all in the frame
+whose axes are those of the assembly in the order `axes`.
 """
 struct ElasticMultipoleSolution{T, C}
     names::Vector{Symbol}
@@ -86,6 +87,7 @@ struct ElasticMultipoleSolution{T, C}
     responses::Vector{Matrix{C}}
     received::Matrix{C}
     nmax::Int
+    axes::NTuple{3, Int}
 end
 
 # A sphere in the elastic expansion: the radius R of the scaling and the scaled
@@ -129,15 +131,16 @@ function _mem_solve(asm::ParticleAssembly, C₀::TensND.AbstractTens{4, 3}, prop
     )
     names = particle_names(asm)
     geometries = [particle_geometry(asm, nm) for nm in names]
-    particles = _mem_elastic_particles(Val(_mem_one_kind(geometries)), asm, C₀, prop, names, geometries, nmax)
+    # the particles, and the order of the axes of the assembly in their frame
+    particles, order = _mem_elastic_particles(Val(_mem_one_kind(geometries)), asm, C₀, prop, names, geometries, nmax)
     centers = [particle_center(asm, nm) for nm in names]
     # a center given as a tuple may mix plain numbers and one carrying a derivative
     TX = mapreduce(c -> mapreduce(typeof, promote_type, c), promote_type, centers)
-    X = [SVector{3, TX}(c) for c in centers]
-    â = _mem_vector_system(particles, X, ν₀, asm.boundary, nmax)
+    X = [SVector{3, TX}(c[collect(order)]) for c in centers]
+    â = _mem_vector_system(particles, X, ν₀, _mem_permuted(asm.boundary, order), nmax)
     C = eltype(â)
     return ElasticMultipoleSolution(
-        copy(names), [real(C)(d.R) for d in particles], [Matrix{C}(d.Ẑ) for d in particles], â, nmax
+        copy(names), [real(C)(d.R) for d in particles], [Matrix{C}(d.Ẑ) for d in particles], â, nmax, order
     )
 end
 
@@ -147,7 +150,7 @@ function _mem_elastic_particles(::Val{:sphere}, asm, C₀, prop::Symbol, names, 
     R = _common_eltype([LayeredSpheres.outer_radius(sphere) for sphere in spheres])
     raw = [[harmonic_response(sphere, C₀, n) for n in 0:nmax] for sphere in spheres]
     T = float(promote_type(eltype(R), mapreduce(Z -> eltype(first(Z)), promote_type, raw)))
-    return [_mem_elastic_sphere(raw[q], T(R[q]), nmax) for q in eachindex(spheres)]
+    return [_mem_elastic_sphere(raw[q], T(R[q]), nmax) for q in eachindex(spheres)], (1, 2, 3)
 end
 
 function _mem_elastic_particles(::Val{:spheroid}, asm, C₀, prop::Symbol, names, geometries, nmax::Int)
@@ -155,12 +158,8 @@ function _mem_elastic_particles(::Val{:spheroid}, asm, C₀, prop::Symbol, names
     ν₀ = LayeredSpheres._lame_poisson(κ₀, μ₀)
     raw = [_mem_elastic_spheroid(_mem_spheroid(g, asm, nm, prop), nm, κ₀, μ₀, ν₀, nmax) for (g, nm) in zip(geometries, names)]
     C = mapreduce(d -> eltype(d.Ẑ), promote_type, raw)
-    return [_mem_convert(d, C) for d in raw]
+    return [_mem_convert(d, C) for d in raw], (1, 2, 3)
 end
-
-_mem_elastic_particles(::Val{kind}, args...) where {kind} = throw(
-    ArgumentError("MultipoleExpansion: in elasticity the particles are spheres or spheroids, not $(kind)s")
-)
 
 # Function barrier, as in conduction. Returns the scaled coefficients received
 # by every particle, one column per unit strain of the Kelvin-Mandel basis.
@@ -340,6 +339,17 @@ function _mem_contribution(
         Σ[6, :] .+= -h .* imag.(q₂) ./ 2
     end
     Σ ./= assembly_volume(asm)
-    # major-symmetric by reciprocity; the rounding of the solve is taken off
-    return TensND.from_mandel((Σ .+ transpose(Σ)) ./ 2)
+    # back to the frame of the assembly; major-symmetric by reciprocity, the
+    # rounding of the solve taken off
+    p = _mem_mandel_permutation(sol.axes)
+    Σa = zeros(T, 6, 6)
+    Σa[p, p] .= (Σ .+ transpose(Σ)) ./ 2
+    return TensND.from_mandel(Σa)
+end
+
+# The Kelvin-Mandel components (11, 22, 33, 23, 13, 12) of the frame of axes
+# `order` among those of the assembly.
+function _mem_mandel_permutation(order)
+    pair(i, j) = 9 - order[i] - order[j]          # the shear component of (oᵢ, oⱼ): 4, 5 or 6
+    return [order[1], order[2], order[3], pair(2, 3), pair(1, 3), pair(1, 2)]
 end

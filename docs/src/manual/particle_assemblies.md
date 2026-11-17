@@ -271,8 +271,8 @@ M = mandel(homogenize(asm_el, MultipoleExpansion(; nmax = 6), :C), CanonicalBasi
 (C1122 = M[1, 2], C1111 = M[1, 1], C1212 = M[6, 6] / 2)
 ```
 
-Spheroids of axis ``\underline{e}_3``, perfectly bonded or empty, are taken in
-elasticity as well ([theory](@ref th-mem-spheroids-elasticity)):
+Spheroids of axis ``\underline{e}_3``, bonded perfectly or by springs, or empty,
+are taken in elasticity as well ([theory](@ref th-mem-spheroids-elasticity)):
 
 ```@example mem_manual
 flat = ParticleAssembly(; boundary = PeriodicBox((2.5, 2.5, 1.0)))
@@ -280,6 +280,18 @@ add_matrix!(flat, Dict(:C => C(1.0, 0.3)))
 add_particle!(flat, :p, (0.0, 0.0, 0.0), Ellipsoid(1.0, 1.0, 0.25), Dict(:C => C(10.0, 0.3)))
 M = mandel(homogenize(flat, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
 (C1111 = M[1, 1], C3333 = M[3, 3])
+```
+
+Ellipsoids of three different semi-axes, aligned alike, follow
+([theory](@ref th-mem-ellipsoids-elasticity)); an [`InterfacedEllipsoid`](@ref)
+bonds one by springs:
+
+```@example mem_manual
+springs = ParticleAssembly(; boundary = MixedBC(Ellipsoid(2.0, 1.4, 0.7)))
+add_matrix!(springs, Dict(:C => C(1.0, 0.3)))
+add_particle!(springs, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, SpringInterface(5.0, 5.0)), Dict(:C => C(100.0, 0.2)))
+M = mandel(homogenize(springs, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
+(C1111 = M[1, 1], C2222 = M[2, 2], C3333 = M[3, 3])
 ```
 
 ### Spheroids

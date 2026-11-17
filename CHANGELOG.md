@@ -53,9 +53,21 @@
   constants, the Maxwell estimates with a Kapitza interface and the
   translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
   their printed digits.
+- **Ellipsoids in elasticity.** `MultipoleExpansion` takes assemblies of
+  aligned ellipsoids of three different semi-axes in elasticity, perfectly
+  bonded, empty, or bonded by springs through `InterfacedEllipsoid(a₁, a₂, a₃,
+  SpringInterface(kn, kt))`. Their solutions are Papkovich-Neuber fields of the
+  ellipsoidal harmonics, three potentials and the fourth at the degree 2,
+  which makes one ellipsoid under a uniform strain exact from the degree 2;
+  their spherical form follows in closed form from that of the harmonics. The
+  Maxwell estimates with springs of Kushch (2019a), Table 5, are recovered to
+  their printed digits with the interface stiffness D μ₀ (the text states
+  D μ₀/a₁); of the modified Maxwell estimates of Kushch (2019b), Table 2, the
+  single ellipsoid is recovered and the cluster of eight comes within 0.1 %
+  at the degree 8.
 - **Spheroids in elasticity.** `MultipoleExpansion` takes assemblies of
   spheroids of a common axis in elasticity, finite or periodic, perfectly
-  bonded or empty. Their decaying solutions are those of the sphere built on
+  bonded, empty or bonded by springs. Their decaying solutions are those of the sphere built on
   the spheroidal harmonics, with the gradient of each harmonic as the first
   family, which makes the field of one spheroid under a uniform strain exact
   from the degree 2; their response is solved by least squares on one

@@ -1,0 +1,115 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "kushch2019a",
+  "doi": "10.1016/j.ijsolstr.2019.02.007",
+  "citation": "Kushch, Volodymyr I. (2019). Elastic ellipsoidal inhomogeneity with imperfect interface: Complete displacement solution in terms of ellipsoidal harmonics. International Journal of Solids and Structures 166, 83-95.",
+  "location": "Table 5, p. 91"
+ },
+ "transcription": {
+  "from": "the published article (PDF), Table 5, read on the page text",
+  "checked_against_source": true,
+  "note": "The interface stiffness of the table is recovered with D_n = D G0, D_n = D_t; the text defines D = D_n a1/G0 with a1 = 1.5, which gives lower moduli."
+ },
+ "quantities": {
+  "semi_axes": {
+   "value": [
+    1.5,
+    1.0,
+    0.5
+   ],
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 6, p. 90",
+   "description": "Semi-axes of the ellipsoid."
+  },
+  "nu0": {
+   "value": 0.3,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 6, p. 90",
+   "description": "Poisson ratio of the matrix."
+  },
+  "nu1": {
+   "value": 0.2,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 6, p. 90",
+   "description": "Poisson ratio of the ellipsoid."
+  },
+  "mu_ratio": {
+   "value": 100.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 6, p. 90",
+   "description": "Shear modulus of the ellipsoid over that of the matrix."
+  },
+  "fraction": {
+   "value": 0.5,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 5, p. 91",
+   "description": "Volume fraction of the Maxwell estimate of Table 5."
+  }
+ },
+ "tables": {
+  "maxwell_spring": [
+   {
+    "D": "Infinity",
+    "C1111": 13.402,
+    "C2222": 10.492,
+    "C3333": 7.9206,
+    "C2233": 3.387,
+    "C3311": 3.4244,
+    "C1122": 3.719,
+    "C2323": 2.5884,
+    "C3131": 2.6534,
+    "C1212": 3.8814
+   },
+   {
+    "D": 10.0,
+    "C1111": 7.8673,
+    "C2222": 5.6673,
+    "C3333": 3.6067,
+    "C2233": 1.057,
+    "C3311": 1.1087,
+    "C1122": 1.3714,
+    "C2323": 1.5928,
+    "C3131": 1.6802,
+    "C1212": 2.5373
+   },
+   {
+    "D": 1.0,
+    "C1111": 2.7224,
+    "C2222": 2.0201,
+    "C3333": 1.157,
+    "C2233": 0.3499,
+    "C3311": 0.3592,
+    "C1122": 0.4972,
+    "C2323": 0.5541,
+    "C3131": 0.5932,
+    "C1212": 0.8899
+   },
+   {
+    "D": 0.0,
+    "C1111": 1.3042,
+    "C2222": 1.1541,
+    "C3333": 0.6691,
+    "C2233": 0.297,
+    "C3311": 0.2977,
+    "C1122": 0.4171,
+    "C2323": 0.2809,
+    "C3131": 0.2935,
+    "C1212": 0.4023
+   }
+  ]
+ },
+ "notes": [
+  "Table maxwell_spring: Table 5, p. 91. Maxwell estimate C*_ijkl/G0 of aligned ellipsoids with a spring interface of equal normal and tangential stiffness D (Infinity: perfect; 0: cavity). Columns C1111 to C1212 in the order of the table: C1111, C2222, C3333, C2233, C3311, C1122, C2323, C3131, C1212."
+ ]
+}
