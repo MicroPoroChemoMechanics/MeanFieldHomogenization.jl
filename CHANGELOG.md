@@ -1,6 +1,21 @@
 # Changelog
 
-## Unreleased — the multipole expansion method
+## v0.27.0 — the multipole expansion method
+
+A minor release. The one-site and N-body schemes of the package keep one
+uniform polarization per inclusion; `MultipoleExpansion` resolves the whole
+field around every particle of an assembly by the multipole expansion of Kushch,
+for spheres, spheroids, ellipsoids and penny-shaped cracks, in conduction and in
+elasticity, with imperfect interfaces, on finite or periodic assemblies, and
+recovers the published tables of its author.
+
+### Breaking changes
+
+- `PeriodicBox` has three periods: its field `period` is replaced by `periods`,
+  read by `box_periods(box)`; `PeriodicBox(L)` still builds a cubic cell.
+- TensND 0.13 is required, for the harmonics the expansion is written on.
+- Being a minor release below 1.0, it is not accepted by a `[compat]` bound
+  `MeanFieldHomogenization = "0.26"`: dependents widen it.
 
 ### Added
 
@@ -145,8 +160,7 @@
 - The local fields of `LayeredSphere`, `LayeredCylinder` and `LayeredSpheroid`
   read their frames (spherical, cylindrical, confocal) on the charts of TensND,
   and the multipole expansion its spheroidal and ellipsoidal coordinates,
-  instead of formulas of their own; TensND 0.12.2 or later is required. No
-  value changes.
+  instead of formulas of their own. No value changes.
 
 ## v0.26.8 — tensors symmetric by construction infer their storage
 
