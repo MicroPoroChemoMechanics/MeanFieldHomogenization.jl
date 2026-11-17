@@ -164,7 +164,8 @@ with a matrix orthotropic in the axes of the assembly
 ([theory](@ref th-mem-anisotropic)), spheres in elasticity
 ([theory](@ref th-mem-elasticity)), spheroids in elasticity
 ([theory](@ref th-mem-spheroids-elasticity)) and ellipsoids in elasticity with
-springs ([theory](@ref th-mem-ellipsoids-elasticity)). What the works of Kushch contain beyond
+springs ([theory](@ref th-mem-ellipsoids-elasticity)), and penny-shaped cracks in conduction and
+in elasticity ([theory](@ref th-mem-cracks)). What the works of Kushch contain beyond
 that, in the order in which it is to be added:
 
 - **Local fields** at a point of a sphere, from the regular field it receives,
@@ -173,8 +174,8 @@ that, in the order in which it is to be added:
   solution other than the uniform strain (the third one at the degree 2) has a
   non-zero mean strain over a ball, so the averages need the field inside each
   sphere and not the received uniform strain alone.
-- Penny-shaped cracks (kushch2013, chapter 7); in assemblies of spheroids,
-  layers, and the stress concentrations at the interfaces of spheroids and
+- In assemblies of spheroids, the stress intensity factors of the cracks
+  (kushch2013, chapter 7), layers, and the stress concentrations at the interfaces of spheroids and
   ellipsoids; the fields of each spheroid and ellipsoid in conduction; particles whose axes differ from those of an
   anisotropic matrix, and imperfect interfaces with an anisotropic matrix
   [kushch2017](@cite).

@@ -282,6 +282,19 @@ M = mandel(homogenize(flat, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{
 (C1111 = M[1, 1], C3333 = M[3, 3])
 ```
 
+Penny-shaped cracks of normal ``\underline{e}_3`` are taken in conduction and in
+elasticity, alone or with spheroids ([theory](@ref th-mem-cracks)); a crack
+has no volume and its properties are not read, an insulating or traction-free
+crack being all the expansion knows:
+
+```@example mem_manual
+cracked = ParticleAssembly(; boundary = PeriodicBox((3.0, 3.0, 1.5)))
+add_matrix!(cracked, Dict(:C => C(1.0, 0.25)))
+add_particle!(cracked, :c, (0.0, 0.0, 0.0), EllipticCrack(1.0, 1.0), Dict{Symbol, Any}())
+D = inv(mandel(homogenize(cracked, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}()))
+(E33 = 1 / D[3, 3], E11 = 1 / D[1, 1])
+```
+
 Ellipsoids of three different semi-axes, aligned alike, follow
 ([theory](@ref th-mem-ellipsoids-elasticity)); an [`InterfacedEllipsoid`](@ref)
 bonds one by springs:

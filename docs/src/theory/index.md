@@ -155,6 +155,7 @@ then has its page, with its figure, its assumption and its equations.
 | [The multipole expansion method for ellipsoids](@ref th-mem-ellipsoids) | Lamé functions and ellipsoidal harmonics, the response of an ellipsoid with a Kapitza interface, and the translation between ellipsoids |
 | [The multipole expansion method for ellipsoids in elasticity](@ref th-mem-ellipsoids-elasticity) | the Papkovich–Neuber potentials on the ellipsoidal harmonics, the response of an ellipsoid bonded by springs, and its spherical form |
 | [The multipole expansion method with anisotropic constituents](@ref th-mem-anisotropic) | the affine map that makes an orthotropic matrix isotropic, and the response of a particle of anisotropic conductivity |
+| [The multipole expansion method for penny-shaped cracks](@ref th-mem-cracks) | the crack as the focal disk of its oblate coordinates, its response in conduction and in elasticity, and the reading of a close neighbor through the flux or the traction on its plane |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
 The cluster model, the equivalent inclusion method and the multipole expansion

@@ -491,6 +491,64 @@ published one. The perfect bond and the cavity are Mori–Tanaka, which the
 expansion gives exactly; there the published ``C_{2233}`` of the cavity,
 0.2970, differs from that estimate, 0.2940.
 
+## 10. Arrays of penny-shaped cracks
+
+[kushch2013](@citet), Tables 6.3, 7.7 and 7.8, gives the conductivity
+``\lambda^*_{33}/\lambda_0`` of a solid with insulating cracks, and its moduli
+``E^*_{33}/E_0`` and ``\mu^*_{13}/\mu_0`` with traction-free cracks,
+``\nu_0 = 0.25``, the cracks of unit radius and normal ``\underline{e}_3`` lying on
+the lattice of periods ``(a, a, a_3)`` ([theory](@ref th-mem-cracks)). The
+moduli follow from the effective compliance ``\mathbb{D}`` as
+``E^*_{33} = 1/D_{3333}`` and ``\mu^*_{13} = 1/(4 D_{1313})``.
+
+````@example multipole_spheroids
+function crack_cell(a, a₃, property)
+    cell = ParticleAssembly(; boundary = PeriodicBox((a, a, a₃)))
+    add_matrix!(cell, property)
+    add_particle!(cell, :c, (0.0, 0.0, 0.0), EllipticCrack(1.0, 1.0), Dict{Symbol, Any}())
+    return cell
+end
+crack_k33(a, a₃) = canonical_components(homogenize(crack_cell(a, a₃, Dict(:K => TensISO{3}(1.0))), MultipoleExpansion(; nmax = 8), :K))[3, 3]
+function crack_moduli(a, a₃)
+    ν₀ = 0.25
+    C₀ = TensISO{3}(2 * (1 + ν₀) / (1 - 2ν₀), 2.0)        # μ₀ = 1
+    M = TensND.mandel(homogenize(crack_cell(a, a₃, Dict(:C => C₀)), MultipoleExpansion(; nmax = 4), :C), TensND.CanonicalBasis{3, Float64}())
+    D = inv(M)
+    return 1 / (2 * (1 + ν₀) * D[3, 3]), 1 / (2 * D[5, 5])   # D₁₃₁₃ = D[5, 5]/2 in Kelvin–Mandel
+end
+function crack_tables()
+    io = IOBuffer()
+    lit = book["tables"]
+    println(io, "| ``a`` | ``a_3/a`` | ``\\lambda^*_{33}/\\lambda_0`` |")
+    println(io, "| :-- | :-- | :-- |")
+    for row in lit["conductivity_cracks_so"], (r, key) in ((1.0, "1"), (0.5, "1_2"), (0.25, "1_4"))
+        row["a1"] in (5.0, 3.0, 2.5) || continue
+        println(io, "| ", row["a1"], " | ", r, " | ", @sprintf("%.3f (%.3f)", crack_k33(row["a1"], r * row["a1"]), row["a3_over_a1_" * key]), " |")
+    end
+    println(io)
+    println(io, "| ``a`` | ``a/a_3`` | ``E^*_{33}/E_0`` | ``\\mu^*_{13}/\\mu_0`` |")
+    println(io, "| :-- | :-- | :-- | :-- |")
+    for a in (5.0, 3.0), (ā, key) in ((1.0, "1"), (2.0, "2"))
+        E, μ = crack_moduli(a, a / ā)
+        E_ref = only(r["a_over_a3_" * key] for r in lit["young_cracks_so"] if r["a"] == a)
+        μ_ref = only(r["a_over_a3_" * key] for r in lit["shear_cracks_so"] if r["a"] == a)
+        println(io, "| ", a, " | ", ā, " | ", @sprintf("%.3f (%.3f)", E, E_ref), " | ", @sprintf("%.3f (%.3f)", μ, μ_ref), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+crack_tables()
+````
+
+Each cell gives the computed value and, in parentheses, the published one, at
+`nmax = 8` in conduction and `nmax = 4` in elasticity: they agree to the third
+decimal. The cracks stacked at ``a_3 = a/4`` lie closer to one another than
+their diameter, which the expansion reads through the flux or the traction on
+the plane of each crack. Table 6.3 prints 0.932 at ``a = 4``,
+``a_3/a = 1/2``, where the expansion gives 0.923: the same digits in another
+order, and the value of the body-centered array of the same crack density
+(0.919, Table 6.4), as the density governs the conductivity of well separated
+cracks.
+
 ## Summary
 
 | result | source | recovered |
@@ -504,6 +562,7 @@ expansion gives exactly; there the published ``C_{2233}`` of the cavity,
 | stiffness of lattices of spheroids | [kushch2013](@cite), Table 7.6 | to within one unit of the third decimal at `nmax = 6` to 8, but for one entry printed with its digits permuted |
 | ellipsoids bonded by springs, Maxwell estimate | [kushch2019a](@cite), Table 5 | to the fourth decimal with the stiffness ``D\,\mu_0``, but for one entry of the cavity, where the published value differs from Mori–Tanaka |
 | spheroids in a transversely isotropic matrix, anisotropy parameter | [kushch2014](@cite), Table 5 | to the third decimal up to ``c = 0.4`` at `nmax = 8`, but for three entries at ``\kappa = 0.25`` |
+| arrays of penny-shaped cracks, conductivity and moduli | [kushch2013](@cite), Tables 6.3, 6.4 and 7.7 to 7.10 | to the third decimal, but for one entry of Table 6.3 printed with its digits permuted |
 
 ```@raw html
 <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>
