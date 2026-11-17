@@ -84,8 +84,12 @@ lattice_biharmonics(x::AbstractVector, periods, nmax::Integer) =
 
 # Both tables by Ewald's splitting with the parameter α; the result does not
 # depend on α, which the tests check. With `Val(false)` the second table is
-# not computed (`nothing`).
-function _lattice_sums(x::AbstractVector, periods, nmax::Integer, bih::Val, α = nothing)
+# not computed (`nothing`). The images whose integer coordinates are listed in
+# `exclude` are left out of the sums: their short-range terms are skipped and
+# the long-range part they carry into the reciprocal sum, (1 − w_n) Y_n, is
+# taken off. That part is small, hence free of cancellation, only for the
+# images within 1/α or so, which is what `α` is for.
+function _lattice_sums(x::AbstractVector, periods, nmax::Integer, bih::Val, α = nothing; exclude = ())
     length(x) == 3 == length(periods) ||
         throw(ArgumentError("lattice_harmonics: a point and three periods in 3D are expected"))
     nmax ≥ 0 || throw(ArgumentError("lattice_harmonics: the degree must be nonnegative, got $nmax"))
@@ -95,7 +99,7 @@ function _lattice_sums(x::AbstractVector, periods, nmax::Integer, bih::Val, α =
     a = _ewald_parameter(α, T, V)
     ξ = _ewald_reduced_cutoff(nmax)
     S, ρ = _ewald_buffers(Complex{T}, _packed(nmax, nmax), bih)
-    on_site = _ewald_real!(S, ρ, x, L, a, ξ, Int(nmax))
+    on_site = _ewald_real!(S, ρ, x, L, a, ξ, Int(nmax), exclude)
     _ewald_reciprocal!(S, ρ, x, L, a, ξ, Int(nmax))
     _ewald_constants!(S, ρ, a, V, on_site)
     return HarmonicTable(Int(nmax), S), _table(Int(nmax), ρ)
@@ -127,7 +131,7 @@ end
 # (1/r) dψ/dr = erfc(αr)/r), Hobson's theorem gives
 #     𝒟_n^m ψ = w_{n−1}(r) 𝒟_n^m r = −w_{n−1}(r) r² Y_n^m/(2n−1)    (n ≥ 1).
 # Returns whether `x` is a lattice point, whose own source is then skipped.
-function _ewald_real!(S::Vector{Complex{T}}, ρ, x, L::NTuple{3}, α, ξ, nmax::Int) where {T}
+function _ewald_real!(S::Vector{Complex{T}}, ρ, x, L::NTuple{3}, α, ξ, nmax::Int, exclude = ()) where {T}
     r_c = ξ / α
     reach = ntuple(i -> ceil(Int, primal(r_c + abs(x[i])) / primal(L[i])), 3)
     on_site = false
@@ -138,37 +142,54 @@ function _ewald_real!(S::Vector{Complex{T}}, ρ, x, L::NTuple{3}, α, ξ, nmax::
             on_site = true
             continue
         end
-        r² ≤ r_c^2 || continue
-        r = sqrt(r²)
-        Y = irregular_harmonics(collect(xn), nmax)
-        e = exp(-α^2 * r²)
-        g = e / (sqrt(T(π)) * α * r)
-        w = erfc(α * r)
-        _ewald_real_biharmonic!(ρ, Y, r, w, e, α, 0)
-        dfact = one(T)                       # (2n − 1)!!
-        for n in 0:nmax
-            if n > 0
-                _ewald_real_biharmonic!(ρ, Y, r, w, e, α, n)    # w = w_{n−1} here
-                dfact *= 2n - 1
-                w += (2 * α^2 * r²)^n * g / dfact
-            end
-            for m in 0:n
-                S[_packed(n, m)] += w * Y[n, m]
-            end
-        end
+        # an excluded image counts with the sign −1 for its long-range part alone
+        excluded = (n₁, n₂, n₃) in exclude
+        excluded || r² ≤ r_c^2 || continue
+        _ewald_real_image!(S, ρ, xn, r², α, nmax, excluded)
     end
     return on_site
 end
 
+# The short-range terms of one image at xn: w_n Y_n for S and 𝒟_n ψ for ρ, or,
+# for an excluded image, minus the long-range part, −(1 − w_n) Y_n and
+# −(𝒟_n r − 𝒟_n ψ).
+function _ewald_real_image!(S::Vector{Complex{T}}, ρ, xn, r², α, nmax::Int, excluded::Bool) where {T}
+    r = sqrt(r²)
+    Y = irregular_harmonics(collect(xn), nmax)
+    e = exp(-α^2 * r²)
+    g = e / (sqrt(T(π)) * α * r)
+    w = erfc(α * r)
+    σ = excluded ? -one(T) : one(T)
+    _ewald_real_biharmonic!(ρ, Y, r, _long_range(w, excluded), e, α, 0, excluded)
+    dfact = one(T)                       # (2n − 1)!!
+    for n in 0:nmax
+        if n > 0
+            _ewald_real_biharmonic!(ρ, Y, r, _long_range(w, excluded), e, α, n, excluded)    # w = w_{n−1} here
+            dfact *= 2n - 1
+            w += (2 * α^2 * r²)^n * g / dfact
+        end
+        f = σ * _long_range(w, excluded)
+        for m in 0:n
+            S[_packed(n, m)] += f * Y[n, m]
+        end
+    end
+    return nothing
+end
+
+# The weight w_n of the short-range part, or 1 − w_n, that of the long-range one.
+_long_range(w, excluded::Bool) = excluded ? one(w) - w : w
+
 # The degree n of the short-range part of ρ, from w = w_{n−1}(r) (n ≥ 1), and its
-# value at n = 0.
-_ewald_real_biharmonic!(::Nothing, Y, r, w, e, α, n::Int) = nothing
-function _ewald_real_biharmonic!(ρ::Vector, Y, r, w, e, α, n::Int)
+# value at n = 0; for an excluded image, minus the long-range part, w being then
+# 1 − w_{n−1} and ψ being replaced by r − ψ.
+_ewald_real_biharmonic!(::Nothing, Y, r, w, e, α, n::Int, excluded::Bool) = nothing
+function _ewald_real_biharmonic!(ρ::Vector, Y, r, w, e, α, n::Int, excluded::Bool)
     if n == 0
-        ρ[1] += r * erfc(α * r) - e / (α * sqrt(oftype(α, π)))
+        ψ = r * erfc(α * r) - e / (α * sqrt(oftype(α, π)))
+        ρ[1] += excluded ? -(r - ψ) : ψ
         return nothing
     end
-    f = -w * r^2 / (2n - 1)
+    f = (excluded ? w : -w) * r^2 / (2n - 1)
     for m in 0:n
         ρ[_packed(n, m)] += f * Y[n, m]
     end

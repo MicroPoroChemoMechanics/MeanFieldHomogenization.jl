@@ -36,42 +36,49 @@
 using QuadGK: quadgk
 
 # ── Default path: direct quadrature of the closed-form integrals ───────────
+#
+#  At any order m and any set of degrees, the jump of a Kapitza interface
+#  projects 1/√(q²−x²) times a harmonic on the others, and that of a
+#  surface-conductive interface projects the surface gradient: with
+#  P_i = P_i^m(x) on [−1, 1],
+#
+#      LC :  ∫ P_i P_j / √(q²−x²) dx ,
+#      HC :  ∫ (1−x²) P_i′ P_j′ / √(q²−x²) dx + m²/(q²−1) ∫ √(q²−x²) P_i P_j / (1−x²) dx ,
+#
+#  the second term of HC being the azimuthal part of the surface gradient.
+#  The paper's matrices are I = LC(0), J = LC(1) = HC(0), K and L the two
+#  integrals of HC(1).
 
-function _coupling_I(q, Nseries::Int)
-    f(x) = begin
-        P, _ = legendre_odd(:P0, x, Nseries)
-        (P * P') ./ sqrt(q^2 - x^2)
-    end
+function _coupling_quadrature(q, m::Int, degrees, kind::Val)
+    idx = [n + 1 for n in degrees]
+    nmax = maximum(degrees)
+    f(x) = _coupling_integrand(q, x, m, idx, nmax, kind)
     M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
     return M
 end
 
-function _coupling_J(q, Nseries::Int)
-    f(x) = begin
-        P1, _ = legendre_odd(:P1p, x, Nseries)
-        (P1 * P1') ./ sqrt(q^2 - x^2)
-    end
-    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
-    return M
+function _coupling_integrand(q, x, m, idx, nmax, ::Val{:lc})
+    P = legendre_order_p(x, m, nmax)[1][idx]
+    return (P * transpose(P)) ./ sqrt(q^2 - x^2)
+end
+function _coupling_integrand(q, x, m, idx, nmax, ::Val{:hc_grad})
+    dP = legendre_order_p(x, m, nmax)[2][idx]
+    return ((1 - x^2) / sqrt(q^2 - x^2)) .* (dP * transpose(dP))
+end
+function _coupling_integrand(q, x, m, idx, nmax, ::Val{:hc_phi})
+    P = legendre_order_p(x, m, nmax)[1][idx]
+    return (sqrt(q^2 - x^2) / (1 - x^2)) .* (P * transpose(P))
+end
+function _coupling_integrand(q, x, m, idx, nmax, ::Val{:hc})
+    grad = _coupling_integrand(q, x, m, idx, nmax, Val(:hc_grad))
+    m == 0 && return grad
+    return grad .+ (m^2 / (q^2 - 1)) .* _coupling_integrand(q, x, m, idx, nmax, Val(:hc_phi))
 end
 
-function _coupling_K(q, Nseries::Int)
-    f(x) = begin
-        _, dP1 = legendre_odd(:P1p, x, Nseries)
-        ((1 - x^2) / sqrt(q^2 - x^2)) .* (dP1 * dP1')
-    end
-    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
-    return M
-end
-
-function _coupling_L(q, Nseries::Int)
-    f(x) = begin
-        _, dP0 = legendre_odd(:P0, x, Nseries)
-        sqrt(q^2 - x^2) .* (dP0 * dP0')
-    end
-    M, _ = quadgk(f, -1.0, 1.0; norm = MFH_Core._quadgk_norm)
-    return M
-end
+_coupling_I(q, Nseries::Int) = _coupling_quadrature(q, 0, 1:2:(2Nseries - 1), Val(:lc))
+_coupling_J(q, Nseries::Int) = _coupling_quadrature(q, 1, 1:2:(2Nseries - 1), Val(:lc))
+_coupling_K(q, Nseries::Int) = _coupling_quadrature(q, 1, 1:2:(2Nseries - 1), Val(:hc_grad))
+_coupling_L(q, Nseries::Int) = _coupling_quadrature(q, 1, 1:2:(2Nseries - 1), Val(:hc_phi))
 
 """
     coupling_matrices(q, Nseries; method = :quadrature) -> (I, J, K, L)

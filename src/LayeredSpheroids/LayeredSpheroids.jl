@@ -57,7 +57,8 @@ import ..LayeredSpheres: get_layer, local_temperature, local_gradient, local_flu
     local_gradient_flux_concentration, local_flux_flux_concentration
 
 import ..Core: gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration,
-    property_contribution, inverse_property_contribution, is_homogeneous_inclusion
+    property_contribution, inverse_property_contribution, is_homogeneous_inclusion,
+    harmonic_response
 
 # `is_hard_numeric` — the numeric/symbolic split used throughout the package.
 using ..Elliptic: is_hard_numeric
@@ -66,6 +67,7 @@ include("legendre.jl")
 include("coupling.jl")
 include("geometry.jl")
 include("conductivity.jl")     # confocal-harmonic transfer-matrix recurrence
+include("harmonic_response.jl") # response to the harmonics of any degree and order
 include("pn_modes.jl")           # one PN harmonic mode -> u and traction
 include("elasticity.jl")         # elastic case I closed forms (cross-check reference)
 include("elastic_cases.jl")     # the three elementary problems -> concentration

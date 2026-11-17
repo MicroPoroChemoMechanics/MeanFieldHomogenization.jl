@@ -53,8 +53,11 @@ import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
     MultipoleExpansion, AbstractParameter, MoriTanaka
 import ..LayeredSpheres
+import ..LayeredSpheroids
+import ..Harmonics
 using ..Harmonics: irregular_harmonics, lattice_harmonics, lattice_biharmonics, harmonic_norm, lame_translation
 using ..Core: harmonic_response
+using SpecialFunctions: logfactorial, loggamma
 
 # `add_matrix!`, `matrix_property` and `matrix_volume_fraction` are declared
 # HERE, not in `Schemes`: an `RVE` has no matrix to speak of — which phase is a
@@ -68,6 +71,7 @@ include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
 include("mem.jl")
+include("mem_spheroids.jl")
 include("mem_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")

@@ -36,6 +36,22 @@
   periodic counterpart of ``r`` (``Δρ = 2S``), returned by
   `lattice_biharmonics`. The stiffnesses of simple cubic, body-centered and
   face-centered arrays tabulated by Kushch (2013) are recovered.
+- **Spheroids in conduction.** `MultipoleExpansion` takes assemblies of
+  spheroids of revolution axis e₃ (`Ellipsoid` or `LayeredSpheroid`, with Kapitza
+  and surface-conductive interfaces), finite or periodic. The translation
+  between close spheroids, for which the series through spherical harmonics
+  diverges (oblate spheroids stacked along their axis), is computed by
+  projection on the receiving surface. The tables of Kushch et al. (2015) for
+  the SP, BCP and FCP lattices of oblate spheroids are recovered to the third
+  decimal, and their convergence table digit for digit.
+- `harmonic_response(spheroid, K₀, m, nmax)`, the response of a layered
+  spheroid to the spheroidal harmonics of any degree and order; the Legendre
+  functions and the transfer matrices of `LayeredSpheroid` are written at any
+  order.
+- `PeriodicBox((L₁, L₂, L₃))`, a rectangular periodic cell (the cluster model
+  and the equivalent inclusion method keep a cubic one), and an exact overlap
+  test between ellipsoids in `validate_assembly`, which no longer rejects
+  spheroids whose bounding balls overlap.
 - **Solid harmonics.** `regular_harmonics`, `irregular_harmonics` and
   `lattice_harmonics` (the harmonics of a periodic array of sources, by Ewald
   sums, on an orthogonal lattice), with `HarmonicTable` and `harmonic_norm`.

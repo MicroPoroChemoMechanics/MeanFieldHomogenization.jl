@@ -84,6 +84,7 @@ pages = [
             "theory/eim.md",
             "theory/multipole_expansion.md",
             "theory/multipole_expansion_elasticity.md",
+            "theory/multipole_expansion_spheroids.md",
             # Not a scheme: what every scheme's concentration tensors give
             # beyond the effective stiffness.
             "theory/levin.md",
@@ -249,6 +250,7 @@ pages = [
             "applications/generated/cluster_model.md",
             "applications/generated/eim_assembly.md",
             "applications/generated/multipole_spheres.md",
+            "applications/generated/multipole_spheroids.md",
             # The Fourier reduction of the first is reused by the second.
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",

@@ -125,3 +125,26 @@ end
     @test @inferred(lattice_biharmonics(x, L, 2)) isa Tuple{HarmonicTable{ComplexF64}, HarmonicTable{ComplexF64}}
     @test_throws ArgumentError lattice_biharmonics(x, L, -1)
 end
+
+@testset "lattice sums with excluded images" begin
+    x = [0.2, -0.1, 0.35]
+    L = (1.0, 1.3, 0.8)
+    out = [(0, 0, 1), (-1, 0, 0), (1, 1, -1)]
+    S, B = MeanFieldHomogenization.Harmonics._lattice_sums(x, L, 6, Val(true), 1.2; exclude = out)
+    Sf, Bf = lattice_biharmonics(x, L, 6)
+    Sd = zero(S.values)
+    Bd = zero(B.values)
+    for n in out
+        xn = x .+ n .* L
+        Y = irregular_harmonics(xn, 6)
+        r² = sum(abs2, xn)
+        k = 0
+        for N in 0:6, M in 0:N
+            k += 1
+            Sd[k] += Y[N, M]
+            Bd[k] += N == 0 ? sqrt(r²) : -r² * Y[N, M] / (2N - 1)
+        end
+    end
+    @test S.values ≈ Sf.values .- Sd rtol = 1.0e-10
+    @test B.values ≈ Bf.values .- Bd rtol = 1.0e-10
+end

@@ -48,6 +48,7 @@ const DOC_SHARDS = [
         "applications/generated/cluster_model.md",
         "applications/generated/eim_assembly.md",
         "applications/generated/multipole_spheres.md",
+        "applications/generated/multipole_spheroids.md",
         "applications/recycled_aggregate.md",
         "applications/concave_pores.md",
         "applications/generated/stokes_darcy_permeability.md",

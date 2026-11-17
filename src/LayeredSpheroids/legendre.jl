@@ -406,6 +406,105 @@ function _Q2_table(x::Tx, Nmax::Int) where {Tx}
     return tab, dtab
 end
 
+# ── Any order m ───────────────────────────────────────────────────────────────
+#
+#  The multipole expansion needs every order m ≤ n ≤ nmax. On both branches P
+#  grows upward in n from the seeds
+#      p branch (Ferrers): P_m^m(p) = (−1)^m (2m−1)!! (1−p²)^{m/2} ,
+#      q branch (Hobson):  P_m^m(q) = (2m−1)!! (q²−1)^{m/2} ,
+#  with P_{m+1}^m = (2m+1) x P_m^m, the conventions of the tables above.
+#  Q is the minimal solution in n; it is built at the order 0 by `_Q0_table`
+#  (Miller where needed) and raised in m by the exact identity
+#      √(q²−1) Q_n^{m+1} = (n−m) q Q_n^m − (n+m) Q_{n−1}^m ,
+#  which loses nothing measurable (the orders 1 and 2 agree with the closed
+#  forms to a few ulp, the order 8 with a 1024-bit reference to 1e-12 at
+#  q = 1.05), and needs Q_0^m, known in closed form:
+#      Q_0^m = (q²−1)^{m/2} dᵐ arccoth q / dqᵐ
+#            = (−1)^m (m−1)!/2 · (q²−1)^{m/2} [(q−1)^{−m} − (q+1)^{−m}]   (m ≥ 1).
+#  Derivatives come from (x² − 1) dF_n^m/dx = n x F_n^m − (n + m) F_{n−1}^m, which
+#  holds for P and Q on the q branch, and from its counterpart
+#  (1 − p²) dP_n^m/dp = (n + m) P_{n−1}^m − n p P_n^m on the p branch.
+
+"""
+    legendre_order_p(x, m, nmax) -> (P, dP)
+
+Ferrers' associated Legendre functions ``P_n^m(x)`` of the first kind and their
+derivatives, ``|x| \\le 1``, at the order `m` and the degrees ``n = 0, \\dots,`` `nmax`
+(index ``n + 1``; zero for ``n < m``), with the phase ``(-1)^m`` of `_P1p_table`.
+"""
+function legendre_order_p(x::Tx, m::Int, nmax::Int) where {Tx}
+    (0 ≤ m && nmax ≥ 0) || throw(ArgumentError("legendre_order_p: need m ≥ 0 and nmax ≥ 0, got m = $m, nmax = $nmax"))
+    P = zeros(Tx, nmax + 1)
+    dP = zeros(Tx, nmax + 1)
+    m ≤ nmax || return P, dP
+    s = one(Tx) - x^2
+    P[m + 1] = (-1)^m * _double_factorial(Tx, 2m - 1) * sqrt(s)^m
+    m < nmax && (P[m + 2] = (2m + 1) * x * P[m + 1])
+    for n in (m + 1):(nmax - 1)
+        P[n + 2] = _legendre_next(n, m, x, P[n + 1], P[n])
+    end
+    for n in m:nmax
+        dP[n + 1] = ((n + m) * (n > 0 ? P[n] : zero(Tx)) - n * x * P[n + 1]) / s
+    end
+    return P, dP
+end
+
+"""
+    legendre_order_q(x, m, nmax) -> (P, dP, Q, dQ)
+
+Hobson's associated Legendre functions ``P_n^m(x)`` and ``Q_n^m(x)`` of the first
+and second kinds and their derivatives, off the cut (``x > 1`` for a prolate
+spheroid, ``x = \\mathrm{i}\\tau`` for an oblate one), at the order `m` and the degrees
+``n = 0, \\dots,`` `nmax` (index ``n + 1``; ``P_n^m = 0`` for ``n < m``), with the
+conventions of `_P1_table` and `_Q1_table`.
+"""
+function legendre_order_q(x::Tx, m::Int, nmax::Int) where {Tx}
+    (0 ≤ m && nmax ≥ 0) || throw(ArgumentError("legendre_order_q: need m ≥ 0 and nmax ≥ 0, got m = $m, nmax = $nmax"))
+    x2m1 = x^2 - one(Tx)
+    xb = sqrt(x2m1)
+    P = zeros(Tx, nmax + 1)
+    if m ≤ nmax
+        P[m + 1] = _double_factorial(Tx, 2m - 1) * xb^m
+        m < nmax && (P[m + 2] = (2m + 1) * x * P[m + 1])
+        for n in (m + 1):(nmax - 1)
+            P[n + 2] = _legendre_next(n, m, x, P[n + 1], P[n])
+        end
+    end
+    Q = _legendre_q_orders(x, nmax, m)[:, m + 1]
+    dP = [(n * x * P[n + 1] - (n + m) * (n > 0 ? P[n] : zero(Tx))) / x2m1 for n in 0:nmax]
+    dQ = similar(Q)
+    dQ[1] = (xb * _Q0_order(x, m + 1) + m * x * Q[1]) / x2m1
+    for n in 1:nmax
+        dQ[n + 1] = (n * x * Q[n + 1] - (n + m) * Q[n]) / x2m1
+    end
+    return P, dP, Q, dQ
+end
+
+# Q_n^k(x) at the degrees 0…nmax (rows) and the orders 0…mmax (columns), each
+# order raised from the previous one.
+function _legendre_q_orders(x::Tx, nmax::Int, mmax::Int) where {Tx}
+    xb = sqrt(x^2 - one(Tx))
+    Q = zeros(Tx, nmax + 1, mmax + 1)
+    Q[:, 1] .= first(_Q0_table(x, nmax))
+    for k in 0:(mmax - 1)
+        for n in 1:nmax
+            Q[n + 1, k + 2] = ((n - k) * x * Q[n + 1, k + 1] - (n + k) * Q[n, k + 1]) / xb
+        end
+        Q[1, k + 2] = _Q0_order(x, k + 1)
+    end
+    return Q
+end
+
+# Q_0^m in closed form (Q_0 = arccoth x at m = 0).
+function _Q0_order(x, m::Int)
+    m == 0 && return _arccoth(x)
+    return (-1)^m * prod((one(real(x)) * j for j in 1:(m - 1)); init = one(real(x))) / 2 *
+        sqrt(x^2 - one(x))^m * (inv(x - 1)^m - inv(x + 1)^m)
+end
+
+# (2k − 1)!! in the element type, (−1)!! = 1.
+_double_factorial(::Type{T}, k::Int) where {T} = prod((one(T) * j for j in k:-2:1); init = one(T))
+
 """
     legendre_odd(kind::Symbol, x, Nseries::Int) -> (vals, derivs)
 

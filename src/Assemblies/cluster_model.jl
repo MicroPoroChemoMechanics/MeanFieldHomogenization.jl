@@ -195,7 +195,7 @@ _lattice_parameters(asm::ParticleAssembly, override) =
     _lattice_parameters(asm.boundary, asm, override)
 
 _lattice_parameters(b::PeriodicBox, asm, override) =
-    (b.period, override === nothing ? b.cutoff : override)
+    (_cubic_period(b), override === nothing ? b.cutoff : override)
 
 # No periodicity: keep only the primary images.  A period larger than any
 # cutoff achieves that without a special case in the summation loop.

@@ -45,28 +45,21 @@ convention).
 @inline _as_scalar_k(k₀) = first(TensND.get_data(k₀))
 
 """
-    _spheroid_tables(s::LayeredSpheroid) -> NamedTuple
+    _spheroid_tables(s::LayeredSpheroid, m, degrees) -> NamedTuple
 
-Per-layer scalar conductivities and Legendre value/derivative tables
-(`P0,Q0,dP0,dQ0` for the axial problem, `P1,Q1,dP1,dQ1` for the
-transverse one), each evaluated once at layer ``k``'s own confocal
-parameter ``q_k``.
+Per-layer scalar conductivities and the Legendre values and derivatives
+``P_n^m``, ``Q_n^m`` at the `degrees` of the order `m`, each evaluated once at
+layer ``k``'s own confocal parameter ``q_k``.
 """
-function _spheroid_tables(s::LayeredSpheroid{T, N, Q}) where {T, N, Q}
-    𝒩 = s.Nseries
+function _spheroid_tables(s::LayeredSpheroid{T, N, Q}, m::Int, degrees) where {T, N, Q}
     k_layers = _spheroid_layer_moduli(s)
-    P0 = Vector{Vector{Q}}(undef, N); dP0 = Vector{Vector{Q}}(undef, N)
-    Q0 = Vector{Vector{Q}}(undef, N); dQ0 = Vector{Vector{Q}}(undef, N)
-    P1 = Vector{Vector{Q}}(undef, N); dP1 = Vector{Vector{Q}}(undef, N)
-    Q1 = Vector{Vector{Q}}(undef, N); dQ1 = Vector{Vector{Q}}(undef, N)
-    for k in 1:N
-        q = s.q[k]
-        P0[k], dP0[k] = legendre_odd(:P0, q, 𝒩)
-        Q0[k], dQ0[k] = legendre_odd(:Q0, q, 𝒩)
-        P1[k], dP1[k] = legendre_odd(:P1, q, 𝒩)
-        Q1[k], dQ1[k] = legendre_odd(:Q1, q, 𝒩)
-    end
-    return (; k_layers, P0, dP0, Q0, dQ0, P1, dP1, Q1, dQ1)
+    idx = [n + 1 for n in degrees]
+    tabs = [legendre_order_q(s.q[k], m, maximum(degrees)) for k in 1:N]
+    P = [t[1][idx] for t in tabs]
+    dP = [t[2][idx] for t in tabs]
+    Qf = [t[3][idx] for t in tabs]
+    dQ = [t[4][idx] for t in tabs]
+    return (; k_layers, P, dP, Q = Qf, dQ, m, degrees)
 end
 
 """
@@ -96,19 +89,21 @@ function _J_ext(k, P::Vector{Qx}, Qf::Vector{Qx}, dP::Vector{Qx}, dQ::Vector{Qx}
 end
 
 """
-    _J_int(k, coef, P, Qf, dP, dQ, M, dual, trans) -> Matrix
+    _J_int(k, coef, P, Qf, dP, dQ, M, dual, degrees, m) -> Matrix
 
 ``\\mathcal{J}(k,q) + \\delta\\mathcal{J}^{\\mathrm{LC/HC}}``: the diagonal block `_J_ext` plus the full
 coupling perturbation of generic row/column term
-``[\\delta\\mathcal{J}]_{rs} = c\\,\\frac{4r-1}{2}\\,M_{rs}\\,\\mathcal{R}_{2s-1}``, ``c`` = `coef` (``\\mathcal{R} = P, Q`` for HC,
-``\\mathcal{R} = P', Q'`` for LC), divided by ``(2r-1)(2r)`` for the transverse
-problem (eq:axiLCdJ/axiHCdJ/transLCdJ/transHCdJ). `dual = true` (HC)
-perturbs the FLUX (lower) block using unprimed ``\\mathcal{R}``; `dual = false`
-(LC) perturbs the TEMPERATURE (upper) block using primed ``\\mathcal{R}'``.
+``[\\delta\\mathcal{J}]_{rs} = c\\,\\frac{2n_r+1}{2}\\,\\frac{(n_r-m)!}{(n_r+m)!}\\,M_{rs}\\,\\mathcal{R}_{n_s}``,
+``c`` = `coef`, ``n_r`` the ``r``-th of the `degrees` (``\\mathcal{R} = P, Q`` for HC,
+``\\mathcal{R} = P', Q'`` for LC), the factor of ``M_{rs}`` being the inverse of the
+norm of ``P_{n_r}^m`` on ``[-1, 1]`` (eq:axiLCdJ/axiHCdJ/transLCdJ/transHCdJ at the
+orders 0 and 1). `dual = true` (HC) perturbs the FLUX (lower) block using
+unprimed ``\\mathcal{R}``; `dual = false` (LC) perturbs the TEMPERATURE (upper) block
+using primed ``\\mathcal{R}'``.
 """
 function _J_int(
         k, coef, P::Vector{Qx}, Qf::Vector{Qx}, dP::Vector{Qx}, dQ::Vector{Qx},
-        M::AbstractMatrix, dual::Bool, trans::Bool,
+        M::AbstractMatrix, dual::Bool, degrees, m::Int,
     ) where {Qx}
     𝒩 = length(P)
     # `coef` carries the interface parameter (Kapitza resistance / surface
@@ -121,11 +116,9 @@ function _J_int(
     J = convert(Matrix{Tm}, J0)
     MP = zeros(Tm, 𝒩, 𝒩)
     MQ = zeros(Tm, 𝒩, 𝒩)
-    for r in 1:𝒩
-        i = 2r - 1
-        ci = coef * (4r - 1) / 2
-        trans && (ci = ci / (i * (i + 1)))
-        Rp, Rq = dual ? (P, Qf) : (dP, dQ)
+    Rp, Rq = dual ? (P, Qf) : (dP, dQ)
+    for (r, n) in enumerate(degrees)
+        ci = coef * (2n + 1) / 2 * _factorial_ratio(real(Tm), n, m)
         for c in 1:𝒩
             MP[r, c] = M[r, c] * ci * Rp[c]
             MQ[r, c] = M[r, c] * ci * Rq[c]
@@ -141,25 +134,23 @@ function _J_int(
     return J
 end
 
+# (n − m)!/(n + m)! in the element type `T`, exact for a symbolic one.
+_factorial_ratio(::Type{T}, n::Int, m::Int) where {T} = prod((one(T) / j for j in (n - m + 1):(n + m)); init = one(T))
+
 """
-    _transition(s, layer, trans, k_next, tables) -> Matrix
+    _transition(s, layer, k_next, tables) -> Matrix
 
 Transfer matrix ``R_\\ell = \\mathcal{J}(k_{\\ell+1}, q_\\ell)^{-1}\\,\\bigl(\\mathcal{J}(k_\\ell, q_\\ell) + \\delta\\mathcal{J}\\bigr)``
-(eq:aximat) across the interface at the outer boundary of `layer`.
-`k_next` is the conductivity on the other side (next layer's, or the
-matrix ``k_0`` if `layer == N`).
+(eq:aximat) across the interface at the outer boundary of `layer`, at the
+order and degrees of `tables`. `k_next` is the conductivity on the other
+side (next layer's, or the matrix ``k_0`` if `layer == N`).
 """
-function _transition(
-        s::LayeredSpheroid{T, N, Q}, layer::Int, trans::Bool, k_next, tables,
-    ) where {T, N, Q}
+function _transition(s::LayeredSpheroid, layer::Int, k_next, tables)
     q = s.q[layer]
     kℓ = tables.k_layers[layer]
     intf = layer_interface(s, layer)
-    P, Qf, dP, dQ = trans ?
-        (tables.P1[layer], tables.Q1[layer], tables.dP1[layer], tables.dQ1[layer]) :
-        (tables.P0[layer], tables.Q0[layer], tables.dP0[layer], tables.dQ0[layer])
-
-    Jint = _J_interface(intf, s, q, kℓ, P, Qf, dP, dQ, trans)
+    P, Qf, dP, dQ = tables.P[layer], tables.Q[layer], tables.dP[layer], tables.dQ[layer]
+    Jint = _J_interface(intf, s, q, kℓ, P, Qf, dP, dQ, tables.m, tables.degrees)
     Jext_next = _J_ext(k_next, P, Qf, dP, dQ)
     return Jext_next \ Jint
 end
@@ -167,21 +158,43 @@ end
 # The inner side of the transition across the interface `intf` of the layer of
 # confocal coordinate `q`: the plain exterior operator for a perfect interface,
 # the one carrying the jump of a Kapitza or a surface-conductive interface.
-_J_interface(::PerfectInterface, s, q, kℓ, P, Qf, dP, dQ, trans) = _J_ext(kℓ, P, Qf, dP, dQ)
-function _J_interface(intf::KapitzaInterface, s, q, kℓ, P, Qf, dP, dQ, trans)
-    Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
-    M = trans ? Jm : Im
+_J_interface(::PerfectInterface, s, q, kℓ, P, Qf, dP, dQ, m, degrees) = _J_ext(kℓ, P, Qf, dP, dQ)
+function _J_interface(intf::KapitzaInterface, s, q, kℓ, P, Qf, dP, dQ, m, degrees)
+    M = _coupling_quadrature(q, m, degrees, Val(:lc))
     coef = kℓ * intf.resistance / s.c * sqrt(q^2 - 1)
-    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, false, trans)
+    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, false, degrees, m)
 end
-function _J_interface(intf::SurfaceConductiveInterface, s, q, kℓ, P, Qf, dP, dQ, trans)
-    Im, Jm, Km, Lm = coupling_matrices(q, s.Nseries)
-    M = trans ? (Km .+ Lm ./ (q^2 - 1)) : Jm
+function _J_interface(intf::SurfaceConductiveInterface, s, q, kℓ, P, Qf, dP, dQ, m, degrees)
+    M = _coupling_quadrature(q, m, degrees, Val(:hc))
     coef = intf.conductance / (s.c * sqrt(q^2 - 1))
-    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, true, trans)
+    return _J_int(kℓ, coef, P, Qf, dP, dQ, M, true, degrees, m)
 end
 _J_interface(intf, args...) =
     throw(ArgumentError("LayeredSpheroid: unsupported interface type $(typeof(intf))"))
+
+# Product S_N = R_N ⋯ R_1 of the transfer matrices of the layers, from the core
+# to the matrix, at the order and degrees of `tables`, in the element type
+# that holds the layer conductivities, the interface parameters, `q` and `k₀`.
+function _spheroid_transfer(s::LayeredSpheroid{T, N, Q}, k₀, tables) where {T, N, Q}
+    # The layer conductivities and the interface parameters belong in this
+    # promotion just as much as `q` and `k₀` do: `_J_ext`/`_J_int` widen locally
+    # to whatever `kℓ` and `eltype(intf)` are, and a narrower buffer here then
+    # refuses to store the widened transfer matrix. That is what made a single
+    # `ForwardDiff.Dual` layer conductivity — or any sensitivity with respect to
+    # a Kapitza resistance or a surface conductance — a `MethodError`.
+    Qk = promote_type(
+        Q, typeof(k₀),
+        ntuple(ℓ -> typeof(tables.k_layers[ℓ]), Val(N))...,
+        interfaces_eltype(s.interfaces)
+    )
+    S = Vector{Matrix{Qk}}(undef, N)
+    for ℓ in 1:N
+        k_next = ℓ < N ? tables.k_layers[ℓ + 1] : k₀
+        R = _transition(s, ℓ, k_next, tables)
+        S[ℓ] = ℓ == 1 ? convert(Matrix{Qk}, R) : R * S[ℓ - 1]
+    end
+    return S
+end
 
 """
     spheroid_state_sequence(s, k₀, trans) -> Vector{Vector}
@@ -195,30 +208,10 @@ transverse, eq:axiBCai/eq:transBCai) are imposed exactly.
 """
 function spheroid_state_sequence(s::LayeredSpheroid{T, N, Q}, k₀raw, trans::Bool) where {T, N, Q}
     k₀ = _as_scalar_k(k₀raw)
-    tables = _spheroid_tables(s)
     𝒩 = s.Nseries
-    # The layer conductivities and the interface parameters belong in this
-    # promotion just as much as `q` and `k₀` do: `_J_ext`/`_J_int` widen locally
-    # to whatever `kℓ` and `eltype(intf)` are, and a narrower buffer here then
-    # refuses to store the widened transfer matrix. That is what made a single
-    # `ForwardDiff.Dual` layer conductivity — or any sensitivity with respect to
-    # a Kapitza resistance or a surface conductance — a `MethodError`.
-    Qk = promote_type(
-        Q, typeof(k₀),
-        ntuple(ℓ -> typeof(tables.k_layers[ℓ]), Val(N))...,
-        interfaces_eltype(s.interfaces)
-    )
-
-    R = Vector{Matrix{Qk}}(undef, N)
-    for ℓ in 1:N
-        k_next = ℓ < N ? tables.k_layers[ℓ + 1] : k₀
-        R[ℓ] = _transition(s, ℓ, trans, k_next, tables)
-    end
-    S = Vector{Matrix{Qk}}(undef, N)
-    S[1] = R[1]
-    for ℓ in 2:N
-        S[ℓ] = R[ℓ] * S[ℓ - 1]
-    end
+    tables = _spheroid_tables(s, trans ? 1 : 0, 1:2:(2𝒩 - 1))
+    S = _spheroid_transfer(s, k₀, tables)
+    Qk = eltype(S[N])
 
     Ainf = zeros(Qk, 𝒩)
     Ainf[1] = trans ? -one(Qk) : one(Qk)

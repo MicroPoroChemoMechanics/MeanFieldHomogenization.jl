@@ -114,7 +114,8 @@ end
 _mem_not_a_sphere(name::Symbol, geom) = throw(
     ArgumentError(
         "MultipoleExpansion: particle :$(name) is a $(nameof(typeof(geom))) that is not a " *
-            "sphere; the scheme takes balls (an Ellipsoid of equal semi-axes) and LayeredSphere"
+            "sphere; in elasticity the scheme takes balls (an Ellipsoid of equal semi-axes) and " *
+            "LayeredSphere, spheroids being taken in conduction"
     )
 )
 
@@ -149,9 +150,33 @@ struct MultipoleSolution{T, C}
     nmax::Int
 end
 
+# The fields of the particles are written for spheres (the method of the
+# spheroids, which refuses, is in `mem_spheroids.jl`).
+_mem_spheres_only(sol::MultipoleSolution, what::String) = sol
+
 function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop::Symbol, nmax::Int)
     _mem_isotropic(K₀)
     names = particle_names(asm)
+    geometries = [particle_geometry(asm, nm) for nm in names]
+    all(_mem_is_sphere, geometries) && return _mem_sphere_solve(asm, K₀, prop, names, nmax)
+    any(_mem_is_sphere, geometries) && throw(
+        ArgumentError(
+            "MultipoleExpansion: the assembly mixes spheres and spheroids; it takes either " *
+                "spheres or spheroids of axis e₃"
+        )
+    )
+    spheroids = [_mem_spheroid(g, asm, nm, prop) for (g, nm) in zip(geometries, names)]
+    return _mem_spheroid_solve(asm, K₀, names, spheroids, nmax)
+end
+
+# Spheres take the spherical harmonics; spheroids (and anything else, refused
+# later with its own message) the spheroidal ones.
+_mem_is_sphere(::LayeredSpheres.LayeredSphere) = true
+_mem_is_sphere(::LayeredSpheroids.LayeredSpheroid) = false
+_mem_is_sphere(geom::Elasticity.Ellipsoid{3}) = allequal(geom.semi_axes)
+_mem_is_sphere(geom) = true
+
+function _mem_sphere_solve(asm::ParticleAssembly, K₀, prop::Symbol, names, nmax::Int)
     spheres = Any[_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]
     # Particles differ in their number types (one radius or one center carrying
     # a derivative, the others not): each array is brought to its common type.
@@ -301,7 +326,7 @@ function Schemes._concentration_tensors(
     ) where {p}
     P₀ = matrix_property(asm, p)
     _mem_conduction_only(P₀, "the concentration tensors")
-    sol = _mem_solve(asm, P₀, p, _mem_nmax(scheme))
+    sol = _mem_spheres_only(_mem_solve(asm, P₀, p, _mem_nmax(scheme)), "the concentration tensors")
     Σ = _mem_contribution(asm, P₀, sol)
     𝔼 = _mem_remote_field(asm.boundary, P₀, Σ; kw...)
     P_hom = P₀ + Σ ⊙ 𝔼
@@ -383,7 +408,7 @@ function multipole_coefficients(
     )
     MFH_Core.validate_cell(asm, scheme)
     _mem_conduction_only(matrix_property(asm, prop), "the coefficients of the series")
-    sol = _mem_solve(asm, matrix_property(asm, prop), prop, _mem_nmax(scheme))
+    sol = _mem_spheres_only(_mem_solve(asm, matrix_property(asm, prop), prop, _mem_nmax(scheme)), "the coefficients of the series")
     n = _mem_block(sol.nmax)
     # b_nm = ζ̂_n R^(n+1) â_nm / N_nm
     scale(q) = [

@@ -271,9 +271,27 @@ M = mandel(homogenize(asm_el, MultipoleExpansion(; nmax = 6), :C), CanonicalBasi
 (C1122 = M[1, 2], C1111 = M[1, 1], C1212 = M[6, 6] / 2)
 ```
 
+### Spheroids
+
+In conduction the particles may be spheroids of revolution axis
+``\underline{e}_3``, all spheroids or all spheres: an [`Ellipsoid`](@ref) with
+two equal semi-axes along ``\underline{e}_1`` and ``\underline{e}_2``, or a
+[`LayeredSpheroid`](@ref) with its layers and interfaces
+([theory](@ref th-mem-spheroids)). A [`PeriodicBox`](@ref) may have three
+different periods, so that a lattice can follow the aspect ratio of its
+particles:
+
+```@example mem_manual
+oblate = ParticleAssembly(; boundary = PeriodicBox((1.0, 1.0, 1 / 3)))
+add_matrix!(oblate, Dict(:K => TensISO{3}(1.0)))
+add_particle!(oblate, :p, (0.0, 0.0, 0.0), Ellipsoid(0.4, 0.4, 0.4 / 3), Dict(:K => TensISO{3}(100.0)))
+K = canonical_components(homogenize(oblate, MultipoleExpansion(; nmax = 5), :K))
+K[1, 1], K[3, 3]
+```
+
 ### Fields of the particles
 
-The fields of this section are available in conduction.
+The fields of this section are available in conduction, for spheres.
 
 [`concentration_tensors`](@ref) gives the mean gradient and the mean flux of
 every particle per unit macroscopic gradient, the matrix taking the rest of the

@@ -9,7 +9,7 @@
 # The multipole expansion method resolves the field around every sphere of an
 # assembly, up to a degree `nmax` of the harmonics. This page computes with
 # [`MultipoleExpansion`](@ref) the reference results of the method on spheres:
-# the conductivity of the three cubic arrays tabulated by
+# the conductivity and the stiffness of the three cubic arrays tabulated by
 # [kushch2013](@citet) and [kushch2014](@citet), and the conductivity and the
 # stiffness of the finite cluster of 27 spheres that serves as the test problem
 # of the sample codes of [kushch2013](@citet). The published values are read
@@ -218,7 +218,62 @@ Markdown.parse(String(take!(io)))
 # with a contraction along another (``\mu_1``) more than a shear between two of
 # its axes (``\mu_2``).
 #
-# ## 4. Field around two spheres
+# ## 4. Stiffness of the cubic arrays
+#
+# On a periodic array, each sphere stands for its lattice in elasticity too
+# ([theory](@ref th-mem-elasticity)). [kushch2013](@citet) tabulate the three
+# moduli ``C_{1122}/2\mu_0``, ``C_{1111}/2\mu_0`` and ``C_{1212}/\mu_0`` of the three
+# cubic arrays for voids, spheres ten times stiffer than the matrix and nearly
+# rigid ones, the Poisson ratio being 0.3 in both phases. Each cell gives the
+# value computed at `nmax = 8` and, in parentheses, the published one, for the
+# fractions where this degree gives the third decimal.
+
+contrasts_el = (0, 10, 1000)
+function stiffness_table(kind, name; cs = (0.1, 0.2, 0.3), nmax = 8)
+    io = IOBuffer()
+    println(io, "| ``c`` | ", join(("``\\mu_1/\\mu_0 = $(μ)``" for μ in contrasts_el), " | "), " |")
+    println(io, "| :-- | ", join(fill(":--", length(contrasts_el)), " | "), " |")
+    for row in book["tables"][name]
+        row["c"] in cs || continue
+        cells = map(contrasts_el) do μ₁
+            asm = cubic_lattice(kind, Dict(:C => C₀), Dict(:C => iso(float(μ₁), ν)); fraction = row["c"])
+            M = mandel(homogenize(asm, MultipoleExpansion(; nmax), :C), CanonicalBasis{3, Float64}())
+            @sprintf(
+                "%.3f, %.3f, %.3f (%.3f, %.3f, %.3f)", M[1, 2] / 2, M[1, 1] / 2, M[6, 6] / 2,
+                row["c1122_contrast_$μ₁"], row["c1111_contrast_$μ₁"], row["c1212_contrast_$μ₁"]
+            )
+        end
+        println(io, "| ", row["c"], " | ", join(cells, " | "), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+nothing #hide
+
+# Simple cubic array:
+
+stiffness_table(:sc, "stiffness_sc")
+
+# Body-centered and face-centered arrays, at ``c = 0.2`` and ``0.4``:
+
+stiffness_table(:bcc, "stiffness_bcc"; cs = (0.2, 0.4))
+
+#-
+
+stiffness_table(:fcc, "stiffness_fcc"; cs = (0.2, 0.4))
+
+# The degree 8 is short of the third decimal only for the densest and stiffest
+# simple cubic array, where the spheres nearly touch; the appendix A.4 of the
+# book gives that case, ``c = 0.4`` with ``\mu_1/\mu_0 = 1000``, to five decimals,
+# recovered at `nmax = 12`:
+
+let asm = cubic_lattice(:sc, Dict(:C => C₀), Dict(:C => iso(1000.0, ν)); fraction = 0.4)
+    M = mandel(homogenize(asm, MultipoleExpansion(; nmax = 12), :C), CanonicalBasis{3, Float64}())
+    computed = round.((M[1, 3] / 2, M[3, 3] / 2, M[6, 6] / 2); digits = 5)
+    published = (q("ruc_c1133"), q("ruc_c3333"), q("ruc_c1212"))
+    (; computed, published)
+end
+
+# ## 5. Field around two spheres
 #
 # The coefficients of the series give the field at any point of the matrix.
 # Take two spheres ten times more conducting than the matrix, under a gradient
@@ -273,6 +328,7 @@ gap_gradient = (temperature([0.0, 0.0, 0.04]) - temperature([0.0, 0.0, -0.04])) 
 # | conductivity of the body-centered and face-centered arrays | [kushch2013](@cite), Tables 3.2 and 3.3 | on the published points, short of contact |
 # | conductivity of the cluster of 27 spheres | [kushch2013](@cite), appendix A.1 | five decimals at `nmax = 5` |
 # | bulk and shear moduli of the cluster of 27 rigid spheres | [kushch2013](@cite), appendix A.3 | four decimals at `nmax = 6` |
+# | stiffness of the cubic arrays | [kushch2013](@cite), Tables 5.1 to 5.3 and appendix A.4 | third decimal at `nmax = 8` up to ``c = 0.4``; five decimals at `nmax = 12` for the appendix |
 #
 #md # ```@raw html
 #md # <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>

@@ -56,12 +56,15 @@ MixedBC(radius::Real) = MixedBC(Elasticity.Ellipsoid(radius))
 
 """
     PeriodicBox(period; cutoff = 3 * period) <: AbstractAssemblyBoundary
+    PeriodicBox((L₁, L₂, L₃); cutoff = 3 * maximum(periods)) <: AbstractAssemblyBoundary
 
 Periodic elementary representative volume of
 [molinari1996](@cite): the cubic cell of side
 `period` tiles space, each particle carrying a family of periodic images, and
 the interaction sums are truncated to the images lying within `cutoff` of the
-receiver.
+receiver. A tuple of three periods gives a rectangular cell, which the
+[`MultipoleExpansion`](@ref) takes; the schemes that truncate the image sums
+([`ClusterModel`](@ref), [`EquivalentInclusion`](@ref)) take a cubic one.
 
 The cutoff is a **sphere**, not a box, and that is not cosmetic: Appendix B of
 [molinari1996](@citet) proves convergence from the vanishing of the interaction
@@ -74,7 +77,7 @@ degenerate case in which the cluster model collapses exactly onto Mori-Tanaka
 (their Appendix C) — a useful thing to be able to ask for.
 """
 struct PeriodicBox{T} <: AbstractAssemblyBoundary
-    period::T
+    periods::NTuple{3, T}
     cutoff::T
 end
 
@@ -83,14 +86,28 @@ end
 
 Periods of the cell along the three axes.
 """
-box_periods(b::PeriodicBox) = (b.period, b.period, b.period)
+box_periods(b::PeriodicBox) = b.periods
 
-function PeriodicBox(period::Real; cutoff::Union{Nothing, Real} = nothing)
-    period > 0 || throw(ArgumentError("PeriodicBox: the period must be positive"))
-    c = cutoff === nothing ? 3 * period : cutoff
+PeriodicBox(period::Real; cutoff::Union{Nothing, Real} = nothing) = PeriodicBox((period, period, period); cutoff)
+
+function PeriodicBox(periods::NTuple{3, Real}; cutoff::Union{Nothing, Real} = nothing)
+    all(>(0), periods) || throw(ArgumentError("PeriodicBox: the periods must be positive, got $(periods)"))
+    c = cutoff === nothing ? 3 * maximum(periods) : cutoff
     c ≥ 0 || throw(ArgumentError("PeriodicBox: the cutoff must be non-negative"))
-    p, cc = promote(period, c)
-    return PeriodicBox(p, cc)
+    v = promote(periods..., c)
+    return PeriodicBox(v[1:3], v[4])
+end
+
+# The single period of a cubic cell, for the schemes that need one.
+function _cubic_period(b::PeriodicBox)
+    L = b.periods
+    L[1] == L[2] == L[3] || throw(
+        ArgumentError(
+            "PeriodicBox: this scheme sums the images of a cubic cell; the cell has the " *
+                "periods $(L)"
+        )
+    )
+    return L[1]
 end
 
 # ─── Particle ────────────────────────────────────────────────────────────────
@@ -317,7 +334,7 @@ _boundary_volume(b::MixedBC, ::ParticleAssembly) = Interactions._inclusion_volum
 
 function _boundary_volume(b::PeriodicBox, asm::ParticleAssembly)
     d = _assembly_dimension(asm)
-    return b.period^d
+    return prod(b.periods[1:d])
 end
 
 """
@@ -402,27 +419,67 @@ function _check_no_overlap(asm::ParticleAssembly)
     names = asm.particle_names
     for i in eachindex(names), j in (i + 1):lastindex(names)
         na, nb = names[i], names[j]
-        ra = _bounding_radius(asm.particles[na].geometry)
-        rb = _bounding_radius(asm.particles[nb].geometry)
+        ga, gb = asm.particles[na].geometry, asm.particles[nb].geometry
         ca, cb = asm.particles[na].center, asm.particles[nb].center
-        δ = sqrt(sum((ca[k] - cb[k])^2 for k in eachindex(ca)))
-        δ > ra + rb || throw(
+        r = [TensND.primal(cb[k] - ca[k]) for k in eachindex(ca)]
+        _disjoint(_envelope(ga), _envelope(gb), r) || throw(
             ArgumentError(
                 "ParticleAssembly: particles :$(na) and :$(nb) overlap " *
-                    "(center distance $(δ) ≤ $(ra) + $(rb))"
+                    "(center distance $(sqrt(sum(abs2, r))))"
             )
         )
     end
     return nothing
 end
 
+# The ellipsoidal envelope of a particle, as the matrix A² of {x : x·A⁻²·x ≤ 1}
+# in the canonical frame, or its bounding radius when it has none.
+_envelope(ell::Elasticity.Ellipsoid{3}) = _envelope_matrix(ell)
+_envelope(sphere::LayeredSpheres.LayeredSphere) = _envelope_matrix(sphere)
+_envelope(spheroid::LayeredSpheroids.LayeredSpheroid) = _envelope_matrix(spheroid)
+_envelope(geom) = _bounding_radius(geom)
+function _envelope_matrix(geom)
+    A = TensND.primal.(Array(TensND.canonical_components(MFH_Core.shape_tensor(geom))))
+    return A * A
+end
+
+# Two bounding balls are disjoint when the distance of their centers exceeds the
+# sum of their radii; two ellipsoids, when the contact function of Perram and
+# Wertheim,
+#     F(λ) = λ(1 − λ) r·[(1 − λ) A² + λ B²]⁻¹·r ,
+# concave on [0, 1], exceeds 1 at its maximum.
+_disjoint(ra::Real, rb::Real, r) = sqrt(sum(abs2, r)) > ra + rb
+function _disjoint(A::AbstractMatrix, B::AbstractMatrix, r)
+    F(λ) = λ * (1 - λ) * dot(r, ((1 - λ) * A + λ * B) \ r)
+    # golden-section search of the maximum of a concave function
+    a, b = 0.0, 1.0
+    φ = (sqrt(5.0) - 1) / 2
+    c, d = b - φ * (b - a), a + φ * (b - a)
+    Fc, Fd = F(c), F(d)
+    for _ in 1:80
+        if Fc < Fd
+            a, c, Fc = c, d, Fd
+            d = a + φ * (b - a)
+            Fd = F(d)
+        else
+            b, d, Fd = d, c, Fc
+            c = b - φ * (b - a)
+            Fc = F(c)
+        end
+    end
+    return max(Fc, Fd) > 1
+end
+
 _bounding_radius(ell::Elasticity.Ellipsoid) = maximum(ell.semi_axes)
 _bounding_radius(sphere::LayeredSpheres.LayeredSphere) = LayeredSpheres.outer_radius(sphere)
+_bounding_radius(spheroid::LayeredSpheroids.LayeredSpheroid) = maximum(LayeredSpheroids.outer_semiaxes(spheroid))
 
 # A layered sphere occupies its outer ball: that is the region the fractions
 # and the overlap check are about.
 Interactions._inclusion_volume(sphere::LayeredSpheres.LayeredSphere) =
     4 * π * LayeredSpheres.outer_radius(sphere)^3 / 3
+Interactions._inclusion_volume(spheroid::LayeredSpheroids.LayeredSpheroid) =
+    4 * π * prod(LayeredSpheroids.outer_semiaxes(spheroid) .^ (1, 2)) / 3
 _bounding_radius(incl::MFH_Core.AbstractInclusion) = throw(
     ArgumentError(
         "ParticleAssembly: no bounding radius is defined for a " *
