@@ -473,7 +473,7 @@ end
 function ellipsoid_spring_table()
     io = IOBuffer()
     entries = (("C1111", 1, 1), ("C3333", 3, 3), ("C2233", 2, 3), ("C1212", 6, 6))
-    println(io, "| ``D`` | ", join(("``C_{$(k[2:end])}/\\mu_0``" for (k, _, _) in entries), " | "), " |")
+    println(io, "| ``D`` | ", join(("``C_{$(k[2:end])}/\\\\mu_0``" for (k, _, _) in entries), " | "), " |")
     println(io, "| :-- | :-- | :-- | :-- | :-- |")
     for row in springs["tables"]["maxwell_spring"]
         D = row["D"] == "Infinity" ? Inf : row["D"]
