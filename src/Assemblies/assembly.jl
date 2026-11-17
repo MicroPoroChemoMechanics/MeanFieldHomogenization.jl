@@ -117,10 +117,12 @@ end
 
 Ellipsoid of semi-axes ``a_1``, ``a_2``, ``a_3`` along ``\\underline{e}_1``,
 ``\\underline{e}_2``, ``\\underline{e}_3``, bonded to the matrix by `interface`
-(a [`KapitzaInterface`](@ref) in conduction, or a [`PerfectInterface`](@ref)): the
+(a [`KapitzaInterface`](@ref MeanFieldHomogenization.LayeredSpheres.KapitzaInterface) in conduction,
+or a [`PerfectInterface`](@ref MeanFieldHomogenization.LayeredSpheres.PerfectInterface)): the
 particle of a [`ParticleAssembly`](@ref) that carries an imperfect interface on an
 ellipsoid, which no layered inclusion of the package describes. Its property is
-given with [`add_particle!`](@ref) as for an [`Ellipsoid`](@ref). Only
+given with [`add_particle!`](@ref) as for an
+[`Ellipsoid`](@ref MeanFieldHomogenization.Elasticity.Ellipsoid). Only
 [`MultipoleExpansion`](@ref) takes it ([theory](@ref th-mem-ellipsoids)).
 """
 struct InterfacedEllipsoid{T <: Number, E <: Elasticity.Ellipsoid{3}, I <: LayeredSpheres.AbstractInterface} <: MFH_Core.AbstractInclusion{T}
