@@ -210,23 +210,34 @@ _lame_at_ν(E, c) = lame_value(E, c.ν, c.ν3, c.ν2, -1, -1)
 
 The Lamé function of the second kind ``F(\\rho) = (2n+1)\\,E(\\rho)\\,I(\\rho)`` and its
 derivative, with ``I(\\rho) = \\int_\\rho^\\infty \\mathrm{d}t / [E(t)^2 \\sqrt{t^2-h_3^2}\\sqrt{t^2-h_2^2}]``
-computed as ``\\rho \\int_0^1 \\mathrm{d}s / [E(\\rho/s)^2 \\sqrt{\\rho^2-h_3^2 s^2}\\sqrt{\\rho^2-h_2^2 s^2}]``,
-whose integrand is smooth, by Gauss–Legendre on `nodes` (nodes and weights on
-``[0, 1]``, ``n + 24`` points by default; a caller evaluating many functions
-passes them once).
+computed as ``\\rho \\int_0^1 \\mathrm{d}s / [E(\\rho/s)^2 \\sqrt{\\rho^2-h_3^2 s^2}\\sqrt{\\rho^2-h_2^2 s^2}]``.
+The factor ``\\sqrt{\\rho^2-h_2^2 s^2}`` falls to ``\\kappa = \\sqrt{\\rho^2-h_2^2}`` at
+``s = 1``, which is ``a_3`` on the surface: for an elongated ellipsoid the
+integrand varies there over a length ``(\\kappa/h_2)^2``. The interval is
+split at ``s = 1/2``; on ``[1/2, 1]`` the variable ``\\tau``, with
+``1 - s^2 = (\\kappa/h_2)^2 \\sinh^2\\tau``, turns ``\\sqrt{\\rho^2-h_2^2 s^2}`` into
+``\\kappa\\cosh\\tau`` and leaves a smooth integrand. Both parts are integrated
+by Gauss–Legendre on `nodes` (nodes and weights on ``[0, 1]``, ``n + 24``
+points by default; a caller evaluating many functions passes them once).
 """
 function lame_second_kind(g::EllipsoidalGeometry, E::LameFunction, ρ, nodes = gauss(E.n + 24, 0.0, 1.0))
     h₂, h₃ = g.h2, g.h3
     xs, ws = nodes
-    I = zero(ρ)
-    for (s, w) in zip(xs, ws)
-        t = ρ / s
-        Et, _ = lame_value(E, t, sqrt(t^2 - h₃^2), sqrt(t^2 - h₂^2), 1, 1)
-        I += w / (Et^2 * sqrt(ρ^2 - h₃^2 * s^2) * sqrt(ρ^2 - h₂^2 * s^2))
+    κ = sqrt(ρ^2 - h₂^2)
+    τ₁ = asinh(sqrt(oftype(κ, 3)) * h₂ / (2κ))     # s = 1/2
+    Eρs(s) = first(lame_value(E, ρ / s, sqrt((ρ / s)^2 - h₃^2), sqrt((ρ / s)^2 - h₂^2), 1, 1))
+    I = zero(κ)
+    for (x, w) in zip(xs, ws)
+        s = x / 2                                             # on [0, 1/2]
+        I += (w / 2) / (Eρs(s)^2 * sqrt(ρ^2 - h₃^2 * s^2) * sqrt(ρ^2 - h₂^2 * s^2))
+        τ = τ₁ * x                                            # on [1/2, 1]
+        sh = sinh(τ)
+        s = sqrt(1 - (κ * sh / h₂)^2)
+        I += τ₁ * w * κ * sh / (h₂^2 * s * Eρs(s)^2 * sqrt(ρ^2 - h₃^2 * s^2))
     end
     I *= ρ
-    s₃, s₂ = sqrt(ρ^2 - h₃^2), sqrt(ρ^2 - h₂^2)
-    Eρ, dEρ = lame_value(E, ρ, s₃, s₂, 1, 1)
-    dI = -1 / (Eρ^2 * s₃ * s₂)
+    s₃ = sqrt(ρ^2 - h₃^2)
+    Eρ, dEρ = lame_value(E, ρ, s₃, κ, 1, 1)
+    dI = -1 / (Eρ^2 * s₃ * κ)
     return (2E.n + 1) * Eρ * I, (2E.n + 1) * (dEρ * I + Eρ * dI)
 end

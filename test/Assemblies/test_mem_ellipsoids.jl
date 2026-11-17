@@ -20,12 +20,13 @@ _mel_lit() = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "l
 _mel_k(asm, nmax) = diag(canonical_components(homogenize(asm, MultipoleExpansion(; nmax), :K)))
 
 @testset "MEM ellipsoids — one ellipsoid is Mori-Tanaka at any degree" begin
-    for (semi, k₁) in (((1.5, 1.0, 0.5), 10.0), ((0.5, 1.5, 1.0), 4.0)), nmax in (1, 3)
+    # the last two elongated, where the Lamé functions of the second kind vary
+    # sharply near the surface
+    for (semi, k₁) in (((1.5, 1.0, 0.5), 10.0), ((0.5, 1.5, 1.0), 4.0), ((3.0, 1.0, 0.3), 5.0), ((10.0, 9.0, 0.1), 5.0)), nmax in (1, 3)
         asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid((semi ./ cbrt(0.5))...)))
         add_matrix!(asm, _MEL_K0)
         add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(semi...), Dict(:K => TensISO{3}(k₁)))
-        # to the accuracy of the quadrature of the Lamé functions of the second kind
-        @test _mel_k(asm, nmax) ≈ diag(canonical_components(homogenize(asm, MoriTanaka(), :K))) rtol = 1.0e-9
+        @test _mel_k(asm, nmax) ≈ diag(canonical_components(homogenize(asm, MoriTanaka(), :K))) rtol = 1.0e-11
     end
 end
 

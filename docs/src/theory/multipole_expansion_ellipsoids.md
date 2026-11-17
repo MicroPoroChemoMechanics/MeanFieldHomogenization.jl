@@ -49,8 +49,13 @@ F(\rho) = (2n+1)\,E(\rho)\int_\rho^\infty \frac{\mathrm{d}t}{E(t)^2\sqrt{t^2-h_3
 ```
 
 the first a polynomial of degree ``n``, the second decaying as ``\rho^{-n-1}``. The
-integral is computed as ``\rho\int_0^1 \mathrm{d}s/[E(\rho/s)^2\sqrt{\rho^2-h_3^2s^2}\sqrt{\rho^2-h_2^2s^2}]``,
-whose integrand is smooth. At the degree 1 the three classes K, L, M give
+integral is computed as ``\rho\int_0^1 \mathrm{d}s/[E(\rho/s)^2\sqrt{\rho^2-h_3^2s^2}\sqrt{\rho^2-h_2^2s^2}]``.
+Its last factor falls to ``\kappa = \sqrt{\rho^2-h_2^2}`` at ``s = 1``, that is ``a_3`` on
+the surface, so that for an elongated ellipsoid the integrand varies over a
+length ``(\kappa/h_2)^2`` there. On ``[1/2, 1]`` the variable ``\tau`` defined by
+``1 - s^2 = (\kappa/h_2)^2\sinh^2\tau`` turns that factor into ``\kappa\cosh\tau``; the
+integrands on ``[0, 1/2]`` in ``s`` and on the image of ``[1/2, 1]`` in ``\tau`` are
+then smooth and integrated by Gauss–Legendre. At the degree 1 the three classes K, L, M give
 ``\mathbb{E}_1 = h_2h_3\,x_1``, ``h_1h_3\,x_2``, ``h_1h_2\,x_3``, and the
 corresponding ``\mathbb{F}_1`` tend to the same constants times ``x_j/r^3``.
 
