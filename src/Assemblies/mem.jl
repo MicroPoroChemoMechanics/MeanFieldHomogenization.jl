@@ -114,9 +114,8 @@ _mem_remote_field(::PeriodicBox, P₀, Σ; kw...) = one(P₀)
 # ball becomes its one-layer sphere, a layered sphere is taken as it is.
 _mem_sphere(geom::LayeredSpheres.LayeredSphere, asm, name::Symbol, prop::Symbol) = geom
 
+# A ball: `_mem_kind` sends here only an `Ellipsoid` of equal semi-axes.
 function _mem_sphere(geom::Elasticity.Ellipsoid{3}, asm, name::Symbol, prop::Symbol)
-    a = geom.semi_axes
-    a[1] == a[2] == a[3] || _mem_not_a_sphere(name, geom)
     P = particle_property(asm, name, prop)
     P isa TensND.TensISO || throw(
         ArgumentError(
@@ -124,16 +123,8 @@ function _mem_sphere(geom::Elasticity.Ellipsoid{3}, asm, name::Symbol, prop::Sym
                 ":$(prop); the spheres of the expansion are isotropic (TensISO)"
         )
     )
-    return LayeredSpheres.LayeredSphere((a[1],), (P,))
+    return LayeredSpheres.LayeredSphere((geom.semi_axes[1],), (P,))
 end
-
-_mem_not_a_sphere(name::Symbol, geom) = throw(
-    ArgumentError(
-        "MultipoleExpansion: particle :$(name) is a $(nameof(typeof(geom))) that is not a " *
-            "sphere; the spheres of the scheme are balls (an Ellipsoid of equal semi-axes) and " *
-            "LayeredSphere"
-    )
-)
 
 # The matrix property, checked to be isotropic.
 function _mem_isotropic(P₀)
@@ -189,9 +180,9 @@ function _mem_one_kind(geometries)
     return only(kinds)
 end
 
-# Spheres take the spherical harmonics, spheroids the spheroidal ones and
-# ellipsoids of three different semi-axes the ellipsoidal ones; anything else
-# goes with the spheres, which refuse it with their own message.
+# Spheres take the spherical harmonics, spheroids and penny-shaped cracks the
+# spheroidal ones and ellipsoids of three different semi-axes the ellipsoidal ones; an assembly
+# holds no other geometry (`_bounding_radius` refuses it when it is added).
 _mem_kind(::LayeredSpheres.LayeredSphere) = :sphere
 _mem_kind(::LayeredSpheroids.LayeredSpheroid) = :spheroid
 function _mem_kind(geom::Elasticity.Ellipsoid{3})
@@ -199,7 +190,7 @@ function _mem_kind(geom::Elasticity.Ellipsoid{3})
     return n == 1 ? :sphere : n == 2 ? :spheroid : :ellipsoid
 end
 _mem_kind(::InterfacedEllipsoid) = :ellipsoid
-_mem_kind(geom) = :sphere
+_mem_kind(::Cracks.EllipticCrack) = :spheroid
 
 function _mem_kind_solve(::Val{:sphere}, asm, K₀, prop, names, geometries, nmax)
     any(_mem_anisotropic_ball(asm, nm, g, prop) for (nm, g) in zip(names, geometries)) ||

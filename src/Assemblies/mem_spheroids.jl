@@ -131,8 +131,13 @@ _mem_spheres_only(sol::ShapedMultipoleSolution, what::String) = throw(
 # The two matrices carry everything the remote field, the background of a
 # lattice and the effective conductivity need, whatever the harmonics.
 
+# How a particle reads the field of a close neighbor on its surface: by its
+# values, or, for a crack (`mem_cracks.jl`), by its normal derivative on one lip.
+struct _MemValues end
+struct _MemNormalDerivative end
+
 # Everything the expansion needs of one spheroid.
-struct _MemSpheroid{C, R}
+struct _MemSpheroid{C, R, D <: Union{_MemValues, _MemNormalDerivative}}
     c::C                      # focal distance, complex
     ξ₀::C                     # confocal coordinate of the outer surface
     scales::Vector{R}
@@ -141,15 +146,18 @@ struct _MemSpheroid{C, R}
     surface::Matrix{R}
     dipole::Matrix{C}
     gradient::Matrix{C}
+    reading::D
 end
+_MemSpheroid{C, R}(c, ξ₀, scales, Z, Π, surface, dipole, gradient) where {C, R} =
+    _MemSpheroid{C, R, _MemValues}(c, ξ₀, scales, Z, Π, surface, dipole, gradient, _MemValues())
 
 # The radius of the sphere that holds the singularities of the decaying harmonics.
 _mem_focal(d::_MemSpheroid) = abs(d.c)
 _mem_far_degree(::_MemSpheroid, nmax::Int) = 2 * (nmax + _MEM_FAR_TERMS)
 
 # The same in another element type, to bring the particles of an assembly to one.
-_mem_convert(d::_MemSpheroid, ::Type{C}) where {C} = _MemSpheroid{C, real(C)}(
-    d.c, d.ξ₀, d.scales, d.Z, d.Π, d.surface, d.dipole, d.gradient
+_mem_convert(d::_MemSpheroid{<:Any, <:Any, D}, ::Type{C}) where {C, D} = _MemSpheroid{C, real(C), D}(
+    d.c, d.ξ₀, d.scales, d.Z, d.Π, d.surface, d.dipole, d.gradient, d.reading
 )
 
 # The spheroidal dipole map: Ŷ₁ᵐ = (−1)^m (c²/3) Y₁ᵐ + …, and the spherical
@@ -276,12 +284,20 @@ function _mem_eta_near(q, p, R, nmax::Int)
     C = promote_type(eltype(q.Π), eltype(R))
     npts = size(q.surface, 2)
     U = zeros(C, npts, _mem_block(nmax))
-    F = zeros(C, _mem_block(nmax))
     for j in 1:npts
-        _mem_irregular!(F, R .+ view(q.surface, :, j), p, nmax)
-        U[j, :] .= F
+        U[j, :] .= _mem_read(_mem_reading(q), C, R .+ view(q.surface, :, j), p, nmax)
     end
     return q.Π * U
+end
+
+# What particle q reads at x of the decaying harmonics of p: their values, or
+# their derivative along e₃ (a crack, `mem_cracks.jl`).
+_mem_reading(q) = _MemValues()
+_mem_reading(q::_MemSpheroid) = q.reading
+_mem_read(::_MemValues, ::Type{C}, x, p, nmax::Int) where {C} = _mem_irregular!(zeros(C, _mem_block(nmax)), x, p, nmax)
+function _mem_read(::_MemNormalDerivative, ::Type{C}, x, p, nmax::Int) where {C}
+    along(h) = _mem_irregular!(zeros(promote_type(C, typeof(h)), _mem_block(nmax)), x .+ (0, 0, h), p, nmax)
+    return ForwardDiff.derivative(along, zero(real(C)))
 end
 
 # The same by the far form, from the table `Y` of the decaying spherical

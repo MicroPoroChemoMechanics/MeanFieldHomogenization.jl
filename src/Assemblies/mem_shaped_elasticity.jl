@@ -29,12 +29,29 @@
 # decrease at least as 5^{−n′}.
 const _MEM_ELASTIC_EXTRA = 12
 
+# A point given by its coordinates (φ, p, τ) on the oblate chart of focal
+# distance a, where the lips of a penny-shaped crack are τ = 0, p ≷ 0.
+struct _MemOnChart{C}
+    chart::C
+end
+_mem_cartesian(on::_MemOnChart, ξ) = TensND.coords_to_cartesian(on.chart, ξ)
+_mem_chart_jacobian(on::_MemOnChart, ξ) = ForwardDiff.jacobian(y -> _mem_cartesian(on, y), ξ)
+
+# A crack reads the traction σ·e₃ of the fields of its neighbors on its plane,
+# in the matrix of moduli (κ, μ).
+struct _MemNormalTraction{T}
+    κ::T
+    μ::T
+end
+
 # Everything the elastic expansion needs of one particle of shape `shape`, in
 # the scaled unknowns of `_mem_vector_system` (radius R, its largest semi-axis):
 #   Ẑ        received â (degree ≤ nmax) → sent spherical b̂ (degree ≤ K);
 #   W        received â → coefficients of the emitted solutions;
-#   Π        displacements at the points `surface` (3 per point) → received â.
-struct _MemElasticShaped{C, T, S}
+#   Π        what the particle reads at the points `surface` (3 rows per
+#            point) → received â: the displacements, or for a crack the
+#            tractions on its plane (`_MemNormalTraction`).
+struct _MemElasticShaped{C, T, S, D <: Union{_MemValues, _MemNormalTraction}}
     shape::S
     R::Float64
     K::Int
@@ -43,21 +60,22 @@ struct _MemElasticShaped{C, T, S}
     W::Matrix{C}
     Π::Matrix{C}
     surface::Matrix{Float64}
+    reading::D
 end
 
 _mem_sent_degree(d::_MemElasticShaped, nmax::Int) = d.K
 _mem_focal(d::_MemElasticShaped) = _mem_focal(d.shape)
-_mem_convert(d::_MemElasticShaped, ::Type{C}) where {C} =
-    _MemElasticShaped{C, typeof(d.ν₀), typeof(d.shape)}(d.shape, d.R, d.K, d.ν₀, d.Ẑ, d.W, d.Π, d.surface)
+_mem_convert(d::_MemElasticShaped{<:Any, T, S, D}, ::Type{C}) where {C, T, S, D} =
+    _MemElasticShaped{C, T, S, D}(d.shape, d.R, d.K, d.ν₀, d.Ẑ, d.W, d.Π, d.surface, d.reading)
 
 # The data from the natural response Z (received a → emitted coefficients) and
 # the spherical form μ of the emitted solutions (emitted → sent b, degree ≤ K).
-function _mem_elastic_shaped(shape, Z, μ, R, K::Int, ν₀, surface, weights, nmax::Int)
+function _mem_elastic_shaped(shape, Z, μ, R, K::Int, ν₀, surface, weights, nmax::Int; reading = _MemValues())
     W = Z ./ transpose(_mem_received_scales(R, nmax))
     Ẑ = _mem_sent_scales(R, K) .* (μ * W)
-    Π = _mem_near_projection(surface, weights, R, ν₀, nmax)
+    Π = _mem_near_projection(reading, surface, weights, R, ν₀, nmax)
     C = promote_type(eltype(Ẑ), eltype(W), eltype(Π))
-    return _MemElasticShaped{C, typeof(ν₀), typeof(shape)}(shape, R, K, ν₀, Ẑ, W, Π, surface)
+    return _MemElasticShaped{C, typeof(ν₀), typeof(shape), typeof(reading)}(shape, R, K, ν₀, Ẑ, W, Π, surface, reading)
 end
 
 # ─── Spherical solutions ─────────────────────────────────────────────────────
@@ -101,10 +119,17 @@ _mem_sent_scales(R, K::Int) =
 # Values and tractions on the normal n of a family u = P + ν Q at a point of a
 # phase (κ, μ): rows u₁, u₂, u₃, t₁, t₂, t₃, columns as `fields`; the gradients
 # come from forward-mode differentiation of the two parts.
-function _mem_values_tractions(fields::F, x::SVector{3, Float64}, n, κ, μ) where {F}
-    P, Q = fields(x)
+_mem_values_tractions(fields::F, x::SVector{3}, n, κ, μ) where {F} =
+    _mem_values_tractions(fields(x)..., ForwardDiff.jacobian(y -> _mem_packed_parts(fields(y)...), x), n, κ, μ)
+# The same at the point of coordinates ξ on a chart (`_MemOnChart`), the fields
+# being functions of ξ: the gradients are ∂/∂ξ · (∂x/∂ξ)⁻¹, which holds where
+# the Cartesian coordinates do not tell the point (the two lips of a crack).
+function _mem_values_tractions(fields::F, ξ::SVector{3, Float64}, on::_MemOnChart, n, κ, μ) where {F}
+    Jξ = ForwardDiff.jacobian(y -> _mem_packed_parts(fields(y)...), ξ)
+    return _mem_values_tractions(fields(ξ)..., Jξ / _mem_chart_jacobian(on, ξ), n, κ, μ)
+end
+function _mem_values_tractions(P, Q, J, n, κ, μ)
     nc = size(P, 2)
-    J = ForwardDiff.jacobian(y -> _mem_packed_parts(fields(y)...), x)
     ν = LayeredSpheres._lame_poisson(κ, μ)
     λ = κ - 2μ / 3
     out = zeros(Complex{promote_type(typeof(κ), typeof(μ))}, 6, nc)
@@ -185,31 +210,67 @@ end
 
 # ─── Near pairs ──────────────────────────────────────────────────────────────
 
-# The projection of the displacements at points of the surface (3 rows per
-# point, weights w) on the scaled regular spherical solutions about the center.
-function _mem_near_projection(surface, weights, R, ν₀, nmax::Int)
+# The projection of what is read at points of the surface (3 rows per point,
+# weights w) on the scaled regular spherical solutions about the center: the
+# displacements, or the tractions on the plane of a crack. A crack answers the
+# traction alone, which the regular solutions of zero traction there do not
+# carry: the minimal-norm solution leaves them out, without changing the
+# response.
+function _mem_near_projection(reading, surface, weights, R, ν₀, nmax::Int)
     A = reduce(
         vcat, [
-            (u = _mem_spherical_lame(SVector{3}(view(surface, :, k)), nmax); sqrt(wk) .* (u[1] .+ ν₀ .* u[2]))
+            sqrt(wk) .* _mem_read(reading, y -> _mem_spherical_lame(y, nmax), SVector{3}(view(surface, :, k)), ν₀)
                 for (k, wk) in enumerate(weights)
         ]
     )
-    # the pseudo-inverse of A, times the weights of the rows, by its QR factors
-    s = [inv(norm(TensND.primal.(view(A, :, j)))) for j in axes(A, 2)]
-    F = qr(A .* transpose(s))
-    return (s .* _mem_received_scales(R, nmax)) .* (F.R \ (Matrix(F.Q)' .* transpose(repeat(sqrt.(weights); inner = 3))))
+    # The least-squares solution, times the weights of the rows, by the QR
+    # factors of A on the columns `read` (all of them for a reading by the
+    # values), the others left at zero.
+    read = _mem_read_columns(reading, A)
+    s = [inv(norm(TensND.primal.(view(A, :, j)))) for j in read]
+    F = qr(A[:, read] .* transpose(s))
+    Π = zeros(eltype(F.R), size(A, 2), size(A, 1))
+    Π[read, :] .= (s .* _mem_received_scales(R, nmax)[read]) .* (F.R \ (Matrix(F.Q)' .* transpose(repeat(sqrt.(weights); inner = 3))))
+    return Π
 end
+
+# The solutions a particle reads independently. By its values, all of them. By
+# the traction on the plane of a crack, a basis of those that carry one: the
+# rigid motions, the uniform plane stresses and many others carry none there,
+# and the reading has a null space. The response of a crack is a function of
+# the traction it reads, Ẑ = G T, so any solution of T â = t gives the same
+# Ẑ â: the columns of a basis of the range of T are chosen by a QR
+# factorization with column pivoting of the scaled columns (on the primal
+# values, the choice being discrete), down to a relative rounding level.
+_mem_read_columns(::_MemValues, A) = axes(A, 2)
+function _mem_read_columns(::_MemNormalTraction, A)
+    B = TensND.primal.(A)
+    norms = [norm(view(B, :, j)) for j in axes(B, 2)]
+    live = findall(>(0), norms)
+    F = qr(B[:, live] ./ transpose(norms[live]), ColumnNorm())
+    d = abs.(diag(F.R))
+    rank = count(>(_MEM_READ_RANK * d[1]), d)
+    return sort(live[F.p[1:rank]])
+end
+# The relative level below which a pivot of the reading is the rounding of zero.
+const _MEM_READ_RANK = 1.0e-10
 
 # The received coefficients of q due to p at −r from it, read on the surface of q.
 function _mem_elastic_near(dq::_MemElasticShaped, dp::_MemElasticShaped, r, nmax::Int)
     U = reduce(
         vcat, [
-            (V = _mem_emitted(dp.shape, r .+ view(dq.surface, :, k), nmax); V[1] .+ dp.ν₀ .* V[2])
+            _mem_read(dq.reading, y -> _mem_emitted(dp.shape, y, nmax), r .+ view(dq.surface, :, k), dp.ν₀)
                 for k in axes(dq.surface, 2)
         ]
     )
     return dq.Π * (U * dp.W)
 end
+
+# What a particle reads at x of a family u = P + ν₀ Q given as `fields(y)`: its
+# displacements, or its tractions on the plane x₃ = const of a crack.
+_mem_read(::_MemValues, fields::F, x, ν₀) where {F} = (u = fields(x); u[1] .+ ν₀ .* u[2])
+_mem_read(t::_MemNormalTraction, fields::F, x, ν₀) where {F} =
+    _mem_values_tractions(fields, SVector{3}(x), SVector(0.0, 0.0, 1.0), t.κ, t.μ)[4:6, :]
 
 function _mem_couple_elastic!(M, rows, cols, b::MixedBC, dq::_MemElasticShaped, dp::_MemElasticShaped, r, self::Bool, ν₀, norms, nmax::Int)
     self && return M

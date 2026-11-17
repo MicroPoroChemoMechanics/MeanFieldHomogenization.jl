@@ -46,15 +46,25 @@ _mem_focal(s::_MemSpheroidShape) = abs(s.c)
 # The decaying solutions V⁽ⁱ⁾_nm at x, n ≤ nmax, as V = P + ν Q: columns by
 # `_mem_eindex`, rows the three Cartesian components.
 function _mem_emitted(s::_MemSpheroidShape, x, nmax::Int)
-    c = s.c
-    deg = nmax + 1
-    table(y) = _mem_spheroidal_table(y, c, deg)
-    F̃ = table(x)
-    np = length(F̃.values)
+    table(y) = _mem_spheroidal_table(y, s.c, nmax + 1)
     J = ForwardDiff.jacobian(y -> (v = table(y).values; vcat(real.(v), imag.(v))), x)
+    return _mem_emitted(table(x), J, x, nmax)
+end
+# The same at the point of coordinates ξ = (φ, p, τ) on the oblate chart of
+# the spheroid (a lip of a crack): the table from the coordinates, its
+# gradient by ∂/∂ξ · (∂x/∂ξ)⁻¹.
+function _mem_emitted(s::_MemSpheroidShape, ξ, on::_MemOnChart, nmax::Int)
+    table(y) = _mem_spheroidal_table(on.chart, y, nmax + 1)
+    Jξ = ForwardDiff.jacobian(y -> (v = table(y).values; vcat(real.(v), imag.(v))), ξ)
+    return _mem_emitted(table(ξ), Jξ / _mem_chart_jacobian(on, ξ), _mem_cartesian(on, ξ), nmax)
+end
+# From the table F̃ at x and the Jacobian J of its real and imaginary parts.
+function _mem_emitted(F̃::TensND.SolidHarmonicTable, J, x, nmax::Int)
+    deg = nmax + 1
+    np = length(F̃.values)
     ∂F̃ = ntuple(k -> TensND.SolidHarmonicTable(deg, complex.(view(J, 1:np, k), view(J, (np + 1):(2np), k))), 3)
     xs = SVector{3}(x)
-    C = eltype(F̃.values)
+    C = promote_type(eltype(F̃.values), eltype(J))
     P, Q = zeros(C, 3, _mem_eblock(nmax)), zeros(C, 3, _mem_eblock(nmax))
     for n in 0:nmax, m in (-n):n, i in _mem_sent(n)
         col = _mem_eindex(i, n, m)
@@ -95,9 +105,14 @@ _mem_order_columns(nmax::Int, m::Int, families) =
 function _mem_spheroid_elastic_response(c, ρ₀, z₀, κ₀, μ₀, κ₁, μ₁, compliances, nmax::Int)
     points, normals, w = _mem_meridian(ρ₀, z₀, 2 * nmax + 24)
     rows = _mem_interface_rows(y -> _mem_emitted(_MemSpheroidShape(c), y, nmax), points, normals, κ₀, μ₀, κ₁, μ₁, nmax)
-    C = promote_type(eltype(rows[1].out), eltype(rows[1].remote), _mem_is_cavity(κ₁, μ₁) ? Bool : eltype(rows[1].inner), map(typeof, compliances)...)
+    return _mem_orderwise_response(rows, w, max(ρ₀, z₀) / TensND.primal(μ₀), compliances, nmax)
+end
+
+# The response from the rows of the interface conditions at the points of one
+# meridian (weights w), order by order.
+function _mem_orderwise_response(rows, w, tscale, compliances, nmax::Int)
+    C = promote_type(eltype(rows[1].out), eltype(rows[1].remote), _mem_inner_eltype(rows[1].inner), map(typeof, compliances)...)
     Z = zeros(C, _mem_eblock(nmax), _mem_eblock(nmax))
-    tscale = max(ρ₀, z₀) / TensND.primal(μ₀)
     for m in (-nmax):nmax
         sent = _mem_order_columns(nmax, m, _mem_sent)
         received = _mem_order_columns(nmax, m, _mem_received)
@@ -106,6 +121,8 @@ function _mem_spheroid_elastic_response(c, ρ₀, z₀, κ₀, μ₀, κ₁, μ�
     end
     return Z
 end
+_mem_inner_eltype(::Nothing) = Bool          # a cavity or a crack: no inner field
+_mem_inner_eltype(inner) = eltype(inner)
 
 # ─── The spherical form ──────────────────────────────────────────────────────
 

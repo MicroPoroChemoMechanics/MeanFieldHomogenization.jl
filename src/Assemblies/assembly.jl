@@ -469,6 +469,19 @@ _envelope(ell::Elasticity.Ellipsoid{3}) = _envelope_matrix(ell)
 _envelope(sphere::LayeredSpheres.LayeredSphere) = _envelope_matrix(sphere)
 _envelope(spheroid::LayeredSpheroids.LayeredSpheroid) = _envelope_matrix(spheroid)
 _envelope(geom) = _bounding_radius(geom)
+
+# A flat crack is the degenerate ellipsoid a² ℓ⊗ℓ + b² m⊗m of normal n.
+struct _FlatEnvelope{M <: AbstractMatrix, V <: AbstractVector}
+    A²::M
+    plane::M    # the columns ℓ, m
+    n::V
+end
+function _envelope(crack::Cracks.EllipticCrack)
+    B = TensND.primal.(Array(TensND.vecbasis(crack.basis)))
+    ℓ, m = B[:, 1], B[:, 2]
+    a, b = TensND.primal(crack.a), TensND.primal(crack.b)
+    return _FlatEnvelope(a^2 * ℓ * transpose(ℓ) + b^2 * m * transpose(m), B[:, 1:2], B[:, 3])
+end
 function _envelope_matrix(geom)
     A = TensND.primal.(Array(TensND.canonical_components(MFH_Core.shape_tensor(geom))))
     return A * A
@@ -501,12 +514,29 @@ function _disjoint(A::AbstractMatrix, B::AbstractMatrix, r)
     return max(Fc, Fd) > 1
 end
 
+# The sum (1 − λ) A² + λ B² is regular for λ in (0, 1) as soon as one of the two
+# is a solid ellipsoid or the two cracks are not parallel; two parallel cracks
+# are disjoint when their planes differ, and otherwise when their ellipses are,
+# in the common plane. The normals are compared exactly: the cracks of an
+# assembly that share an orientation share it by construction.
+_disjoint(A::_FlatEnvelope, B::AbstractMatrix, r) = _disjoint(A.A², B, r)
+_disjoint(A::AbstractMatrix, B::_FlatEnvelope, r) = _disjoint(A, B.A², r)
+function _disjoint(A::_FlatEnvelope, B::_FlatEnvelope, r)
+    iszero(cross(A.n, B.n)) || return _disjoint(A.A², B.A², r)
+    iszero(dot(A.n, r)) || return true
+    P = A.plane
+    return _disjoint(transpose(P) * A.A² * P, transpose(P) * B.A² * P, transpose(P) * r)
+end
+
 _bounding_radius(ell::Elasticity.Ellipsoid) = maximum(ell.semi_axes)
 _bounding_radius(ie::InterfacedEllipsoid) = _bounding_radius(ie.ellipsoid)
 _envelope(ie::InterfacedEllipsoid) = _envelope_matrix(ie)
 Interactions._inclusion_volume(ie::InterfacedEllipsoid) = Interactions._inclusion_volume(ie.ellipsoid)
 _bounding_radius(sphere::LayeredSpheres.LayeredSphere) = LayeredSpheres.outer_radius(sphere)
 _bounding_radius(spheroid::LayeredSpheroids.LayeredSpheroid) = maximum(LayeredSpheroids.outer_semiaxes(spheroid))
+_bounding_radius(crack::Cracks.EllipticCrack) = crack.a
+# A crack has no volume: it changes the fractions of nothing.
+Interactions._inclusion_volume(crack::Cracks.EllipticCrack) = zero(crack.a)
 
 # A layered sphere occupies its outer ball: that is the region the fractions
 # and the overlap check are about.
@@ -535,6 +565,12 @@ function MFH_Core.validate_cell(asm::ParticleAssembly, scheme::Union{ClusterMode
             ArgumentError(
                 "$(nameof(typeof(scheme))): particle :$(nm) is a $(nameof(typeof(geom))), which has no " *
                     "Hill tensor; use MultipoleExpansion, which takes it with its interfaces"
+            )
+        )
+        geom isa Cracks.EllipticCrack && throw(
+            ArgumentError(
+                "$(nameof(typeof(scheme))): particle :$(nm) is a crack, which has no volume to " *
+                    "polarize; use MultipoleExpansion, which takes penny-shaped cracks"
             )
         )
     end

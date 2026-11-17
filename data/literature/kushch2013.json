@@ -4,7 +4,7 @@
   "key": "kushch2013",
   "doi": "10.1016/C2012-0-03565-X",
   "citation": "Kushch, Volodymyr I. (2013). Micromechanics of Composites: Multipole Expansion Approach. Elsevier. ISBN 9780124076839.",
-  "location": "Tables 3.1 to 3.3 (p. 67), 5.1 to 5.3 (pp. 149-150) and 7.6 (p. 244); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
+  "location": "Tables 3.1 to 3.3 (p. 67), 5.1 to 5.3 (pp. 149-150), 6.3 and 6.4 (pp. 197-198), 7.6 (p. 244) and 7.7 to 7.10 (pp. 245-246); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
  },
  "transcription": {
   "from": "the published book (PDF), read on the page text",
@@ -668,6 +668,368 @@
     "c_0.3": 6.708,
     "c_0.5": 17.81
    }
+  ],
+  "conductivity_cracks_so": [
+   {
+    "a1": 5.0,
+    "a3_over_a1_1": 0.979,
+    "a3_over_a1_1_2": 0.959,
+    "a3_over_a1_1_4": 0.931,
+    "a3_over_a1_1_8": 0.906,
+    "a3_over_a1_1_16": 0.891,
+    "a3_over_a1_0": 0.874
+   },
+   {
+    "a1": 4.0,
+    "a3_over_a1_1": 0.959,
+    "a3_over_a1_1_2": 0.932,
+    "a3_over_a1_1_4": 0.879,
+    "a3_over_a1_1_8": 0.844,
+    "a3_over_a1_1_16": 0.825,
+    "a3_over_a1_0": 0.804
+   },
+   {
+    "a1": 3.0,
+    "a3_over_a1_1": 0.903,
+    "a3_over_a1_1_2": 0.83,
+    "a3_over_a1_1_4": 0.756,
+    "a3_over_a1_1_8": 0.706,
+    "a3_over_a1_1_16": 0.679,
+    "a3_over_a1_0": 0.651
+   },
+   {
+    "a1": 2.5,
+    "a3_over_a1_1": 0.832,
+    "a3_over_a1_1_2": 0.724,
+    "a3_over_a1_1_4": 0.625,
+    "a3_over_a1_1_8": 0.564,
+    "a3_over_a1_1_16": 0.536,
+    "a3_over_a1_0": 0.487
+   },
+   {
+    "a1": 2.2,
+    "a3_over_a1_1": 0.75,
+    "a3_over_a1_1_2": 0.613,
+    "a3_over_a1_1_4": 0.497,
+    "a3_over_a1_1_8": 0.427,
+    "a3_over_a1_1_16": 0.393,
+    "a3_over_a1_0": 0.351
+   },
+   {
+    "a1": 2.1,
+    "a3_over_a1_1": 0.707,
+    "a3_over_a1_1_2": 0.559,
+    "a3_over_a1_1_4": 0.44,
+    "a3_over_a1_1_8": 0.367,
+    "a3_over_a1_1_16": 0.333,
+    "a3_over_a1_0": 0.288
+   },
+   {
+    "a1": 2.01,
+    "a3_over_a1_1": 0.65,
+    "a3_over_a1_1_2": 0.496,
+    "a3_over_a1_1_4": 0.374,
+    "a3_over_a1_1_8": 0.309,
+    "a3_over_a1_1_16": 0.272,
+    "a3_over_a1_0": 0.222
+   }
+  ],
+  "conductivity_cracks_bc": [
+   {
+    "a1": 5.0,
+    "a3_over_a1_2": 0.979,
+    "a3_over_a1_1": 0.958,
+    "a3_over_a1_1_2": 0.919,
+    "a3_over_a1_1_4": 0.862,
+    "a3_over_a1_1_8": 0.812,
+    "a3_over_a1_0": 0.748
+   },
+   {
+    "a1": 4.0,
+    "a3_over_a1_2": 0.959,
+    "a3_over_a1_1": 0.919,
+    "a3_over_a1_1_2": 0.847,
+    "a3_over_a1_1_4": 0.757,
+    "a3_over_a1_1_8": 0.689,
+    "a3_over_a1_0": 0.607
+   },
+   {
+    "a1": 3.0,
+    "a3_over_a1_2": 0.902,
+    "a3_over_a1_1": 0.817,
+    "a3_over_a1_1_2": 0.671,
+    "a3_over_a1_1_4": 0.515,
+    "a3_over_a1_1_8": 0.413,
+    "a3_over_a1_0": 0.302
+   },
+   {
+    "a1": 2.5,
+    "a3_over_a1_2": 0.832,
+    "a3_over_a1_1": 0.703,
+    "a3_over_a1_1_2": 0.502,
+    "a3_over_a1_1_4": 0.307,
+    "a3_over_a1_1_8": 0.178,
+    "a3_over_a1_0": 0.089
+   },
+   {
+    "a1": 2.2,
+    "a3_over_a1_2": 0.749,
+    "a3_over_a1_1": 0.587,
+    "a3_over_a1_1_2": 0.37,
+    "a3_over_a1_1_4": 0.186,
+    "a3_over_a1_1_8": 0.088,
+    "a3_over_a1_0": 0.016
+   },
+   {
+    "a1": 2.1,
+    "a3_over_a1_2": 0.706,
+    "a3_over_a1_1": 0.533,
+    "a3_over_a1_1_2": 0.32,
+    "a3_over_a1_1_4": 0.149,
+    "a3_over_a1_1_8": 0.059,
+    "a3_over_a1_0": 0.0045
+   },
+   {
+    "a1": 2.01,
+    "a3_over_a1_2": 0.649,
+    "a3_over_a1_1": 0.468,
+    "a3_over_a1_1_2": 0.265,
+    "a3_over_a1_1_4": 0.122,
+    "a3_over_a1_1_8": 0.045,
+    "a3_over_a1_0": 5e-05
+   }
+  ],
+  "young_cracks_so": [
+   {
+    "a": 5.0,
+    "a_over_a3_1": 0.961,
+    "a_over_a3_2": 0.932,
+    "a_over_a3_4": 0.907,
+    "a_over_a3_8": 0.894,
+    "a_over_a3_16": 0.888
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1": 0.926,
+    "a_over_a3_2": 0.878,
+    "a_over_a3_4": 0.845,
+    "a_over_a3_8": 0.83,
+    "a_over_a3_16": 0.821
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1": 0.834,
+    "a_over_a3_2": 0.753,
+    "a_over_a3_4": 0.709,
+    "a_over_a3_8": 0.688,
+    "a_over_a3_16": 0.675
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1": 0.729,
+    "a_over_a3_2": 0.623,
+    "a_over_a3_4": 0.568,
+    "a_over_a3_8": 0.54,
+    "a_over_a3_16": 0.523
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1": 0.619,
+    "a_over_a3_2": 0.496,
+    "a_over_a3_4": 0.43,
+    "a_over_a3_8": 0.396,
+    "a_over_a3_16": 0.375
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1": 0.566,
+    "a_over_a3_2": 0.439,
+    "a_over_a3_4": 0.37,
+    "a_over_a3_8": 0.333,
+    "a_over_a3_16": 0.31
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1": 0.501,
+    "a_over_a3_2": 0.374,
+    "a_over_a3_4": 0.306,
+    "a_over_a3_8": 0.268,
+    "a_over_a3_16": 0.243
+   }
+  ],
+  "shear_cracks_so": [
+   {
+    "a": 5.0,
+    "a_over_a3_1": 0.982,
+    "a_over_a3_2": 0.963,
+    "a_over_a3_4": 0.926,
+    "a_over_a3_8": 0.872,
+    "a_over_a3_16": 0.823
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1": 0.964,
+    "a_over_a3_2": 0.929,
+    "a_over_a3_4": 0.863,
+    "a_over_a3_8": 0.781,
+    "a_over_a3_16": 0.722
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1": 0.915,
+    "a_over_a3_2": 0.837,
+    "a_over_a3_4": 0.714,
+    "a_over_a3_8": 0.599,
+    "a_over_a3_16": 0.531
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1": 0.852,
+    "a_over_a3_2": 0.732,
+    "a_over_a3_4": 0.569,
+    "a_over_a3_8": 0.439,
+    "a_over_a3_16": 0.371
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1": 0.777,
+    "a_over_a3_2": 0.623,
+    "a_over_a3_4": 0.44,
+    "a_over_a3_8": 0.306,
+    "a_over_a3_16": 0.235
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1": 0.736,
+    "a_over_a3_2": 0.571,
+    "a_over_a3_4": 0.385,
+    "a_over_a3_8": 0.251,
+    "a_over_a3_16": 0.178
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1": 0.682,
+    "a_over_a3_2": 0.506,
+    "a_over_a3_4": 0.322,
+    "a_over_a3_8": 0.191,
+    "a_over_a3_16": 0.115
+   }
+  ],
+  "young_cracks_bc": [
+   {
+    "a": 5.0,
+    "a_over_a3_1_2": 0.961,
+    "a_over_a3_1": 0.922,
+    "a_over_a3_2": 0.862,
+    "a_over_a3_4": 0.812,
+    "a_over_a3_8": 0.787
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1_2": 0.925,
+    "a_over_a3_1": 0.852,
+    "a_over_a3_2": 0.752,
+    "a_over_a3_4": 0.688,
+    "a_over_a3_8": 0.656
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1_2": 0.83,
+    "a_over_a3_1": 0.68,
+    "a_over_a3_2": 0.496,
+    "a_over_a3_4": 0.404,
+    "a_over_a3_8": 0.361
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1_2": 0.723,
+    "a_over_a3_1": 0.517,
+    "a_over_a3_2": 0.283,
+    "a_over_a3_4": 0.17,
+    "a_over_a3_8": 0.125
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1_2": 0.611,
+    "a_over_a3_1": 0.387,
+    "a_over_a3_2": 0.162,
+    "a_over_a3_4": 0.066,
+    "a_over_a3_8": 0.041
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1_2": 0.559,
+    "a_over_a3_1": 0.336,
+    "a_over_a3_2": 0.127,
+    "a_over_a3_4": 0.044,
+    "a_over_a3_8": 0.024
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1_2": 0.5,
+    "a_over_a3_1": 0.28,
+    "a_over_a3_2": 0.094,
+    "a_over_a3_4": 0.026,
+    "a_over_a3_8": 0.011
+   }
+  ],
+  "shear_cracks_bc": [
+   {
+    "a": 5.0,
+    "a_over_a3_1_2": 0.982,
+    "a_over_a3_1": 0.964,
+    "a_over_a3_2": 0.928,
+    "a_over_a3_4": 0.858,
+    "a_over_a3_8": 0.759
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1_2": 0.965,
+    "a_over_a3_1": 0.932,
+    "a_over_a3_2": 0.864,
+    "a_over_a3_4": 0.743,
+    "a_over_a3_8": 0.605
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1_2": 0.916,
+    "a_over_a3_1": 0.847,
+    "a_over_a3_2": 0.715,
+    "a_over_a3_4": 0.505,
+    "a_over_a3_8": 0.324
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1_2": 0.854,
+    "a_over_a3_1": 0.749,
+    "a_over_a3_2": 0.571,
+    "a_over_a3_4": 0.327,
+    "a_over_a3_8": 0.141
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1_2": 0.779,
+    "a_over_a3_1": 0.643,
+    "a_over_a3_2": 0.445,
+    "a_over_a3_4": 0.221,
+    "a_over_a3_8": 0.08
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1_2": 0.739,
+    "a_over_a3_1": 0.591,
+    "a_over_a3_2": 0.392,
+    "a_over_a3_4": 0.186,
+    "a_over_a3_8": 0.066
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1_2": 0.692,
+    "a_over_a3_1": 0.524,
+    "a_over_a3_2": 0.329,
+    "a_over_a3_4": 0.15,
+    "a_over_a3_8": 0.053
+   }
   ]
  },
  "notes": [
@@ -682,6 +1044,9 @@
   "Table stiffness_bcc: Table 5.2, p. 150. Effective stiffness of the body-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
   "Table stiffness_fcc: Table 5.3, p. 150. Effective stiffness of the face-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
   "Tables stiffness_bcc: the entries 2.6782 (c = 0.4, C1212, contrast 1000) and 6.2030 (c = 0.6, same column) are printed with four decimals in the book; they are transcribed as printed.",
-  "Table stiffness_spheroids: Table 7.6, p. 244, columns tmax = 15. C3333/mu0 of an orthogonal array of spheroids of semi-axes (1, 1, aspect_ratio), periods proportional to the semi-axes, nu0 = nu1 = 0.3, the contrast being mu1/mu0 (0 for cavities); the columns c_0.1 to c_0.5 are the volume fraction."
+  "Table stiffness_spheroids: Table 7.6, p. 244, columns tmax = 15. C3333/mu0 of an orthogonal array of spheroids of semi-axes (1, 1, aspect_ratio), periods proportional to the semi-axes, nu0 = nu1 = 0.3, the contrast being mu1/mu0 (0 for cavities); the columns c_0.1 to c_0.5 are the volume fraction.",
+  "Table conductivity_cracks_so: Table 6.3, p. 197. Effective conductivity lambda*33/lambda0 of a solid with insulating penny-shaped cracks of unit radius and normal e3 on the orthogonal lattice of periods (a1, a1, a3), one crack per cell; the key a3_over_a1_1_2 is a3/a1 = 1/2, and a3_over_a1_0 the limit a3/a1 -> 0, which no computation at finite a3 reaches. The entry a1 = 4, a3/a1 = 1/2 is printed 0.932; the multipole expansion gives 0.923, the same digits transposed, in line with the body-centered array of the same crack density (0.919, Table 6.4): it is transcribed as printed.",
+  "Table conductivity_cracks_bc: Table 6.4, p. 198. The same with two cracks per cell, at the origin and at (a1/2, a1/2, a3/2) (body-centered array). The entries 0.0045 and 0.00005 are printed 0.45 \u00b7 10^-2 and 0.5 \u00b7 10^-4.",
+  "Tables young_cracks_so, shear_cracks_so, young_cracks_bc, shear_cracks_bc: Tables 7.7 to 7.10, pp. 245-246. E*33/E0 = 1/(E0 D*3333) and mu*13/mu0 = 1/(4 mu0 D*1313), D* the effective compliance, of a solid of Poisson ratio nu0 = 0.25 with traction-free penny-shaped cracks of unit radius and normal e3 on the lattice of periods (a, a, a3); the key a_over_a3_1_2 is a/a3 = 1/2. SO: one crack per cell; BC: two, at the origin and at (a/2, a/2, a3/2)."
  ]
 }

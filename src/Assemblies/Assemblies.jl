@@ -49,6 +49,7 @@ using ..Core
 const MFH_Core = Core
 
 import ..Elasticity
+import ..Cracks
 import ..Interactions
 import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
@@ -76,6 +77,7 @@ include("mem_anisotropic.jl")
 include("mem_elasticity.jl")
 include("mem_shaped_elasticity.jl")
 include("mem_spheroid_elasticity.jl")
+include("mem_cracks.jl")
 include("mem_ellipsoid_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")

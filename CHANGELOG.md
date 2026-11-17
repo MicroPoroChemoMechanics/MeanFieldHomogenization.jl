@@ -98,6 +98,20 @@
   spheroid to the spheroidal harmonics of any degree and order; the Legendre
   functions and the transfer matrices of `LayeredSpheroid` are written at any
   order.
+- **Penny-shaped cracks.** `MultipoleExpansion` takes penny-shaped cracks of
+  normal e₃ (`EllipticCrack(a, a)`), alone or with spheroids, finite or
+  periodic, in conduction (insulating cracks) and in elasticity (traction-free
+  lips). A crack is the focal disk τ = 0 of its oblate coordinates, where the
+  spheroidal harmonics are finite: its two lips are told apart by their
+  coordinates, not approached by a flat spheroid. A close neighbor is read
+  through what a crack answers, the normal flux or the traction on its plane.
+  One crack in a ball is Maxwell's estimate to the rounding, and the tables of
+  Kushch (2013) for simple and body-centered arrays of cracks, 6.3 and 6.4 in
+  conduction and 7.7 to 7.10 in elasticity, are recovered to their third
+  decimal; the entry 0.932 of Table 6.3 is the misprint of 0.923. The overlap
+  check of an assembly treats cracks as disks, so that parallel cracks in
+  distinct planes may be as close as wished; `ClusterModel` and
+  `EquivalentInclusion` refuse them.
 - `PeriodicBox((L₁, L₂, L₃))`, a rectangular periodic cell (the cluster model
   and the equivalent inclusion method keep a cubic one), and an exact overlap
   test between ellipsoids in `validate_assembly`, which no longer rejects
