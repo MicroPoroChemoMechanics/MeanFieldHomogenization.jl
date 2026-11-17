@@ -94,6 +94,7 @@ function Schemes.RVE(
         rve, asm.matrix_name, geom_m, copy(asm.matrix_properties); fraction = :rest
     )
     for (nm, f) in zip(names, fracs)
+        _rve_geometry(particle_geometry(asm, nm), nm)
         Schemes.add_phase!(
             rve, nm, particle_geometry(asm, nm),
             copy(particle(asm, nm).properties); fraction = f
@@ -101,6 +102,16 @@ function Schemes.RVE(
     end
     return rve
 end
+
+# A particle as a phase of an RVE: an ellipsoid with an interface has no
+# concentration tensor for the one-particle schemes.
+_rve_geometry(geom, name::Symbol) = geom
+_rve_geometry(::InterfacedEllipsoid, name::Symbol) = throw(
+    ArgumentError(
+        "particle :$(name) is an InterfacedEllipsoid, taken by MultipoleExpansion alone; the " *
+            "one-particle schemes have no concentration tensor for an ellipsoid with an interface"
+    )
+)
 
 # A ball of the assembly's own dimension.  Its radius is irrelevant — the Hill
 # tensor is size-independent — so the unit one is used; only the *shape class*

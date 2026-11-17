@@ -89,37 +89,76 @@ function _mem_axis_e3(axis, name::Symbol)
 end
 
 """
-    SpheroidalMultipoleSolution
+    ShapedMultipoleSolution
 
-Solution of the multipole expansion of an assembly of spheroids in
-conduction: for each particle, in the order of `names`, its focal distance
-`c` (real for a prolate spheroid, ``-\\mathrm{i}`` times the focal distance for
-an oblate one), the scales ``|\\bar{P}_n^m(\\xi_0)|`` of its unknowns, its
-response ``\\mathbf{Z}`` (block-diagonal over the orders) and the scaled
-coefficients it receives under the three unit remote gradients (`received`,
-one column per gradient).
+Solution of the multipole expansion of an assembly of spheroids or ellipsoids
+in conduction: for each particle, in the order of `names`, the scales of its
+unknowns (the moduli of its regular harmonics on its surface), its response
+``\\mathbf{Z}`` over its harmonics, the matrix that turns the coefficients it
+sends into its dipole (`dipoles`, ``3 \\times`` the number of harmonics), and
+the scaled coefficients it receives under the three unit remote gradients
+(`received`, one column per gradient), these in the frame whose axes are the
+axes `axes` of the assembly.
 """
-struct SpheroidalMultipoleSolution{T, C}
+struct ShapedMultipoleSolution{T, C}
     names::Vector{Symbol}
-    c::Vector{C}
     scales::Vector{Vector{T}}
     responses::Vector{Matrix{C}}
+    dipoles::Vector{Matrix{C}}
     received::Matrix{C}
     nmax::Int
+    axes::NTuple{3, Int}
 end
 
-_mem_spheres_only(sol::SpheroidalMultipoleSolution, what::String) = throw(
+_mem_spheres_only(sol::ShapedMultipoleSolution, what::String) = throw(
     ArgumentError("MultipoleExpansion: $(what) are available for spheres; the spheroids give the effective property")
 )
+
+# What the expansion needs of a particle of any shape, beyond its geometry:
+#   scales    the moduli of its regular harmonics on its surface, scaling the unknowns;
+#   Z         its response over its harmonics, b = Z a;
+#   Π         the projection of the values of a regular field on its surface
+#             (`surface`, 3 × points) on its regular harmonics;
+#   dipole    the dipole d = dipole · b of the field it sends;
+#   gradient  the coefficients a = gradient · g of the uniform gradient g·x.
+# The two matrices carry everything the remote field, the background of a
+# lattice and the effective conductivity need, whatever the harmonics.
 
 # Everything the expansion needs of one spheroid.
 struct _MemSpheroid{C, R}
     c::C                      # focal distance, complex
     ξ₀::C                     # confocal coordinate of the outer surface
-    scales::Vector{R}         # |P̄_n^m(ξ₀)| of the unknowns
-    Z::Matrix{C}              # response, over the unknowns
-    Π::Matrix{C}              # projection of surface values on the a_k^l
-    surface::Matrix{R}        # quadrature points of the surface, 3 × npoints
+    scales::Vector{R}
+    Z::Matrix{C}
+    Π::Matrix{C}
+    surface::Matrix{R}
+    dipole::Matrix{C}
+    gradient::Matrix{C}
+end
+
+# The radius of the sphere that holds the singularities of the decaying harmonics.
+_mem_focal(d::_MemSpheroid) = abs(d.c)
+_mem_far_degree(::_MemSpheroid, nmax::Int) = 2 * (nmax + _MEM_FAR_TERMS)
+
+# The same in another element type, to bring the particles of an assembly to one.
+_mem_convert(d::_MemSpheroid, ::Type{C}) where {C} = _MemSpheroid{C, real(C)}(
+    d.c, d.ξ₀, d.scales, d.Z, d.Π, d.surface, d.dipole, d.gradient
+)
+
+# The spheroidal dipole map: Ŷ₁ᵐ = (−1)^m (c²/3) Y₁ᵐ + …, and the spherical
+# dipoles b₁ᵐ give d = (b₁¹ − b₁⁻¹, i (b₁¹ + b₁⁻¹), b₁⁰) (spheres page). The
+# gradient map: g·x = g₃ y₁⁰ + (g₁ − i g₂) y₁¹ − (g₁ + i g₂) y₁⁻¹ with y₁ᵐ = c ŷ₁ᵐ.
+function _mem_spheroid_maps(c::C, nb::Int) where {C}
+    D = zeros(C, 3, nb)
+    s(m) = (isodd(m) ? -1 : 1) * c^2 / 3
+    D[1, _mem_index(1, 1)], D[1, _mem_index(1, -1)] = s(1), -s(-1)
+    D[2, _mem_index(1, 1)], D[2, _mem_index(1, -1)] = im * s(1), im * s(-1)
+    D[3, _mem_index(1, 0)] = s(0)
+    G = zeros(C, nb, 3)
+    G[_mem_index(1, 1), :] .= (c, -im * c, 0)
+    G[_mem_index(1, -1), :] .= (-c, -im * c, 0)
+    G[_mem_index(1, 0), 3] = c
+    return D, G
 end
 
 function _mem_spheroid_data(s::LayeredSpheroids.LayeredSpheroid, K₀, nmax::Int)
@@ -142,7 +181,7 @@ function _mem_spheroid_data(s::LayeredSpheroids.LayeredSpheroid, K₀, nmax::Int
         end
     end
     Π, surface = _mem_surface_projection(c, ξ₀, nmax)
-    return _MemSpheroid{C, R}(c, ξ₀, scales, Z, Π, surface)
+    return _MemSpheroid{C, R}(c, ξ₀, scales, Z, Π, surface, _mem_spheroid_maps(C(c), nb)...)
 end
 
 # Quadrature of the outer surface ξ = ξ₀: the points, and the matrix Π that
@@ -178,9 +217,9 @@ end
 # χ_k^l from P_k^{|l|} (Ferrers): (−1)^l P e^{ilφ} for l ≥ 0, P e^{ilφ} for l < 0.
 _mem_surface_harmonic(P, l::Int, φ) = (l ≥ 0 && isodd(l) ? -P : P) * cis(l * φ)
 
-# Decaying spheroidal harmonics F_t^s (1 ≤ t ≤ nmax) of focal distance c at x.
-function _mem_spheroidal_irregular!(F::AbstractVector, x, c, nmax::Int)
-    ξ, η, φ = _mem_spheroidal_coordinates(x, c)
+# Decaying spheroidal harmonics Ŷ_t^s (1 ≤ t ≤ nmax) of the spheroid at x.
+function _mem_irregular!(F::AbstractVector, x, sph::_MemSpheroid, nmax::Int)
+    ξ, η, φ = _mem_spheroidal_coordinates(x, sph.c)
     Q = LayeredSpheroids._legendre_q_orders(ξ, nmax, nmax)
     for m in 0:nmax
         Pη = LayeredSpheroids.legendre_order_p(η, m, nmax)[1]
@@ -212,12 +251,14 @@ end
 
 # Coefficients η of the regular expansion about particle q of the decaying
 # harmonics of particle p, centered at −R from q: by projection on the surface.
-function _mem_eta_near(q::_MemSpheroid{C}, p::_MemSpheroid{C}, R, nmax::Int) where {C}
+function _mem_eta_near(q, p, R, nmax::Int)
+    # the relative position may carry a derivative (a center of the assembly)
+    C = promote_type(eltype(q.Π), eltype(R))
     npts = size(q.surface, 2)
     U = zeros(C, npts, _mem_block(nmax))
     F = zeros(C, _mem_block(nmax))
     for j in 1:npts
-        _mem_spheroidal_irregular!(F, R .+ view(q.surface, :, j), p.c, nmax)
+        _mem_irregular!(F, R .+ view(q.surface, :, j), p, nmax)
         U[j, :] .= F
     end
     return q.Π * U
@@ -225,7 +266,8 @@ end
 
 # The same by the far form, from the table `Y` of the decaying spherical
 # harmonics at R (or their sums over the images).
-function _mem_eta_far(q::_MemSpheroid{C}, p::_MemSpheroid{C}, Y, nmax::Int) where {C}
+function _mem_eta_far(q::_MemSpheroid, p::_MemSpheroid, Y, nmax::Int)
+    C = eltype(q.Z)
     R = real(C)
     rmax = _MEM_FAR_TERMS
     hp, hq = p.c / 2, q.c / 2
@@ -245,15 +287,15 @@ end
 
 # All the coefficients η of the field that particle p (and its images) sends
 # to particle q, centered at −R from q; `nothing` when there is none.
-function _mem_eta_total(::MixedBC, q::_MemSpheroid, p::_MemSpheroid, R, self::Bool, nmax::Int)
+function _mem_eta_total(::MixedBC, q, p, R, self::Bool, nmax::Int)
     self && return nothing
-    norm(TensND.primal.(R)) < _MEM_NEAR * (abs(q.c) + abs(p.c)) && return _mem_eta_near(q, p, R, nmax)
-    return _mem_eta_far(q, p, irregular_harmonics(R, 2 * (nmax + _MEM_FAR_TERMS)), nmax)
+    norm(TensND.primal.(R)) < _MEM_NEAR * (_mem_focal(q) + _mem_focal(p)) && return _mem_eta_near(q, p, R, nmax)
+    return _mem_eta_far(q, p, irregular_harmonics(R, _mem_far_degree(q, nmax)), nmax)
 end
 
-function _mem_eta_total(b::PeriodicBox, q::_MemSpheroid, p::_MemSpheroid, R, self::Bool, nmax::Int)
+function _mem_eta_total(b::PeriodicBox, q, p, R, self::Bool, nmax::Int)
     L = box_periods(b)
-    rn = _MEM_NEAR * (abs(q.c) + abs(p.c))
+    rn = _MEM_NEAR * (_mem_focal(q) + _mem_focal(p))
     reach = ntuple(i -> ceil(Int, (rn + abs(TensND.primal(R[i]))) / TensND.primal(L[i])), 3)
     near = NTuple{3, Int}[]
     for n₁ in (-reach[1]):reach[1], n₂ in (-reach[2]):reach[2], n₃ in (-reach[3]):reach[3]
@@ -261,7 +303,7 @@ function _mem_eta_total(b::PeriodicBox, q::_MemSpheroid, p::_MemSpheroid, R, sel
         x = TensND.primal.(R .+ (n₁ * L[1], n₂ * L[2], n₃ * L[3]))
         norm(x) < rn && push!(near, (n₁, n₂, n₃))
     end
-    η = _mem_eta_far(q, p, _mem_far_sums(R, L, near, rn, nmax), nmax)
+    η = _mem_eta_far(q, p, _mem_far_sums(R, L, near, rn, _mem_far_degree(q, nmax)), nmax)
     for n in near
         η .+= _mem_eta_near(q, p, R .+ (n[1] * L[1], n[2] * L[2], n[3] * L[3]), nmax)
     end
@@ -280,8 +322,7 @@ end
 const _MEM_EWALD_DEGREE = 8
 const _MEM_DIRECT_REACH = 8
 
-function _mem_far_sums(R, L, near, rn, nmax::Int)
-    deg = 2 * (nmax + _MEM_FAR_TERMS)
+function _mem_far_sums(R, L, near, rn, deg::Int)
     V = prod(TensND.primal.(L))
     α = sqrt(π) / cbrt(V)
     if !isempty(near)
@@ -303,75 +344,67 @@ function _mem_far_sums(R, L, near, rn, nmax::Int)
     return Harmonics.HarmonicTable(deg, values)
 end
 
-# The uniform gradient −4π d/(3V) a spherical dipole d of the lattice sends to
-# every particle: with d the dipoles (−1)^m c_p² b_1^m/3 of p and y_1^m = c_q f_1^m,
-# a_1^m of q gains −(4π/3V) (1−m)!(1+m)! c_q (−1)^m c_p² b_1^m/3.
-_mem_spheroid_background!(M, rows, cols, ::MixedBC, q, p, W) = M
-function _mem_spheroid_background!(M, rows, cols, b::PeriodicBox, q::_MemSpheroid, p::_MemSpheroid, W)
+# The uniform gradient −4π d/(3V) a dipole d of the lattice sends to every
+# particle, d = dipole_p · b_p and a_q = gradient_q · g.
+_mem_shaped_background!(M, rows, cols, ::MixedBC, q, p, W) = M
+function _mem_shaped_background!(M, rows, cols, b::PeriodicBox, q, p, W)
     g = 4π / (3 * prod(box_periods(b)))
-    for m in -1:1
-        i = _mem_index(1, m)
-        w = g * factorial(1 - m) * factorial(1 + m) * q.c * (isodd(m) ? -1 : 1) * p.c^2 / 3 * q.scales[i]
-        @views M[rows[i], cols] .+= w .* W[i, :]
-    end
+    @views M[rows, cols] .+= g .* q.scales .* (q.gradient * (p.dipole * W))
     return M
 end
 
-function _mem_spheroid_solve(asm::ParticleAssembly, K₀, names, spheroids, nmax::Int)
-    raw = [_mem_spheroid_data(s, K₀, nmax) for s in spheroids]
-    C = mapreduce(d -> eltype(d.Z), promote_type, raw)
-    data = [_MemSpheroid{C, real(C)}(d.c, d.ξ₀, d.scales, d.Z, d.Π, d.surface) for d in raw]
-    centers = [particle_center(asm, nm) for nm in names]
-    TX = mapreduce(eltype, promote_type, centers)
+# The linear system of any shaped particles: their received scaled coefficients
+# under the three unit remote gradients.
+function _mem_shaped_solve(
+        asm::ParticleAssembly, names, raw, nmax::Int;
+        centers = [particle_center(asm, nm) for nm in names], boundary = asm.boundary, axes = (1, 2, 3)
+    )
+    # one element type for the particles, their responses and their centers,
+    # any of which may carry a derivative
+    TX = mapreduce(c -> mapreduce(typeof, promote_type, c), promote_type, centers)
+    C = promote_type(mapreduce(d -> eltype(d.Z), promote_type, raw), Complex{TX})
+    data = [_mem_convert(d, C) for d in raw]
     X = [SVector{3, TX}(c) for c in centers]
     N, nb = length(data), _mem_block(nmax)
     _check_system_size(N * nb, C, N, nmax)
-    M = zeros(promote_type(C, TX), N * nb, N * nb)
+    M = zeros(C, N * nb, N * nb)
     B = zeros(eltype(M), N * nb, 3)
     for q in 1:N
         rows = ((q - 1) * nb + 1):(q * nb)
         for i in rows
             M[i, i] = one(eltype(M))
         end
-        _mem_spheroid_remote!(B, rows, data[q])
+        B[rows, :] .= data[q].scales .* data[q].gradient
         for p in 1:N
-            η = _mem_eta_total(asm.boundary, data[q], data[p], X[q] - X[p], p == q, nmax)
+            η = _mem_eta_total(boundary, data[q], data[p], X[q] - X[p], p == q, nmax)
             η === nothing && continue
             cols = ((p - 1) * nb + 1):(p * nb)
             W = data[p].Z ./ transpose(data[p].scales)          # b_p from the scaled â_p
             @views M[rows, cols] .-= data[q].scales .* (η * W)
-            _mem_spheroid_background!(M, rows, cols, asm.boundary, data[q], data[p], W)
+            _mem_shaped_background!(M, rows, cols, boundary, data[q], data[p], W)
         end
     end
     â = M \ B
-    return SpheroidalMultipoleSolution(
-        copy(names), [d.c for d in data], [d.scales for d in data], [d.Z for d in data], â, nmax
+    return ShapedMultipoleSolution(
+        copy(names), [d.scales for d in data], [d.Z for d in data], [d.dipole for d in data], â, nmax, axes
     )
 end
 
-# H·x = H₃ y₁⁰ + (H₁ − iH₂) y₁¹ − (H₁ + iH₂) y₁⁻¹ with y₁ᵐ = c f₁ᵐ, scaled, for
-# the three unit gradients.
-function _mem_spheroid_remote!(B, rows, q::_MemSpheroid)
-    s(m) = q.c * q.scales[_mem_index(1, m)]
-    B[rows[_mem_index(1, 1)], 1] = s(1)
-    B[rows[_mem_index(1, -1)], 1] = -s(-1)
-    B[rows[_mem_index(1, 1)], 2] = -im * s(1)
-    B[rows[_mem_index(1, -1)], 2] = -im * s(-1)
-    B[rows[_mem_index(1, 0)], 3] = s(0)
-    return B
-end
+_mem_spheroid_solve(asm::ParticleAssembly, K₀, names, spheroids, nmax::Int) =
+    _mem_shaped_solve(asm, names, [_mem_spheroid_data(s, K₀, nmax) for s in spheroids], nmax)
 
-function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, sol::SpheroidalMultipoleSolution)
+function _mem_contribution(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, sol::ShapedMultipoleSolution)
     k₀ = LayeredSpheres._iso_scalar(_mem_isotropic(K₀))
     nb = _mem_block(sol.nmax)
-    D = sum(eachindex(sol.names)) do q
-        â = view(sol.received, ((q - 1) * nb + 1):(q * nb), :)
-        Wq = sol.responses[q] ./ transpose(sol.scales[q])
-        # spherical dipoles (−1)^m c² b₁ᵐ/3 under the three unit gradients
-        d(m) = (isodd(m) ? -1 : 1) * sol.c[q]^2 / 3 .* vec(transpose(Wq[_mem_index(1, m), :]) * â)
-        d₀, d₁ = d(0), 2 .* d(1)
-        real.(permutedims(hcat(d₁, im .* d₁, d₀)))
-    end
-    D = real.(D)
-    return TensND.Tens((-4π * k₀ / assembly_volume(asm)) .* (D .+ transpose(D)) ./ 2)
+    # the dipoles under the three unit gradients, one column each
+    D = real.(
+        sum(
+            sol.dipoles[q] * ((sol.responses[q] ./ transpose(sol.scales[q])) * view(sol.received, ((q - 1) * nb + 1):(q * nb), :))
+                for q in eachindex(sol.names)
+        )
+    )
+    # back to the frame of the assembly
+    Dg = zeros(eltype(D), 3, 3)
+    Dg[collect(sol.axes), collect(sol.axes)] .= D
+    return TensND.Tens((-4π * k₀ / assembly_volume(asm)) .* (Dg .+ transpose(Dg)) ./ 2)
 end

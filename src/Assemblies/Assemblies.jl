@@ -55,7 +55,7 @@ using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
 import ..LayeredSpheres
 import ..LayeredSpheroids
 import ..Harmonics
-using ..Harmonics: irregular_harmonics, lattice_harmonics, lattice_biharmonics, harmonic_norm, lame_translation
+using ..Harmonics: regular_harmonics, irregular_harmonics, lattice_harmonics, lattice_biharmonics, harmonic_norm, lame_translation
 using ..Core: harmonic_response
 using SpecialFunctions: logfactorial, loggamma
 
@@ -72,6 +72,7 @@ include("cluster_model.jl")
 include("eim.jl")
 include("mem.jl")
 include("mem_spheroids.jl")
+include("mem_ellipsoids.jl")
 include("mem_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")
@@ -79,7 +80,7 @@ include("parameters.jl")
 
 # ── The cell and its parts ──────────────────────────────────────────────────
 export ParticleAssembly, Particle
-export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods, InterfacedEllipsoid
 export add_matrix!, add_particle!
 export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry

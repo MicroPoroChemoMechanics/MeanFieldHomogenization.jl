@@ -19,20 +19,25 @@ Contents
                           of sources, by Ewald sums
 - `vector_harmonics.jl`: the vector solid harmonics, the solutions of the Lamé
                           equation built on them and their translation
+- `ellipsoidal.jl`     : the Lamé functions and the ellipsoidal harmonics
 """
 module Harmonics
 
 using SpecialFunctions: logfactorial, erfc
+using LinearAlgebra: eigen, eigvals
+using QuadGK: gauss
 using StaticArrays: SVector
 using TensND: primal
 
 include("solid_harmonics.jl")
 include("lattice_sums.jl")
 include("vector_harmonics.jl")
+include("ellipsoidal.jl")
 
 export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
 export lattice_harmonics, lattice_biharmonics
 export vector_regular_harmonic, vector_irregular_harmonic
 export lame_regular, lame_irregular, lame_translation
+export EllipsoidalGeometry, LameFunction, lame_functions, lame_value, lame_second_kind, ellipsoidal_coordinates
 
 end # module

@@ -195,7 +195,7 @@ unknowns for ``N`` spheres in conduction, three times as many in elasticity
 ([theory](@ref th-mem-elasticity)). The matrix is isotropic.
 
 ```@example mem_manual
-using MeanFieldHomogenization, TensND
+using MeanFieldHomogenization, TensND, LinearAlgebra
 
 matrix, spheres = Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(100.0))
 asm = cubic_lattice(:fcc, matrix, spheres; fraction = 0.4)
@@ -287,6 +287,20 @@ add_matrix!(oblate, Dict(:K => TensISO{3}(1.0)))
 add_particle!(oblate, :p, (0.0, 0.0, 0.0), Ellipsoid(0.4, 0.4, 0.4 / 3), Dict(:K => TensISO{3}(100.0)))
 K = canonical_components(homogenize(oblate, MultipoleExpansion(; nmax = 5), :K))
 K[1, 1], K[3, 3]
+```
+
+### Ellipsoids
+
+Ellipsoids of three different semi-axes are taken in conduction too, all
+aligned alike with the axes of the assembly ([theory](@ref th-mem-ellipsoids)).
+An imperfect interface on an ellipsoid is carried by an
+[`InterfacedEllipsoid`](@ref), which only this scheme takes:
+
+```@example mem_manual
+ellipsoids = ParticleAssembly(; boundary = MixedBC(Ellipsoid(2.0, 1.4, 0.7)))
+add_matrix!(ellipsoids, Dict(:K => TensISO{3}(1.0)))
+add_particle!(ellipsoids, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, KapitzaInterface(0.2)), Dict(:K => TensISO{3}(100.0)))
+diag(canonical_components(homogenize(ellipsoids, MultipoleExpansion(; nmax = 3), :K)))
 ```
 
 ### Fields of the particles

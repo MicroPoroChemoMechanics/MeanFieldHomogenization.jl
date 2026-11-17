@@ -2327,3 +2327,32 @@ tex = '\eta'
 label = "η"
 name = "coefficient of the translation of a decaying spheroidal harmonic on the regular ones of another particle"
 pages = ["theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{E}'
+label = "𝔼"
+name = "interior ellipsoidal harmonic of degree n"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{F}'
+label = "𝔽"
+name = "exterior ellipsoidal harmonic of degree n"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\rho'
+label = "ρ"
+name = "ellipsoidal coordinate, constant on the confocal ellipsoids"
+unit = "m"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\rho_{\mathrm{K}}'
+label = "ρ_K"
+name = "thermal resistance of a Kapitza interface on an ellipsoid"
+pages = ["theory/multipole_expansion_ellipsoids.md"]

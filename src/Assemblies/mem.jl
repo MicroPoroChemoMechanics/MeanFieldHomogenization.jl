@@ -158,23 +158,33 @@ function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop
     _mem_isotropic(K₀)
     names = particle_names(asm)
     geometries = [particle_geometry(asm, nm) for nm in names]
-    all(_mem_is_sphere, geometries) && return _mem_sphere_solve(asm, K₀, prop, names, nmax)
-    any(_mem_is_sphere, geometries) && throw(
+    kinds = unique(_mem_kind.(geometries))
+    length(kinds) == 1 || throw(
         ArgumentError(
-            "MultipoleExpansion: the assembly mixes spheres and spheroids; it takes either " *
-                "spheres or spheroids of axis e₃"
+            "MultipoleExpansion: the assembly mixes spheres, spheroids and ellipsoids; it takes " *
+                "one kind of particle at a time"
         )
     )
-    spheroids = [_mem_spheroid(g, asm, nm, prop) for (g, nm) in zip(geometries, names)]
-    return _mem_spheroid_solve(asm, K₀, names, spheroids, nmax)
+    return _mem_kind_solve(Val(only(kinds)), asm, K₀, prop, names, geometries, nmax)
 end
 
-# Spheres take the spherical harmonics; spheroids (and anything else, refused
-# later with its own message) the spheroidal ones.
-_mem_is_sphere(::LayeredSpheres.LayeredSphere) = true
-_mem_is_sphere(::LayeredSpheroids.LayeredSpheroid) = false
-_mem_is_sphere(geom::Elasticity.Ellipsoid{3}) = allequal(geom.semi_axes)
-_mem_is_sphere(geom) = true
+# Spheres take the spherical harmonics, spheroids the spheroidal ones and
+# ellipsoids of three different semi-axes the ellipsoidal ones; anything else
+# goes with the spheres, which refuse it with their own message.
+_mem_kind(::LayeredSpheres.LayeredSphere) = :sphere
+_mem_kind(::LayeredSpheroids.LayeredSpheroid) = :spheroid
+function _mem_kind(geom::Elasticity.Ellipsoid{3})
+    n = length(unique(geom.semi_axes))
+    return n == 1 ? :sphere : n == 2 ? :spheroid : :ellipsoid
+end
+_mem_kind(::InterfacedEllipsoid) = :ellipsoid
+_mem_kind(geom) = :sphere
+
+_mem_kind_solve(::Val{:sphere}, asm, K₀, prop, names, geometries, nmax) = _mem_sphere_solve(asm, K₀, prop, names, nmax)
+_mem_kind_solve(::Val{:spheroid}, asm, K₀, prop, names, geometries, nmax) =
+    _mem_spheroid_solve(asm, K₀, names, [_mem_spheroid(g, asm, nm, prop) for (g, nm) in zip(geometries, names)], nmax)
+_mem_kind_solve(::Val{:ellipsoid}, asm, K₀, prop, names, geometries, nmax) =
+    _mem_ellipsoid_solve(asm, K₀, names, geometries, prop, nmax)
 
 function _mem_sphere_solve(asm::ParticleAssembly, K₀, prop::Symbol, names, nmax::Int)
     spheres = Any[_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]

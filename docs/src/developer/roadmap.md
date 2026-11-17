@@ -158,7 +158,8 @@ certify the field that produces them. So:
 
 [`MultipoleExpansion`](@ref) treats spheres in an isotropic matrix: conduction
 on finite and periodic assemblies ([theory](@ref th-mem)), spheroids in
-conduction ([theory](@ref th-mem-spheroids)), and spheres in elasticity
+conduction ([theory](@ref th-mem-spheroids)), ellipsoids in conduction
+([theory](@ref th-mem-ellipsoids)), and spheres in elasticity
 ([theory](@ref th-mem-elasticity)). What the works of Kushch contain beyond
 that, in the order in which it is to be added:
 
@@ -170,8 +171,10 @@ that, in the order in which it is to be added:
   sphere and not the received uniform strain alone.
 - **Assemblies of spheroids in elasticity** (the spheroidal Lamé solutions and
   their translation, kushch2013, chapter 7; one spheroid with a spring interface
-  is in), and **ellipsoids** in a finite assembly; the fields of each spheroid
-  in conduction.
+  is in), and **ellipsoids in elasticity** with a spring interface, alone and
+  interacting (Kushch, 2019); the fields of each spheroid and
+  ellipsoid in conduction; ellipsoids of **anisotropic constituents**
+  [kushch2017](@cite) and of different orientations.
 - **Anisotropic conduction** by an affine map [kushch2014](@cite), a
   transversely isotropic elastic matrix, and fiber composites in 2D.
 

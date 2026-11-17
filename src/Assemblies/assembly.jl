@@ -110,6 +110,35 @@ function _cubic_period(b::PeriodicBox)
     return L[1]
 end
 
+# ─── An ellipsoid with an interface ──────────────────────────────────────────
+
+"""
+    InterfacedEllipsoid(a₁, a₂, a₃, interface)
+
+Ellipsoid of semi-axes ``a_1``, ``a_2``, ``a_3`` along ``\\underline{e}_1``,
+``\\underline{e}_2``, ``\\underline{e}_3``, bonded to the matrix by `interface`
+(a [`KapitzaInterface`](@ref) in conduction, or a [`PerfectInterface`](@ref)): the
+particle of a [`ParticleAssembly`](@ref) that carries an imperfect interface on an
+ellipsoid, which no layered inclusion of the package describes. Its property is
+given with [`add_particle!`](@ref) as for an [`Ellipsoid`](@ref). Only
+[`MultipoleExpansion`](@ref) takes it ([theory](@ref th-mem-ellipsoids)).
+"""
+struct InterfacedEllipsoid{T <: Number, E <: Elasticity.Ellipsoid{3}, I <: LayeredSpheres.AbstractInterface} <: MFH_Core.AbstractInclusion{T}
+    ellipsoid::E
+    interface::I
+end
+
+function InterfacedEllipsoid(a₁::Real, a₂::Real, a₃::Real, interface::LayeredSpheres.AbstractInterface)
+    e = Elasticity.Ellipsoid(a₁, a₂, a₃)
+    e isa Elasticity.Ellipsoid{3} || throw(
+        ArgumentError("InterfacedEllipsoid: the semi-axes ($a₁, $a₂, $a₃) do not describe a solid ellipsoid")
+    )
+    return InterfacedEllipsoid{eltype(e.semi_axes), typeof(e), typeof(interface)}(e, interface)
+end
+
+MFH_Core.dimension(::InterfacedEllipsoid) = 3
+MFH_Core.shape_tensor(ie::InterfacedEllipsoid) = MFH_Core.shape_tensor(ie.ellipsoid)
+
 # ─── Particle ────────────────────────────────────────────────────────────────
 
 """
@@ -471,6 +500,9 @@ function _disjoint(A::AbstractMatrix, B::AbstractMatrix, r)
 end
 
 _bounding_radius(ell::Elasticity.Ellipsoid) = maximum(ell.semi_axes)
+_bounding_radius(ie::InterfacedEllipsoid) = _bounding_radius(ie.ellipsoid)
+_envelope(ie::InterfacedEllipsoid) = _envelope_matrix(ie)
+Interactions._inclusion_volume(ie::InterfacedEllipsoid) = Interactions._inclusion_volume(ie.ellipsoid)
 _bounding_radius(sphere::LayeredSpheres.LayeredSphere) = LayeredSpheres.outer_radius(sphere)
 _bounding_radius(spheroid::LayeredSpheroids.LayeredSpheroid) = maximum(LayeredSpheroids.outer_semiaxes(spheroid))
 
@@ -496,10 +528,11 @@ MFH_Core.validate_cell(asm::ParticleAssembly) = validate_assembly(asm)
 function MFH_Core.validate_cell(asm::ParticleAssembly, scheme::Union{ClusterModel, EquivalentInclusion})
     validate_assembly(asm)
     for nm in asm.particle_names
-        asm.particles[nm].geometry isa LayeredSpheres.LayeredSphere && throw(
+        geom = asm.particles[nm].geometry
+        geom isa Union{LayeredSpheres.LayeredSphere, InterfacedEllipsoid} && throw(
             ArgumentError(
-                "$(nameof(typeof(scheme))): particle :$(nm) is a LayeredSphere, which has no Hill " *
-                    "tensor; use MultipoleExpansion, which takes layered spheres and their interfaces"
+                "$(nameof(typeof(scheme))): particle :$(nm) is a $(nameof(typeof(geom))), which has no " *
+                    "Hill tensor; use MultipoleExpansion, which takes it with its interfaces"
             )
         )
     end

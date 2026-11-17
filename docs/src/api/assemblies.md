@@ -9,6 +9,7 @@ MeanFieldHomogenization.Assemblies
 ```@docs
 ParticleAssembly
 Particle
+InterfacedEllipsoid
 add_matrix!
 add_particle!
 validate_assembly

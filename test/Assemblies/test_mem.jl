@@ -199,10 +199,7 @@ end
     asm = base()
     add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5), Dict(:K => TensISO{3}(5.0)))
     @test_throws ArgumentError homogenize(asm, MultipoleExpansion(; nmax = 0), :K)
-    # a triaxial ellipsoid, an anisotropic sphere, an anisotropic matrix
-    triaxial = base()
-    add_particle!(triaxial, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5, 0.4, 0.3), Dict(:K => TensISO{3}(5.0)))
-    @test_throws ArgumentError homogenize(triaxial, MultipoleExpansion(), :K)
+    # an anisotropic sphere, an anisotropic matrix
     aniso = base()
     add_particle!(aniso, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5), Dict(:K => Tens([1.0 0 0; 0 2.0 0; 0 0 3.0])))
     @test_throws ArgumentError homogenize(aniso, MultipoleExpansion(), :K)

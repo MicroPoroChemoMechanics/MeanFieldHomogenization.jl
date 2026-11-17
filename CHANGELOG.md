@@ -44,6 +44,15 @@
   projection on the receiving surface. The tables of Kushch et al. (2015) for
   the SP, BCP and FCP lattices of oblate spheroids are recovered to the third
   decimal, and their convergence table digit for digit.
+- **Ellipsoids in conduction.** `MultipoleExpansion` takes assemblies of
+  ellipsoids of three different semi-axes, aligned alike, finite or periodic,
+  on the ellipsoidal harmonics built from the Lamé functions (new in
+  `Harmonics`: `EllipsoidalGeometry`, `lame_functions`, `ellipsoidal_coordinates`,
+  `lame_second_kind`). `InterfacedEllipsoid(a₁, a₂, a₃, interface)` carries a
+  Kapitza interface on an ellipsoid, for this scheme alone. The normalization
+  constants, the Maxwell estimates with a Kapitza interface and the
+  translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
+  their printed digits.
 - **Elastic spheroids with a spring interface.** `LayeredSpheroid` in
   elasticity takes `SpringInterface`: the spring law enters the matching on the
   side of the matrix, the projection then being truncated and converging with

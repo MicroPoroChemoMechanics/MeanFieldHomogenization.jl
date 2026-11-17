@@ -33,6 +33,12 @@ vector_irregular_harmonic
 lame_regular
 lame_irregular
 lame_translation
+EllipsoidalGeometry
+LameFunction
+lame_functions
+lame_value
+lame_second_kind
+ellipsoidal_coordinates
 ```
 
 ## Real-space Green operator

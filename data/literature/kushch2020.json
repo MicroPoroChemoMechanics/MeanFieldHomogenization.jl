@@ -1,0 +1,171 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "kushch2020",
+  "doi": null,
+  "citation": "Kushch, Volodymyr I. (2020). Numerical algorithm of multipole expansion method for conductivity of ellipsoidal particle composite. Preprint, April 2020, https://www.researchgate.net/publication/340627510.",
+  "location": "Tables 1 to 3, pp. 8, 10 and 15"
+ },
+ "transcription": {
+  "from": "the preprint (PDF), read on the page text",
+  "checked_against_source": true,
+  "note": "Ellipsoid of semi-axes (1.5, 1.0, 0.5). Table 1: normalization constants gamma of surface harmonics at the finest quadrature printed (NC = 20), with the scale factors of the header (10^2, 10^5) applied; the labels of the harmonics within a degree are not used, the tests finding each value among the 2n + 1 constants of its degree. Table 2: Maxwell estimate of lambda11 at the fraction 0.5 with a Kapitza interface of conductance hc; the conductivity ratio is not restated for this table, and the values are recovered with lambda1/lambda0 = 100 (the residual example just before it uses 10). Table 3: coefficients eta of the translation of an exterior harmonic on the interior ones of a second ellipsoid at alpha e3, by projection on its surface (Eq. (33)); eta_nmkl is the coefficient of the interior harmonic (n, m) of the receiver for the exterior harmonic (k, l) of the sender."
+ },
+ "quantities": {
+  "semi_axes": {
+   "value": [
+    1.5,
+    1.0,
+    0.5
+   ],
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3 and Table 3",
+   "description": "Semi-axes of the ellipsoids of Tables 1 to 3."
+  },
+  "fraction": {
+   "value": 0.5,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 2",
+   "description": "Volume fraction of the Maxwell estimate of Table 2."
+  },
+  "contrast": {
+   "value": 100.0,
+   "unit": "1",
+   "kind": "derived",
+   "uncertainty": null,
+   "location": "Table 2",
+   "description": "Conductivity ratio with which Table 2 is recovered, the table not restating it."
+  }
+ },
+ "tables": {
+  "normalization": [
+   {
+    "n": 1,
+    "gamma": 10.471975
+   },
+   {
+    "n": 1,
+    "gamma": 6.2831853
+   },
+   {
+    "n": 5,
+    "gamma": 0.021145271
+   },
+   {
+    "n": 5,
+    "gamma": 0.050203007
+   },
+   {
+    "n": 10,
+    "gamma": 4.1852909e-05
+   },
+   {
+    "n": 10,
+    "gamma": 0.00021196723
+   }
+  ],
+  "maxwell_kapitza": [
+   {
+    "nmax": 1,
+    "hc_1e-4": 0.4577454,
+    "hc_1e-2": 0.4709017,
+    "hc_1": 1.5541708,
+    "hc_1e2": 6.3891445,
+    "hc_1e4": 6.6627427
+   },
+   {
+    "nmax": 3,
+    "hc_1e-4": 0.4577554,
+    "hc_1e-2": 0.4718957,
+    "hc_1": 1.607941,
+    "hc_1e2": 6.3899102,
+    "hc_1e4": 6.6627427
+   },
+   {
+    "nmax": 5,
+    "hc_1e-4": 0.4577556,
+    "hc_1e-2": 0.4719118,
+    "hc_1": 1.609647,
+    "hc_1e2": 6.3900504,
+    "hc_1e4": 6.6627428
+   },
+   {
+    "nmax": 10,
+    "hc_1e-4": 0.4577556,
+    "hc_1e-2": 0.4719129,
+    "hc_1": 1.609763,
+    "hc_1e2": 6.3900835,
+    "hc_1e4": 6.6627428
+   },
+   {
+    "nmax": 15,
+    "hc_1e-4": 0.4577556,
+    "hc_1e-2": 0.4719129,
+    "hc_1": 1.6097643,
+    "hc_1e2": 6.3900849,
+    "hc_1e4": 6.6627428
+   },
+   {
+    "nmax": 20,
+    "hc_1e-4": 0.4577556,
+    "hc_1e-2": 0.4719129,
+    "hc_1": 1.6097643,
+    "hc_1e2": 6.390085,
+    "hc_1e4": 6.6627428
+   }
+  ],
+  "translation": [
+   {
+    "alpha_over_a1": 1.5,
+    "eta_1111": 0.0496805,
+    "eta_1171": 4.05778e-06,
+    "eta_7171": 0.000684655
+   },
+   {
+    "alpha_over_a1": 1.9,
+    "eta_1111": 0.02914,
+    "eta_1171": 1.06561e-06,
+    "eta_7171": 4.2969e-05
+   },
+   {
+    "alpha_over_a1": 2.0,
+    "eta_1111": 0.0257871,
+    "eta_1171": 7.71256e-07,
+    "eta_7171": 2.28755e-05
+   },
+   {
+    "alpha_over_a1": 2.1,
+    "eta_1111": 0.0229112,
+    "eta_1171": 5.61726e-07,
+    "eta_7171": 1.24468e-05
+   },
+   {
+    "alpha_over_a1": 2.5,
+    "eta_1111": 0.0147978,
+    "eta_1171": 1.69115e-07,
+    "eta_7171": 1.32491e-06
+   },
+   {
+    "alpha_over_a1": 3.0,
+    "eta_1111": 0.00917124,
+    "eta_1171": 4.38153e-08,
+    "eta_7171": 1.1585e-07
+   },
+   {
+    "alpha_over_a1": 5.0,
+    "eta_1111": 0.00221222,
+    "eta_1171": 7.00792e-10,
+    "eta_7171": 8.78461e-11
+   }
+  ]
+ },
+ "notes": [
+  "Table normalization: Table 1, p. 8, last quadrature row, by degree n.",
+  "Table maxwell_kapitza: Table 2, p. 10, the columns being the conductance hc of the Kapitza interface.",
+  "Table translation: Table 3, p. 15, column Eq. (33) (direct integration), with nmax = 15."
+ ]
+}

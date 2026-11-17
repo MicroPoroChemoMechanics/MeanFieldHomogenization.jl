@@ -241,7 +241,7 @@ add_particle!(lattice, :p, (0.0, 0.0, 0.0), Ellipsoid(l₁, l₁, l₁ / 3), Dic
     for nmax in (1, 3)]
 ```
 
-The application [Lattices of spheroids by the multipole expansion](@ref app-mem-spheroids)
+The application [Spheroids and ellipsoids by the multipole expansion](@ref app-mem-spheroids)
 compares the method with the other tables of the article, interfaces included.
 The fields of each spheroid, and the spheroids in elasticity, are listed in the
 [roadmap](@ref dev-roadmap).

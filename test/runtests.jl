@@ -214,6 +214,7 @@ end
         include("Harmonics/test_solid_harmonics.jl")
         include("Harmonics/test_lattice_harmonics.jl")
         include("Harmonics/test_vector_harmonics.jl")
+        include("Harmonics/test_ellipsoidal.jl")
     end
 
     rungroup("Interactions") && @testset "Interactions" begin
@@ -229,6 +230,7 @@ end
         include("Assemblies/test_eim.jl")
         include("Assemblies/test_mem.jl")
         include("Assemblies/test_mem_spheroids.jl")
+        include("Assemblies/test_mem_ellipsoids.jl")
         include("Assemblies/test_mem_elasticity.jl")
         include("Assemblies/test_as_rve.jl")
         include("Assemblies/test_multiscale.jl")

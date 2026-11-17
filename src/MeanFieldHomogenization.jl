@@ -319,6 +319,7 @@ export HarmonicTable, regular_harmonics, irregular_harmonics, harmonic_norm
 export lattice_harmonics, lattice_biharmonics
 export vector_regular_harmonic, vector_irregular_harmonic
 export lame_regular, lame_irregular, lame_translation
+export EllipsoidalGeometry, LameFunction, lame_functions, lame_value, lame_second_kind, ellipsoidal_coordinates
 
 # ── Schemes : RVE + amounts + distribution shape + symmetrize ───────────────
 export AbstractAmount, VolumeFraction, CrackDensity, Remainder
@@ -364,7 +365,7 @@ export ThicknessParameter, InterfaceParameter, thickness, interface_param
 
 # ── Assemblies : the positional cell of the N-body schemes ──────────────────
 export ParticleAssembly, Particle
-export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods, InterfacedEllipsoid
 export add_matrix!, add_particle!
 export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry

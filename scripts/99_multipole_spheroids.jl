@@ -1,8 +1,8 @@
-# # [Lattices of spheroids by the multipole expansion](@id app-mem-spheroids)
+# # [Spheroids and ellipsoids by the multipole expansion](@id app-mem-spheroids)
 #
 # !!! info "Before this page"
-#     [The multipole expansion method for spheroids](@ref th-mem-spheroids),
-#     where the scheme is derived, and
+#     [The multipole expansion method for spheroids](@ref th-mem-spheroids)
+#     and [for ellipsoids](@ref th-mem-ellipsoids), where the scheme is derived, and
 #     [Particle assemblies and N-body schemes](@ref man-assemblies) for the
 #     assemblies it acts on.
 #
@@ -10,8 +10,9 @@
 # lattices, with a perfect interface, a low-conducting (Kapitza) one and a
 # highly conducting one. This page computes the same quantities with
 # [`MultipoleExpansion`](@ref) and sets them beside the published values, read
-# from the files below, and ends with the stiffness of spheroids bonded by a
-# spring [kushch2018](@cite).
+# from the files below. It goes on with the stiffness of spheroids bonded by a
+# spring [kushch2018](@cite) and with ellipsoids bonded by a Kapitza interface
+# [kushch2020](@cite).
 
 import Pkg                                                          #jl
 Pkg.activate(joinpath(@__DIR__, "..", "docs"); io = devnull)                 #jl
@@ -39,6 +40,10 @@ nothing #hide
 #-
 
 #md Main.show_literature("kushch2018") # hide
+
+#-
+
+#md Main.show_literature("kushch2020") # hide
 
 # ## 1. The lattices
 #
@@ -259,6 +264,42 @@ spring_table()
 # ``C_{44} = \mu_0`` in the matrix alone); through a stiff one they act as
 # perfectly bonded.
 
+# ## 6. Ellipsoids with a Kapitza interface
+#
+# [kushch2020](@citet) gives the Maxwell estimate ``k_{11}/k_0`` of ellipsoids of
+# semi-axes ``(1.5, 1, 0.5)`` at the fraction 0.5, conductivity ratio 100,
+# against the conductance ``h_c`` of a Kapitza interface and the degree. One
+# [`InterfacedEllipsoid`](@ref) in a domain of its own shape is that estimate;
+# each cell gives the computed value and, in parentheses, the published one.
+
+ellipsoids = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2020.json"))
+semi = Tuple(ellipsoids["quantities"]["semi_axes"]["value"])
+function ellipsoid_estimate(hc, nmax)
+    c = ellipsoids["quantities"]["fraction"]["value"]
+    asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid((semi ./ cbrt(c))...)))
+    add_matrix!(asm, Dict(:K => k₀))
+    particle = InterfacedEllipsoid(semi..., KapitzaInterface(1 / hc))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), particle, Dict(:K => TensISO{3}(ellipsoids["quantities"]["contrast"]["value"])))
+    return canonical_components(homogenize(asm, MultipoleExpansion(; nmax), :K))[1, 1]
+end
+function ellipsoid_table()
+    io = IOBuffer()
+    hcs = (("hc_1e-2", 1.0e-2), ("hc_1", 1.0), ("hc_1e2", 1.0e2))
+    println(io, "| ``n_{\\max}`` | ", join(("``h_c = $(h)``" for (_, h) in hcs), " | "), " |")
+    println(io, "| :-- | :-- | :-- | :-- |")
+    for row in ellipsoids["tables"]["maxwell_kapitza"]
+        row["nmax"] ≤ 5 || continue
+        cells = [@sprintf("%.7f (%.7f)", ellipsoid_estimate(h, row["nmax"]), row[key]) for (key, h) in hcs]
+        println(io, "| ", row["nmax"], " | ", join(cells, " | "), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+ellipsoid_table()
+
+# The seven printed digits are recovered at every degree: the response of the
+# ellipsoid couples its harmonics through the interface, and the truncation is
+# the same as in the article.
+
 # ## Summary
 #
 # | result | source | recovered |
@@ -268,6 +309,7 @@ spring_table()
 # | three lattices, perfect interface | [kushch2015](@cite), Table 4 | to the third decimal at `nmax = 7` up to ``c = 0.2``; ``c = 0.3`` on the simple lattice at `nmax = 13` |
 # | low- and highly conducting interfaces | [kushch2015](@cite), Tables 6 and 8 | to the third decimal at `nmax = 5`, ``c = 0.2`` |
 # | elastic spheroids with a spring interface, Maxwell estimate | [kushch2018](@cite), Table 2 | to the fourth decimal |
+# | ellipsoids with a Kapitza interface, Maxwell estimate | [kushch2020](@cite), Table 2 | to the seventh decimal, degree by degree |
 #
 #md # ```@raw html
 #md # <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>
