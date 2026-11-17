@@ -68,15 +68,16 @@ function _mem_spheroid(geom::Elasticity.Ellipsoid{3}, asm, name::Symbol, prop::S
     off = TensND.primal.((A[1, 2], A[1, 3], A[2, 3]))
     (all(iszero, off) && isapprox(TensND.primal(A[1, 1]), TensND.primal(A[2, 2]); rtol = 1.0e-12)) ||
         _mem_axis_e3(nothing, name)
-    P = particle_property(asm, name, prop)
-    P isa TensND.TensISO || throw(
-        ArgumentError(
-            "MultipoleExpansion: particle :$(name) has a $(nameof(typeof(P))) property " *
-                ":$(prop); the spheroids of the expansion are isotropic (TensISO)"
-        )
-    )
-    return LayeredSpheroids.LayeredSpheroid((A[3, 3],), (A[1, 1],), (P,))
+    return _mem_spheroid_carrying(A[3, 3], A[1, 1], particle_property(asm, name, prop))
 end
+
+# An isotropic spheroid is its one-layer layered spheroid; an anisotropic one,
+# that of unit conductivity carrying its conductivity (`mem_anisotropic.jl`).
+_mem_spheroid_carrying(a₃, a₁, P::TensND.TensISO) = LayeredSpheroids.LayeredSpheroid((a₃,), (a₁,), (P,))
+_mem_spheroid_carrying(a₃, a₁, P::TensND.AbstractTens{2, 3}) = _MemAnisotropicSpheroid(
+    LayeredSpheroids.LayeredSpheroid((a₃,), (a₁,), (TensND.TensISO{3}(one(a₁)),)),
+    Array(TensND.canonical_components(P))
+)
 
 function _mem_axis_e3(axis, name::Symbol)
     axis !== nothing && iszero(TensND.primal(axis[1])) && iszero(TensND.primal(axis[2])) && return nothing
@@ -318,7 +319,9 @@ end
 #     images excluded and the parameter lowered so that they lie within half a
 #     splitting length (accurate to 1e-9 on the lattices of the tests);
 #   - above it, where they converge absolutely, directly over the images up
-#     to `_MEM_DIRECT_REACH` rn, the rest being below 1e-8 of the sum.
+#     to `_MEM_DIRECT_REACH` times rn or the shortest period, whichever is
+#     larger (rn vanishes with the focal distances), the rest being below
+#     1e-8 of the sum.
 const _MEM_EWALD_DEGREE = 8
 const _MEM_DIRECT_REACH = 8
 
@@ -332,13 +335,14 @@ function _mem_far_sums(R, L, near, rn, deg::Int)
     low = first(Harmonics._lattice_sums(R, L, min(deg, _MEM_EWALD_DEGREE), Val(false), α; exclude = near))
     values = zeros(eltype(low.values), Harmonics._packed(deg, deg))
     values[eachindex(low.values)] .= low.values
-    r₂ = _MEM_DIRECT_REACH * rn
+    r₂ = _MEM_DIRECT_REACH * max(rn, minimum(TensND.primal.(L)))
     reach = ntuple(i -> ceil(Int, (r₂ + abs(TensND.primal(R[i]))) / TensND.primal(L[i])), 3)
     first_high = Harmonics._packed(_MEM_EWALD_DEGREE + 1, 0)
     for n₁ in (-reach[1]):reach[1], n₂ in (-reach[2]):reach[2], n₃ in (-reach[3]):reach[3]
         x = R .+ (n₁ * L[1], n₂ * L[2], n₃ * L[3])
         r = norm(TensND.primal.(x))
-        rn ≤ r ≤ r₂ || continue
+        # the near images, and the particle itself
+        (rn ≤ r ≤ r₂ && r > 0) || continue
         values[first_high:end] .+= view(irregular_harmonics(x, deg).values, first_high:length(values))
     end
     return Harmonics.HarmonicTable(deg, values)

@@ -303,6 +303,20 @@ add_particle!(ellipsoids, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5
 diag(canonical_components(homogenize(ellipsoids, MultipoleExpansion(; nmax = 3), :K)))
 ```
 
+### Anisotropic constituents
+
+In conduction the matrix may be orthotropic in the axes of the assembly and
+the particles of any anisotropic conductivity, perfectly bonded, the
+ellipsoids aligned with those axes ([theory](@ref th-mem-anisotropic)); a
+sphere in a transversely isotropic matrix is such a case:
+
+```@example mem_manual
+aniso = ParticleAssembly(; boundary = PeriodicBox(2.5))
+add_matrix!(aniso, Dict(:K => TensTI{2}(1.0, 0.5, (0.0, 0.0, 1.0))))
+add_particle!(aniso, :p, (0.0, 0.0, 0.0), Ellipsoid(1.0), Dict(:K => TensISO{3}(10.0)))
+diag(canonical_components(homogenize(aniso, MultipoleExpansion(; nmax = 4), :K)))
+```
+
 ### Fields of the particles
 
 The fields of this section are available in conduction, for spheres.

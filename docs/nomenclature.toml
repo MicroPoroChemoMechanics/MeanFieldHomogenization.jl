@@ -2356,3 +2356,34 @@ tex = '\rho_{\mathrm{K}}'
 label = "ρ_K"
 name = "thermal resistance of a Kapitza interface on an ellipsoid"
 pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbf{L}'
+label = "<b>L</b>"
+name = "affine map that makes an orthotropic matrix isotropic, of determinant one"
+unit = "1"
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\bar{k}'
+label = "k̄"
+name = "geometric mean of the principal conductivities of the matrix"
+unit = ""
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\boldsymbol{\Lambda}'
+label = "<b>Λ</b>"
+name = "Cholesky factor of the conductivity of an anisotropic particle"
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\varpi'
+label = "ϖ"
+name = "anisotropy parameter of an effective conductivity"
+unit = "1"
+pages = ["theory/multipole_expansion_anisotropic.md", "applications/generated/multipole_spheroids.md"]

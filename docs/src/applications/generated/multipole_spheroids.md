@@ -11,7 +11,8 @@ EditURL = "../../../../scripts/99_multipole_spheroids.jl"
 
 !!! info "Before this page"
     [The multipole expansion method for spheroids](@ref th-mem-spheroids)
-    and [for ellipsoids](@ref th-mem-ellipsoids), where the scheme is derived, and
+    and [for ellipsoids](@ref th-mem-ellipsoids), where the scheme is derived,
+    [with anisotropic constituents](@ref th-mem-anisotropic), and
     [Particle assemblies and N-body schemes](@ref man-assemblies) for the
     assemblies it acts on.
 
@@ -20,8 +21,9 @@ lattices, with a perfect interface, a low-conducting (Kapitza) one and a
 highly conducting one. This page computes the same quantities with
 [`MultipoleExpansion`](@ref) and sets them beside the published values, read
 from the files below. It goes on with the stiffness of spheroids bonded by a
-spring [kushch2018](@cite) and with ellipsoids bonded by a Kapitza interface
-[kushch2020](@cite).
+spring [kushch2018](@cite), with ellipsoids bonded by a Kapitza interface
+[kushch2020](@cite), and with spheroids in a transversely isotropic matrix
+[kushch2014](@cite).
 
 ````@example multipole_spheroids
 using MeanFieldHomogenization
@@ -51,6 +53,10 @@ Main.show_literature("kushch2018") # hide
 
 ````@example multipole_spheroids
 Main.show_literature("kushch2020") # hide
+````
+
+````@example multipole_spheroids
+Main.show_literature("kushch2014") # hide
 ````
 
 ## 1. The lattices
@@ -127,7 +133,7 @@ perfect = l₁ -> PerfectInterface{Float64}()
 columns = (("perfect", "hc_infinity", perfect), ("``\\tilde h_c = 10``", "hc_10", kapitza(10.0)), ("``\\tilde h_c = 1``", "hc_1", kapitza(1.0)))
 function convergence_table(rows)
     io = IOBuffer()
-    println(io, "| ``n_{\\max}`` | ", join(first.(columns), " | "), " |")
+    println(io, "| ``n_{\\\\max}`` | ", join(first.(columns), " | "), " |")
     println(io, "| :-- | ", join(fill(":--", length(columns)), " | "), " |")
     for row in rows
         cells = map(columns) do (_, key, interface)
@@ -314,7 +320,7 @@ end
 function ellipsoid_table()
     io = IOBuffer()
     hcs = (("hc_1e-2", 1.0e-2), ("hc_1", 1.0), ("hc_1e2", 1.0e2))
-    println(io, "| ``n_{\\max}`` | ", join(("``h_c = $(h)``" for (_, h) in hcs), " | "), " |")
+    println(io, "| ``n_{\\\\max}`` | ", join(("``h_c = $(h)``" for (_, h) in hcs), " | "), " |")
     println(io, "| :-- | :-- | :-- | :-- |")
     for row in ellipsoids["tables"]["maxwell_kapitza"]
         row["nmax"] ≤ 5 || continue
@@ -330,6 +336,63 @@ The seven printed digits are recovered at every degree: the response of the
 ellipsoid couples its harmonics through the interface, and the truncation is
 the same as in the article.
 
+## 7. Spheroids in a transversely isotropic matrix
+
+[kushch2014](@citet) consider spheroids of semi-axes ``(1, 1, e)`` and
+conductivity ``10\,k_{11}`` in a matrix of conductivities ``k_{11} = 1`` across
+and ``k_{33} = \kappa`` along ``\underline{e}_3``, on an orthorhombic lattice of
+periods proportional to the semi-axes. They tabulate the anisotropy parameter
+``\varpi = (k^{\mathrm{hom}}_{33}/\kappa)/k^{\mathrm{hom}}_{11}``, which measures
+how much the particles change the anisotropy of the matrix. The scheme maps
+the matrix to an isotropic one (see [the theory](@ref th-mem-anisotropic)),
+where the spheroids become spheroids of semi-axis ratio ``e/\sqrt{\kappa}``,
+or spheres when ``e = \sqrt{\kappa}``, of anisotropic conductivity.
+
+````@example multipole_spheroids
+anisotropy = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2014.json"))
+function anisotropy_parameter(e, κ, c, nmax)
+    semi = (1.0, 1.0, e)
+    cell = ParticleAssembly(; boundary = PeriodicBox(cbrt(4π / 3 / c) .* semi))
+    add_matrix!(cell, Dict(:K => TensTI{2}(1.0, κ, (0.0, 0.0, 1.0))))
+    inclusion = anisotropy["quantities"]["inclusion_conductivity"]["value"]
+    add_particle!(cell, :p, (0.0, 0.0, 0.0), Ellipsoid(semi...), Dict(:K => TensISO{3}(inclusion)))
+    k = diag(canonical_components(homogenize(cell, MultipoleExpansion(; nmax), :K)))
+    return (k[3] / κ) / k[1]
+end
+function anisotropy_table(nmax)
+    io = IOBuffer()
+    fractions = ("0.15", "0.30", "0.40")
+    println(io, "| ``e`` | ``\\\\kappa`` | ", join(("``c = $(c)``" for c in fractions), " | "), " |")
+    println(io, "| :-- | :-- | :-- | :-- | :-- |")
+    for row in anisotropy["tables"]["anisotropy_ti"]
+        cells = map(fractions) do c
+            computed, published = anisotropy_parameter(row["aspect_ratio"], row["matrix_anisotropy"], parse(Float64, c), nmax), row["c_$c"]
+            cell = @sprintf("%.3f (%.3f)", computed, published)
+            abs(computed - published) > 1.0e-3 ? "**$(cell)**" : cell
+        end
+        println(io, "| ", row["aspect_ratio"], " | ", row["matrix_anisotropy"], " | ", join(cells, " | "), " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+anisotropy_table(8)
+````
+
+Each cell gives the computed value at `nmax = 8` and, in parentheses, the
+published one; the cells in bold differ by more than one unit of the third
+decimal. There are three, all at ``\kappa = 0.25``, where the map stretches
+the particles most (to the ratio ``e/\sqrt{\kappa}`` = 2 and 4). The published
+values ``\varpi = 1.282`` (``e = 1``, ``c = 0.3``) and ``1.793`` (``e = 2``,
+``c = 0.4``) break the monotonic trend of their rows, which the computed
+values follow; ``1.636`` (``e = 2``, ``c = 0.3``) differs by two units. The
+computed values do not move when the degree is raised:
+
+````@example multipole_spheroids
+[round(anisotropy_parameter(e, 0.25, c, nmax); digits = 4) for (e, c) in ((1.0, 0.3), (2.0, 0.3), (2.0, 0.4)), nmax in (8, 10)]
+````
+
+The higher fractions of the table, 0.45 and 0.5, approach the closest packing
+``\pi/6`` of the lattice and need degrees beyond those run here.
+
 ## Summary
 
 | result | source | recovered |
@@ -340,6 +403,7 @@ the same as in the article.
 | low- and highly conducting interfaces | [kushch2015](@cite), Tables 6 and 8 | to the third decimal at `nmax = 5`, ``c = 0.2`` |
 | elastic spheroids with a spring interface, Maxwell estimate | [kushch2018](@cite), Table 2 | to the fourth decimal |
 | ellipsoids with a Kapitza interface, Maxwell estimate | [kushch2020](@cite), Table 2 | to the seventh decimal, degree by degree |
+| spheroids in a transversely isotropic matrix, anisotropy parameter | [kushch2014](@cite), Table 5 | to the third decimal up to ``c = 0.4`` at `nmax = 8`, but for three entries at ``\kappa = 0.25`` |
 
 ```@raw html
 <details class="source-file"><summary>Show the code of <code>scripts/common/docviz.jl</code>, included above</summary>

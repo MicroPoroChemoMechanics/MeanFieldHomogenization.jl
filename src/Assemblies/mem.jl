@@ -79,8 +79,24 @@ file and in the theory page [The multipole expansion method](@ref th-mem).
 function Schemes._evaluate(
         asm::ParticleAssembly, scheme::MultipoleExpansion, ::Val{p}; kw...
     ) where {p}
-    P₀ = matrix_property(asm, p)
-    sol = _mem_solve(asm, P₀, p, _mem_nmax(scheme))
+    return _mem_evaluate(asm, matrix_property(asm, p), p, _mem_nmax(scheme); kw...)
+end
+
+_mem_evaluate(asm::ParticleAssembly, P₀, p::Symbol, nmax::Int; kw...) = _mem_direct(asm, P₀, p, nmax; kw...)
+_mem_evaluate(asm::ParticleAssembly, K₀::TensND.TensISO{2, 3}, p::Symbol, nmax::Int; kw...) =
+    _mem_direct(asm, K₀, p, nmax; kw...)
+
+# An anisotropic matrix in conduction: solved in the variables where it is
+# isotropic (`mem_anisotropic.jl`), the effective conductivity mapped back.
+function _mem_evaluate(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, p::Symbol, nmax::Int; kw...)
+    L, k̄ = _mem_affine(K₀)
+    mapped = _mem_mapped_assembly(asm, p, L, k̄)
+    Kv = _mem_direct(mapped, matrix_property(mapped, p), p, nmax; kw...)
+    return TensND.Tens(L * Array(TensND.canonical_components(Kv)) * L)
+end
+
+function _mem_direct(asm::ParticleAssembly, P₀, p::Symbol, nmax::Int; kw...)
+    sol = _mem_solve(asm, P₀, p, nmax)
     Σ = _mem_contribution(asm, P₀, sol)
     return P₀ + Σ ⊙ _mem_remote_field(asm.boundary, P₀, Σ; kw...)
 end
@@ -180,7 +196,11 @@ end
 _mem_kind(::InterfacedEllipsoid) = :ellipsoid
 _mem_kind(geom) = :sphere
 
-_mem_kind_solve(::Val{:sphere}, asm, K₀, prop, names, geometries, nmax) = _mem_sphere_solve(asm, K₀, prop, names, nmax)
+function _mem_kind_solve(::Val{:sphere}, asm, K₀, prop, names, geometries, nmax)
+    any(_mem_anisotropic_ball(asm, nm, g, prop) for (nm, g) in zip(names, geometries)) ||
+        return _mem_sphere_solve(asm, K₀, prop, names, nmax)
+    return _mem_anisotropic_spheres(asm, K₀, prop, names, geometries, nmax)
+end
 _mem_kind_solve(::Val{:spheroid}, asm, K₀, prop, names, geometries, nmax) =
     _mem_spheroid_solve(asm, K₀, names, [_mem_spheroid(g, asm, nm, prop) for (g, nm) in zip(geometries, names)], nmax)
 _mem_kind_solve(::Val{:ellipsoid}, asm, K₀, prop, names, geometries, nmax) =

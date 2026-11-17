@@ -137,9 +137,6 @@ end
         add_particle!(bad, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, intf), Dict(:K => TensISO{3}(5.0)))
         @test_throws ArgumentError homogenize(bad, MultipoleExpansion(), :K)
     end
-    aniso = base()
-    add_particle!(aniso, :p, (0.0, 0.0, 0.0), Ellipsoid(1.5, 1.0, 0.5), Dict(:K => TensTI{2}(1.0, 2.0, (0.0, 0.0, 1.0))))
-    @test_throws ArgumentError homogenize(aniso, MultipoleExpansion(), :K)
     interfaced = base()
     add_particle!(interfaced, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, KapitzaInterface(0.5)), Dict(:K => TensISO{3}(5.0)))
     @test_throws ArgumentError homogenize(interfaced, MoriTanaka(), :K)

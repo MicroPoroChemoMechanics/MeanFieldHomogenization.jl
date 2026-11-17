@@ -4,14 +4,23 @@
   "key": "kushch2014",
   "doi": "10.1016/j.ijengsci.2013.08.002",
   "citation": "Kushch, Volodymyr I., Sevostianov, Igor (2014). Dipole moments, property contribution tensors and effective conductivity of anisotropic particulate composites. International Journal of Engineering Science 74, 15-34.",
-  "location": "Table 2, p. 29"
+  "location": "Tables 2 and 5, pp. 29 and 31"
  },
  "transcription": {
-  "from": "the published article (PDF), Table 2, read on the page text",
+  "from": "the published article (PDF), Tables 2 and 5, read on the page text",
   "checked_against_source": true,
-  "note": "The table is identical to Table 3.1 of Kushch (2013)."
+  "note": "Table 2 is identical to Table 3.1 of Kushch (2013)."
  },
- "quantities": {},
+ "quantities": {
+  "inclusion_conductivity": {
+   "value": 10.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 6.2.1, p. 31",
+   "description": "Conductivity of the isotropic spheroids of Table 5, over the transverse conductivity k11 of the matrix."
+  }
+ },
  "tables": {
   "conductivity_sc": [
    {
@@ -62,10 +71,122 @@
     "contrast_1000": 5.831,
     "contrast_infinity": 5.891
    }
+  ],
+  "anisotropy_ti": [
+   {
+    "aspect_ratio": 0.5,
+    "matrix_anisotropy": 0.25,
+    "c_0.15": 1.076,
+    "c_0.30": 1.161,
+    "c_0.40": 1.246,
+    "c_0.45": 1.316,
+    "c_0.50": 1.453
+   },
+   {
+    "aspect_ratio": 0.5,
+    "matrix_anisotropy": 0.5,
+    "c_0.15": 0.984,
+    "c_0.30": 1.025,
+    "c_0.40": 1.076,
+    "c_0.45": 1.115,
+    "c_0.50": 1.175
+   },
+   {
+    "aspect_ratio": 0.5,
+    "matrix_anisotropy": 2.0,
+    "c_0.15": 0.835,
+    "c_0.30": 0.763,
+    "c_0.40": 0.722,
+    "c_0.45": 0.697,
+    "c_0.50": 0.659
+   },
+   {
+    "aspect_ratio": 0.5,
+    "matrix_anisotropy": 4.0,
+    "c_0.15": 0.762,
+    "c_0.30": 0.631,
+    "c_0.40": 0.554,
+    "c_0.45": 0.513,
+    "c_0.50": 0.465
+   },
+   {
+    "aspect_ratio": 1.0,
+    "matrix_anisotropy": 0.25,
+    "c_0.15": 1.261,
+    "c_0.30": 1.282,
+    "c_0.40": 1.471,
+    "c_0.45": 1.541,
+    "c_0.50": 1.692
+   },
+   {
+    "aspect_ratio": 1.0,
+    "matrix_anisotropy": 0.5,
+    "c_0.15": 1.124,
+    "c_0.30": 1.186,
+    "c_0.40": 1.23,
+    "c_0.45": 1.265,
+    "c_0.50": 1.333
+   },
+   {
+    "aspect_ratio": 1.0,
+    "matrix_anisotropy": 2.0,
+    "c_0.15": 0.892,
+    "c_0.30": 0.826,
+    "c_0.40": 0.782,
+    "c_0.45": 0.754,
+    "c_0.50": 0.715
+   },
+   {
+    "aspect_ratio": 1.0,
+    "matrix_anisotropy": 4.0,
+    "c_0.15": 0.795,
+    "c_0.30": 0.667,
+    "c_0.40": 0.589,
+    "c_0.45": 0.546,
+    "c_0.50": 0.495
+   },
+   {
+    "aspect_ratio": 2.0,
+    "matrix_anisotropy": 0.25,
+    "c_0.15": 1.44,
+    "c_0.30": 1.636,
+    "c_0.40": 1.793,
+    "c_0.45": 1.86,
+    "c_0.50": 2.341
+   },
+   {
+    "aspect_ratio": 2.0,
+    "matrix_anisotropy": 0.5,
+    "c_0.15": 1.278,
+    "c_0.30": 1.376,
+    "c_0.40": 1.427,
+    "c_0.45": 1.461,
+    "c_0.50": 1.53
+   },
+   {
+    "aspect_ratio": 2.0,
+    "matrix_anisotropy": 2.0,
+    "c_0.15": 0.965,
+    "c_0.30": 0.9,
+    "c_0.40": 0.845,
+    "c_0.45": 0.811,
+    "c_0.50": 0.768
+   },
+   {
+    "aspect_ratio": 2.0,
+    "matrix_anisotropy": 4.0,
+    "c_0.15": 0.839,
+    "c_0.30": 0.708,
+    "c_0.40": 0.622,
+    "c_0.45": 0.576,
+    "c_0.50": 0.522
+   }
   ]
  },
  "notes": [
   "Table conductivity_sc: Table 2, p. 29. Effective conductivity of the simple cubic array of spherical inclusions, over that of the matrix.",
-  "The columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres."
+  "The columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres.",
+  "Table anisotropy_ti: Table 5, p. 31. Anisotropy parameter (k*33/k33)/(k*11/k11) of an orthorhombic array of aligned spheroids in a matrix transversely isotropic about their axis e3.",
+  "aspect_ratio is the semi-axis along e3 over the transverse one; matrix_anisotropy is k33/k11 of the matrix; the periods of the array are proportional to the semi-axes; the columns c_0.15 to c_0.50 are the volume fraction."
  ]
 }

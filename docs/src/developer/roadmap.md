@@ -159,7 +159,9 @@ certify the field that produces them. So:
 [`MultipoleExpansion`](@ref) treats spheres in an isotropic matrix: conduction
 on finite and periodic assemblies ([theory](@ref th-mem)), spheroids in
 conduction ([theory](@ref th-mem-spheroids)), ellipsoids in conduction
-([theory](@ref th-mem-ellipsoids)), and spheres in elasticity
+([theory](@ref th-mem-ellipsoids)), anisotropic constituents in conduction
+with a matrix orthotropic in the axes of the assembly
+([theory](@ref th-mem-anisotropic)), and spheres in elasticity
 ([theory](@ref th-mem-elasticity)). What the works of Kushch contain beyond
 that, in the order in which it is to be added:
 
@@ -173,10 +175,10 @@ that, in the order in which it is to be added:
   their translation, kushch2013, chapter 7; one spheroid with a spring interface
   is in), and **ellipsoids in elasticity** with a spring interface, alone and
   interacting (Kushch, 2019); the fields of each spheroid and
-  ellipsoid in conduction; ellipsoids of **anisotropic constituents**
-  [kushch2017](@cite) and of different orientations.
-- **Anisotropic conduction** by an affine map [kushch2014](@cite), a
-  transversely isotropic elastic matrix, and fiber composites in 2D.
+  ellipsoid in conduction; particles whose axes differ from those of an
+  anisotropic matrix, and imperfect interfaces with an anisotropic matrix
+  [kushch2017](@cite).
+- A transversely isotropic elastic matrix, and fiber composites in 2D.
 
 ## N-body schemes — remaining pieces
 

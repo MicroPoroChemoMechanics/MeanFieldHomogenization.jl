@@ -42,6 +42,7 @@ using LinearAlgebra
 using StaticArrays
 using TensND
 using Random
+import ForwardDiff
 
 import ..Core
 using ..Core
@@ -73,6 +74,7 @@ include("eim.jl")
 include("mem.jl")
 include("mem_spheroids.jl")
 include("mem_ellipsoids.jl")
+include("mem_anisotropic.jl")
 include("mem_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")

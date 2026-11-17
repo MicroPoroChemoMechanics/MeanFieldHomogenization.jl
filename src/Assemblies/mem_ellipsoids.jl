@@ -270,17 +270,27 @@ function _mem_ellipsoid_solve(asm::ParticleAssembly, K₀, names, geometries, pr
     centers = [collect(particle_center(asm, nm))[collect(order)] for nm in names]
     far = _mem_needs_far(asm.boundary, centers, [maximum(first(a)) for a in axes])
     raw = map(zip(names, axes)) do (nm, (semi, _))
-        P = particle_property(asm, nm, prop)
-        P isa TensND.TensISO || throw(
-            ArgumentError(
-                "MultipoleExpansion: particle :$(nm) has a $(nameof(typeof(P))) property " *
-                    ":$(prop); the ellipsoids of the expansion are isotropic (TensISO)"
-            )
-        )
-        k₁ = LayeredSpheres._iso_scalar(P)
-        _mem_ellipsoid_data(semi, k₁ / k₀, nmax, far, _mem_interface(particle_geometry(asm, nm)), k₁)
+        _mem_ellipsoid_carrying(particle_property(asm, nm, prop), semi, k₀, nmax, far, _mem_interface(particle_geometry(asm, nm)), order)
     end
     return _mem_shaped_solve(asm, names, raw, nmax; centers, boundary = _mem_permuted(asm.boundary, order), axes = order)
+end
+
+# The data of an ellipsoid of isotropic conductivity, or of a perfectly bonded
+# one of anisotropic conductivity (`mem_anisotropic.jl`), turned to the frame
+# of its axes.
+function _mem_ellipsoid_carrying(P::TensND.TensISO, semi, k₀, nmax::Int, far::Bool, interface, order)
+    k₁ = LayeredSpheres._iso_scalar(P)
+    return _mem_ellipsoid_data(semi, k₁ / k₀, nmax, far, interface, k₁)
+end
+function _mem_ellipsoid_carrying(P::TensND.AbstractTens{2, 3}, semi, k₀, nmax::Int, far::Bool, interface, order)
+    interface isa LayeredSpheres.PerfectInterface || throw(
+        ArgumentError(
+            "MultipoleExpansion: an ellipsoid of anisotropic conductivity is perfectly bonded; " *
+                "got a $(nameof(typeof(interface)))"
+        )
+    )
+    K = Array(TensND.canonical_components(P))[collect(order), collect(order)]
+    return _mem_anisotropic(_mem_ellipsoid_data(semi, one(k₀), nmax, far), K, k₀, nmax)
 end
 
 _mem_permuted(b::MixedBC, order) = b

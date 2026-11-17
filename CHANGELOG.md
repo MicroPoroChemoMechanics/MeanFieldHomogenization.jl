@@ -53,6 +53,15 @@
   constants, the Maxwell estimates with a Kapitza interface and the
   translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
   their printed digits.
+- **Anisotropic constituents in conduction.** `MultipoleExpansion` takes a
+  matrix orthotropic in the axes of the assembly, by the affine change of
+  variables that makes it isotropic, and perfectly bonded spheres, spheroids
+  and ellipsoids of any anisotropic conductivity, whose response is obtained
+  by projecting the interface conditions on their surface harmonics. One
+  particle is Mori-Tanaka with the Hill tensors of anisotropic media, and the
+  anisotropy parameters of Kushch & Sevostianov (2014), Table 5, are
+  recovered to their printed digits but for three entries, which the
+  application reports.
 - **Elastic spheroids with a spring interface.** `LayeredSpheroid` in
   elasticity takes `SpringInterface`: the spring law enters the matching on the
   side of the matrix, the projection then being truncated and converging with
