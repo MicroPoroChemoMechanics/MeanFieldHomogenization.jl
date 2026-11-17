@@ -2387,3 +2387,18 @@ label = "ϖ"
 name = "anisotropy parameter of an effective conductivity"
 unit = "1"
 pages = ["theory/multipole_expansion_anisotropic.md", "applications/generated/multipole_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\tilde{F}'
+label = "F̃"
+name = "decaying spheroidal harmonic divided by (−1)^m κ_n, tending to the spherical one"
+pages = ["theory/multipole_expansion_spheroids_elasticity.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\kappa_n'
+label = "κ_n"
+name = "far-field factor of the decaying spheroidal harmonics of degree n, c^{n+1}/(2n+1)!!"
+unit = ""
+pages = ["theory/multipole_expansion_spheroids_elasticity.md"]

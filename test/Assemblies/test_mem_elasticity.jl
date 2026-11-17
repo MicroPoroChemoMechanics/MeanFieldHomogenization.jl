@@ -192,11 +192,6 @@ end
     add_particle!(asm, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5), Dict(:C => _mel_C(5.0, 0.2)))
     @test_throws ArgumentError concentration_tensors(asm, MultipoleExpansion(), :C)
     @test_throws ArgumentError multipole_coefficients(asm, :C)
-    # spheroids are taken in conduction only
-    spheroid = ParticleAssembly(; boundary = MixedBC(3.0))
-    add_matrix!(spheroid, Dict(:C => _MEL_C0))
-    add_particle!(spheroid, :p, (0.0, 0.0, 0.0), Ellipsoid(0.5, 0.5, 0.3), Dict(:C => _mel_C(5.0, 0.2)))
-    @test_throws ArgumentError homogenize(spheroid, MultipoleExpansion(), :C)
     # the dipoles of elasticity are of degree 2
     @test_throws ArgumentError homogenize(asm, MultipoleExpansion(; nmax = 1), :C)
     # an incompressible matrix

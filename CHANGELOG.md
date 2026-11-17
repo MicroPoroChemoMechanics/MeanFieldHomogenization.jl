@@ -53,6 +53,18 @@
   constants, the Maxwell estimates with a Kapitza interface and the
   translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
   their printed digits.
+- **Spheroids in elasticity.** `MultipoleExpansion` takes assemblies of
+  spheroids of a common axis in elasticity, finite or periodic, perfectly
+  bonded or empty. Their decaying solutions are those of the sphere built on
+  the spheroidal harmonics, with the gradient of each harmonic as the first
+  family, which makes the field of one spheroid under a uniform strain exact
+  from the degree 2; their response is solved by least squares on one
+  meridian, order by order, and enters the solver of the spheres through its
+  spherical form, close neighbors being read on the surface of the receiver.
+  The elastic solver of the spheres now works on full response matrices. The
+  stiffness of spheroids on a lattice of Kushch (2013), Table 7.6, is
+  recovered to its printed digits, but for one entry whose digits the
+  application shows permuted.
 - **Anisotropic constituents in conduction.** `MultipoleExpansion` takes a
   matrix orthotropic in the axes of the assembly, by the affine change of
   variables that makes it isotropic, and perfectly bonded spheres, spheroids

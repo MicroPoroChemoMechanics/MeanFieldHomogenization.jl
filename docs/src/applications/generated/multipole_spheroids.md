@@ -12,7 +12,8 @@ EditURL = "../../../../scripts/99_multipole_spheroids.jl"
 !!! info "Before this page"
     [The multipole expansion method for spheroids](@ref th-mem-spheroids)
     and [for ellipsoids](@ref th-mem-ellipsoids), where the scheme is derived,
-    [with anisotropic constituents](@ref th-mem-anisotropic), and
+    [with anisotropic constituents](@ref th-mem-anisotropic),
+    [for spheroids in elasticity](@ref th-mem-spheroids-elasticity), and
     [Particle assemblies and N-body schemes](@ref man-assemblies) for the
     assemblies it acts on.
 
@@ -22,8 +23,9 @@ highly conducting one. This page computes the same quantities with
 [`MultipoleExpansion`](@ref) and sets them beside the published values, read
 from the files below. It goes on with the stiffness of spheroids bonded by a
 spring [kushch2018](@cite), with ellipsoids bonded by a Kapitza interface
-[kushch2020](@cite), and with spheroids in a transversely isotropic matrix
-[kushch2014](@cite).
+[kushch2020](@cite), with spheroids in a transversely isotropic matrix
+[kushch2014](@cite), and with the stiffness of lattices of spheroids
+[kushch2013](@cite).
 
 ````@example multipole_spheroids
 using MeanFieldHomogenization
@@ -212,7 +214,7 @@ recovers:
 ````@example multipole_spheroids
 function maxwell_table()
     io = IOBuffer()
-    println(io, "| ``\\tilde h_c`` | ``(k_{11}, k_{33})/k_0`` at ``c = 0.5`` | published |")
+    println(io, "| ``\\\\tilde h_c`` | ``(k_{11}, k_{33})/k_0`` at ``c = 0.5`` | published |")
     println(io, "| :-- | :-- | :-- |")
     row = only(r for r in paper["tables"]["maxwell_lc"] if r["c"] == 0.5)
     for (label, key, interface) in (("1", "hc_1", kapitza(1.0)), ("10", "hc_10", kapitza(10.0)), ("∞", "hc_infinity", perfect))
@@ -277,7 +279,7 @@ function spring_estimate(e, D̃)
 end
 function spring_table()
     io = IOBuffer()
-    println(io, "| ``\\tilde D`` | ``e = 1/3`` | ``e = 3`` |")
+    println(io, "| ``\\\\tilde D`` | ``e = 1/3`` | ``e = 3`` |")
     println(io, "| :-- | :-- | :-- |")
     rows = elastic["tables"]["maxwell_aligned"]
     for D̃ in (1.0e-6, 1.0, 10.0, 1.0e6)
@@ -393,6 +395,52 @@ computed values do not move when the degree is raised:
 The higher fractions of the table, 0.45 and 0.5, approach the closest packing
 ``\pi/6`` of the lattice and need degrees beyond those run here.
 
+## 8. Stiffness of lattices of spheroids
+
+[kushch2013](@citet), Table 7.6, gives ``C^{\mathrm{hom}}_{3333}/\mu_0`` of spheroids of
+semi-axes ``(1, 1, \varepsilon)`` on an orthogonal lattice of periods
+proportional to them, with ``\nu_0 = \nu_1 = 0.3``, against the shear modulus
+ratio ``\mu_1/\mu_0`` (zero for cavities) and the volume fraction. The
+spheres, ``\varepsilon = 1``, are those of the application
+[Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres);
+the oblate spheroids follow, at the fraction 0.1 for both shapes and 0.3 for
+``\varepsilon = 0.5``.
+
+````@example multipole_spheroids
+book = JSON.parsefile(joinpath(pkgdir(MeanFieldHomogenization), "data", "literature", "kushch2013.json"))
+poisson_iso(μ) = TensISO{3}(2μ * 1.3 / 0.4, 2μ)          # (3κ, 2μ) at ν = 0.3
+function lattice_stiffness(ε, μ₁, c, nmax)
+    semi = (1.0, 1.0, ε)
+    cell = ParticleAssembly(; boundary = PeriodicBox(cbrt(4π / 3 / c) .* semi))
+    add_matrix!(cell, Dict(:C => poisson_iso(1.0)))
+    add_particle!(cell, :p, (0.0, 0.0, 0.0), Ellipsoid(semi...), Dict(:C => poisson_iso(μ₁)))
+    M = TensND.mandel(homogenize(cell, MultipoleExpansion(; nmax), :C), TensND.CanonicalBasis{3, Float64}())
+    return M[3, 3]
+end
+function lattice_table()
+    io = IOBuffer()
+    println(io, "| ``\\\\varepsilon`` | ``\\\\mu_1/\\\\mu_0`` | ``c = 0.1`` | ``c = 0.3`` |")
+    println(io, "| :-- | :-- | :-- | :-- |")
+    for row in book["tables"]["stiffness_spheroids"]
+        ε, μ₁ = row["aspect_ratio"], row["contrast"]
+        ε < 1 || continue
+        # a flat cavity converges more slowly in the degree
+        low = @sprintf("%.3f (%.3f)", lattice_stiffness(ε, μ₁, 0.1, ε == 0.2 && μ₁ == 0 ? 8 : 6), row["c_0.1"])
+        high = ε == 0.5 ? @sprintf("%.3f (%.3f)", lattice_stiffness(ε, μ₁, 0.3, 8), row["c_0.3"]) : "–"
+        println(io, "| ", ε, " | ", μ₁, " | ", low, " | ", high, " |")
+    end
+    return Markdown.parse(String(take!(io)))
+end
+lattice_table()
+````
+
+Each cell gives the computed value and, in parentheses, the published one.
+They agree to within one unit of the third decimal but at ``\varepsilon = 0.5``,
+``\mu_1/\mu_0 = 10``, ``c = 0.3``, where the book prints 5.675 and the
+computed value is 5.765, the same digits in another order; the published
+value is also below those of ``\varepsilon = 1`` (5.930) and
+``\varepsilon = 0.2`` (5.737), where the computed ones fall in between.
+
 ## Summary
 
 | result | source | recovered |
@@ -403,6 +451,7 @@ The higher fractions of the table, 0.45 and 0.5, approach the closest packing
 | low- and highly conducting interfaces | [kushch2015](@cite), Tables 6 and 8 | to the third decimal at `nmax = 5`, ``c = 0.2`` |
 | elastic spheroids with a spring interface, Maxwell estimate | [kushch2018](@cite), Table 2 | to the fourth decimal |
 | ellipsoids with a Kapitza interface, Maxwell estimate | [kushch2020](@cite), Table 2 | to the seventh decimal, degree by degree |
+| stiffness of lattices of spheroids | [kushch2013](@cite), Table 7.6 | to within one unit of the third decimal at `nmax = 6` to 8, but for one entry printed with its digits permuted |
 | spheroids in a transversely isotropic matrix, anisotropy parameter | [kushch2014](@cite), Table 5 | to the third decimal up to ``c = 0.4`` at `nmax = 8`, but for three entries at ``\kappa = 0.25`` |
 
 ```@raw html

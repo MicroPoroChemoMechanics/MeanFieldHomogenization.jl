@@ -4,7 +4,7 @@
   "key": "kushch2013",
   "doi": "10.1016/C2012-0-03565-X",
   "citation": "Kushch, Volodymyr I. (2013). Micromechanics of Composites: Multipole Expansion Approach. Elsevier. ISBN 9780124076839.",
-  "location": "Tables 3.1 to 3.3 (p. 67) and 5.1 to 5.3 (pp. 149-150); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
+  "location": "Tables 3.1 to 3.3 (p. 67), 5.1 to 5.3 (pp. 149-150) and 7.6 (p. 244); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
  },
  "transcription": {
   "from": "the published book (PDF), read on the page text",
@@ -603,6 +603,71 @@
     "c1212_contrast_10": 4.478,
     "c1212_contrast_1000": 10.72
    }
+  ],
+  "stiffness_spheroids": [
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 0,
+    "c_0.1": 2.799,
+    "c_0.3": 1.818,
+    "c_0.5": 1.048
+   },
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 10,
+    "c_0.1": 4.102,
+    "c_0.3": 5.93,
+    "c_0.5": 9.646
+   },
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 1000,
+    "c_0.1": 4.248,
+    "c_0.3": 6.887,
+    "c_0.5": 17.71
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 0,
+    "c_0.1": 2.656,
+    "c_0.3": 1.667,
+    "c_0.5": 0.945
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 10,
+    "c_0.1": 4.021,
+    "c_0.3": 5.675,
+    "c_0.5": 9.228
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 1000,
+    "c_0.1": 4.128,
+    "c_0.3": 6.652,
+    "c_0.5": 17.73
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 0,
+    "c_0.1": 2.523,
+    "c_0.3": 1.518,
+    "c_0.5": 0.829
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 10,
+    "c_0.1": 4.005,
+    "c_0.3": 5.737,
+    "c_0.5": 9.102
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 1000,
+    "c_0.1": 4.115,
+    "c_0.3": 6.708,
+    "c_0.5": 17.81
+   }
   ]
  },
  "notes": [
@@ -616,6 +681,7 @@
   "Table stiffness_sc: Table 5.1, p. 149. Effective stiffness of the simple cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
   "Table stiffness_bcc: Table 5.2, p. 150. Effective stiffness of the body-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
   "Table stiffness_fcc: Table 5.3, p. 150. Effective stiffness of the face-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
-  "Tables stiffness_bcc: the entries 2.6782 (c = 0.4, C1212, contrast 1000) and 6.2030 (c = 0.6, same column) are printed with four decimals in the book; they are transcribed as printed."
+  "Tables stiffness_bcc: the entries 2.6782 (c = 0.4, C1212, contrast 1000) and 6.2030 (c = 0.6, same column) are printed with four decimals in the book; they are transcribed as printed.",
+  "Table stiffness_spheroids: Table 7.6, p. 244, columns tmax = 15. C3333/mu0 of an orthogonal array of spheroids of semi-axes (1, 1, aspect_ratio), periods proportional to the semi-axes, nu0 = nu1 = 0.3, the contrast being mu1/mu0 (0 for cavities); the columns c_0.1 to c_0.5 are the volume fraction."
  ]
 }

@@ -74,6 +74,12 @@ end
 # An isotropic spheroid is its one-layer layered spheroid; an anisotropic one,
 # that of unit conductivity carrying its conductivity (`mem_anisotropic.jl`).
 _mem_spheroid_carrying(a₃, a₁, P::TensND.TensISO) = LayeredSpheroids.LayeredSpheroid((a₃,), (a₁,), (P,))
+_mem_spheroid_carrying(a₃, a₁, P) = throw(
+    ArgumentError(
+        "MultipoleExpansion: a spheroid of anisotropic stiffness is not taken; its moduli are " *
+            "isotropic (TensISO)"
+    )
+)
 _mem_spheroid_carrying(a₃, a₁, P::TensND.AbstractTens{2, 3}) = _MemAnisotropicSpheroid(
     LayeredSpheroids.LayeredSpheroid((a₃,), (a₁,), (TensND.TensISO{3}(one(a₁)),)),
     Array(TensND.canonical_components(P))
@@ -181,12 +187,13 @@ function _mem_spheroid_data(s::LayeredSpheroids.LayeredSpheroid, K₀, nmax::Int
             end
         end
     end
-    Π, surface = _mem_surface_projection(c, ξ₀, nmax)
+    Π, surface, _ = _mem_surface_projection(c, ξ₀, nmax)
     return _MemSpheroid{C, R}(c, ξ₀, scales, Z, Π, surface, _mem_spheroid_maps(C(c), nb)...)
 end
 
-# Quadrature of the outer surface ξ = ξ₀: the points, and the matrix Π that
-# turns the values there of a regular field into its coefficients a_k^l,
+# Quadrature of the outer surface ξ = ξ₀: the points, their weights in (η, φ),
+# and the matrix Π that turns the values there of a regular field into its
+# coefficients a_k^l,
 #     a_k^l = (2k+1)/(4π P_k^{|l|}(ξ₀)) Σ w conj(χ_k^l) u .
 function _mem_surface_projection(c::C, ξ₀::C, nmax::Int) where {C}
     R = real(C)
@@ -196,6 +203,7 @@ function _mem_surface_projection(c::C, ξ₀::C, nmax::Int) where {C}
     nb = _mem_block(nmax)
     Π = zeros(C, nb, nη * nφ)
     surface = zeros(R, 3, nη * nφ)
+    weights = zeros(R, nη * nφ)
     ρ₀, z₀ = real(c * sqrt(ξ₀^2 - 1)), real(c * ξ₀)      # transverse and axial semi-axes
     Pξ = [LayeredSpheroids.legendre_order_q(ξ₀, m, nmax)[1] for m in 0:nmax]
     for (j, (η, w)) in enumerate(zip(xg, wg))
@@ -205,6 +213,7 @@ function _mem_surface_projection(c::C, ξ₀::C, nmax::Int) where {C}
             φ = 2 * R(π) * (i - 1) / nφ
             col = (j - 1) * nφ + i
             surface[:, col] .= (ρ₀ * η̄ * cos(φ), ρ₀ * η̄ * sin(φ), z₀ * η)
+            weights[col] = w * (2 * R(π) / nφ)
             for k in 1:nmax, l in (-k):k
                 μ = abs(l)
                 χ = _mem_surface_harmonic(Pη[μ + 1][k + 1], l, φ)
@@ -212,26 +221,44 @@ function _mem_surface_projection(c::C, ξ₀::C, nmax::Int) where {C}
             end
         end
     end
-    return Π, surface
+    return Π, surface, weights
 end
 
 # χ_k^l from P_k^{|l|} (Ferrers): (−1)^l P e^{ilφ} for l ≥ 0, P e^{ilφ} for l < 0.
 _mem_surface_harmonic(P, l::Int, φ) = (l ≥ 0 && isodd(l) ? -P : P) * cis(l * φ)
 
-# Decaying spheroidal harmonics Ŷ_t^s (1 ≤ t ≤ nmax) of the spheroid at x.
+# Decaying spheroidal harmonics Ŷ_t^s (1 ≤ t ≤ nmax) of the spheroid at x,
+# from the table of their renormalized counterparts, F_t^s = (−1)^s κ_t F̃_t^s.
 function _mem_irregular!(F::AbstractVector, x, sph::_MemSpheroid, nmax::Int)
-    ξ, η, φ = _mem_spheroidal_coordinates(x, sph.c)
-    Q = LayeredSpheroids._legendre_q_orders(ξ, nmax, nmax)
-    for m in 0:nmax
-        Pη = LayeredSpheroids.legendre_order_p(η, m, nmax)[1]
-        for t in max(m, 1):nmax
-            radial = LayeredSpheroids._factorial_ratio(real(typeof(ξ)), t, m) * Q[t + 1, m + 1]
-            F[_mem_index(t, m)] = radial * _mem_surface_harmonic(Pη[t + 1], m, φ)
-            m > 0 && (F[_mem_index(t, -m)] = radial * _mem_surface_harmonic(Pη[t + 1], -m, φ))
-        end
+    F̃ = _mem_spheroidal_table(x, sph.c, nmax)
+    for t in 1:nmax, s in (-t):t
+        F[_mem_index(t, s)] = (isodd(s) ? -1 : 1) * _mem_spheroidal_scale(sph.c, t) * F̃[t, s]
     end
     return F
 end
+
+# The decaying spheroidal harmonics divided by (−1)^s κ_t, κ_t = c^{t+1}/(2t+1)!!,
+# F̃_t^s = (−1)^s F_t^s / κ_t, as the table of the spherical Y_t^s they tend to
+# far from the spheroid, for 0 ≤ t ≤ deg: the vector harmonics and the
+# solutions of the Lamé equation built on the Y_t^s then carry over to the
+# spheroid by replacing Y_t^s with F̃_t^s, which keeps the symmetry
+# F̃_t^{−s} = (−1)^s conj(F̃_t^s) of the table.
+function _mem_spheroidal_table(x, c, deg::Int)
+    ξ, η, φ = _mem_spheroidal_coordinates(x, c)
+    Q = LayeredSpheroids._legendre_q_orders(ξ, deg, deg)
+    R = real(typeof(ξ))
+    values = Vector{Complex{R}}(undef, Harmonics._packed(deg, deg))
+    for s in 0:deg
+        P = LayeredSpheroids.legendre_order_p(η, s, deg)[1]
+        for t in s:deg
+            F = LayeredSpheroids._factorial_ratio(R, t, s) * Q[t + 1, s + 1] * _mem_surface_harmonic(P[t + 1], s, φ)
+            values[Harmonics._packed(t, s)] = (isodd(s) ? -F : F) / _mem_spheroidal_scale(c, t)
+        end
+    end
+    return Harmonics.HarmonicTable(deg, values)
+end
+
+_mem_spheroidal_scale(c, t::Int) = c^(t + 1) / LayeredSpheroids._double_factorial(real(typeof(c)), 2t + 1)
 
 # Confocal coordinates (ξ, η, φ) of x for the focal distance c: c real, a
 # prolate spheroid, x₃ = c ξ η; c = −i f, an oblate one, ξ = i s with
@@ -297,6 +324,17 @@ end
 function _mem_eta_total(b::PeriodicBox, q, p, R, self::Bool, nmax::Int)
     L = box_periods(b)
     rn = _MEM_NEAR * (_mem_focal(q) + _mem_focal(p))
+    near = _mem_near_images(R, L, rn, self)
+    η = _mem_eta_far(q, p, _mem_far_sums(R, L, near, rn, _mem_far_degree(q, nmax)), nmax)
+    for n in near
+        η .+= _mem_eta_near(q, p, R .+ (n[1] * L[1], n[2] * L[2], n[3] * L[3]), nmax)
+    end
+    return η
+end
+
+# The images of a particle at R from another, other than the particle itself,
+# closer than rn.
+function _mem_near_images(R, L, rn, self::Bool)
     reach = ntuple(i -> ceil(Int, (rn + abs(TensND.primal(R[i]))) / TensND.primal(L[i])), 3)
     near = NTuple{3, Int}[]
     for n₁ in (-reach[1]):reach[1], n₂ in (-reach[2]):reach[2], n₃ in (-reach[3]):reach[3]
@@ -304,11 +342,7 @@ function _mem_eta_total(b::PeriodicBox, q, p, R, self::Bool, nmax::Int)
         x = TensND.primal.(R .+ (n₁ * L[1], n₂ * L[2], n₃ * L[3]))
         norm(x) < rn && push!(near, (n₁, n₂, n₃))
     end
-    η = _mem_eta_far(q, p, _mem_far_sums(R, L, near, rn, _mem_far_degree(q, nmax)), nmax)
-    for n in near
-        η .+= _mem_eta_near(q, p, R .+ (n[1] * L[1], n[2] * L[2], n[3] * L[3]), nmax)
-    end
-    return η
+    return near
 end
 
 # Sums of the decaying spherical harmonics over the images not in `near`, those
@@ -325,16 +359,20 @@ end
 const _MEM_EWALD_DEGREE = 8
 const _MEM_DIRECT_REACH = 8
 
-function _mem_far_sums(R, L, near, rn, deg::Int)
+# With `Val(true)` the biharmonic sums of `lattice_biharmonics` come along, the
+# image at x adding 𝒟_n^m r = −r² Y_n^m/(2n−1) to them above the Ewald degree.
+_mem_far_sums(R, L, near, rn, deg::Int) = first(_mem_far_sums(R, L, near, rn, deg, Val(false)))
+function _mem_far_sums(R, L, near, rn, deg::Int, bih::Val)
     V = prod(TensND.primal.(L))
     α = sqrt(π) / cbrt(V)
     if !isempty(near)
         rmin = minimum(norm(TensND.primal.(R .+ (n[1] * L[1], n[2] * L[2], n[3] * L[3]))) for n in near)
         α = min(α, 1 / (2 * rmin))
     end
-    low = first(Harmonics._lattice_sums(R, L, min(deg, _MEM_EWALD_DEGREE), Val(false), α; exclude = near))
+    low, lowρ = Harmonics._lattice_sums(R, L, min(deg, _MEM_EWALD_DEGREE), bih, α; exclude = near)
     values = zeros(eltype(low.values), Harmonics._packed(deg, deg))
     values[eachindex(low.values)] .= low.values
+    ρvalues = _mem_extended(lowρ, values)
     r₂ = _MEM_DIRECT_REACH * max(rn, minimum(TensND.primal.(L)))
     reach = ntuple(i -> ceil(Int, (r₂ + abs(TensND.primal(R[i]))) / TensND.primal(L[i])), 3)
     first_high = Harmonics._packed(_MEM_EWALD_DEGREE + 1, 0)
@@ -343,9 +381,30 @@ function _mem_far_sums(R, L, near, rn, deg::Int)
         r = norm(TensND.primal.(x))
         # the near images, and the particle itself
         (rn ≤ r ≤ r₂ && r > 0) || continue
-        values[first_high:end] .+= view(irregular_harmonics(x, deg).values, first_high:length(values))
+        Y = irregular_harmonics(x, deg)
+        values[first_high:end] .+= view(Y.values, first_high:length(values))
+        _mem_add_biharmonic!(ρvalues, Y, sum(abs2, x), _MEM_EWALD_DEGREE + 1)
     end
-    return Harmonics.HarmonicTable(deg, values)
+    return Harmonics.HarmonicTable(deg, values), _mem_table(deg, ρvalues)
+end
+
+# The biharmonic sums widened to the degree of `values`, or nothing.
+_mem_extended(::Nothing, values) = nothing
+function _mem_extended(low::Harmonics.HarmonicTable, values)
+    ρ = zero(values)
+    ρ[eachindex(low.values)] .= low.values
+    return ρ
+end
+_mem_table(deg::Int, ::Nothing) = nothing
+_mem_table(deg::Int, ρ::Vector) = Harmonics.HarmonicTable(deg, ρ)
+
+# 𝒟_n^m r = −r² Y_n^m/(2n−1) of one image, from the degree n₀ up.
+_mem_add_biharmonic!(::Nothing, Y, r², n₀::Int) = nothing
+function _mem_add_biharmonic!(ρ::Vector, Y, r², n₀::Int)
+    for n in n₀:Y.nmax, m in 0:n
+        ρ[Harmonics._packed(n, m)] -= r² * Y[n, m] / (2n - 1)
+    end
+    return ρ
 end
 
 # The uniform gradient −4π d/(3V) a dipole d of the lattice sends to every

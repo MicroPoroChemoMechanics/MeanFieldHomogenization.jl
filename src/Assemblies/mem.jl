@@ -130,8 +130,8 @@ end
 _mem_not_a_sphere(name::Symbol, geom) = throw(
     ArgumentError(
         "MultipoleExpansion: particle :$(name) is a $(nameof(typeof(geom))) that is not a " *
-            "sphere; in elasticity the scheme takes balls (an Ellipsoid of equal semi-axes) and " *
-            "LayeredSphere, spheroids being taken in conduction"
+            "sphere; the spheres of the scheme are balls (an Ellipsoid of equal semi-axes) and " *
+            "LayeredSphere"
     )
 )
 
@@ -174,6 +174,11 @@ function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop
     _mem_isotropic(K₀)
     names = particle_names(asm)
     geometries = [particle_geometry(asm, nm) for nm in names]
+    return _mem_kind_solve(Val(_mem_one_kind(geometries)), asm, K₀, prop, names, geometries, nmax)
+end
+
+# The one kind of the particles of an assembly.
+function _mem_one_kind(geometries)
     kinds = unique(_mem_kind.(geometries))
     length(kinds) == 1 || throw(
         ArgumentError(
@@ -181,7 +186,7 @@ function _mem_solve(asm::ParticleAssembly, K₀::TensND.AbstractTens{2, 3}, prop
                 "one kind of particle at a time"
         )
     )
-    return _mem_kind_solve(Val(only(kinds)), asm, K₀, prop, names, geometries, nmax)
+    return only(kinds)
 end
 
 # Spheres take the spherical harmonics, spheroids the spheroidal ones and

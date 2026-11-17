@@ -161,8 +161,9 @@ on finite and periodic assemblies ([theory](@ref th-mem)), spheroids in
 conduction ([theory](@ref th-mem-spheroids)), ellipsoids in conduction
 ([theory](@ref th-mem-ellipsoids)), anisotropic constituents in conduction
 with a matrix orthotropic in the axes of the assembly
-([theory](@ref th-mem-anisotropic)), and spheres in elasticity
-([theory](@ref th-mem-elasticity)). What the works of Kushch contain beyond
+([theory](@ref th-mem-anisotropic)), spheres in elasticity
+([theory](@ref th-mem-elasticity)) and spheroids in elasticity
+([theory](@ref th-mem-spheroids-elasticity)). What the works of Kushch contain beyond
 that, in the order in which it is to be added:
 
 - **Local fields** at a point of a sphere, from the regular field it receives,
@@ -171,11 +172,10 @@ that, in the order in which it is to be added:
   solution other than the uniform strain (the third one at the degree 2) has a
   non-zero mean strain over a ball, so the averages need the field inside each
   sphere and not the received uniform strain alone.
-- **Assemblies of spheroids in elasticity** (the spheroidal Lamé solutions and
-  their translation, kushch2013, chapter 7; one spheroid with a spring interface
-  is in), and **ellipsoids in elasticity** with a spring interface, alone and
-  interacting (Kushch, 2019); the fields of each spheroid and
-  ellipsoid in conduction; particles whose axes differ from those of an
+- **Ellipsoids in elasticity** with a spring interface, alone and interacting
+  (Kushch, 2019); in assemblies of spheroids, springs, layers, the stress
+  concentrations at the interfaces and penny-shaped cracks (kushch2013,
+  chapter 7); the fields of each spheroid and ellipsoid in conduction; particles whose axes differ from those of an
   anisotropic matrix, and imperfect interfaces with an anisotropic matrix
   [kushch2017](@cite).
 - A transversely isotropic elastic matrix, and fiber composites in 2D.

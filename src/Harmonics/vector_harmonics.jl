@@ -77,17 +77,19 @@ function vector_regular_harmonic(i::Integer, n::Integer, m::Integer, y::Harmonic
 end
 
 """
-    lame_irregular(i, n, m, x, ν) -> SVector{3}
+    lame_irregular(i, n, m, x, ν[, Y]) -> SVector{3}
 
 Decaying solution ``\\underline{U}^{(i)}_{nm}`` of the Lamé equation at the
 point `x`, for the Poisson ratio `ν`: the vector harmonics
 ``\\underline{Y}^{(1)}_{nm}`` and ``\\underline{Y}^{(2)}_{nm}``, and
 ``\\underline{U}^{(3)}_{nm} = 4(1-\\nu)\\,\\underline{Y}^{(3)}_{nm}
 - \\underline{\\operatorname{grad}}\\,(\\underline{x}\\cdot\\underline{Y}^{(3)}_{nm})``
-[kushch2013](@cite).
+[kushch2013](@cite). `Y`, the table of [`irregular_harmonics`](@ref) at `x` up
+to a degree `n + 1` or more, is computed when not given.
 """
-function lame_irregular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν)
-    Y = irregular_harmonics(x, n + 1)
+lame_irregular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν) =
+    lame_irregular(i, n, m, x, ν, irregular_harmonics(x, n + 1))
+function lame_irregular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν, Y::HarmonicTable)
     i < 3 && return vector_irregular_harmonic(i, n, m, Y)
     r² = sum(abs2, x)
     # grad(x·Y⁽³⁾) = grad(r² Y_n^m)/(2n−1) = (2 x Y_n^m + r² Y⁽¹⁾_nm)/(2n−1)
@@ -96,17 +98,20 @@ function lame_irregular(i::Integer, n::Integer, m::Integer, x::AbstractVector, �
 end
 
 """
-    lame_regular(i, n, m, x, ν) -> SVector{3}
+    lame_regular(i, n, m, x, ν[, y]) -> SVector{3}
 
 Regular solution ``\\underline{u}^{(i)}_{nm}`` of the Lamé equation at the point
 `x`, for the Poisson ratio `ν`: the counterpart of [`lame_irregular`](@ref) on
 the regular vector harmonics. The solutions of the lowest degrees are the
 dilatation ``\\underline{u}^{(3)}_{00}``, the translations
 ``\\underline{u}^{(1)}_{1m}``, the rotations ``\\underline{u}^{(2)}_{1m}`` and
-the uniform deviatoric strains ``\\underline{u}^{(1)}_{2m}``.
+the uniform deviatoric strains ``\\underline{u}^{(1)}_{2m}``. `y`, the table of
+[`regular_harmonics`](@ref) at `x` up to a degree `n + 1` or more, is computed
+when not given.
 """
-function lame_regular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν)
-    y = regular_harmonics(x, n + 1)
+lame_regular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν) =
+    lame_regular(i, n, m, x, ν, regular_harmonics(x, n + 1))
+function lame_regular(i::Integer, n::Integer, m::Integer, x::AbstractVector, ν, y::HarmonicTable)
     i < 3 && return vector_regular_harmonic(i, n, m, y)
     r² = sum(abs2, x)
     # grad(x·y⁽³⁾) = −grad(r² y_n^m)/(2n+3) = −(2 x y_n^m + r² y⁽¹⁾_nm)/(2n+3)

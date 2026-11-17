@@ -2,7 +2,10 @@
 #  mem_elasticity.jl — the multipole expansion method in elasticity.
 #
 #  The structure is that of conduction (`mem.jl`), with three solutions of the
-#  Lamé equation per harmonic instead of one harmonic function. In the matrix,
+#  Lamé equation per harmonic instead of one harmonic function. This file
+#  writes it for spheres; a particle of another shape enters the same system
+#  through its response, from the received solutions about its center to the
+#  decaying spherical solutions it sends (`mem_spheroid_elasticity.jl`). In the matrix,
 #  of shear modulus μ₀ and Poisson ratio ν₀,
 #
 #       u(x) = E·x + Σ_p Σ_{n′,m′} Σ_i b⁽ⁱ⁾⁽ᵖ⁾_n′m′ U⁽ⁱ⁾_n′m′(x − X_p) ,
@@ -71,18 +74,41 @@
     ElasticMultipoleSolution
 
 Solution of the multipole expansion of an assembly in elasticity: for each
-sphere, in the order of `names`, its radius (`radii`), its responses
-``(\\mathbf{Z}_n)_{ij}/R^{2n+1+j-i}``, made dimensionless (`responses[q][n + 1]`), and the scaled
-coefficients it receives under the six unit strains of the Kelvin-Mandel basis
-(`received`, one column per strain).
+particle, in the order of `names`, the radius of its scaling (`radii`), its
+response (`responses[q]`), the matrix that turns the scaled coefficients it
+receives into the scaled coefficients of the decaying spherical solutions it
+sends, and the scaled coefficients it receives under the six unit strains of
+the Kelvin-Mandel basis (`received`, one column per strain).
 """
 struct ElasticMultipoleSolution{T, C}
     names::Vector{Symbol}
     radii::Vector{T}
-    responses::Vector{Vector{Matrix{T}}}
+    responses::Vector{Matrix{C}}
     received::Matrix{C}
     nmax::Int
 end
+
+# A sphere in the elastic expansion: the radius R of the scaling and the scaled
+# response Ẑ, from the received solutions (j, n, m) to the sent ones (i, n, m),
+# both up to the degree nmax.
+struct _MemElasticSphere{T}
+    R::T
+    Ẑ::Matrix{T}
+end
+
+# The response of a sphere from the 3 × 3 matrices 𝐙_n of `harmonic_response`,
+# made dimensionless, 𝐙̂_n = 𝐙_n / R^{2n+1+j−i}; the degree and the order are kept.
+function _mem_elastic_sphere(Z::Vector, R::T, nmax::Int) where {T}
+    Ẑ = zeros(T, _mem_eblock(nmax), _mem_eblock(nmax))
+    for n in 0:nmax, m in (-n):n, i in _mem_sent(n), j in _mem_received(n)
+        Ẑ[_mem_eindex(i, n, m), _mem_eindex(j, n, m)] = Z[n + 1][i, j] / R^(2n + 1 + j - i)
+    end
+    return _MemElasticSphere(R, Ẑ)
+end
+
+# The highest degree a particle sends: nmax for a sphere, whose response keeps
+# the degree.
+_mem_sent_degree(d::_MemElasticSphere, nmax::Int) = nmax
 
 function _mem_solve(asm::ParticleAssembly, C₀::TensND.AbstractTens{4, 3}, prop::Symbol, nmax::Int)
     _mem_isotropic(C₀)
@@ -102,44 +128,60 @@ function _mem_solve(asm::ParticleAssembly, C₀::TensND.AbstractTens{4, 3}, prop
         )
     )
     names = particle_names(asm)
-    spheres = Any[_mem_sphere(particle_geometry(asm, nm), asm, nm, prop) for nm in names]
-    R = _common_eltype([LayeredSpheres.outer_radius(sphere) for sphere in spheres])
-    raw = [[harmonic_response(sphere, C₀, n) for n in 0:nmax] for sphere in spheres]
+    geometries = [particle_geometry(asm, nm) for nm in names]
+    particles = _mem_elastic_particles(Val(_mem_one_kind(geometries)), asm, C₀, prop, names, geometries, nmax)
     centers = [particle_center(asm, nm) for nm in names]
-    TX = mapreduce(eltype, promote_type, centers)
-    T = float(promote_type(eltype(R), TX, typeof(ν₀), mapreduce(Z -> eltype(first(Z)), promote_type, raw)))
-    Rᵀ = convert(Vector{T}, R)
-    # 𝐙̂_n = 𝐙_n / R^{2n+1+j−i}
-    Ẑ = [
-        [T[raw[q][n + 1][i, j] / Rᵀ[q]^(2n + 1 + j - i) for i in 1:3, j in 1:3] for n in 0:nmax]
-            for q in eachindex(spheres)
-    ]
+    # a center given as a tuple may mix plain numbers and one carrying a derivative
+    TX = mapreduce(c -> mapreduce(typeof, promote_type, c), promote_type, centers)
     X = [SVector{3, TX}(c) for c in centers]
-    â = _mem_vector_system(Rᵀ, Ẑ, X, T(ν₀), asm.boundary, nmax)
-    return ElasticMultipoleSolution(copy(names), Rᵀ, Ẑ, â, nmax)
+    â = _mem_vector_system(particles, X, ν₀, asm.boundary, nmax)
+    C = eltype(â)
+    return ElasticMultipoleSolution(
+        copy(names), [real(C)(d.R) for d in particles], [Matrix{C}(d.Ẑ) for d in particles], â, nmax
+    )
 end
 
+function _mem_elastic_particles(::Val{:sphere}, asm, C₀, prop::Symbol, names, geometries, nmax::Int)
+    spheres = Any[_mem_sphere(g, asm, nm, prop) for (g, nm) in zip(geometries, names)]
+    # one element type for all, any radius or response possibly carrying a derivative
+    R = _common_eltype([LayeredSpheres.outer_radius(sphere) for sphere in spheres])
+    raw = [[harmonic_response(sphere, C₀, n) for n in 0:nmax] for sphere in spheres]
+    T = float(promote_type(eltype(R), mapreduce(Z -> eltype(first(Z)), promote_type, raw)))
+    return [_mem_elastic_sphere(raw[q], T(R[q]), nmax) for q in eachindex(spheres)]
+end
+
+function _mem_elastic_particles(::Val{:spheroid}, asm, C₀, prop::Symbol, names, geometries, nmax::Int)
+    κ₀, μ₀ = TensND.k_mu(C₀)
+    ν₀ = LayeredSpheres._lame_poisson(κ₀, μ₀)
+    raw = [_mem_elastic_spheroid(_mem_spheroid(g, asm, nm, prop), nm, κ₀, μ₀, ν₀, nmax) for (g, nm) in zip(geometries, names)]
+    C = mapreduce(d -> eltype(d.Ẑ), promote_type, raw)
+    return [_mem_convert(d, C) for d in raw]
+end
+
+_mem_elastic_particles(::Val{kind}, args...) where {kind} = throw(
+    ArgumentError("MultipoleExpansion: in elasticity the particles are spheres or spheroids, not $(kind)s")
+)
+
 # Function barrier, as in conduction. Returns the scaled coefficients received
-# by every sphere, one column per unit strain of the Kelvin-Mandel basis.
-function _mem_vector_system(
-        R::Vector{T}, Ẑ::Vector{Vector{Matrix{T}}}, X::Vector, ν₀::T, boundary, nmax::Int
-    ) where {T}
-    N, n = length(R), _mem_eblock(nmax)
-    _check_system_size(N * n, Complex{T}, N, nmax)
-    M = zeros(Complex{T}, N * n, N * n)
-    rhs = zeros(Complex{T}, N * n, 6)
-    norms = [harmonic_norm(n, m) for n in 0:nmax for m in (-n):n]
+# by every particle, one column per unit strain of the Kelvin-Mandel basis.
+function _mem_vector_system(particles::Vector, X::Vector, ν₀, boundary, nmax::Int)
+    T = float(promote_type(eltype(eltype(X)), typeof(ν₀), mapreduce(d -> real(eltype(d.Ẑ)), promote_type, particles)))
+    C = Complex{T}
+    N, n = length(particles), _mem_eblock(nmax)
+    _check_system_size(N * n, C, N, nmax)
+    M = zeros(C, N * n, N * n)
+    rhs = zeros(C, N * n, 6)
+    K = maximum(d -> _mem_sent_degree(d, nmax), particles)
+    norms = [harmonic_norm(k, m) for k in 0:K for m in (-k):k]
     for q in 1:N
-        oq = (q - 1) * n
-        for i in 1:n
-            M[oq + i, oq + i] = one(T)
+        rows = ((q - 1) * n + 1):(q * n)
+        for i in rows
+            M[i, i] = one(T)
         end
-        _mem_remote_strain!(rhs, oq, R[q], ν₀)
+        _mem_remote_strain!(rhs, rows[1] - 1, T(particles[q].R), T(ν₀))
         for p in 1:N
-            W = _mem_vector_translation(boundary, X[q] - X[p], p == q, 2 * nmax)
-            W === nothing && continue
-            _mem_couple_vector!(M, oq, (p - 1) * n, W..., R[q], R[p], Ẑ[p], ν₀, norms, nmax)
-            _mem_vector_background!(M, oq, (p - 1) * n, boundary, R[q], R[p], Ẑ[p], ν₀)
+            cols = ((p - 1) * n + 1):(p * n)
+            _mem_couple_elastic!(M, rows, cols, boundary, particles[q], particles[p], X[q] - X[p], p == q, ν₀, norms, nmax)
         end
     end
     return M \ rhs
@@ -177,23 +219,40 @@ function _mem_remote_strain!(rhs::Matrix{Complex{T}}, oq::Int, R::T, ν₀::T) w
     return rhs
 end
 
-# Block of the field sphere p sends to sphere q: for each solution received
-# (j, n, m) and each one sent (i, n′, m′), the translation coefficient times the
-# response of p, which turns what p receives (the unknowns) into what it sends.
-function _mem_couple_vector!(M::Matrix, oq::Int, op::Int, Y, r, Rq, Rp, Ẑp, ν₀, norms, nmax::Int)
+# The field particle p sends to particle q: the translation of its decaying
+# spherical solutions to the regular ones about q, times its response, which
+# turns what p receives (the unknowns) into what it sends; and the uniform
+# background of a periodic array.
+function _mem_couple_elastic!(M, rows, cols, boundary, dq, dp, r, self::Bool, ν₀, norms, nmax::Int)
+    W = _mem_vector_translation(boundary, r, self, nmax + _mem_sent_degree(dp, nmax))
+    return _mem_couple_far!(M, rows, cols, boundary, W, dq, dp, ν₀, norms, nmax)
+end
+
+# The same from the tables W of the translation (`nothing` for none).
+function _mem_couple_far!(M, rows, cols, boundary, W, dq, dp, ν₀, norms, nmax::Int)
+    if W !== nothing
+        T = _mem_vector_translation_matrix(W..., dq.R, dp.R, ν₀, norms, nmax, _mem_sent_degree(dp, nmax))
+        @views M[rows, cols] .-= T * dp.Ẑ
+    end
+    _mem_vector_background!(M, rows, cols, boundary, dq.R, dp.R, dp.Ẑ, ν₀)
+    return M
+end
+
+# The scaled coefficient a⁽ʲ⁾_nm received about q per scaled coefficient b⁽ⁱ⁾_n′m′
+# sent by p, n ≤ nmax and n′ ≤ K (`lame_translation`).
+function _mem_vector_translation_matrix(Y, r, Rq, Rp, ν₀, norms, nmax::Int, K::Int)
+    T = promote_type(eltype(Y.values), typeof(ν₀), typeof(Rq), typeof(Rp))
+    W = zeros(T, _mem_eblock(nmax), _mem_eblock(K))
     for n in 0:nmax, m in (-n):n, j in _mem_received(n)
-        row = oq + _mem_eindex(j, n, m)
+        row = _mem_eindex(j, n, m)
         wq = Rq^(n - 2 + j) / norms[_mem_norm_index(n, m)]
         isodd(n + m) && (wq = -wq)
-        for n′ in 0:nmax, m′ in (-n′):n′, i in _mem_sent(n′)
+        for n′ in 0:K, m′ in (-n′):n′, i in _mem_sent(n′)
             a, b = lame_translation(i, j, n′, n, m′, m, Y, r)
-            w = wq * (a + 4 * (1 - ν₀) * b) * Rp^(n′ + 3 - i) / norms[_mem_norm_index(n′, m′)]
-            for j′ in _mem_received(n′)
-                M[row, op + _mem_eindex(j′, n′, m′)] -= w * Ẑp[n′ + 1][i, j′]
-            end
+            W[row, _mem_eindex(i, n′, m′)] += wq * (a + 4 * (1 - ν₀) * b) * Rp^(n′ + 3 - i) / norms[_mem_norm_index(n′, m′)]
         end
     end
-    return M
+    return W
 end
 
 # Tables of the translation from sphere p to sphere q: the harmonics at the
@@ -215,33 +274,31 @@ _mem_vector_translation(b::PeriodicBox, r, self::Bool, nmax::Int) =
 #   U⁽³⁾_2m → [8d/3 − 4c(1−ν₀)/3] N_2m² u⁽¹⁾_2m = (8π/45V)(5ν₀ − 4) N_2m² u⁽¹⁾_2m ,
 # and nothing at higher degrees. U⁽³⁾_1m, a point force, would add a quadratic
 # field: a sphere in equilibrium never sends it (its response is zero there).
-_mem_vector_background!(M, oq::Int, op::Int, ::MixedBC, Rq, Rp, Ẑp, ν₀) = M
-function _mem_vector_background!(M, oq::Int, op::Int, b::PeriodicBox, Rq, Rp, Ẑp, ν₀)
+_mem_vector_background!(M, rows, cols, ::MixedBC, Rq, Rp, Ẑp, ν₀) = M
+function _mem_vector_background!(M, rows, cols, b::PeriodicBox, Rq, Rp, Ẑp, ν₀)
     V = prod(box_periods(b))
     c = 2π / (3 * V)
     γ₀ = (4 * ν₀ - 2) / 3
     # (sent i, n′; received j, n; factor without N²): the order m is kept
-    _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 1, 0, 3, 0, 0, 2 * c / γ₀)
+    _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 1, 0, 3, 0, 0, 2 * c / γ₀)
     for m in -1:1
         N² = harmonic_norm(1, m)^2
-        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 1, 1, 1, 1, m, -2 * c * N²)
-        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 2, 1, 2, 1, m, 4 * c * N²)
+        _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 1, 1, 1, 1, m, -2 * c * N²)
+        _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 2, 1, 2, 1, m, 4 * c * N²)
     end
     for m in -2:2
         N² = harmonic_norm(2, m)^2
-        _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, 3, 2, 1, 2, m, 8π / (45 * V) * (5 * ν₀ - 4) * N²)
+        _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, 3, 2, 1, 2, m, 8π / (45 * V) * (5 * ν₀ - 4) * N²)
     end
     return M
 end
 
-# The received coefficient a⁽ʲ⁾_nm of sphere q gains β b⁽ⁱ⁾_nm of sphere p, in the
-# scaled unknowns of `_mem_vector_system`.
-function _mem_background_term!(M, oq, op, Rq, Rp, Ẑp, i, n′, j, n, m, β)
+# The received coefficient a⁽ʲ⁾_nm of q gains β b⁽ⁱ⁾_n′m of p, in the scaled
+# unknowns of `_mem_vector_system`.
+function _mem_background_term!(M, rows, cols, Rq, Rp, Ẑp, i, n′, j, n, m, β)
     N = harmonic_norm(n, m)
     w = β * Rq^(n - 2 + j) * Rp^(n′ + 3 - i) / (N * N)
-    for j′ in _mem_received(n′)
-        M[oq + _mem_eindex(j, n, m), op + _mem_eindex(j′, n′, m)] -= w * Ẑp[n′ + 1][i, j′]
-    end
+    @views M[rows[_mem_eindex(j, n, m)], cols] .-= w .* Ẑp[_mem_eindex(i, n′, m), :]
     return M
 end
 
@@ -265,14 +322,11 @@ function _mem_contribution(
     Σ = zeros(T, 6, 6)
     h = sqrt(T(2))
     for q in eachindex(sol.names)
-        oq = (q - 1) * n
         R² = sol.radii[q]^2
-        Ẑ₀, Ẑ₂ = sol.responses[q][1], sol.responses[q][3]
-        # b⁽¹⁾_00 = b̂ R² and b⁽³⁾_2m = b̂ R² / N_2m, with b̂ = 𝐙̂ â
-        b₀ = Ẑ₀[1, 3] * R² .* view(sol.received, oq + 1, :)
-        b₂(m) = (R² / N₂[m + 1]) .* sum(
-            Ẑ₂[3, j] .* view(sol.received, oq + _mem_eindex(j, 2, m), :) for j in 1:3
-        )
+        # the sent coefficients, b⁽¹⁾_00 = b̂ R² and b⁽³⁾_2m = b̂ R² / N_2m
+        b̂ = sol.responses[q] * view(sol.received, ((q - 1) * n + 1):(q * n), :)
+        b₀ = R² .* view(b̂, _mem_eindex(1, 0, 0), :)
+        b₂(m) = (R² / N₂[m + 1]) .* view(b̂, _mem_eindex(3, 2, m), :)
         tr_τ = 24π * μ₀ * (1 - ν₀) / (1 - 2 * ν₀) .* real.(b₀)
         dev = -32π * μ₀ * (1 - ν₀) .* real.(b₂(0))               # 2τ₃₃ − τ₁₁ − τ₂₂
         q₁ = -16π * μ₀ * (1 - ν₀) .* b₂(1)                      # τ₁₃ − i τ₂₃
