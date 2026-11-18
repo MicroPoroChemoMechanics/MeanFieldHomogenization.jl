@@ -124,13 +124,13 @@ for (r, B, b) in zip(rice_pts, Brice, brice)
 end
 ````
 
-A crack of radius ``R_{\mathrm{eff}}`` without contact has the same normal
-compliance when ``R_{\mathrm{eff}}^3 B^{\mathrm{penny}}_{nn} = a^3 B_{nn}``:
+A crack of radius ``R_{\mathrm{eq}}`` without contact has the same normal
+compliance when ``R_{\mathrm{eq}}^3 B^{\mathrm{penny}}_{nn} = a^3 B_{nn}``:
 
 ````@example rice_cracks
 plot(
     ratios .^ 2, [cbrt(B[3, 3] / Bp[3, 3]) for B in Bopen];
-    xlabel = "area of contact / area of the penny, (c/a)²", ylabel = "R_eff / a",
+    xlabel = "area of contact / area of the penny, (c/a)²", ylabel = "R_eq / a",
     legend = false, lw = 2, size = (620, 380)
 )
 ````

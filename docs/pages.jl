@@ -84,11 +84,7 @@ pages = [
             "theory/cluster_model.md",
             "theory/eim.md",
             "theory/multipole_expansion.md",
-            "theory/multipole_expansion_elasticity.md",
             "theory/multipole_expansion_spheroids.md",
-            "theory/multipole_expansion_spheroids_elasticity.md",
-            "theory/multipole_expansion_ellipsoids.md",
-            "theory/multipole_expansion_ellipsoids_elasticity.md",
             "theory/multipole_expansion_anisotropic.md",
             "theory/multipole_expansion_cracks.md",
             # Not a scheme: what every scheme's concentration tensors give

@@ -2256,35 +2256,35 @@ group = "Poromechanics and N-body models"
 tex = 'y'
 label = "y"
 name = "regular solid harmonic of degree n and order m"
-pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = 'Y'
 label = "Y"
 name = "decaying solid harmonic of degree n and order m"
-pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = '\chi'
 label = "χ"
 name = "surface harmonic of degree n and order m"
-pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = 'a'
 label = "a"
 name = "coefficient of a regular solid harmonic, or of a regular Lamé solution, in the field a particle receives"
-pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = 'b'
 label = "b"
 name = "coefficient of a decaying solid harmonic, or of a decaying Lamé solution, in the field a particle sends"
-pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
@@ -2305,7 +2305,7 @@ group = "Poromechanics and N-body models"
 tex = '\mathbf{Z}'
 label = "Z"
 name = "response of a sphere to the harmonic of degree n in elasticity (3 × 3 matrix), or of a spheroid to the harmonics of order m (matrix over the degrees)"
-pages = ["theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
@@ -2333,14 +2333,14 @@ group = "Poromechanics and N-body models"
 tex = '\mathbb{E}'
 label = "𝔼"
 name = "interior ellipsoidal harmonic of degree n"
-pages = ["theory/multipole_expansion_ellipsoids.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = '\mathbb{F}'
 label = "𝔽"
 name = "exterior ellipsoidal harmonic of degree n"
-pages = ["theory/multipole_expansion_ellipsoids.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
@@ -2348,14 +2348,14 @@ tex = '\rho'
 label = "ρ"
 name = "ellipsoidal coordinate, constant on the confocal ellipsoids"
 unit = "m"
-pages = ["theory/multipole_expansion_ellipsoids.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
 tex = '\rho_{\mathrm{K}}'
 label = "ρ_K"
 name = "thermal resistance of a Kapitza interface on an ellipsoid"
-pages = ["theory/multipole_expansion_ellipsoids.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
@@ -2393,7 +2393,7 @@ group = "Poromechanics and N-body models"
 tex = '\tilde{F}'
 label = "F̃"
 name = "decaying spheroidal harmonic divided by (−1)^m κ_n, tending to the spherical one"
-pages = ["theory/multipole_expansion_spheroids_elasticity.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
 
 [[symbol]]
 group = "Poromechanics and N-body models"
@@ -2401,4 +2401,4 @@ tex = '\kappa_n'
 label = "κ_n"
 name = "far-field factor of the decaying spheroidal harmonics of degree n, c^{n+1}/(2n+1)!!"
 unit = ""
-pages = ["theory/multipole_expansion_spheroids_elasticity.md"]
+pages = ["theory/multipole_expansion_spheroids.md"]
