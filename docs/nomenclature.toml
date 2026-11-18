@@ -1466,7 +1466,7 @@ tex = '\rho'
 label = "ρ"
 name = "thermal resistance of a Kapitza interface"
 unit = ""
-pages = ["theory/layered_sphere.md", "theory/layered_spheroid.md", "theory/laminate.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/layered_spheroid_effective.md"]
+pages = ["theory/multipole_expansion.md", "theory/layered_sphere.md", "theory/layered_spheroid.md", "theory/laminate.md", "tutorials/generated/layered_spheroid_interfaces.md", "tutorials/generated/layered_spheroid_hc.md", "tutorials/generated/layered_spheroid_effective.md"]
 
 [[symbol]]
 group = "Interfaces and layered inclusions"
@@ -2250,3 +2250,155 @@ label = "RH"
 name = "relative humidity"
 unit = "1"
 pages = ["applications/aging_basic_creep.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'y'
+label = "y"
+name = "regular solid harmonic of degree n and order m"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'Y'
+label = "Y"
+name = "decaying solid harmonic of degree n and order m"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\chi'
+label = "χ"
+name = "surface harmonic of degree n and order m"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'a'
+label = "a"
+name = "coefficient of a regular solid harmonic, or of a regular Lamé solution, in the field a particle receives"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = 'b'
+label = "b"
+name = "coefficient of a decaying solid harmonic, or of a decaying Lamé solution, in the field a particle sends"
+pages = ["theory/multipole_expansion.md", "theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\zeta'
+label = "ζ"
+name = "response of a sphere to the harmonic of degree n in conduction"
+pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\underline{H}'
+label = "H"
+name = "remote temperature gradient"
+pages = ["theory/multipole_expansion.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbf{Z}'
+label = "Z"
+name = "response of a sphere to the harmonic of degree n in elasticity (3 × 3 matrix), or of a spheroid to the harmonics of order m (matrix over the degrees)"
+pages = ["theory/multipole_expansion_elasticity.md", "theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\hat{y}'
+label = "ŷ"
+name = "regular spheroidal solid harmonic of degree n and order m"
+pages = ["theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\hat{Y}'
+label = "Ŷ"
+name = "decaying spheroidal solid harmonic of degree n and order m"
+pages = ["theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\eta'
+label = "η"
+name = "coefficient of the translation of a decaying spheroidal harmonic on the regular ones of another particle"
+pages = ["theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{E}'
+label = "𝔼"
+name = "interior ellipsoidal harmonic of degree n"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbb{F}'
+label = "𝔽"
+name = "exterior ellipsoidal harmonic of degree n"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\rho'
+label = "ρ"
+name = "ellipsoidal coordinate, constant on the confocal ellipsoids"
+unit = "m"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\rho_{\mathrm{K}}'
+label = "ρ_K"
+name = "thermal resistance of a Kapitza interface on an ellipsoid"
+pages = ["theory/multipole_expansion_ellipsoids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\mathbf{L}'
+label = "<b>L</b>"
+name = "affine map that makes an orthotropic matrix isotropic, of determinant one"
+unit = "1"
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\bar{k}'
+label = "k̄"
+name = "geometric mean of the principal conductivities of the matrix"
+unit = ""
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\boldsymbol{\Lambda}'
+label = "<b>Λ</b>"
+name = "Cholesky factor of the conductivity of an anisotropic particle"
+pages = ["theory/multipole_expansion_anisotropic.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\varpi'
+label = "ϖ"
+name = "anisotropy parameter of an effective conductivity"
+unit = "1"
+pages = ["theory/multipole_expansion_anisotropic.md", "applications/generated/multipole_spheroids.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\tilde{F}'
+label = "F̃"
+name = "decaying spheroidal harmonic divided by (−1)^m κ_n, tending to the spherical one"
+pages = ["theory/multipole_expansion_spheroids_elasticity.md"]
+
+[[symbol]]
+group = "Poromechanics and N-body models"
+tex = '\kappa_n'
+label = "κ_n"
+name = "far-field factor of the decaying spheroidal harmonics of degree n, c^{n+1}/(2n+1)!!"
+unit = ""
+pages = ["theory/multipole_expansion_spheroids_elasticity.md"]

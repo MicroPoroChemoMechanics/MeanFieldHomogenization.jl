@@ -148,11 +148,20 @@ then has its page, with its figure, its assumption and its equations.
 | [Laminate](@ref th-laminate) | a periodic stack solved exactly: no inclusion at all, the interface algebra replaces the Hill tensor |
 | [The cluster model](@ref th-cluster) | the mean strain of every inclusion, resolved inside a cluster [molinari1996](@cite) |
 | [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
+| [The multipole expansion method](@ref th-mem) | the whole field around each sphere, as a series of harmonics carried from one center to the next [kushch2013](@cite) |
+| [The multipole expansion method in elasticity](@ref th-mem-elasticity) | the three solutions of the Lamé equation per harmonic, the response of a sphere as a matrix, and their translation |
+| [The multipole expansion method for spheroids](@ref th-mem-spheroids) | spheroidal harmonics, the response of a layered spheroid at any degree and order, and the translation between close spheroids |
+| [The multipole expansion method for spheroids in elasticity](@ref th-mem-spheroids-elasticity) | the solutions of the Lamé equation built on the spheroidal harmonics, the response of a spheroid by least squares on a meridian, and the reading of a close neighbor |
+| [The multipole expansion method for ellipsoids](@ref th-mem-ellipsoids) | Lamé functions and ellipsoidal harmonics, the response of an ellipsoid with a Kapitza interface, and the translation between ellipsoids |
+| [The multipole expansion method for ellipsoids in elasticity](@ref th-mem-ellipsoids-elasticity) | the Papkovich–Neuber potentials on the ellipsoidal harmonics, the response of an ellipsoid bonded by springs, and its spherical form |
+| [The multipole expansion method with anisotropic constituents](@ref th-mem-anisotropic) | the affine map that makes an orthotropic matrix isotropic, and the response of a particle of anisotropic conductivity |
+| [The multipole expansion method for penny-shaped cracks](@ref th-mem-cracks) | the crack as the focal disk of its oblate coordinates, its response in conduction and in elasticity, and the reading of a close neighbor through the flux or the traction on its plane |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
-The cluster model and the equivalent inclusion method drop the one-site
-assumption: instead of averaging the interaction between inclusions, they
-resolve it pair by pair, and therefore need to know *where* the inclusions are.
+The cluster model, the equivalent inclusion method and the multipole expansion
+method drop the one-site assumption: instead of averaging the interaction
+between inclusions, they resolve it, and therefore need to know *where* the
+inclusions are.
 Every scheme also estimates the concentration tensors of the phases, and the
 last page draws from them what the effective stiffness alone does not give.
 

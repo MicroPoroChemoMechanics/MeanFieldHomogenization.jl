@@ -47,7 +47,7 @@ package already does is described in the [manual](@ref man-index) and the
 - **Finite-element inclusions**, behind the `FEBackend` interface (see
   [FE inclusions](@ref man-fe-inclusions)):
   - an **anisotropic reference medium**. The corrected boundary data needs
-    ``\nabla\mathbb G``, which `green_function_aniso` does not expose — the
+    ``\operatorname{\mathbf{grad}}\,\mathbb G``, which `green_function_aniso` does not expose — the
     Pan-Chou closed form in the transversely isotropic case, or a differentiated
     Barnett-Willis integral, would.
   - more than one inclusion, or a **non-spherical envelope**, in the
@@ -153,6 +153,33 @@ certify the field that produces them. So:
   new algorithm in wider precision only confirms itself; the reference used in
   `test/LayeredSpheroids/test_legendre_stability.jl` is the *original* upward
   recurrence at 600 bits, where the instability does not bite.
+
+## Multipole expansion method — remaining pieces
+
+[`MultipoleExpansion`](@ref) treats spheres in an isotropic matrix: conduction
+on finite and periodic assemblies ([theory](@ref th-mem)), spheroids in
+conduction ([theory](@ref th-mem-spheroids)), ellipsoids in conduction
+([theory](@ref th-mem-ellipsoids)), anisotropic constituents in conduction
+with a matrix orthotropic in the axes of the assembly
+([theory](@ref th-mem-anisotropic)), spheres in elasticity
+([theory](@ref th-mem-elasticity)), spheroids in elasticity
+([theory](@ref th-mem-spheroids-elasticity)) and ellipsoids in elasticity with
+springs ([theory](@ref th-mem-ellipsoids-elasticity)), and penny-shaped cracks in conduction and
+in elasticity ([theory](@ref th-mem-cracks)). What the works of Kushch contain beyond
+that, in the order in which it is to be added:
+
+- **Local fields** at a point of a sphere, from the regular field it receives,
+  and the parameter lens of a radius for a layered sphere.
+- **Concentration tensors in elasticity**: unlike in conduction, a regular
+  solution other than the uniform strain (the third one at the degree 2) has a
+  non-zero mean strain over a ball, so the averages need the field inside each
+  sphere and not the received uniform strain alone.
+- In assemblies of spheroids, the stress intensity factors of the cracks
+  (kushch2013, chapter 7), layers, and the stress concentrations at the interfaces of spheroids and
+  ellipsoids; the fields of each spheroid and ellipsoid in conduction; particles whose axes differ from those of an
+  anisotropic matrix, and imperfect interfaces with an anisotropic matrix
+  [kushch2017](@cite).
+- A transversely isotropic elastic matrix, and fiber composites in 2D.
 
 ## N-body schemes — remaining pieces
 

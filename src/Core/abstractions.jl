@@ -298,6 +298,18 @@ second-order conductivities, the gradient concentration tensor
 function gradient_gradient_concentration end
 
 """
+    harmonic_response(incl, P₀, n) -> Number
+
+Response of an inclusion to one harmonic of degree `n` of the field in a matrix
+of property `P₀`: the amplitude of the decaying harmonic it sends back per unit
+amplitude of the regular harmonic it receives. The uniform remote field of
+Eshelby's problem is the lowest degree; a scheme that resolves the field around
+each inclusion, such as [`MultipoleExpansion`](@ref MeanFieldHomogenization.Schemes.MultipoleExpansion),
+needs every degree up to its truncation.
+"""
+function harmonic_response end
+
+"""
     flux_gradient_concentration(incl, P₁, P₀; kw...) -> AbstractTens
 
 Dilute flux concentration tensor per unit remote gradient: the mean stress in

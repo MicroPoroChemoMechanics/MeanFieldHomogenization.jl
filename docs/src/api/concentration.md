@@ -12,6 +12,7 @@ MeanFieldHomogenization.gradient_gradient_concentration
 MeanFieldHomogenization.flux_gradient_concentration
 MeanFieldHomogenization.gradient_flux_concentration
 MeanFieldHomogenization.flux_flux_concentration
+MeanFieldHomogenization.harmonic_response
 ```
 
 ## Contribution tensors

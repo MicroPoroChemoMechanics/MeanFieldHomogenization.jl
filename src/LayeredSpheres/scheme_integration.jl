@@ -469,7 +469,7 @@ end
     flux_gradient_concentration(sphere::LayeredSphere, K₁, K₀; external = true, kw...) -> TensISO{2,3}
 
 Conductivity counterpart of [`flux_gradient_concentration`](@ref):
-``\\langle k\\,\\nabla T\\rangle_\\Omega = \\big(\\sum_k f_k\\,k_k\\,\\alpha_k\\big)\\,\\nabla T^{\\infty}``, plus the surface-conduction flux
+``\\langle k\\,\\underline{\\operatorname{grad}}\\,T\\rangle_\\Omega = \\big(\\sum_k f_k\\,k_k\\,\\alpha_k\\big)\\,\\underline{\\operatorname{grad}}\\,T^{\\infty}``, plus the surface-conduction flux
 [`_cond_surface_flux`](@ref) of any dual (surface-conductive) interface, that
 of the outer one only when `external` is `true` (see
 [`gradient_gradient_concentration`](@ref)). `K₁` is ignored.

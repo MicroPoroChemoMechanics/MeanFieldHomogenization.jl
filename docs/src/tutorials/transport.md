@@ -248,7 +248,7 @@ paste value.
 
 In the limit ``e_{\mathrm{ITZ}}\to 0`` the thin, highly-conductive ITZ shell can be
 collapsed onto a **zero-thickness surface-conductive interface** carrying a
-tangential surface current ``\underline{q}^{\mathrm s} = k^{\mathrm s}\,\nabla_{\!s}T`` with
+tangential surface current ``\underline{q}^{\mathrm s} = k^{\mathrm s}\,\underline{\operatorname{grad}}_{\!s}\,T`` with
 transmissivity ``k^{\mathrm s} = \alpha = D_s\,e_{\mathrm{ITZ}}`` — the Echoes book's `DUALDISC`
 model. This is a [`SurfaceConductiveInterface`](@ref) on a *bare*
 aggregate (a one-layer [`LayeredSphere`](@ref)); it avoids the explicit shell and

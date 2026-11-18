@@ -25,7 +25,7 @@ Schemes that act on a `ParticleAssembly`, a cell carrying the positions of the
 inclusions, rather than on an `RVE`. The studio has no positional cell, so they
 are left out of its catalog.
 """
-const ASSEMBLY_SCHEMES = ("ClusterModel", "EquivalentInclusion")
+const ASSEMBLY_SCHEMES = ("ClusterModel", "EquivalentInclusion", "MultipoleExpansion")
 
 "The outputs only an isotropic tensor has."
 const ISOTROPIC_ONLY = ("k", "mu", "E", "nu")

@@ -11,14 +11,14 @@ list of the symbols are in the [Nomenclature](@ref nomenclature).
 
 Hooke's law carries no minus sign; Fourier's and Fick's do. That single
 asymmetry — ``\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon}``
-against ``\underline{q} = -\boldsymbol{K}\cdot\nabla T`` — is the only reason
+against ``\underline{q} = -\boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T`` — is the only reason
 order-2 and order-4 mean-field formulas ever look as though they disagreed on a
 sign. The documentation and the code remove it by taking as the stress
 analog **minus** the flux:
 
 ```math
 \boxed{\;\boldsymbol{\sigma} \;\equiv\; -\,\underline{q}
-   \;=\; \boldsymbol{K}\cdot\nabla T\;}
+   \;=\; \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T\;}
 ```
 
 This is not bookkeeping. Take a surface of outward normal ``\underline{n}``:
@@ -37,11 +37,11 @@ for symbol:
 
 | elasticity (order 4) | transport (order 2) |
 | :------------------- | :------------------ |
-| ``\boldsymbol{\varepsilon}`` | ``\nabla T`` |
-| ``\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon} + \boldsymbol{\tau}`` | ``-\underline{q} = \boldsymbol{K}\cdot\nabla T + \underline{\tau}_q`` |
+| ``\boldsymbol{\varepsilon}`` | ``\underline{\operatorname{grad}}\,T`` |
+| ``\boldsymbol{\sigma} = \mathbb{C}:\boldsymbol{\varepsilon} + \boldsymbol{\tau}`` | ``-\underline{q} = \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T + \underline{\tau}_q`` |
 | ``\mathbb{C}`` | ``\boldsymbol{K}`` |
 | ``\mathbb{P}``, ``\mathbb{A}``, ``\mathbb{T}^{ab}``, ``\mathbb{G}^0`` | ``\boldsymbol{P}``, ``\boldsymbol{A}``, ``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0`` |
-| ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` | ``\nabla T = -\boldsymbol{P}\cdot\underline{\tau}_q`` |
+| ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}`` | ``\underline{\operatorname{grad}}\,T = -\boldsymbol{P}\cdot\underline{\tau}_q`` |
 
 Two consequences worth keeping in mind while reading the code:
 

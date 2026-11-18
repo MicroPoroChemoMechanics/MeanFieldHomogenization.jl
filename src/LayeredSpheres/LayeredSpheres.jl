@@ -25,7 +25,7 @@ using ..Elliptic: is_hard_numeric
 # Core/abstractions.jl so every sub-module can attach methods uniformly).
 import ..Core: gradient_gradient_concentration, flux_gradient_concentration,
     gradient_flux_concentration, flux_flux_concentration, property_contribution,
-    inverse_property_contribution, is_homogeneous_inclusion
+    inverse_property_contribution, is_homogeneous_inclusion, harmonic_response
 
 include("interfaces.jl")
 include("geometry.jl")
@@ -33,6 +33,7 @@ include("interface_transfer.jl") # interface jump matrices (bulk + shear)
 include("bulk_recurrence.jl")    # bulk state-vector transfer + concentration
 include("shear_recurrence.jl")   # multi-layer shear stub
 include("conductivity.jl")       # Y₁-harmonic conductivity state-vector
+include("harmonic_transfer.jl")  # elastic response to the harmonic of any degree
 include("averages.jl")
 include("localfields.jl")     # pointwise u, ε, σ, T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
@@ -123,7 +124,7 @@ end
 Per-layer gradient-gradient concentration tensor for an isotropic
 `LayeredSphere` embedded in an isotropic matrix of conductivity `K₀`.
 Returns the scalar ``\\alpha_k`` packed as `TensISO{3}(α_k)` (isotropic
-2-tensor), satisfying ``\\langle\\nabla T\\rangle_k = \\alpha_k\\,\\nabla T^{\\infty}``.
+2-tensor), satisfying ``\\langle\\underline{\\operatorname{grad}}\\,T\\rangle_k = \\alpha_k\\,\\underline{\\operatorname{grad}}\\,T^{\\infty}``.
 
 `external` and `internal` add the temperature jumps across the outer and inner
 boundaries of the layer (nonzero across a [`KapitzaInterface`](@ref) only), as

@@ -205,6 +205,7 @@ and the page where the scheme is derived.
 | [`Laminated`](@ref) | none, exact | piecewise-uniform fields | [Laminate](@ref th-laminate) |
 | [`ClusterModel`](@ref) | matrix | the remote strain and the field of every neighbor | [Cluster model](@ref th-cluster) |
 | [`EquivalentInclusion`](@ref) | matrix | a Galerkin polarization | [Equivalent inclusion method](@ref th-eim) |
+| [`MultipoleExpansion`](@ref) | matrix | the remote field and the harmonics sent by every other sphere | [Multipole expansion method](@ref th-mem) |
 
 The pages of the chapter follow the order of the table. The bounds use no shape
 at all. The next four pages embed the inclusions in the matrix, each with a

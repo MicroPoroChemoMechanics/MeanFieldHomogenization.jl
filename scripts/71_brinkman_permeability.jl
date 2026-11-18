@@ -29,7 +29,7 @@
 # ![The pore-scale problem, one Brinkman inhomogeneity problem, and the patterns used to represent the regions](../../assets/applications/brinkman_problems.svg)
 #
 # At the scale of the pores (left) the fluid obeys the Stokes equations, and a
-# body force ``\underline{f}`` of mean ``\nabla P`` keeps the solid at rest. Each region is
+# body force ``\underline{f}`` of mean ``\underline{\operatorname{grad}}\,P`` keeps the solid at rest. Each region is
 # represented by a pattern (right) placed in an unbounded porous medium of
 # permeability ``k_0`` (center) where the flow obeys Brinkman's equation. The
 # viscous layer around the pattern has the thickness ``\sqrt{k_0}``, so that the

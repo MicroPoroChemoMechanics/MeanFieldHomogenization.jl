@@ -14,8 +14,8 @@ in an unbounded medium of permeability ``k_0`` in which the flow obeys
 Brinkman's equation
 
 ```math
--\\nabla p + \\mu\\,\\Delta\\underline{v} - \\mu\\,k^{-1}\\,\\underline{v} = \\underline{0},
-\\qquad \\nabla\\cdot\\underline{v} = 0 .
+-\\underline{\\operatorname{grad}}\\,p + \\mu\\,\\Delta\\underline{v} - \\mu\\,k^{-1}\\,\\underline{v} = \\underline{0},
+\\qquad \\operatorname{div}\\,\\underline{v} = 0 .
 ```
 
 Its solution depends on ``R`` through ``\\alpha_0 = R/\\sqrt{k_0}``: there is no Hill

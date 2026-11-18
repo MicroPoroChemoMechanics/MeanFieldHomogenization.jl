@@ -336,7 +336,7 @@ end
 Gradient concentration tensor of one layer: with a fourth-order stiffness, the
 strain concentration tensor ``\\mathbb{A}_i``, ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}``, with
 ``\\mathbb{A}_i = \\mathbb{I} + \\mathbb{P}_i:(\\mathbb{C}^{\\mathrm{hom}} - \\mathbb{C}_i)`` and ``\\sum_i f_i\\,\\mathbb{A}_i = \\mathbb{I}``; with a
-second-order conductivity (`property = :K`), ``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T``.
+second-order conductivity (`property = :K`), ``\\underline{\\operatorname{grad}}\\,T_i = \\boldsymbol{A}_i\\cdot\\underline{\\operatorname{grad}}\\,T``.
 
 Its in-plane block is the identity and its in-plane/out-of-plane coupling
 block vanishes — the macroscopic in-plane gradient reaches every layer
@@ -421,7 +421,7 @@ _wrap_km(lam::Laminate, property::Symbol, M::StaticMatrix{3, 3}) = _wrap2(lam, p
 
 Gradient concentration tensor ``\\mathbb{A}_i`` of layer `name`:
 ``\\boldsymbol{\\varepsilon}_i = \\mathbb{A}_i:\\boldsymbol{E}`` in elasticity,
-``\\nabla T_i = \\boldsymbol{A}_i\\cdot\\nabla T`` in conduction. Identical to
+``\\underline{\\operatorname{grad}}\\,T_i = \\boldsymbol{A}_i\\cdot\\underline{\\operatorname{grad}}\\,T`` in conduction. Identical to
 [`layer_gradient_concentration`](@ref).
 """
 function gradient_gradient_concentration(lam::Laminate, name::Symbol; property::Symbol = :C)

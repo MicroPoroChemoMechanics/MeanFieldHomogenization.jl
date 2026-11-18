@@ -247,7 +247,7 @@ while cases II and III survive because their ``P_n^m`` with ``m \\ge 1`` already
 ``(1-p^2)^{m/2}``.
 """
 function _elastic_block(
-        groups, regs, q, c, μ, ν, ϕ₀, xg, wg, tdegs, ::Type{T}
+        groups, regs, q, c, μ, ν, ϕ₀, xg, wg, tdegs, ::Type{T}; interface = PerfectInterface{T}()
     ) where {T}
     cols = [(gi, r, n) for gi in eachindex(groups) for r in regs for n in groups[gi].degrees]
     nt = length(tdegs)
@@ -259,6 +259,7 @@ function _elastic_block(
     for (j, (gi, r, n)) in enumerate(cols)
         for (g, x) in enumerate(xg)
             u, t = _group_fields(groups[gi], r, n, ϕ₀, x, q, c, μ, ν, T, tabs[g])
+            u = _inner_side(u, t, interface)
             # (u_φ, u_p, u_q, σ_φq, σ_pq, σ_qq); the two tangential pairs get
             # the `1 - p²` weight, the normal ones do not.
             pb2 = one(T) - x^2
@@ -276,6 +277,31 @@ function _elastic_block(
     end
     return M, cols
 end
+
+# Degrees kept per harmonic family by default. Perfect interfaces make the
+# matching conditions polynomial identities, exact at any number of degrees for
+# a single layer; a spring makes them a truncated projection, which converges
+# geometrically: the major asymmetry of the contribution tensor, zero for the
+# exact solution, is 3e-4 at 6 degrees and 6e-8 at 16 for an oblate spheroid of
+# aspect ratio 1/3.
+_default_degrees(s::LayeredSpheroid) = any(i -> i isa SpringInterface, s.interfaces) ? 16 : 6
+
+# Factor by which the springs of the spheroid magnify the rounding of the
+# matching conditions: the largest compliance times the largest shear modulus
+# on either side, 1 for perfect interfaces.
+function _rounding_amplification(s::LayeredSpheroid, C₀)
+    μ = maximum(TensND.primal(last(TensND.k_mu(C))) for C in (C₀, s.moduli...))
+    return max(1, maximum(_compliance(i) for i in s.interfaces) * μ)
+end
+_compliance(::PerfectInterface) = 0
+_compliance(i::SpringInterface) = TensND.primal(max(i.sn, i.st))
+
+# The displacement that the inner side of an interface sees, from the field of
+# its outer side: the same through a perfect interface, and u − 𝐒·t through a
+# spring of compliances 𝐒 = sₙ e_q⊗e_q + sₜ (𝟏 − e_q⊗e_q), whose opening is
+# [u] = 𝐒·t, t = σ·e_q being continuous. The components are (φ, p, q).
+_inner_side(u, t, ::PerfectInterface) = u
+_inner_side(u, t, s::SpringInterface) = (u[1] - s.st * t[1], u[2] - s.st * t[2], u[3] - s.sn * t[3])
 
 """
     _equilibrated_solve(A, b)
@@ -336,16 +362,14 @@ series collapses to two coefficients and the answer is exact.
 """
 function _solve_elastic(
         s::LayeredSpheroid{T, N, Q}, C₀, case::ElasticCase, remote;
-        D::Int = 6, ngauss::Int = 0, ϕ₀ = 0.37,
+        D::Int = _default_degrees(s), ngauss::Int = 0, ϕ₀ = 0.37,
     ) where {T, N, Q}
     for ℓ in 1:N
-        layer_interface(s, ℓ) isa PerfectInterface || throw(
+        layer_interface(s, ℓ) isa Union{PerfectInterface, SpringInterface} || throw(
             ArgumentError(
-                "elastic confocal spheroid: only PerfectInterface is supported. " *
-                    "A uniform spring or membrane law puts an odd power of the " *
-                    "metric factor w = √(q²-p²) into the matching condition, so it " *
-                    "stops being a polynomial identity in p — see the theory page. " *
-                    "Model the imperfection as a thin confocal interphase instead."
+                "elastic confocal spheroid: the interfaces are perfect or springs " *
+                    "(SpringInterface); got $(nameof(typeof(layer_interface(s, ℓ)))) " *
+                    "at the interface $(ℓ)"
             )
         )
     end
@@ -398,14 +422,15 @@ function _solve_elastic(
         κi, μi = κμ[ℓ]
         κo, μo = ℓ < N ? κμ[ℓ + 1] : (κ₀, μ₀)
         νi, νo = TensND.poisson_ratio(κi, μi), TensND.poisson_ratio(κo, μo)
+        intf = layer_interface(s, ℓ)
         Mi, _ = _elastic_block(groups, regs[ℓ], qs[ℓ], c, μi, νi, ϕ₀, xg, wg, tdegs, Tp)
-        Mo, _ = _elastic_block(groups, regs[ℓ + 1], qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp)
+        Mo, _ = _elastic_block(groups, regs[ℓ + 1], qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp; interface = intf)
         A[rows, (offs[ℓ] + 1):offs[ℓ + 1]] .= Mi
         A[rows, (offs[ℓ + 1] + 1):offs[ℓ + 2]] .= -Mo
         if ℓ == N
             for ((gi, n), amp) in remote
                 Mr, _ = _elastic_block(
-                    [groups[gi]], (:regular,), qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp
+                    [groups[gi]], (:regular,), qs[ℓ], c, μo, νo, ϕ₀, xg, wg, tdegs, Tp; interface = intf
                 )
                 rhs[rows] .+= amp * Mr[:, findfirst(==(n), groups[gi].degrees)]
             end
@@ -522,8 +547,9 @@ segment there and ``\\mathrm{d}S = c^2\\,\\bar q\\,w\\,\\mathrm{d}p\\,\\mathrm{d
 ``\\bar q``, so the term drops out on its own.
 
 For the **whole** inclusion take `q_in = 1` and the outermost layer's
-amplitudes: with perfect interfaces ``\\underline{u}`` is continuous, so the inner boundaries
-cancel in pairs and only the outer surface survives, whatever ``N`` is.
+amplitudes: the inner boundaries cancel in pairs, or leave the openings of their
+springs, and only the outer surface survives, whatever ``N`` is
+(`_whole_strain` reads the matrix side when the outer interface is a spring).
 """
 function _avg_strain(
         groups, amps, q_out, q_in, c, μ, ν, ::Type{T}; kw...
@@ -538,8 +564,21 @@ function _avg_strain(
     return E ./ (_confocal_volume(q_out, c) - _confocal_volume(q_in, c))
 end
 
+# Average strain of the whole particle, its interfaces opened: by the
+# divergence theorem, the moment of the displacement on the side of the matrix
+# of the outer surface. Through a perfect outer interface that is the moment
+# of the outer layer, whose inner boundaries hold the openings of the springs
+# within; through a spring, the matrix side differs, and its field is the
+# decaying modes plus the remote ones.
+_whole_strain(::PerfectInterface, r, remote, s, μN, νN, μ₀, ν₀, ::Type{T}) where {T} =
+    _avg_strain(r.groups, r.amplitudes[end - 1], s.q[end], one(s.q[end]), s.c, μN, νN, T)
+function _whole_strain(::SpringInterface, r, remote, s, μN, νN, μ₀, ν₀, ::Type{T}) where {T}
+    outside = vcat(r.amplitudes[end], [((gi, :regular, n), amp) for ((gi, n), amp) in remote])
+    return _avg_strain(r.groups, outside, s.q[end], one(s.q[end]), s.c, μ₀, ν₀, T)
+end
+
 """
-    _realify(M, ::Type{T}) -> Matrix
+    _realify(M, ::Type{T}; scale) -> Matrix
 
 Drop a numerically zero imaginary part, or refuse.
 
@@ -547,11 +586,14 @@ An oblate spheroid is solved through the complex substitution ``q = \\mathrm{i}\
 ``c = -\\mathrm{i}\\,\\bar c``, so every intermediate is `Complex` while the answer is real. The
 imaginary part comes out at `1e-16` relative; anything larger means the
 substitution has been misapplied somewhere, and returning half an answer would
-be worse than stopping.
+be worse than stopping. `scale` is the real scale the rounding is measured
+against, that of `M` by default, and `amplification` the factor by which the
+matching conditions magnify the rounding: a spring of compliance ``s`` enters
+them as ``s\\,\\underline{t}``, so its rounding is ``s\\,\\mu`` times that of a perfect
+interface (`_rounding_amplification`).
 """
-function _realify(M::AbstractMatrix{<:Complex}, ::Type{T}) where {T}
-    scale = maximum(abs ∘ real, M)
-    tol = 1000 * eps(real(float(T))) * max(scale, one(scale))
+function _realify(M::AbstractMatrix{<:Complex}, ::Type{T}; scale = maximum(abs ∘ real, M), amplification = 1) where {T}
+    tol = 1000 * eps(real(float(T))) * max(scale, one(scale)) * amplification
     maximum(abs ∘ imag, M) ≤ tol || throw(
         ArgumentError(
             "elastic confocal spheroid: the oblate substitution left an " *
@@ -561,7 +603,7 @@ function _realify(M::AbstractMatrix{<:Complex}, ::Type{T}) where {T}
     )
     return real.(M)
 end
-_realify(M::AbstractMatrix, ::Type) = M
+_realify(M::AbstractMatrix, ::Type; scale = nothing, amplification = 1) = M
 
 """
     _basis_loadings(::Type{T}) -> Vector{Tuple{case, args, E}}
@@ -595,7 +637,7 @@ function _basis_loadings(::Type{T}) where {T}
 end
 
 """
-    spheroid_strain_concentration(s::LayeredSpheroid, C₀; D = 6, kw...) -> (; A, residuals)
+    spheroid_strain_concentration(s::LayeredSpheroid, C₀; D, kw...) -> (; A, residuals)
 
 Volume-averaged strain concentration tensor ``\\mathbb{A}`` of an elastic `n`-layer
 confocal spheroid in an infinite isotropic matrix `C₀`, defined by
@@ -617,7 +659,7 @@ diagnostics, machine-precision for a single inclusion.
     Build the spheroid with the default axis and rotate the result.
 """
 function spheroid_strain_concentration(
-        s::LayeredSpheroid{T, N, Q}, C₀; D::Int = 6, kw...
+        s::LayeredSpheroid{T, N, Q}, C₀; D::Int = _default_degrees(s), kw...
     ) where {T, N, Q}
     isapprox(s.axis[3], one(T); atol = sqrt(eps(float(real(T))))) || throw(
         ArgumentError(
@@ -648,17 +690,17 @@ function spheroid_strain_concentration(
     for (k, (case, args, E)) in enumerate(loads)
         remote = _case_remote(case, c, κ₀, μ₀, args...)
         r = _solve_elastic(s, C₀, case, remote; D, kw...)
-        # `u` is continuous, so the outer boundary is read from layer N.
-        εav = _avg_strain(r.groups, r.amplitudes[N], q_N, one(q_N), c, μN, νN, Tp)
+        εav = _whole_strain(layer_interface(s, N), r, remote, s, μN, νN, μ₀, TensND.poisson_ratio(κ₀, μ₀), Tp)
         Xc[:, k] .= mandel(E)
         Yc[:, k] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εav[i, j])))
         resids[k] = r.residual
     end
-    return (; A = from_mandel(_realify(Yc * inv(Xc), Tp)), residuals = real.(resids))
+    amplification = _rounding_amplification(s, C₀)
+    return (; A = from_mandel(_realify(Yc * inv(Xc), Tp; amplification)), residuals = real.(resids))
 end
 
 """
-    spheroid_layer_strain_concentration(s, C₀; D = 6, kw...) -> (; A, layers, residuals)
+    spheroid_layer_strain_concentration(s, C₀; D, kw...) -> (; A, layers, residuals)
 
 Per-layer strain concentration tensors of an elastic confocal spheroid, plus
 their volume-weighted sum.
@@ -674,7 +716,7 @@ Per-layer averages are what a **stiffness contribution tensor** needs:
 the layers having different moduli.
 """
 function spheroid_layer_strain_concentration(
-        s::LayeredSpheroid{T, N, Q}, C₀; D::Int = 6, kw...
+        s::LayeredSpheroid{T, N, Q}, C₀; D::Int = _default_degrees(s), kw...
     ) where {T, N, Q}
     isapprox(s.axis[3], one(T); atol = sqrt(eps(float(real(T))))) || throw(
         ArgumentError(
@@ -710,15 +752,23 @@ function spheroid_layer_strain_concentration(
             Yl[ℓ][:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εk[i, j])))
         end
         κN, μN = κμ[N]
-        εt = _avg_strain(r.groups, r.amplitudes[N], qs[N], one(qs[N]), c, μN, TensND.poisson_ratio(κN, μN), Tp)
+        εt = _whole_strain(
+            layer_interface(s, N), r, remote, s, μN, TensND.poisson_ratio(κN, μN), μ₀, TensND.poisson_ratio(κ₀, μ₀), Tp
+        )
         Yt[:, kk] .= mandel(TensND.Tens(TensND.SymmetricTensor{2, 3}((i, j) -> εt[i, j])))
         resids[kk] = r.residual
     end
 
     iX = inv(Xc)
+    # The rounding of a layer is that of the whole problem: a layer whose strain
+    # is far below the remote one (a spheroid held by a soft spring) is judged
+    # against the scale of the total, not its own.
+    At = Yt * iX
+    scale = maximum(abs ∘ real, At)
+    amplification = _rounding_amplification(s, C₀)
     return (;
-        A = from_mandel(_realify(Yt * iX, Tp)),
-        layers = ntuple(ℓ -> from_mandel(_realify(Yl[ℓ] * iX, Tp)), Val(N)),
+        A = from_mandel(_realify(At, Tp; amplification)),
+        layers = ntuple(ℓ -> from_mandel(_realify(Yl[ℓ] * iX, Tp; scale, amplification)), Val(N)),
         residuals = real.(resids),
     )
 end

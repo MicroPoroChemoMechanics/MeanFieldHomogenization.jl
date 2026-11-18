@@ -58,8 +58,14 @@ include("partial.jl")
 # Links to TensND's documentation, `[`mandel`](@extref TensND TensND.mandel)`,
 # resolved against the inventory TensND publishes: a name or a section that
 # disappears or is renamed there fails this build, naming the page to correct.
+# With `TENSND_DOCS_INVENTORY`, the `objects.inv` of a local build of TensND's
+# documentation stands for the published one: the links to a TensND ahead of
+# its release are then checked before it is published.
 using DocumenterInterLinks
-links = InterLinks("TensND" => "https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/")
+const TENSND_DOCS = "https://MicroPoroChemoMechanics.github.io/TensND.jl/stable/"
+links = InterLinks(
+    "TensND" => (haskey(ENV, "TENSND_DOCS_INVENTORY") ? (TENSND_DOCS, ENV["TENSND_DOCS_INVENTORY"]) : TENSND_DOCS)
+)
 
 bib = CitationBibliography(
     joinpath(@__DIR__, "src", "references.bib");

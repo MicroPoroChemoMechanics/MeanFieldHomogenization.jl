@@ -118,8 +118,8 @@ one mode:
 | ``\underline{m}_2 = e_3\otimes e_3`` | ``\bar u_z = z`` | 0 |
 | ``\underline{m}_3 = (e_1\otimes e_3 + e_3\otimes e_1)/\sqrt2`` | ``\bar u_\rho = z/\sqrt2,\; \bar u_\theta = -z/\sqrt2,\; \bar u_z = \rho/\sqrt2`` | 1 |
 | ``\underline{m}_4 = (e_1\otimes e_1 - e_2\otimes e_2)/\sqrt2`` | ``\bar u_\rho = \rho/\sqrt2,\; \bar u_\theta = -\rho/\sqrt2`` | 2 |
-| ``\nabla T = e_3`` | ``\bar t = z`` | 0 |
-| ``\nabla T = e_1`` | ``\bar t = \rho`` | 1 |
+| ``\underline{\operatorname{grad}}\,T = e_3`` | ``\bar t = z`` | 0 |
+| ``\underline{\operatorname{grad}}\,T = e_1`` | ``\bar t = \rho`` | 1 |
 
 Four elastic loadings, not six: the partners ``(e_2\otimes e_3 +
 e_3\otimes e_2)/\sqrt2`` and ``(e_1\otimes e_2 + e_2\otimes e_1)/\sqrt2`` are
@@ -183,8 +183,8 @@ m = 2:&\quad \langle T_{11} - T_{22}\rangle
 \end{aligned}
 ```
 
-and in transport ``\langle\nabla T\cdot e_3\rangle = \bar g_z`` for ``m = 0``,
-``\langle\nabla T\cdot e_1\rangle = \tfrac12(\bar g_\rho - \bar g_\theta)`` for
+and in transport ``\langle\underline{\operatorname{grad}}\,T\cdot e_3\rangle = \bar g_z`` for ``m = 0``,
+``\langle\underline{\operatorname{grad}}\,T\cdot e_1\rangle = \tfrac12(\bar g_\rho - \bar g_\theta)`` for
 ``m = 1``. What remains is the meridian quadrature with the measure
 ``\rho\,\mathrm d\rho\,\mathrm d z``, and the volume
 ``V_{\mathcal D} = 2\pi\iint_{\mathcal D}\rho\,\mathrm d\rho\,\mathrm d z``.
@@ -387,13 +387,13 @@ the induced ``\mathbb A_{33}/\mathbb A_{11} - 1`` stays below ``10^{-4}``.
 abscissa sweeps the reference medium ``k_0/k_2`` over four decades.
 
 The transport counterpart, reading the equivalent conductivity of the particle
-off ``\langle q\rangle = k^{\mathrm{eq}}\langle\nabla T\rangle``. The flat black
+off ``\langle q\rangle = k^{\mathrm{eq}}\langle\underline{\operatorname{grad}}\,T\rangle``. The flat black
 line is the concentric particle, whose equivalent conductivity does not depend
 on the medium it is measured in; the eccentricity destroys that property and
 splits the single value into a transverse and an axial one.
 
 ``k_{\mathrm{eq}}/k_{\mathrm{shell}}`` read off
-``\langle q\rangle = k_{\mathrm{eq}}\langle\nabla T\rangle`` over the inclusion,
+``\langle q\rangle = k_{\mathrm{eq}}\langle\underline{\operatorname{grad}}\,T\rangle`` over the inclusion,
 ``k_{\mathrm{core}}/k_{\mathrm{shell}} = 10``, ``w = 0.5``.
 
 | ``k_0/k_{\mathrm{shell}}`` | ``\alpha = 0`` | ``\alpha = 0.4`` tr. | ``\alpha = 0.4`` ax. | ``\alpha = 0.8`` tr. | ``\alpha = 0.8`` ax. |

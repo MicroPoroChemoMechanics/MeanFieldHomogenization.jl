@@ -1,0 +1,1052 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "kushch2013",
+  "doi": "10.1016/C2012-0-03565-X",
+  "citation": "Kushch, Volodymyr I. (2013). Micromechanics of Composites: Multipole Expansion Approach. Elsevier. ISBN 9780124076839.",
+  "location": "Tables 3.1 to 3.3 (p. 67), 5.1 to 5.3 (pp. 149-150), 6.3 and 6.4 (pp. 197-198), 7.6 (p. 244) and 7.7 to 7.10 (pp. 245-246); Appendix A, sections A.1 to A.4 and Table A.1 (p. 465)"
+ },
+ "transcription": {
+  "from": "the published book (PDF), read on the page text",
+  "checked_against_source": true,
+  "note": "Conductivities are divided by that of the matrix, the contrast being the conductivity of the spheres over that of the matrix. The values of the appendix are the printouts the sample codes give as correct. Stiffnesses are divided by the shear modulus of the matrix as in the printed tables, the contrast being mu1/mu0."
+ },
+ "quantities": {
+  "fcm_conductivity": {
+   "value": 1.53345,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.1, p. 434",
+   "description": "Effective conductivity, over that of the matrix, of the finite cluster of 27 equal spheres on a 3x3x3 simple cubic block, volume fraction 0.2, contrast 10, closed by the modified Maxwell method (Eq. 2.65)."
+  },
+  "fcm_volume_fraction": {
+   "value": 0.2,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.1 and A.3",
+   "description": "Volume fraction of the spheres in the two finite-cluster test problems; the period of the block is (4 pi / (3 c))^(1/3) radii."
+  },
+  "fcm_conductivity_contrast": {
+   "value": 10.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.1",
+   "description": "Conductivity of the spheres over that of the matrix in the conduction test problem."
+  },
+  "periodic_conductivity_sc": {
+   "value": 5.89112,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.2, p. 439",
+   "description": "Effective conductivity, over that of the matrix, of the simple cubic array at the volume fraction 0.5 and the contrast 1e8 (Eq. 3.51)."
+  },
+  "fcm_bulk_modulus": {
+   "value": 1.4064,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.3, p. 446",
+   "description": "Effective bulk modulus over that of the matrix for the finite cluster of 27 spheres, volume fraction 0.2, shear moduli ratio 1e6, Poisson ratios 0.3 (Eq. 4.123)."
+  },
+  "fcm_shear_modulus_1": {
+   "value": 1.6568,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.3, p. 446",
+   "description": "Effective shear modulus (C1111 - C1122)/2 over the shear modulus of the matrix, same problem (Eq. 4.124)."
+  },
+  "fcm_shear_modulus_2": {
+   "value": 1.4719,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.3, p. 446",
+   "description": "Effective shear modulus C1212 over the shear modulus of the matrix, same problem (Eq. 4.125)."
+  },
+  "fcm_shear_contrast": {
+   "value": 1000000.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.3, p. 441",
+   "description": "Shear modulus of the spheres over that of the matrix in the elasticity test problem."
+  },
+  "fcm_poisson_ratio": {
+   "value": 0.3,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.3, p. 441",
+   "description": "Poisson ratio of the matrix and of the spheres in the elasticity test problem."
+  },
+  "ruc_c1133": {
+   "value": 1.12681,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.4, p. 454",
+   "description": "C1133/(2 mu0) of the simple cubic array, as printed by the sample code of the periodic elasticity problem."
+  },
+  "ruc_c3333": {
+   "value": 4.79979,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.4, p. 454",
+   "description": "C3333/(2 mu0), same problem."
+  },
+  "ruc_c1212": {
+   "value": 2.24677,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Appendix A.4, p. 454",
+   "description": "C1212/mu0, same problem."
+  }
+ },
+ "tables": {
+  "conductivity_sc": [
+   {
+    "c": 0.1,
+    "contrast_0": 0.857,
+    "contrast_10": 1.243,
+    "contrast_100": 1.323,
+    "contrast_1000": 1.332,
+    "contrast_infinity": 1.334
+   },
+   {
+    "c": 0.2,
+    "contrast_0": 0.727,
+    "contrast_10": 1.532,
+    "contrast_100": 1.728,
+    "contrast_1000": 1.753,
+    "contrast_infinity": 1.756
+   },
+   {
+    "c": 0.3,
+    "contrast_0": 0.606,
+    "contrast_10": 1.888,
+    "contrast_100": 2.275,
+    "contrast_1000": 2.327,
+    "contrast_infinity": 2.333
+   },
+   {
+    "c": 0.4,
+    "contrast_0": 0.49,
+    "contrast_10": 2.364,
+    "contrast_100": 3.133,
+    "contrast_1000": 3.249,
+    "contrast_infinity": 3.263
+   },
+   {
+    "c": 0.45,
+    "contrast_0": 0.433,
+    "contrast_10": 2.69,
+    "contrast_100": 3.863,
+    "contrast_1000": 4.06,
+    "contrast_infinity": 4.083
+   },
+   {
+    "c": 0.5,
+    "contrast_0": 0.374,
+    "contrast_10": 3.145,
+    "contrast_100": 5.349,
+    "contrast_1000": 5.831,
+    "contrast_infinity": 5.891
+   }
+  ],
+  "conductivity_bcc": [
+   {
+    "c": 0.1,
+    "contrast_0": 0.857,
+    "contrast_10": 1.243,
+    "contrast_100": 1.323,
+    "contrast_1000": 1.333,
+    "contrast_infinity": 1.334
+   },
+   {
+    "c": 0.2,
+    "contrast_0": 0.727,
+    "contrast_10": 1.53,
+    "contrast_100": 1.723,
+    "contrast_1000": 1.748,
+    "contrast_infinity": 1.751
+   },
+   {
+    "c": 0.3,
+    "contrast_0": 0.608,
+    "contrast_10": 1.873,
+    "contrast_100": 2.238,
+    "contrast_1000": 2.286,
+    "contrast_infinity": 2.292
+   },
+   {
+    "c": 0.4,
+    "contrast_0": 0.498,
+    "contrast_10": 2.297,
+    "contrast_100": 2.935,
+    "contrast_1000": 3.025,
+    "contrast_infinity": 3.035
+   },
+   {
+    "c": 0.5,
+    "contrast_0": 0.396,
+    "contrast_10": 2.845,
+    "contrast_100": 3.971,
+    "contrast_1000": 4.145,
+    "contrast_infinity": 4.166
+   },
+   {
+    "c": 0.6,
+    "contrast_0": 0.298,
+    "contrast_10": 3.62,
+    "contrast_100": 5.874,
+    "contrast_1000": 6.291,
+    "contrast_infinity": 6.341
+   },
+   {
+    "c": 0.65,
+    "contrast_0": 0.248,
+    "contrast_10": 4.188,
+    "contrast_100": 8.013,
+    "contrast_1000": 8.912,
+    "contrast_infinity": 9.027
+   }
+  ],
+  "conductivity_fcc": [
+   {
+    "c": 0.1,
+    "contrast_0": 0.857,
+    "contrast_10": 1.243,
+    "contrast_100": 1.322,
+    "contrast_1000": 1.332,
+    "contrast_infinity": 1.333
+   },
+   {
+    "c": 0.2,
+    "contrast_0": 0.727,
+    "contrast_10": 1.53,
+    "contrast_100": 1.723,
+    "contrast_1000": 1.748,
+    "contrast_infinity": 1.753
+   },
+   {
+    "c": 0.3,
+    "contrast_0": 0.608,
+    "contrast_10": 1.872,
+    "contrast_100": 2.236,
+    "contrast_1000": 2.284,
+    "contrast_infinity": 2.29
+   },
+   {
+    "c": 0.4,
+    "contrast_0": 0.499,
+    "contrast_10": 2.293,
+    "contrast_100": 2.924,
+    "contrast_1000": 3.013,
+    "contrast_infinity": 3.023
+   },
+   {
+    "c": 0.5,
+    "contrast_0": 0.397,
+    "contrast_10": 2.83,
+    "contrast_100": 3.92,
+    "contrast_1000": 4.086,
+    "contrast_infinity": 4.106
+   },
+   {
+    "c": 0.6,
+    "contrast_0": 0.299,
+    "contrast_10": 3.559,
+    "contrast_100": 5.577,
+    "contrast_1000": 5.93,
+    "contrast_infinity": 5.972
+   },
+   {
+    "c": 0.65,
+    "contrast_0": 0.251,
+    "contrast_10": 4.049,
+    "contrast_100": 6.994,
+    "contrast_1000": 7.573,
+    "contrast_infinity": 7.643
+   },
+   {
+    "c": 0.7,
+    "contrast_0": 0.202,
+    "contrast_10": 4.693,
+    "contrast_100": 9.577,
+    "contrast_1000": 10.77,
+    "contrast_infinity": 10.93
+   }
+  ],
+  "lattice_sums_sc": [
+   {
+    "t": 2,
+    "s": 0,
+    "Y_over_N": -4.18879020478639,
+    "Z_over_N": 0.94576582649354
+   },
+   {
+    "t": 4,
+    "s": 0,
+    "Y_over_N": 3.10822668269944,
+    "Z_over_N": 0.62849702947252
+   },
+   {
+    "t": 4,
+    "s": 4,
+    "Y_over_N": 1.85752072772946,
+    "Z_over_N": 0.232554189789037
+   },
+   {
+    "t": 6,
+    "s": 0,
+    "Y_over_N": 0.573329289434499,
+    "Z_over_N": 0.039332027039521
+   },
+   {
+    "t": 6,
+    "s": 4,
+    "Y_over_N": -1.07260088543324,
+    "Z_over_N": -0.0735834847546077
+   },
+   {
+    "t": 8,
+    "s": 0,
+    "Y_over_N": 3.25929309334983,
+    "Z_over_N": 0.229083119401972
+   },
+   {
+    "t": 8,
+    "s": 4,
+    "Y_over_N": 1.22565950318498,
+    "Z_over_N": 0.0861468711995194
+   },
+   {
+    "t": 8,
+    "s": 8,
+    "Y_over_N": 1.86744362272512,
+    "Z_over_N": 0.131255397458449
+   }
+  ],
+  "stiffness_sc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.558,
+    "c1122_contrast_10": 0.843,
+    "c1122_contrast_1000": 0.854,
+    "c1111_contrast_0": 1.399,
+    "c1111_contrast_10": 2.051,
+    "c1111_contrast_1000": 2.124,
+    "c1212_contrast_0": 0.812,
+    "c1212_contrast_10": 1.173,
+    "c1212_contrast_1000": 1.214
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.413,
+    "c1122_contrast_10": 0.94,
+    "c1122_contrast_1000": 0.956,
+    "c1111_contrast_0": 1.131,
+    "c1111_contrast_10": 2.444,
+    "c1111_contrast_1000": 2.654,
+    "c1212_contrast_0": 0.64,
+    "c1212_contrast_10": 1.363,
+    "c1212_contrast_1000": 1.455
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.301,
+    "c1122_contrast_10": 1.05,
+    "c1122_contrast_1000": 1.049,
+    "c1111_contrast_0": 0.909,
+    "c1111_contrast_10": 2.964,
+    "c1111_contrast_1000": 3.443,
+    "c1212_contrast_0": 0.49,
+    "c1212_contrast_10": 1.593,
+    "c1212_contrast_1000": 1.764
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.21,
+    "c1122_contrast_10": 1.194,
+    "c1122_contrast_1000": 1.127,
+    "c1111_contrast_0": 0.713,
+    "c1111_contrast_10": 3.686,
+    "c1111_contrast_1000": 4.8,
+    "c1212_contrast_0": 0.36,
+    "c1212_contrast_10": 1.907,
+    "c1212_contrast_1000": 2.247
+   },
+   {
+    "c": 0.45,
+    "c1122_contrast_0": 0.17,
+    "c1122_contrast_10": 1.303,
+    "c1122_contrast_1000": 1.16,
+    "c1111_contrast_0": 0.62,
+    "c1111_contrast_10": 4.176,
+    "c1111_contrast_1000": 6.047,
+    "c1212_contrast_0": 0.301,
+    "c1212_contrast_10": 2.13,
+    "c1212_contrast_1000": 2.665
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.131,
+    "c1122_contrast_10": 1.475,
+    "c1122_contrast_1000": 1.197,
+    "c1111_contrast_0": 0.524,
+    "c1111_contrast_10": 4.823,
+    "c1111_contrast_1000": 8.888,
+    "c1212_contrast_0": 0.243,
+    "c1212_contrast_10": 2.463,
+    "c1212_contrast_1000": 3.57
+   }
+  ],
+  "stiffness_bcc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.566,
+    "c1122_contrast_10": 0.852,
+    "c1122_contrast_1000": 0.87,
+    "c1111_contrast_0": 1.385,
+    "c1111_contrast_10": 2.032,
+    "c1111_contrast_1000": 2.093,
+    "c1212_contrast_0": 0.828,
+    "c1212_contrast_10": 1.19,
+    "c1212_contrast_1000": 1.24
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.434,
+    "c1122_contrast_10": 0.979,
+    "c1122_contrast_1000": 1.023,
+    "c1111_contrast_0": 1.094,
+    "c1111_contrast_10": 2.365,
+    "c1111_contrast_1000": 2.514,
+    "c1212_contrast_0": 0.683,
+    "c1212_contrast_10": 1.426,
+    "c1212_contrast_1000": 1.559
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.335,
+    "c1122_contrast_10": 1.136,
+    "c1122_contrast_1000": 1.223,
+    "c1111_contrast_0": 0.857,
+    "c1111_contrast_10": 2.772,
+    "c1111_contrast_1000": 3.054,
+    "c1212_contrast_0": 0.552,
+    "c1212_contrast_10": 1.73,
+    "c1212_contrast_1000": 2.005
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.257,
+    "c1122_contrast_10": 1.336,
+    "c1122_contrast_1000": 1.491,
+    "c1111_contrast_0": 0.66,
+    "c1111_contrast_10": 3.289,
+    "c1111_contrast_1000": 3.792,
+    "c1212_contrast_0": 0.431,
+    "c1212_contrast_10": 2.131,
+    "c1212_contrast_1000": 2.6782
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.191,
+    "c1122_contrast_10": 1.603,
+    "c1122_contrast_1000": 1.888,
+    "c1111_contrast_0": 0.495,
+    "c1111_contrast_10": 3.983,
+    "c1111_contrast_1000": 4.896,
+    "c1212_contrast_0": 0.318,
+    "c1212_contrast_10": 2.679,
+    "c1212_contrast_1000": 3.808
+   },
+   {
+    "c": 0.55,
+    "c1122_contrast_0": 0.161,
+    "c1122_contrast_10": 1.779,
+    "c1122_contrast_1000": 2.188,
+    "c1111_contrast_0": 0.421,
+    "c1111_contrast_10": 4.439,
+    "c1111_contrast_1000": 5.722,
+    "c1212_contrast_0": 0.265,
+    "c1212_contrast_10": 3.031,
+    "c1212_contrast_1000": 4.731
+   },
+   {
+    "c": 0.6,
+    "c1122_contrast_0": 0.133,
+    "c1122_contrast_10": 2.001,
+    "c1122_contrast_1000": 2.648,
+    "c1111_contrast_0": 0.353,
+    "c1111_contrast_10": 5.017,
+    "c1111_contrast_1000": 6.954,
+    "c1212_contrast_0": 0.215,
+    "c1212_contrast_10": 3.458,
+    "c1212_contrast_1000": 6.203
+   },
+   {
+    "c": 0.65,
+    "c1122_contrast_0": 0.104,
+    "c1122_contrast_10": 2.297,
+    "c1122_contrast_1000": 3.623,
+    "c1111_contrast_0": 0.287,
+    "c1111_contrast_10": 5.808,
+    "c1111_contrast_1000": 9.404,
+    "c1212_contrast_0": 0.163,
+    "c1212_contrast_10": 3.993,
+    "c1212_contrast_1000": 9.357
+   }
+  ],
+  "stiffness_fcc": [
+   {
+    "c": 0.1,
+    "c1122_contrast_0": 0.566,
+    "c1122_contrast_10": 0.852,
+    "c1122_contrast_1000": 0.869,
+    "c1111_contrast_0": 1.385,
+    "c1111_contrast_10": 2.032,
+    "c1111_contrast_1000": 2.094,
+    "c1212_contrast_0": 0.828,
+    "c1212_contrast_10": 1.189,
+    "c1212_contrast_1000": 1.239
+   },
+   {
+    "c": 0.2,
+    "c1122_contrast_0": 0.434,
+    "c1122_contrast_10": 0.978,
+    "c1122_contrast_1000": 1.023,
+    "c1111_contrast_0": 1.094,
+    "c1111_contrast_10": 2.365,
+    "c1111_contrast_1000": 2.515,
+    "c1212_contrast_0": 0.683,
+    "c1212_contrast_10": 1.425,
+    "c1212_contrast_1000": 1.557
+   },
+   {
+    "c": 0.3,
+    "c1122_contrast_0": 0.337,
+    "c1122_contrast_10": 1.135,
+    "c1122_contrast_1000": 1.22,
+    "c1111_contrast_0": 0.854,
+    "c1111_contrast_10": 2.773,
+    "c1111_contrast_1000": 3.058,
+    "c1212_contrast_0": 0.555,
+    "c1212_contrast_10": 1.727,
+    "c1212_contrast_1000": 1.998
+   },
+   {
+    "c": 0.4,
+    "c1122_contrast_0": 0.261,
+    "c1122_contrast_10": 1.332,
+    "c1122_contrast_1000": 1.481,
+    "c1111_contrast_0": 0.654,
+    "c1111_contrast_10": 3.291,
+    "c1111_contrast_1000": 3.801,
+    "c1212_contrast_0": 0.439,
+    "c1212_contrast_10": 2.123,
+    "c1212_contrast_1000": 2.65
+   },
+   {
+    "c": 0.5,
+    "c1122_contrast_0": 0.198,
+    "c1122_contrast_10": 1.589,
+    "c1122_contrast_1000": 1.842,
+    "c1111_contrast_0": 0.483,
+    "c1111_contrast_10": 3.983,
+    "c1111_contrast_1000": 4.912,
+    "c1212_contrast_0": 0.333,
+    "c1212_contrast_10": 2.654,
+    "c1212_contrast_1000": 3.686
+   },
+   {
+    "c": 0.6,
+    "c1122_contrast_0": 0.144,
+    "c1122_contrast_10": 1.956,
+    "c1122_contrast_1000": 2.419,
+    "c1111_contrast_0": 0.337,
+    "c1111_contrast_10": 4.978,
+    "c1111_contrast_1000": 6.849,
+    "c1212_contrast_0": 0.238,
+    "c1212_contrast_10": 3.388,
+    "c1212_contrast_1000": 5.569
+   },
+   {
+    "c": 0.65,
+    "c1122_contrast_0": 0.119,
+    "c1122_contrast_10": 2.218,
+    "c1122_contrast_1000": 2.913,
+    "c1111_contrast_0": 0.27,
+    "c1111_contrast_10": 5.676,
+    "c1111_contrast_1000": 8.599,
+    "c1212_contrast_0": 0.194,
+    "c1212_contrast_10": 3.87,
+    "c1212_contrast_1000": 7.295
+   },
+   {
+    "c": 0.7,
+    "c1122_contrast_0": 0.094,
+    "c1122_contrast_10": 2.579,
+    "c1122_contrast_1000": 3.871,
+    "c1111_contrast_0": 0.204,
+    "c1111_contrast_10": 6.627,
+    "c1111_contrast_1000": 12.06,
+    "c1212_contrast_0": 0.15,
+    "c1212_contrast_10": 4.478,
+    "c1212_contrast_1000": 10.72
+   }
+  ],
+  "stiffness_spheroids": [
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 0,
+    "c_0.1": 2.799,
+    "c_0.3": 1.818,
+    "c_0.5": 1.048
+   },
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 10,
+    "c_0.1": 4.102,
+    "c_0.3": 5.93,
+    "c_0.5": 9.646
+   },
+   {
+    "aspect_ratio": 1.0,
+    "contrast": 1000,
+    "c_0.1": 4.248,
+    "c_0.3": 6.887,
+    "c_0.5": 17.71
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 0,
+    "c_0.1": 2.656,
+    "c_0.3": 1.667,
+    "c_0.5": 0.945
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 10,
+    "c_0.1": 4.021,
+    "c_0.3": 5.675,
+    "c_0.5": 9.228
+   },
+   {
+    "aspect_ratio": 0.5,
+    "contrast": 1000,
+    "c_0.1": 4.128,
+    "c_0.3": 6.652,
+    "c_0.5": 17.73
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 0,
+    "c_0.1": 2.523,
+    "c_0.3": 1.518,
+    "c_0.5": 0.829
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 10,
+    "c_0.1": 4.005,
+    "c_0.3": 5.737,
+    "c_0.5": 9.102
+   },
+   {
+    "aspect_ratio": 0.2,
+    "contrast": 1000,
+    "c_0.1": 4.115,
+    "c_0.3": 6.708,
+    "c_0.5": 17.81
+   }
+  ],
+  "conductivity_cracks_so": [
+   {
+    "a1": 5.0,
+    "a3_over_a1_1": 0.979,
+    "a3_over_a1_1_2": 0.959,
+    "a3_over_a1_1_4": 0.931,
+    "a3_over_a1_1_8": 0.906,
+    "a3_over_a1_1_16": 0.891,
+    "a3_over_a1_0": 0.874
+   },
+   {
+    "a1": 4.0,
+    "a3_over_a1_1": 0.959,
+    "a3_over_a1_1_2": 0.932,
+    "a3_over_a1_1_4": 0.879,
+    "a3_over_a1_1_8": 0.844,
+    "a3_over_a1_1_16": 0.825,
+    "a3_over_a1_0": 0.804
+   },
+   {
+    "a1": 3.0,
+    "a3_over_a1_1": 0.903,
+    "a3_over_a1_1_2": 0.83,
+    "a3_over_a1_1_4": 0.756,
+    "a3_over_a1_1_8": 0.706,
+    "a3_over_a1_1_16": 0.679,
+    "a3_over_a1_0": 0.651
+   },
+   {
+    "a1": 2.5,
+    "a3_over_a1_1": 0.832,
+    "a3_over_a1_1_2": 0.724,
+    "a3_over_a1_1_4": 0.625,
+    "a3_over_a1_1_8": 0.564,
+    "a3_over_a1_1_16": 0.536,
+    "a3_over_a1_0": 0.487
+   },
+   {
+    "a1": 2.2,
+    "a3_over_a1_1": 0.75,
+    "a3_over_a1_1_2": 0.613,
+    "a3_over_a1_1_4": 0.497,
+    "a3_over_a1_1_8": 0.427,
+    "a3_over_a1_1_16": 0.393,
+    "a3_over_a1_0": 0.351
+   },
+   {
+    "a1": 2.1,
+    "a3_over_a1_1": 0.707,
+    "a3_over_a1_1_2": 0.559,
+    "a3_over_a1_1_4": 0.44,
+    "a3_over_a1_1_8": 0.367,
+    "a3_over_a1_1_16": 0.333,
+    "a3_over_a1_0": 0.288
+   },
+   {
+    "a1": 2.01,
+    "a3_over_a1_1": 0.65,
+    "a3_over_a1_1_2": 0.496,
+    "a3_over_a1_1_4": 0.374,
+    "a3_over_a1_1_8": 0.309,
+    "a3_over_a1_1_16": 0.272,
+    "a3_over_a1_0": 0.222
+   }
+  ],
+  "conductivity_cracks_bc": [
+   {
+    "a1": 5.0,
+    "a3_over_a1_2": 0.979,
+    "a3_over_a1_1": 0.958,
+    "a3_over_a1_1_2": 0.919,
+    "a3_over_a1_1_4": 0.862,
+    "a3_over_a1_1_8": 0.812,
+    "a3_over_a1_0": 0.748
+   },
+   {
+    "a1": 4.0,
+    "a3_over_a1_2": 0.959,
+    "a3_over_a1_1": 0.919,
+    "a3_over_a1_1_2": 0.847,
+    "a3_over_a1_1_4": 0.757,
+    "a3_over_a1_1_8": 0.689,
+    "a3_over_a1_0": 0.607
+   },
+   {
+    "a1": 3.0,
+    "a3_over_a1_2": 0.902,
+    "a3_over_a1_1": 0.817,
+    "a3_over_a1_1_2": 0.671,
+    "a3_over_a1_1_4": 0.515,
+    "a3_over_a1_1_8": 0.413,
+    "a3_over_a1_0": 0.302
+   },
+   {
+    "a1": 2.5,
+    "a3_over_a1_2": 0.832,
+    "a3_over_a1_1": 0.703,
+    "a3_over_a1_1_2": 0.502,
+    "a3_over_a1_1_4": 0.307,
+    "a3_over_a1_1_8": 0.178,
+    "a3_over_a1_0": 0.089
+   },
+   {
+    "a1": 2.2,
+    "a3_over_a1_2": 0.749,
+    "a3_over_a1_1": 0.587,
+    "a3_over_a1_1_2": 0.37,
+    "a3_over_a1_1_4": 0.186,
+    "a3_over_a1_1_8": 0.088,
+    "a3_over_a1_0": 0.016
+   },
+   {
+    "a1": 2.1,
+    "a3_over_a1_2": 0.706,
+    "a3_over_a1_1": 0.533,
+    "a3_over_a1_1_2": 0.32,
+    "a3_over_a1_1_4": 0.149,
+    "a3_over_a1_1_8": 0.059,
+    "a3_over_a1_0": 0.0045
+   },
+   {
+    "a1": 2.01,
+    "a3_over_a1_2": 0.649,
+    "a3_over_a1_1": 0.468,
+    "a3_over_a1_1_2": 0.265,
+    "a3_over_a1_1_4": 0.122,
+    "a3_over_a1_1_8": 0.045,
+    "a3_over_a1_0": 5e-05
+   }
+  ],
+  "young_cracks_so": [
+   {
+    "a": 5.0,
+    "a_over_a3_1": 0.961,
+    "a_over_a3_2": 0.932,
+    "a_over_a3_4": 0.907,
+    "a_over_a3_8": 0.894,
+    "a_over_a3_16": 0.888
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1": 0.926,
+    "a_over_a3_2": 0.878,
+    "a_over_a3_4": 0.845,
+    "a_over_a3_8": 0.83,
+    "a_over_a3_16": 0.821
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1": 0.834,
+    "a_over_a3_2": 0.753,
+    "a_over_a3_4": 0.709,
+    "a_over_a3_8": 0.688,
+    "a_over_a3_16": 0.675
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1": 0.729,
+    "a_over_a3_2": 0.623,
+    "a_over_a3_4": 0.568,
+    "a_over_a3_8": 0.54,
+    "a_over_a3_16": 0.523
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1": 0.619,
+    "a_over_a3_2": 0.496,
+    "a_over_a3_4": 0.43,
+    "a_over_a3_8": 0.396,
+    "a_over_a3_16": 0.375
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1": 0.566,
+    "a_over_a3_2": 0.439,
+    "a_over_a3_4": 0.37,
+    "a_over_a3_8": 0.333,
+    "a_over_a3_16": 0.31
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1": 0.501,
+    "a_over_a3_2": 0.374,
+    "a_over_a3_4": 0.306,
+    "a_over_a3_8": 0.268,
+    "a_over_a3_16": 0.243
+   }
+  ],
+  "shear_cracks_so": [
+   {
+    "a": 5.0,
+    "a_over_a3_1": 0.982,
+    "a_over_a3_2": 0.963,
+    "a_over_a3_4": 0.926,
+    "a_over_a3_8": 0.872,
+    "a_over_a3_16": 0.823
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1": 0.964,
+    "a_over_a3_2": 0.929,
+    "a_over_a3_4": 0.863,
+    "a_over_a3_8": 0.781,
+    "a_over_a3_16": 0.722
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1": 0.915,
+    "a_over_a3_2": 0.837,
+    "a_over_a3_4": 0.714,
+    "a_over_a3_8": 0.599,
+    "a_over_a3_16": 0.531
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1": 0.852,
+    "a_over_a3_2": 0.732,
+    "a_over_a3_4": 0.569,
+    "a_over_a3_8": 0.439,
+    "a_over_a3_16": 0.371
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1": 0.777,
+    "a_over_a3_2": 0.623,
+    "a_over_a3_4": 0.44,
+    "a_over_a3_8": 0.306,
+    "a_over_a3_16": 0.235
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1": 0.736,
+    "a_over_a3_2": 0.571,
+    "a_over_a3_4": 0.385,
+    "a_over_a3_8": 0.251,
+    "a_over_a3_16": 0.178
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1": 0.682,
+    "a_over_a3_2": 0.506,
+    "a_over_a3_4": 0.322,
+    "a_over_a3_8": 0.191,
+    "a_over_a3_16": 0.115
+   }
+  ],
+  "young_cracks_bc": [
+   {
+    "a": 5.0,
+    "a_over_a3_1_2": 0.961,
+    "a_over_a3_1": 0.922,
+    "a_over_a3_2": 0.862,
+    "a_over_a3_4": 0.812,
+    "a_over_a3_8": 0.787
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1_2": 0.925,
+    "a_over_a3_1": 0.852,
+    "a_over_a3_2": 0.752,
+    "a_over_a3_4": 0.688,
+    "a_over_a3_8": 0.656
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1_2": 0.83,
+    "a_over_a3_1": 0.68,
+    "a_over_a3_2": 0.496,
+    "a_over_a3_4": 0.404,
+    "a_over_a3_8": 0.361
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1_2": 0.723,
+    "a_over_a3_1": 0.517,
+    "a_over_a3_2": 0.283,
+    "a_over_a3_4": 0.17,
+    "a_over_a3_8": 0.125
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1_2": 0.611,
+    "a_over_a3_1": 0.387,
+    "a_over_a3_2": 0.162,
+    "a_over_a3_4": 0.066,
+    "a_over_a3_8": 0.041
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1_2": 0.559,
+    "a_over_a3_1": 0.336,
+    "a_over_a3_2": 0.127,
+    "a_over_a3_4": 0.044,
+    "a_over_a3_8": 0.024
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1_2": 0.5,
+    "a_over_a3_1": 0.28,
+    "a_over_a3_2": 0.094,
+    "a_over_a3_4": 0.026,
+    "a_over_a3_8": 0.011
+   }
+  ],
+  "shear_cracks_bc": [
+   {
+    "a": 5.0,
+    "a_over_a3_1_2": 0.982,
+    "a_over_a3_1": 0.964,
+    "a_over_a3_2": 0.928,
+    "a_over_a3_4": 0.858,
+    "a_over_a3_8": 0.759
+   },
+   {
+    "a": 4.0,
+    "a_over_a3_1_2": 0.965,
+    "a_over_a3_1": 0.932,
+    "a_over_a3_2": 0.864,
+    "a_over_a3_4": 0.743,
+    "a_over_a3_8": 0.605
+   },
+   {
+    "a": 3.0,
+    "a_over_a3_1_2": 0.916,
+    "a_over_a3_1": 0.847,
+    "a_over_a3_2": 0.715,
+    "a_over_a3_4": 0.505,
+    "a_over_a3_8": 0.324
+   },
+   {
+    "a": 2.5,
+    "a_over_a3_1_2": 0.854,
+    "a_over_a3_1": 0.749,
+    "a_over_a3_2": 0.571,
+    "a_over_a3_4": 0.327,
+    "a_over_a3_8": 0.141
+   },
+   {
+    "a": 2.2,
+    "a_over_a3_1_2": 0.779,
+    "a_over_a3_1": 0.643,
+    "a_over_a3_2": 0.445,
+    "a_over_a3_4": 0.221,
+    "a_over_a3_8": 0.08
+   },
+   {
+    "a": 2.1,
+    "a_over_a3_1_2": 0.739,
+    "a_over_a3_1": 0.591,
+    "a_over_a3_2": 0.392,
+    "a_over_a3_4": 0.186,
+    "a_over_a3_8": 0.066
+   },
+   {
+    "a": 2.01,
+    "a_over_a3_1_2": 0.692,
+    "a_over_a3_1": 0.524,
+    "a_over_a3_2": 0.329,
+    "a_over_a3_4": 0.15,
+    "a_over_a3_8": 0.053
+   }
+  ]
+ },
+ "notes": [
+  "The printed column header of the infinite contrast is the symbol of infinity.",
+  "Tables 3.1 to 3.3 are complete; Table A.1 goes to the degree 50 in the book, of which the degrees 2 to 8 are transcribed.",
+  "Table conductivity_sc: Table 3.1, p. 67. Effective conductivity of the simple cubic array of spheres, over that of the matrix.",
+  "Table conductivity_bcc: Table 3.2, p. 67. Effective conductivity of the body-centered cubic array of spheres, over that of the matrix.",
+  "Table conductivity_fcc: Table 3.3, p. 67. Effective conductivity of the face-centered cubic array of spheres, over that of the matrix.",
+  "Table lattice_sums_sc: Table A.1, p. 465. First rows of the lattice sums of the simple cubic lattice of unit period, divided by N_ts = sqrt((t-s)!(t+s)!): harmonic Y_ts(0) and biharmonic Z_ts(0). The harmonic sum of degree 2, conditionally convergent, is given in the convention of the book.",
+  "In the conductivity tables the columns contrast_0 to contrast_infinity are the conductivity of the spheres over that of the matrix; contrast_infinity stands for perfectly conducting spheres.",
+  "Table stiffness_sc: Table 5.1, p. 149. Effective stiffness of the simple cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Table stiffness_bcc: Table 5.2, p. 150. Effective stiffness of the body-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Table stiffness_fcc: Table 5.3, p. 150. Effective stiffness of the face-centered cubic array of spheres, nu0 = nu1 = 0.3 (Section 5.7, p. 145): C1122/(2 mu0), C1111/(2 mu0) and C1212/mu0, the contrast being mu1/mu0.",
+  "Tables stiffness_bcc: the entries 2.6782 (c = 0.4, C1212, contrast 1000) and 6.2030 (c = 0.6, same column) are printed with four decimals in the book; they are transcribed as printed.",
+  "Table stiffness_spheroids: Table 7.6, p. 244, columns tmax = 15. C3333/mu0 of an orthogonal array of spheroids of semi-axes (1, 1, aspect_ratio), periods proportional to the semi-axes, nu0 = nu1 = 0.3, the contrast being mu1/mu0 (0 for cavities); the columns c_0.1 to c_0.5 are the volume fraction.",
+  "Table conductivity_cracks_so: Table 6.3, p. 197. Effective conductivity lambda*33/lambda0 of a solid with insulating penny-shaped cracks of unit radius and normal e3 on the orthogonal lattice of periods (a1, a1, a3), one crack per cell; the key a3_over_a1_1_2 is a3/a1 = 1/2, and a3_over_a1_0 the limit a3/a1 -> 0, which no computation at finite a3 reaches. The entry a1 = 4, a3/a1 = 1/2 is printed 0.932; the multipole expansion gives 0.923, the same digits transposed, in line with the body-centered array of the same crack density (0.919, Table 6.4): it is transcribed as printed.",
+  "Table conductivity_cracks_bc: Table 6.4, p. 198. The same with two cracks per cell, at the origin and at (a1/2, a1/2, a3/2) (body-centered array). The entries 0.0045 and 0.00005 are printed 0.45 \u00b7 10^-2 and 0.5 \u00b7 10^-4.",
+  "Tables young_cracks_so, shear_cracks_so, young_cracks_bc, shear_cracks_bc: Tables 7.7 to 7.10, pp. 245-246. E*33/E0 = 1/(E0 D*3333) and mu*13/mu0 = 1/(4 mu0 D*1313), D* the effective compliance, of a solid of Poisson ratio nu0 = 0.25 with traction-free penny-shaped cracks of unit radius and normal e3 on the lattice of periods (a, a, a3); the key a_over_a3_1_2 is a/a3 = 1/2. SO: one crack per cell; BC: two, at the origin and at (a/2, a/2, a3/2)."
+ ]
+}

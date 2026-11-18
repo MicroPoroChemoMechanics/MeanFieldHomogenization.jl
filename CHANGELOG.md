@@ -1,5 +1,167 @@
 # Changelog
 
+## v0.27.0 — the multipole expansion method
+
+A minor release. The one-site and N-body schemes of the package keep one
+uniform polarization per inclusion; `MultipoleExpansion` resolves the whole
+field around every particle of an assembly by the multipole expansion of Kushch,
+for spheres, spheroids, ellipsoids and penny-shaped cracks, in conduction and in
+elasticity, with imperfect interfaces, on finite or periodic assemblies, and
+recovers the published tables of its author.
+
+### Breaking changes
+
+- `PeriodicBox` has three periods: its field `period` is replaced by `periods`,
+  read by `box_periods(box)`; `PeriodicBox(L)` still builds a cubic cell.
+- TensND 0.13 is required, for the harmonics the expansion is written on.
+- Being a minor release below 1.0, it is not accepted by a `[compat]` bound
+  `MeanFieldHomogenization = "0.26"`: dependents widen it.
+
+### Added
+
+- **`MultipoleExpansion`, a third scheme on a `ParticleAssembly`.** The cluster
+  model and the equivalent inclusion method keep one uniform polarization per
+  inclusion. The multipole expansion method of Kushch expands the field around
+  every sphere in solid harmonics up to the degree `nmax`, carries each
+  expansion to the center of the other spheres, and tends to the exact field of
+  the assembly as `nmax` grows. This release treats conduction in an isotropic
+  matrix: a periodic assembly (`PeriodicBox`) gives the conductivity of the
+  periodic medium, a finite one (`MixedBC`) is closed by Maxwell's argument.
+  The dipoles alone (`nmax = 1`) on a cubic array are Mori–Tanaka exactly, and
+  the published values of simple cubic, body-centered and face-centered arrays
+  are recovered.
+- **Spheres with layers and interfaces as particles.** A particle of an
+  assembly may be a `LayeredSphere`: its layers, its Kapitza resistances and
+  its surface conductances enter the multipole expansion through
+  `harmonic_response(sphere, K₀, n)`, the response of the sphere to the
+  harmonic of degree `n`. The transfer matrices of the layered sphere in
+  conduction are now written at any degree, the uniform gradient being the
+  degree 1.
+- **Elasticity of finite assemblies.** `MultipoleExpansion` gives the stiffness
+  of a finite assembly of spheres (`MixedBC`), from three solutions of the Lamé
+  equation per harmonic. `harmonic_response(sphere, C₀, n)` is the elastic
+  response of a layered sphere at any degree, with its spring and membrane
+  interfaces; the solutions and their expansion about another center are those
+  of TensND (`regular_lame_solution`, `irregular_lame_solution`,
+  `lame_solution_translation`). One sphere is
+  Mori–Tanaka exactly, and the 27 rigid spheres of Kushch (2013) are recovered
+  with their cubic anisotropy.
+- **Elasticity of periodic assemblies.** On a `PeriodicBox` the scheme gives the
+  stiffness of the periodic medium. The sums of the Lamé solutions over the
+  images need, next to the lattice harmonics of conduction, those of the
+  periodic counterpart of ``r`` (``Δρ = 2S``), returned by TensND's
+  `lattice_solid_biharmonics`. The stiffnesses of simple cubic, body-centered and
+  face-centered arrays tabulated by Kushch (2013) are recovered.
+- **Spheroids in conduction.** `MultipoleExpansion` takes assemblies of
+  spheroids of revolution axis e₃ (`Ellipsoid` or `LayeredSpheroid`, with Kapitza
+  and surface-conductive interfaces), finite or periodic. The translation
+  between close spheroids, for which the series through spherical harmonics
+  diverges (oblate spheroids stacked along their axis), is computed by
+  projection on the receiving surface. The tables of Kushch et al. (2015) for
+  the SP, BCP and FCP lattices of oblate spheroids are recovered to the third
+  decimal, and their convergence table digit for digit.
+- **Ellipsoids in conduction.** `MultipoleExpansion` takes assemblies of
+  ellipsoids of three different semi-axes, aligned alike, finite or periodic,
+  on the ellipsoidal harmonics built from the Lamé functions of TensND
+  (`lame_functions`, `lame_second_kind` on its `EllipsoidalChart`). `InterfacedEllipsoid(a₁, a₂, a₃, interface)` carries a
+  Kapitza interface on an ellipsoid, for this scheme alone. The normalization
+  constants, the Maxwell estimates with a Kapitza interface and the
+  translation coefficients of Kushch (2020), Tables 1 to 3, are recovered to
+  their printed digits.
+- **Ellipsoids in elasticity.** `MultipoleExpansion` takes assemblies of
+  aligned ellipsoids of three different semi-axes in elasticity, perfectly
+  bonded, empty, or bonded by springs through `InterfacedEllipsoid(a₁, a₂, a₃,
+  SpringInterface(kn, kt))`. Their solutions are Papkovich-Neuber fields of the
+  ellipsoidal harmonics, three potentials and the fourth at the degree 2,
+  which makes one ellipsoid under a uniform strain exact from the degree 2;
+  their spherical form follows in closed form from that of the harmonics. The
+  Maxwell estimates with springs of Kushch (2019a), Table 5, are recovered to
+  their printed digits with the interface stiffness D μ₀ (the text states
+  D μ₀/a₁); of the modified Maxwell estimates of Kushch (2019b), Table 2, the
+  single ellipsoid is recovered and the cluster of eight comes within 0.1 %
+  at the degree 8.
+- **Spheroids in elasticity.** `MultipoleExpansion` takes assemblies of
+  spheroids of a common axis in elasticity, finite or periodic, perfectly
+  bonded, empty or bonded by springs. Their decaying solutions are those of the sphere built on
+  the spheroidal harmonics, with the gradient of each harmonic as the first
+  family, which makes the field of one spheroid under a uniform strain exact
+  from the degree 2; their response is solved by least squares on one
+  meridian, order by order, and enters the solver of the spheres through its
+  spherical form, close neighbors being read on the surface of the receiver.
+  The elastic solver of the spheres now works on full response matrices. The
+  stiffness of spheroids on a lattice of Kushch (2013), Table 7.6, is
+  recovered to its printed digits, but for one entry whose digits the
+  application shows permuted.
+- **Anisotropic constituents in conduction.** `MultipoleExpansion` takes a
+  matrix orthotropic in the axes of the assembly, by the affine change of
+  variables that makes it isotropic, and perfectly bonded spheres, spheroids
+  and ellipsoids of any anisotropic conductivity, whose response is obtained
+  by projecting the interface conditions on their surface harmonics. One
+  particle is Mori-Tanaka with the Hill tensors of anisotropic media, and the
+  anisotropy parameters of Kushch & Sevostianov (2014), Table 5, are
+  recovered to their printed digits but for three entries, which the
+  application reports.
+- **Elastic spheroids with a spring interface.** `LayeredSpheroid` in
+  elasticity takes `SpringInterface`: the spring law enters the matching on the
+  side of the matrix, the projection then being truncated and converging with
+  the number of degrees (16 by default with a spring). The average strain of
+  the particle counts the openings of its springs, and the contribution tensor
+  is that of the average stress of the layers and the average strain of the
+  particle. The Maxwell estimates of Kushch (2018), Table 2, for aligned oblate
+  and prolate spheroids, are recovered to the fourth decimal.
+- `harmonic_response(spheroid, K₀, m, nmax)`, the response of a layered
+  spheroid to the spheroidal harmonics of any degree and order; the Legendre
+  functions and the transfer matrices of `LayeredSpheroid` are written at any
+  order.
+- **Penny-shaped cracks.** `MultipoleExpansion` takes penny-shaped cracks of
+  normal e₃ (`EllipticCrack(a, a)`), alone or with spheroids, finite or
+  periodic, in conduction (insulating cracks) and in elasticity (traction-free
+  lips). A crack is the focal disk τ = 0 of its oblate coordinates, where the
+  spheroidal harmonics are finite: its two lips are told apart by their
+  coordinates, not approached by a flat spheroid. A close neighbor is read
+  through what a crack answers, the normal flux or the traction on its plane.
+  One crack in a ball is Maxwell's estimate to the rounding, and the tables of
+  Kushch (2013) for simple and body-centered arrays of cracks, 6.3 and 6.4 in
+  conduction and 7.7 to 7.10 in elasticity, are recovered to their third
+  decimal; the entry 0.932 of Table 6.3 is the misprint of 0.923. The overlap
+  check of an assembly treats cracks as disks, so that parallel cracks in
+  distinct planes may be as close as wished; `ClusterModel` and
+  `EquivalentInclusion` refuse them.
+- `PeriodicBox((L₁, L₂, L₃))`, a rectangular periodic cell (the cluster model
+  and the equivalent inclusion method keep a cubic one), and an exact overlap
+  test between ellipsoids in `validate_assembly`, which no longer rejects
+  spheroids whose bounding balls overlap.
+- **Solid harmonics from TensND.** The scheme is written on the solid, vector
+  and ellipsoidal harmonics of TensND 0.13 and on their sums over a periodic
+  array; all accept `ForwardDiff` numbers, so an effective conductivity
+  differentiates with respect to a position, a radius, a contrast or an
+  interface parameter. The Legendre functions of `LayeredSpheroid` are TensND's
+  too: one implementation of each function for both packages, with the
+  derivatives and the oblate focal disk it gained.
+- `concentration_tensors` under `MultipoleExpansion`, the mean gradient and
+  flux of every sphere following from the uniform part of the field it
+  receives, and `multipole_coefficients`, the coefficients of the series.
+- `box_periods(::PeriodicBox)`.
+
+### Documentation
+
+- The differential operators are written by their names in every page, every
+  docstring and every published script: gradient, divergence, curl and
+  Laplacian, in the typography of the vectors and tensors they return, instead
+  of the symbol nabla. The Nomenclature page lists them.
+
+### Changed
+
+- `ClusterModel` and `EquivalentInclusion` refuse a `LayeredSphere` particle
+  with a message naming the scheme that takes it; they need a Hill tensor,
+  which a layered sphere does not have.
+- The closure of the Maxwell scheme is one function, shared by the `RVE` and by
+  the finite assemblies of the multipole expansion. No value changes.
+- The local fields of `LayeredSphere`, `LayeredCylinder` and `LayeredSpheroid`
+  read their frames (spherical, cylindrical, confocal) on the charts of TensND,
+  and the multipole expansion its spheroidal and ellipsoidal coordinates,
+  instead of formulas of their own. No value changes.
+
 ## v0.26.8 — tensors symmetric by construction infer their storage
 
 A patch release: no value changes, the types inferred for the Hill tensors do.

@@ -100,9 +100,9 @@ end
 #
 # ```math
 # J^{\mathrm{hom}}(t_i) = \sum_{j} \big[\widetilde{\mathbb{L}}\big]_{11,\,ij} ,
+# ```
 #
 # ``J^{\mathrm{hom}}`` being the uniaxial creep function of the composite.
-# ```
 
 function uniaxial_creep(R)
     J = volterra_inverse(R; block_size = 6)

@@ -79,7 +79,7 @@ The unknown amplitudes of one region. `:A`/`:B` are the ``P_n(q)``/``Q_n(q)`` pa
   remote field.
 
 Degree `0` is absent from `:A` in every region: ``\\varphi_0 = P_0(p)P_0(q) = 1`` is a
-constant, contributes nothing to ``\\nabla\\Phi``, and would put an exactly null column in
+constant, contributes nothing to ``\\underline{\\operatorname{grad}}\\,\\Phi``, and would put an exactly null column in
 the system.
 """
 function _case1_modes(𝒩::Int, role::Symbol)

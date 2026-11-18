@@ -22,11 +22,11 @@ the physics across it. Two models are available on a [`LayeredSpheroid`](@ref):
 \begin{aligned}
 &\text{LC (Kapitza):} && [\![T]\!] = -\rho\,q_n,
 \\
-&\text{HC (surface-conductive):} && [\![q_n]\!] = k^{\mathrm s}\,\mathrm{div}_S(\nabla_S T),
+&\text{HC (surface-conductive):} && [\![q_n]\!] = k^{\mathrm s}\,\operatorname{div}_S(\underline{\operatorname{grad}}_S\,T),
 \end{aligned}
 ```
 with ``q_n = \underline q\cdot\underline n`` the outward normal flux
-(``\underline q = -k\,\nabla T``), ``\rho`` a genuine thermal resistance and
+(``\underline q = -k\,\underline{\operatorname{grad}}\,T``), ``\rho`` a genuine thermal resistance and
 ``k^{\mathrm s}`` a genuine surface conductance. The LC interface impedes the normal flux; the HC one adds a
 tangential short-circuit. Both come from [kushch2015](@citet); the confocal
 ``N``-layer solution used to resolve them is that of
@@ -320,9 +320,9 @@ The scalar summary: the equivalent particle conductivity
 ``\boldsymbol{k}^{\mathrm{eq}} = \boldsymbol{B}_\Omega\cdot\boldsymbol{A}_\Omega^{-1}``,
 where ``\boldsymbol{A}_\Omega`` and ``\boldsymbol{B}_\Omega`` are the
 volume-averaged gradient and flux concentration tensors of the particle,
-defined by ``\langle\nabla T\rangle_\Omega =
+defined by ``\langle\underline{\operatorname{grad}}\,T\rangle_\Omega =
 \boldsymbol{A}_\Omega\cdot\underline{H}`` and
-``\langle\boldsymbol{K}\cdot\nabla T\rangle_\Omega =
+``\langle\boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T\rangle_\Omega =
 \boldsymbol{B}_\Omega\cdot\underline{H}``.
 
 ````@example layered_spheroid_interfaces

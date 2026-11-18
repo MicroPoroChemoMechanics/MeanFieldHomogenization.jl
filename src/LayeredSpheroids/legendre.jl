@@ -1,428 +1,69 @@
 # =============================================================================
-#  legendre.jl — associated Legendre functions of order m = 0, 1, first
-#  (P) and second (Q) kind, by upward three-term recurrence.
-#
-#  Faithful transliteration of the seed values and recurrences used in
-#  Barthélémy & Bignonnet (IJES 2020, eq:Legformc/d, eq:Leg2formc/d).
+#  legendre.jl — the Legendre functions of the spheroid solution, read from
+#  TensND (`legendre_P`, `radial_P`, `radial_Q` and their derivatives).
 #
 #  Two arguments are used throughout the spheroid solution:
-#    - the "p" argument, real, |p| ≤ 1 (the angular / polar coordinate);
-#    - the "q" argument, |q| > 1 for prolate (real) or purely imaginary
-#      `q = iτ` for oblate (`τ` real) — carried generically as `Q<:Number`
-#      (`T` for prolate, `Complex{T}` for oblate). No branch is taken on
-#      the caller's side: `sqrt`, `atanh` dispatch to the right method
-#      once `x` has the right static type (`Complex` for oblate).
+#    - the "p" argument, real, |p| ≤ 1 (the angular coordinate): Ferrers'
+#      P_n^m(p) = (−√(1−p²))^m dᵐP_n/dpᵐ, P_1^1(p) = −√(1−p²);
+#    - the "q" argument, q > 1 for a prolate spheroid or the imaginary q = iτ
+#      for an oblate one, carried as `Complex`: Hobson's P_n^m(q), Q_n^m(q),
+#      with the principal √(q²−1) (√((iτ)²−1) = i√(τ²+1)).
 #
-#  Only ODD degrees 1, 3, …, 2𝒩−1 ever enter the axial/transverse
-#  spheroid problem (by symmetry, see eq:Taxi/eq:Ttrans); the table
-#  builders below return exactly those `𝒩` values (and derivatives),
-#  never materializing the unused even-degree entries.
+#  TensND's oblate functions are the real 𝒫_n^m(τ) = i⁻ⁿ P_n^m(iτ) and
+#  𝒬_n^m(τ) = iⁿ⁺¹ Q_n^m(iτ); with d/dq = −i d/dτ the complex values and
+#  derivatives follow:
 #
-#  Stability: P upward, Q DOWNWARD
-#  ------------------------------
-#  The three-term recurrence has two solutions, `Pₙ` growing with `n` and
-#  `Qₙ` decaying — `|Qₙ/Pₙ| ~ ρ^{-(2n+1)}` with `ρ = |x + √(x²−1)| > 1`.
-#  Running it **upward** follows the dominant solution, so it is stable for
-#  `P` and catastrophically unstable for `Q`: the rounding error of the seed
-#  contains a `P` component that is amplified by `ρ^{2n}`.  Measured against
-#  `BigFloat`, an upward `Q₁₅(5)` was wrong by a relative `1.3e13`, and
-#  `Q₁₅(50)` by `7.9e26` — and the error grows with the truncation order, so
-#  raising `Nseries` to gain accuracy lost it instead.
+#      P_n^m(iτ) = iⁿ 𝒫_n^m ,          dP_n^m/dq = i^{n−1} 𝒫_n^m′ ,
+#      Q_n^m(iτ) = i^{−(n+1)} 𝒬_n^m ,  dQ_n^m/dq = i^{−(n+2)} 𝒬_n^m′ .
 #
-#  `Q` is therefore obtained by **Miller's algorithm**: the recurrence is run
-#  DOWNWARD from a degree well above the one requested, seeded arbitrarily,
-#  which suppresses the unwanted `P` component by `ρ^{-2k}` over `k` steps;
-#  the arbitrary overall factor is then fixed on a low degree whose closed
-#  form is exact.  Derivatives come from the exact identity
-#
-#      (x² − 1) dQₙᵐ/dx = n x Qₙᵐ − (n + m) Qₙ₋₁ᵐ,
-#
-#  verified here against `BigFloat` to `1e-100`, rather than from a second
-#  unstable recurrence.
+#  The order 0 of the first kind is a polynomial: Legendre's P_n on both
+#  branches, real or complex.
 # =============================================================================
 
-@inline _arccoth(x) = atanh(one(x) / x)
+const _PROLATE_UNIT = TensND.ProlateSpheroidalChart(1.0)
+const _OBLATE_UNIT = TensND.OblateSpheroidalChart(1.0)
 
-@inline function _legendre_next(n, m, x, Pnm, Pnm1)
-    return ((2n + 1) * x * Pnm - (n + m) * Pnm1) / (n - m + 1)
+# iᵏ, exactly.
+_ipow(k::Integer) = (1 + 0im, 0 + 1im, -1 + 0im, 0 - 1im)[mod(k, 4) + 1]
+
+# Hobson's P_n^m and Q_n^m on the q branch, values and derivatives, n = 0 … N:
+# the radial functions of TensND. A q that is not complex is prolate, whatever
+# its number type (a dual, a symbol); a complex q is oblate, q = iτ, when its
+# real part vanishes (τ = 0, the focal disk, included), and prolate otherwise,
+# the spheroid code carrying a prolate q as `complex(q)` as well.
+_q_first(x, m::Int, N::Int) = (TensND.radial_P(_PROLATE_UNIT, N, m, x), TensND.radial_dP(_PROLATE_UNIT, N, m, x))
+_q_second(x, m::Int, N::Int) = (TensND.radial_Q(_PROLATE_UNIT, N, m, x), TensND.radial_dQ(_PROLATE_UNIT, N, m, x))
+_q_first(x::Complex, m::Int, N::Int) = iszero(real(x)) ? _oblate_first(imag(x), m, N) : _complexified(_q_first(real(x), m, N))
+_q_second(x::Complex, m::Int, N::Int) = iszero(real(x)) ? _oblate_second(imag(x), m, N) : _complexified(_q_second(real(x), m, N))
+_complexified((v, d)) = (complex.(v), complex.(d))
+function _oblate_first(τ, m::Int, N::Int)
+    P, dP = TensND.radial_P(_OBLATE_UNIT, N, m, τ), TensND.radial_dP(_OBLATE_UNIT, N, m, τ)
+    return [_ipow(n) * P[n + 1] for n in 0:N], [_ipow(n - 1) * dP[n + 1] for n in 0:N]
 end
-
-@inline function _legendre_next_der(n, m, x, Pnm, dPnm, dPnm1)
-    return ((2n + 1) * (Pnm + x * dPnm) - (n + m) * dPnm1) / (n - m + 1)
-end
-
-"""
-    _legendre_grow!(tab, dtab, Nmax, m, x)
-
-Grow the value/derivative tables `tab`, `dtab` (1-indexed, `tab[k+1]` =
-degree-`k` value) up to degree `Nmax` (inclusive) by the upward
-recurrence `_legendre_next` / `_legendre_next_der`,
-order `m`. `tab` and `dtab` must already hold their required seed
-degrees (2 seeds for the standard case, 3 for `_Q1_table`'s
-special low-degree closed forms).
-"""
-function _legendre_grow!(tab::Vector{Tx}, dtab::Vector{Tx}, Nmax::Int, m::Int, x) where {Tx}
-    n = length(tab) - 1
-    while n < Nmax
-        Pn = tab[n + 1]
-        Pnm1 = tab[n]
-        Pnext = _legendre_next(n, m, x, Pn, Pnm1)
-        push!(tab, Pnext)
-        if length(dtab) == length(tab) - 1
-            dPn = dtab[n + 1]
-            dPnm1 = dtab[n]
-            push!(dtab, _legendre_next_der(n, m, x, Pn, dPn, dPnm1))
-        end
-        n += 1
-    end
-    return tab, dtab
+function _oblate_second(τ, m::Int, N::Int)
+    Q, dQ = TensND.radial_Q(_OBLATE_UNIT, N, m, τ), TensND.radial_dQ(_OBLATE_UNIT, N, m, τ)
+    return [_ipow(-(n + 1)) * Q[n + 1] for n in 0:N], [_ipow(-(n + 2)) * dQ[n + 1] for n in 0:N]
 end
 
 """
-    _q_recurrence_plan(x, Nmax, Tx) -> (:upward | :downward, k)
+    legendre_order_p(x, m, nmax) -> (P, dP)
 
-Which direction to run the ``Q`` recurrence, and how many extra degrees Miller
-needs when it is the downward one.
-
-A single quantity decides, and it decides both ways:
-
-```math
-\\rho = \\bigl|x + \\sqrt{x^2-1}\\bigr| > 1,
-\\qquad
-|Q_n/P_n| \\sim \\rho^{-(2n+1)}.
-```
-
-Going **up**, the seed's rounding error picks up the dominant ``P`` solution and
-is amplified by ``\\rho^{2n}``; over the `Nmax` degrees needed that costs
-``2N_{\\max}\\log\\rho`` nats of precision.  Going **down**, Miller suppresses that same
-``P`` component by ``\\rho^{-2k}`` over ``k`` steps, so it needs
-``k \\approx \\log(1/\\epsilon)/(2\\log\\rho)``.
-
-The two are reciprocal in ``\\log\\rho``, so exactly one of them is always cheap:
-
-- ``\\rho`` near 1 — a nearly degenerate spheroid, ``Q`` barely decaying — upward
-  loses almost nothing, while Miller would need thousands of steps;
-- ``\\rho`` well above 1 — upward is hopeless, and Miller converges in a handful.
-
-Getting this backwards is not a small error: capping Miller's step count and
-using it anyway at ``\\rho = 1.017`` (a 1:60 flat disc) silently returned a
-``Q`` accurate to only `2e-7`.
+Ferrers' functions ``P_n^m(x)`` on the cut (``|x| \\le 1``) and their
+derivatives, at the order `m` and the degrees ``n = 0, \\dots,`` `nmax` (index
+``n + 1``; zero for ``n < m``), from TensND's `legendre_P` and `legendre_dP`.
 """
-function _q_recurrence_plan(x, Nmax::Int, ::Type{Tx}) where {Tx}
-    # Miller's downward recurrence exists for one reason: to keep floating-point
-    # cancellation from swamping the minimal solution. An exact element type has
-    # no cancellation to control, and the upward recurrence — the plain
-    # three-term identity — is then exact. It is also the only branch a symbolic
-    # type can take at all: `eps`, `isfinite` and `ceil(Int, ·)` are all
-    # meaningless on a `Sym`.
-    #
-    # The predicate is on `real(Tx)`, and neither `Tx` nor `float(Tx)` will do:
-    #
-    #   * an oblate spheroid carries `q = iτ`, so `Tx` is `Complex{Float64}`,
-    #     which is NOT hard numeric — testing `Tx` itself sends every oblate
-    #     case down the upward branch and hands back the `7.9e26` errors this
-    #     recurrence plan exists to prevent;
-    #   * `float(Sym) === Float64` (Base derives it from `typeof(float(zero(T)))`,
-    #     and SymPy answers with a `Float64`), so `float(Tx)` reports a symbolic
-    #     type as numeric and lets `ceil(Int, ·)` throw further down.
-    #
-    # `real` separates the two cleanly: `real(Complex{Float64}) === Float64`
-    # while `real(Sym) === Sym`.
-    is_hard_numeric(real(Tx)) || return (:upward, 0)
-    ε = eps(real(float(Tx)))
-    budget = log(1 / ε)                       # nats of precision available
-    ρ = abs(x + sqrt(x^2 - one(x)))
-    (isfinite(ρ) && ρ > 1) || return (:upward, 0)
-    lρ = log(ρ)
-
-    # Upward amplifies the seed's rounding error by `ρ^{2 Nmax}`; keep it when
-    # that costs at most a factor 100, i.e. two digits.
-    loss = 2 * Nmax * lρ
-    loss ≤ log(100) && return (:upward, 0)
-
-    k = ceil(Int, budget / (2 * lρ)) + 5
-    k_max = 10 * Nmax + 100
-    k ≤ k_max && return (:downward, k)
-
-    # Miller too expensive, and upward then cheap: `k > k_max` forces
-    # `lρ < budget / (2 k_max)`, hence
-    # `loss = 2 Nmax lρ < Nmax·budget / (10 Nmax + 100) < budget/10`, a tenth
-    # of the digits.  In `Float64` that is under four nats, below the factor 100
-    # tested above, so this line is reached only in a wider precision
-    # (`BigFloat`), where a tenth of the digits is still many more than Float64
-    # has.
-    return (:upward, 0)
-end
+legendre_order_p(x, m::Int, nmax::Int) = (TensND.legendre_P(nmax, m, x), TensND.legendre_dP(nmax, m, x))
 
 """
-    _Q_values_miller(x, Nmax, m, n_norm, q_norm, k) -> Vector
+    legendre_order_q(x, m, nmax) -> (P, dP, Q, dQ)
 
-``Q_n^m(x)`` for ``n = 0, \\dots, N_{\\max}`` by Miller's downward recurrence, normalized so
-that degree `n_norm` equals the exact closed form `q_norm`.
-
-The recurrence is `_legendre_next` solved for the lower neighbor,
-
-```math
-Q_{n-1} = \\frac{(2n+1)\\,x\\,Q_n - (n-m+1)\\,Q_{n+1}}{n+m},
-```
-
-started at `Nmax + k` with ``(Q_{n+1}, Q_n) = (0, 1)``.  Going down,
-``Q`` grows like ``\\rho^n``, so the running values are rescaled whenever they get
-large; a global factor is irrelevant, the final normalization removes it.
+Hobson's functions ``P_n^m(x)`` and ``Q_n^m(x)`` of the first and second kinds
+and their derivatives, off the cut (``x > 1`` for a prolate spheroid,
+``x = \\mathrm{i}\\tau`` for an oblate one), at the order `m` and the degrees
+``n = 0, \\dots,`` `nmax` (index ``n + 1``; ``P_n^m = 0`` for ``n < m``), from the
+radial functions of TensND.
 """
-function _Q_values_miller(x::Tx, Nmax::Int, m::Int, n_norm::Int, q_norm::Tx, k::Int) where {Tx}
-    N_start = Nmax + k
-    tab = zeros(Tx, N_start + 2)
-    tab[N_start + 2] = zero(Tx)
-    tab[N_start + 1] = one(Tx)
-    big_thresh = convert(real(float(Tx)), 1.0e100)
-    for n in N_start:-1:1
-        tab[n] = ((2n + 1) * x * tab[n + 1] - (n - m + 1) * tab[n + 2]) / (n + m)
-        if abs(tab[n]) > big_thresh
-            # Rescale everything computed so far; the tail above is discarded.
-            inv_s = one(Tx) / tab[n]
-            @inbounds for j in n:(N_start + 2)
-                tab[j] *= inv_s
-            end
-        end
-    end
-    scale = q_norm / tab[n_norm + 1]
-    return [tab[j] * scale for j in 1:(Nmax + 1)]
-end
-
-"""
-    _Q_derivatives(tab, x, m, dtab_low) -> Vector
-
-Derivatives of ``Q_n^m`` from the exact identity
-``(x^2 - 1)\\,\\mathrm{d}Q_n^m/\\mathrm{d}x = n\\,x\\,Q_n^m - (n + m)\\,Q_{n-1}^m``, with the low degrees for which
-that identity is unusable taken from the closed forms in `dtab_low`.
-
-For ``m = 1`` the identity needs ``Q_0^1``, which the tables here carry as a
-placeholder zero (the ``m = 1`` recurrence is singular at ``n = 0`` and that entry
-is never used), so degrees `0` and `1` come from `dtab_low`; for ``m = 0`` only
-degree `0` does.
-"""
-function _Q_derivatives(tab::Vector{Tx}, x::Tx, m::Int, dtab_low::Vector{Tx}) where {Tx}
-    Nmax = length(tab) - 1
-    x2m1 = x^2 - one(Tx)
-    n_low = length(dtab_low) - 1
-    dtab = Vector{Tx}(undef, Nmax + 1)
-    @inbounds for n in 0:Nmax
-        dtab[n + 1] = n ≤ n_low ? dtab_low[n + 1] :
-            (n * x * tab[n + 1] - (n + m) * tab[n]) / x2m1
-    end
-    return dtab
-end
-
-"""
-    _P0_table(x, Nmax) -> (tab, dtab)
-
-``P_n(x)``, ``n = 0, \\dots, N_{\\max}``, plain Legendre polynomials (order ``m = 0``).
-Valid for any argument (the ``p`` branch, ``|p| \\le 1``, or the ``q`` branch).
-"""
-function _P0_table(x::Tx, Nmax::Int) where {Tx}
-    tab = Tx[one(Tx), x]
-    dtab = Tx[zero(Tx), one(Tx)]
-    return _legendre_grow!(tab, dtab, Nmax, 0, x)
-end
-
-"""
-    _Q0_table(x, Nmax) -> (tab, dtab)
-
-``Q_n(x)``, ``n = 0, \\dots, N_{\\max}``, Legendre functions of the second kind
-(order ``m = 0``). Valid for the ``q`` branch (``|x| > 1``, real or the
-oblate ``\\mathrm{i}\\tau`` substitute).
-"""
-function _Q0_table(x::Tx, Nmax::Int) where {Tx}
-    ax = _arccoth(x)
-    x2m1 = x^2 - one(Tx)
-    Nmax ≤ 1 && return (
-        Tx[ax, x * ax - one(Tx)][1:(Nmax + 1)],
-        Tx[-one(Tx) / x2m1, ax - x / x2m1][1:(Nmax + 1)],
-    )
-    dir, k = _q_recurrence_plan(x, Nmax, Tx)
-    if dir === :upward
-        tab = Tx[ax, x * ax - one(Tx)]
-        dtab = Tx[-one(Tx) / x2m1, ax - x / x2m1]
-        return _legendre_grow!(tab, dtab, Nmax, 0, x)
-    end
-    tab = _Q_values_miller(x, Nmax, 0, 0, ax, k)      # normalized on Q₀ = arccoth x
-    dtab = _Q_derivatives(tab, x, 0, Tx[-one(Tx) / x2m1])
-    return tab, dtab
-end
-
-"""
-    _P1p_table(x, Nmax) -> (tab, dtab)
-
-``P_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the first kind,
-order ``m = 1``, on the ``p`` branch (``|p| \\le 1``), seeded with
-``P_1^1(p) = -\\sqrt{1-p^2}``.
-"""
-function _P1p_table(x::Tx, Nmax::Int) where {Tx}
-    xb = -sqrt(one(Tx) - x^2)
-    tab = Tx[zero(Tx), xb]
-    dtab = Tx[zero(Tx), -x / xb]
-    return _legendre_grow!(tab, dtab, Nmax, 1, x)
-end
-
-"""
-    _P1_table(x, Nmax) -> (tab, dtab)
-
-``P_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the first kind,
-order ``m = 1``, on the ``q`` branch (``|x| > 1``), seeded with
-``P_1^1(q) = \\sqrt{q^2-1}``.
-"""
-function _P1_table(x::Tx, Nmax::Int) where {Tx}
-    xb = sqrt(x^2 - one(Tx))
-    tab = Tx[zero(Tx), xb]
-    dtab = Tx[zero(Tx), x / xb]
-    return _legendre_grow!(tab, dtab, Nmax, 1, x)
-end
-
-"""
-    _Q1_table(x, Nmax) -> (tab, dtab)
-
-``Q_n^1(x)``, ``n = 0, \\dots, N_{\\max}``, associated Legendre of the second kind,
-order ``m = 1``, on the ``q`` branch. The recurrence for ``m = 1`` is
-singular at ``n = 0``, so the degrees ``0, 1, 2`` are seeded from closed
-forms and the upward recurrence resumes from ``n = 2``.
-"""
-function _Q1_table(x::Tx, Nmax::Int) where {Tx}
-    ax = _arccoth(x)
-    xb = sqrt(x^2 - one(Tx))
-    x2 = x^2
-    x2m1 = x2 - one(Tx)
-    tab_low = Tx[
-        zero(Tx),
-        xb * ax - x / xb,
-        x * xb * (3 * ax - (3 * x2 - 2) / (x * x2m1)),
-    ]
-    dtab_low = Tx[
-        zero(Tx),
-        x / xb * (ax + (2 - x2) / (x * x2m1)),
-        (2 * x2 - 1) / xb * (3 * ax - x * (6 * x2 - 7) / ((2 * x2 - 1) * x2m1)),
-    ]
-    Nmax ≤ 2 && return (tab_low[1:(Nmax + 1)], dtab_low[1:(Nmax + 1)])
-    dir, k = _q_recurrence_plan(x, Nmax, Tx)
-    if dir === :upward
-        return _legendre_grow!(copy(tab_low), copy(dtab_low), Nmax, 1, x)
-    end
-    # Normalized on Q₁¹, the lowest degree with an exact closed form here (the
-    # `m = 1` recurrence is singular at `n = 0`, so `Q₀¹` stays a placeholder).
-    tab = _Q_values_miller(x, Nmax, 1, 1, tab_low[2], k)
-    tab[1] = zero(Tx)
-    dtab = _Q_derivatives(tab, x, 1, dtab_low[1:2])
-    return tab, dtab
-end
-
-"""
-    _P2p_table(x, Nmax) -> (tab, dtab)
-
-``P_n^2(x)``, order ``m = 2``, on the ``p`` branch (``|p| \\le 1``), seeded with
-``P_2^2(p) = 3(1-p^2)`` — Ferrers' convention, whose ``(-1)^m`` is ``+1`` here, matching
-`_P1p_table`'s ``P_1^1(p) = -\\sqrt{1-p^2}``.
-
-``P_0^2 = P_1^2 = 0``, and the three-term recurrence is **singular at ``n = m-1``**
-(its leading coefficient ``n-m+1`` vanishes there), so the seed has to reach
-``n = m``. Growth then starts from ``n = 2``, where the coefficient is ``1``.
-"""
-function _P2p_table(x::Tx, Nmax::Int) where {Tx}
-    z = zero(Tx)
-    tab = Tx[z, z, 3 * (one(Tx) - x^2)]
-    dtab = Tx[z, z, -6 * x]
-    return _legendre_grow!(tab, dtab, Nmax, 2, x)
-end
-
-"""
-    _P2_table(x, Nmax) -> (tab, dtab)
-
-``P_n^2(x)``, order ``m = 2``, on the ``q`` branch (``|x| > 1``), seeded with
-``P_2^2(q) = 3(q^2-1)`` — Hobson's convention, matching `_P1_table`.
-"""
-function _P2_table(x::Tx, Nmax::Int) where {Tx}
-    z = zero(Tx)
-    tab = Tx[z, z, 3 * (x^2 - one(Tx))]
-    dtab = Tx[z, z, 6 * x]
-    return _legendre_grow!(tab, dtab, Nmax, 2, x)
-end
-
-"""
-    _Q2_table(x, Nmax) -> (tab, dtab)
-
-``Q_n^2(x)``, order ``m = 2``, ``q`` branch. Seeded on the three closed forms
-
-```math
-Q_0^2 = \\frac{2x}{x^2-1},
-\\qquad
-Q_1^2 = \\frac{2}{x^2-1},
-\\qquad
-Q_2^2 = 3(x^2-1)\\,\\mathrm{arccoth}\\,x - 3x + \\frac{2x}{x^2-1},
-```
-
-which the recurrence relates exactly. All three are needed: ``Q_0^2`` and ``Q_1^2``
-satisfy the recurrence's degenerate relation at ``n = m-1`` rather than stepping
-through it, so growth can only start at ``n = m = 2``.
-
-Direction is chosen as everywhere else in this file — ``Q_n`` is the minimal
-solution, so upward is only safe for a nearly degenerate spheroid. Miller's
-downward pass is normalized on ``Q_2^2``, the lowest degree it can legitimately
-anchor on.
-
-!!! note "The `Q₂²` seed cancels at large `q`, and that is where it does not matter"
-    ``3(x^2-1)\\,\\mathrm{arccoth}\\,x`` and ``-3x`` agree to leading order — both are ``3x`` — so
-    the seed loses about ``\\log_{10}(3x/Q_2^2)`` digits, which is roughly 4.6 at
-    ``q = 12`` and shows up as a uniform `2e-12` across all degrees. It is
-    uniform because it is a *normalization* error, not an instability: measured
-    against the original upward recurrence at 600 bits, every degree carries the
-    same relative error.
-
-    Large ``q`` means a nearly **spherical** spheroid (``\\omega = q/\\sqrt{q^2-1} \\to 1``), which
-    is the regime one would hand to `LayeredSphere` instead; at ``q = 2.5`` the
-    seed is accurate to `6e-15`. The elastic solver's own `Float64` floor is
-    `1e-7`, four orders coarser, so a series expansion in ``1/x`` would buy
-    nothing here.
-"""
-function _Q2_table(x::Tx, Nmax::Int) where {Tx}
-    ax = _arccoth(x)
-    x2m1 = x^2 - one(Tx)
-    q0 = 2 * x / x2m1
-    q1 = 2 / x2m1
-    q2 = 3 * x2m1 * ax - 3 * x + 2 * x / x2m1
-    tab_low = Tx[q0, q1, q2]
-    # `(x²-1) dQₙᵐ/dx = n x Qₙᵐ - (n+m) Qₙ₋₁ᵐ` gives `dQ₂²`; the two below it
-    # are differentiated directly, the identity being degenerate there.
-    dtab_low = Tx[
-        -2 * (x^2 + one(Tx)) / x2m1^2,
-        -4 * x / x2m1^2,
-        (2 * x * q2 - 4 * q1) / x2m1,
-    ]
-    Nmax ≤ 2 && return (tab_low[1:(Nmax + 1)], dtab_low[1:(Nmax + 1)])
-    dir, k = _q_recurrence_plan(x, Nmax, Tx)
-    if dir === :upward
-        return _legendre_grow!(copy(tab_low), copy(dtab_low), Nmax, 2, x)
-    end
-    tab = _Q_values_miller(x, Nmax, 2, 2, q2, k)
-    dtab = _Q_derivatives(tab, x, 2, dtab_low)
-    return tab, dtab
-end
-
-"""
-    legendre_odd(kind::Symbol, x, Nseries::Int) -> (vals, derivs)
-
-Values and derivatives of the requested Legendre kind at the `Nseries`
-ODD degrees ``1, 3, \\dots, 2\\mathcal{N} - 1`` (``\\mathcal{N}`` = `Nseries`), as length-`Nseries` `Vector`s
-(index ``r`` ``\\leftrightarrow`` degree ``2r - 1``).
-
-`kind ∈ (:P0, :Q0, :P1, :P1p, :Q1)`:
-- `:P0`  — ``P_n(x)``   (``m = 0``, any branch)
-- `:Q0`  — ``Q_n(x)``   (``m = 0``, ``q`` branch, ``|x| > 1``)
-- `:P1`  — ``P_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
-- `:P1p` — ``P_n^1(x)``  (``m = 1``, ``p`` branch, ``|x| \\le 1``)
-- `:Q1`  — ``Q_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
-"""
-function legendre_odd(kind::Symbol, x, Nseries::Int)
-    return legendre_degrees(kind, x, 1:2:(2 * Nseries - 1))
-end
+legendre_order_q(x, m::Int, nmax::Int) = (_q_first(x, m, nmax)..., _q_second(x, m, nmax)...)
 
 """
     legendre_table(kind::Symbol, x, Nmax::Int) -> (vals, derivs)
@@ -432,51 +73,55 @@ Values and derivatives of the requested Legendre kind at **every** degree
 
 `kind ∈ (:P0, :Q0, :P1, :P1p, :Q1, :P2, :P2p, :Q2)`:
 - `:P0`  — ``P_n(x)``   (``m = 0``, any branch)
-- `:Q0`  — ``Q_n(x)``   (``m = 0``, ``q`` branch, ``|x| > 1``)
-- `:P1`  — ``P_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
+- `:Q0`  — ``Q_n(x)``   (``m = 0``, ``q`` branch)
+- `:P1`  — ``P_n^1(x)``  (``m = 1``, ``q`` branch)
 - `:P1p` — ``P_n^1(x)``  (``m = 1``, ``p`` branch, ``|x| \\le 1``)
-- `:Q1`  — ``Q_n^1(x)``  (``m = 1``, ``q`` branch, ``|x| > 1``)
-- `:P2`  — ``P_n^2(x)``  (``m = 2``, ``q`` branch, ``|x| > 1``)
+- `:Q1`  — ``Q_n^1(x)``  (``m = 1``, ``q`` branch)
+- `:P2`  — ``P_n^2(x)``  (``m = 2``, ``q`` branch)
 - `:P2p` — ``P_n^2(x)``  (``m = 2``, ``p`` branch, ``|x| \\le 1``)
-- `:Q2`  — ``Q_n^2(x)``  (``m = 2``, ``q`` branch, ``|x| > 1``)
+- `:Q2`  — ``Q_n^2(x)``  (``m = 2``, ``q`` branch)
+
+The ``q`` branch is ``x > 1`` (prolate) or ``x = \\mathrm{i}\\tau`` (oblate).
 """
 function legendre_table(kind::Symbol, x, Nmax::Int)
-    kind === :P0 && return _P0_table(x, Nmax)
-    kind === :Q0 && return _Q0_table(x, Nmax)
-    kind === :P1 && return _P1_table(x, Nmax)
-    kind === :P1p && return _P1p_table(x, Nmax)
-    kind === :Q1 && return _Q1_table(x, Nmax)
-    kind === :P2 && return _P2_table(x, Nmax)
-    kind === :P2p && return _P2p_table(x, Nmax)
-    kind === :Q2 && return _Q2_table(x, Nmax)
+    kind === :P0 && return legendre_order_p(x, 0, Nmax)
+    kind === :Q0 && return _q_second(x, 0, Nmax)
+    kind === :P1 && return _q_first(x, 1, Nmax)
+    kind === :P1p && return legendre_order_p(x, 1, Nmax)
+    kind === :Q1 && return _q_second(x, 1, Nmax)
+    kind === :P2 && return _q_first(x, 2, Nmax)
+    kind === :P2p && return legendre_order_p(x, 2, Nmax)
+    kind === :Q2 && return _q_second(x, 2, Nmax)
     throw(ArgumentError("legendre_table: unknown kind $kind"))
 end
 
 """
+    legendre_odd(kind::Symbol, x, Nseries::Int) -> (vals, derivs)
+
+Values and derivatives of the requested Legendre kind (see
+[`legendre_table`](@ref)) at the `Nseries` odd degrees
+``1, 3, \\dots, 2\\mathcal{N} - 1`` (``\\mathcal{N}`` = `Nseries`), as length-`Nseries`
+`Vector`s (index ``r`` ``\\leftrightarrow`` degree ``2r - 1``): the degrees of the
+conduction problem.
+"""
+legendre_odd(kind::Symbol, x, Nseries::Int) = legendre_degrees(kind, x, 1:2:(2 * Nseries - 1))
+
+"""
     legendre_degrees(kind::Symbol, x, degrees) -> (vals, derivs)
 
-Values and derivatives at an arbitrary set of `degrees`, in the order given.
-
-Conduction needs the odd degrees alone, which is what
-[`legendre_odd`](@ref) selects. Elasticity does not: the case-I Papkovich–Neuber
-potentials split by parity — ``\\varphi_0`` on the even degrees, ``\\varphi_3`` on the odd ones —
-so the degree list is part of the problem rather than a property of the module.
-The underlying tables are built for `0:maximum(degrees)` either way, the
-recurrences being what they are, so asking for a sparse set costs nothing extra.
-
-!!! note "`Qₙ` depends on the highest degree requested"
-    ``P_n`` grows upward and is bit-identical whatever `Nmax` is asked for. ``Q_n`` is
-    the *minimal* solution and is built by Miller's downward recurrence, which
-    starts above the highest degree requested and normalizes on a closed form —
-    so the arithmetic path, and with it the last couple of bits, depends on
-    `Nmax`. Two calls with different degree sets agree to a few ulp, never
-    to the last digit.
+Values and derivatives of the requested Legendre kind (see
+[`legendre_table`](@ref)) at an arbitrary set of `degrees`, in the order
+given. Conduction needs the odd degrees alone ([`legendre_odd`](@ref));
+elasticity does not, the case-I Papkovich–Neuber potentials splitting by
+parity — ``\\varphi_0`` on the even degrees, ``\\varphi_3`` on the odd ones.
 """
 function legendre_degrees(kind::Symbol, x, degrees)
     isempty(degrees) && throw(ArgumentError("legendre_degrees: empty degree set"))
-    minimum(degrees) ≥ 0 ||
-        throw(ArgumentError("legendre_degrees: degrees must be non-negative"))
+    minimum(degrees) ≥ 0 || throw(ArgumentError("legendre_degrees: degrees must be non-negative"))
     tab, dtab = legendre_table(kind, x, maximum(degrees))
     idx = [n + 1 for n in degrees]
     return tab[idx], dtab[idx]
 end
+
+# (2k − 1)!! in the element type, (−1)!! = 1.
+_double_factorial(::Type{T}, k::Int) where {T} = prod((one(T) * j for j in k:-2:1); init = one(T))

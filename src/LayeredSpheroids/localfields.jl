@@ -59,17 +59,16 @@ function get_layer(s::LayeredSpheroid{T, N}, q; side::Symbol = :outer) where {T,
     return k
 end
 
-@inline function _base_fond(q::Qx, p, φ) where {Qx}
-    qb = sqrt(q^2 - 1)
-    pb = sqrt(1 - p^2)
-    qp = sqrt(q^2 - p^2)
-    eR = (cos(φ), sin(φ), zero(φ))
-    ephi = (-sin(φ), cos(φ), zero(φ))
-    ez = (zero(φ), zero(φ), one(φ))
-    e_p = ((-p * qb) .* eR .+ (q * pb) .* ez) ./ qp
-    e_q = ((pb * q) .* eR .+ (p * qb) .* ez) ./ qp
-    return e_q, e_p, ephi
+# The unit vectors (e_q, e_p, e_φ) of the confocal coordinates at (q, p, φ), from
+# the charts of TensND, which order them (e_φ, e_p, e_q): q real for a prolate
+# spheroid, q = i τ for an oblate one. They do not depend on the focal
+# distance, and the chart is taken of unit focal distance.
+@inline function _base_fond(q, p, φ)
+    E = _confocal_unit_vectors(q, p, φ)
+    return (E[1, 3], E[2, 3], E[3, 3]), (E[1, 2], E[2, 2], E[3, 2]), (E[1, 1], E[2, 1], E[3, 1])
 end
+_confocal_unit_vectors(q::Complex, p, φ) = TensND.unit_vectors(TensND.OblateSpheroidalChart(one(real(q))), (φ, p, imag(q)))
+_confocal_unit_vectors(q, p, φ) = TensND.unit_vectors(TensND.ProlateSpheroidalChart(one(q)), (φ, p, q))
 
 """
     _spheroid_field_coeffs(s, k₀) -> (Xa, Xt)
@@ -121,7 +120,7 @@ end
 """
     local_gradient(s, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0) -> (g₁, g₂, g₃)
 
-Temperature gradient ``\\nabla T`` at `(q, p, φ)` (own frame, real Cartesian
+Temperature gradient ``\\underline{\\operatorname{grad}}\\,T`` at `(q, p, φ)` (own frame, real Cartesian
 triple), under the same remote loading as [`local_temperature`](@ref).
 
 Valid on the revolution axis (``|p| = 1``) as well, where the ``(q, p, \\varphi)`` chart
@@ -212,7 +211,7 @@ end
 """
     local_flux(s, k₀, q, p, φ; H_axial = 1.0, H_trans = 0.0) -> (u₁, u₂, u₃)
 
-Heat/mass flux ``\\underline{q} = -k(\\underline{x})\\,\\nabla T`` at `(q, p, φ)` (own frame), ``k(\\underline{x})`` the
+Heat/mass flux ``\\underline{q} = -k(\\underline{x})\\,\\underline{\\operatorname{grad}}\\,T`` at `(q, p, φ)` (own frame), ``k(\\underline{x})`` the
 conductivity of the layer containing the point (or `k₀` outside the
 spheroid).
 """
@@ -299,9 +298,10 @@ the canonical ``\\underline{e}_1`` one evaluated at the shifted azimuth ``\\varp
 back by ``\\varphi_0`` — which is also true, vacuously, of the axial part, so a single
 shifted evaluation carries both.
 """
+# the cylindrical coordinates (r, θ, z) of the gradient, as a point
 @inline function _split_remote_gradient(G)
-    g = TensND._extract_vec(G)
-    return g[3], hypot(g[1], g[2]), atan(g[2], g[1])
+    r, θ, z = TensND.cartesian_to_coords(TensND.CylindricalChart(), TensND._extract_vec(G))
+    return z, r, θ
 end
 
 @inline _rotz(v, φ₀) = (
@@ -345,7 +345,7 @@ end
 """
     local_flux(s_or_fields, [k₀,] q, p, φ, ∇T∞) -> NTuple{3}
 
-Flux ``\\underline{q} = -k(\\underline{x})\\,\\nabla T`` at `(q, p, φ)` under a remote uniform gradient `∇T∞`
+Flux ``\\underline{q} = -k(\\underline{x})\\,\\underline{\\operatorname{grad}}\\,T`` at `(q, p, φ)` under a remote uniform gradient `∇T∞`
 given as a vector in the spheroid's own frame.
 """
 local_flux(s::LayeredSpheroid, k₀, q, p, φ, ∇T∞) =
@@ -360,7 +360,7 @@ end
     local_gradient_gradient_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
 Pointwise gradient-gradient concentration ``\\boldsymbol{A}(q, p, \\varphi)``, so that
-``\\nabla T = \\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` for any remote uniform gradient, in the spheroid's own frame.
+``\\underline{\\operatorname{grad}}\\,T = \\boldsymbol{A}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` for any remote uniform gradient, in the spheroid's own frame.
 
 Unlike the sphere's, this tensor is **not** transversely isotropic about the
 local radial direction — a confocal spheroid is not rotation-invariant about
@@ -381,7 +381,7 @@ end
 """
     local_flux_gradient_concentration(s_or_fields, [k₀,] q, p, φ) -> Tens{2,3}
 
-Pointwise flux-gradient concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(q, p, \\varphi)``: ``\\underline{q} = -k(\\underline{x})\\,\\boldsymbol{A}\\cdot\\nabla T^{\\infty}`` with
+Pointwise flux-gradient concentration ``-k(\\underline{x})\\,\\boldsymbol{A}(q, p, \\varphi)``: ``\\underline{q} = -k(\\underline{x})\\,\\boldsymbol{A}\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}`` with
 the Fourier / Fick sign convention.
 """
 local_flux_gradient_concentration(s::LayeredSpheroid, k₀, q, p, φ) =

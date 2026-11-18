@@ -240,7 +240,7 @@ J = LC._jump(itf, LC.TransverseShear(), R, (U₀, V₀, Sym(0), Sym(0)))
 
 In conduction the two interfaces are a **Kapitza resistance**,
 ``[\![T]\!] = -\rho\,q_r`` with a continuous flux, and a **conducting surface**,
-which carries the flux ``-k^{\mathrm s}\nabla^{\mathrm s}T`` and makes the normal
+which carries the flux ``-k^{\mathrm s}\,\underline{\operatorname{grad}}_{\mathrm s}\,T`` and makes the normal
 flux jump by its surface divergence:
 
 ````@example layered_cylinder_symbolic

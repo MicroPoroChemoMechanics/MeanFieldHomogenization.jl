@@ -45,7 +45,7 @@ disagreed on a sign. The convention fixed in
 as the stress analog **minus** the flux,
 
 ```math
-\boldsymbol{\sigma} \;\equiv\; -\,\underline{q} \;=\; \boldsymbol{K}\cdot\nabla T ,
+\boldsymbol{\sigma} \;\equiv\; -\,\underline{q} \;=\; \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T ,
 ```
 
 so that ``\boldsymbol{\sigma}\cdot\underline{n}`` is, in both theories, what the
@@ -58,7 +58,7 @@ with the symbols renamed, and no sign is ever flipped.
 | Elasticity — order 4                                    | Conductivity — order 2                                |
 | :------------------------------------------------------ | :---------------------------------------------------- |
 | displacement ``\underline{u}`` — vector                  | potential ``T`` — scalar                              |
-| strain ``\boldsymbol{\varepsilon}`` — 2-tensor           | gradient ``\nabla T`` — vector                        |
+| strain ``\boldsymbol{\varepsilon}`` — 2-tensor           | gradient ``\underline{\operatorname{grad}}\,T`` — vector                        |
 | stress ``\boldsymbol{\sigma}`` — 2-tensor                | ``\boldsymbol{\sigma} \equiv -\underline{q}`` — vector |
 | stiffness ``\mathbb{C}`` — 21 components                 | conductivity ``\boldsymbol{K}`` — 6 components         |
 | Hill tensor ``\mathbb{P}`` — 4-tensor                    | Hill tensor ``\boldsymbol{P}`` — 2-tensor              |

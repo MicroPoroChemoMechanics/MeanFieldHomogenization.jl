@@ -59,7 +59,7 @@ The cell is loaded by a macroscopic strain ``\boldsymbol{E}``:
 
 ```math
 \begin{aligned}
-\underline{\mathrm{div}}\,\boldsymbol{\sigma} &= \underline{0},
+\underline{\operatorname{div}}\,\boldsymbol{\sigma} &= \underline{0},
 &\qquad
 \boldsymbol{\sigma} &= \mathbb{C}_i : \boldsymbol{\varepsilon}
   \quad (\mathcal{L}_i), \\
@@ -78,7 +78,7 @@ macroscopic stress is the average
 ## 2. The two continuity conditions
 
 Invariance in the plane makes every field depend on
-``\underline{x}\cdot\underline{n}`` alone, so ``\underline{\mathrm{div}}\,
+``\underline{x}\cdot\underline{n}`` alone, so ``\underline{\operatorname{div}}\,
 \boldsymbol{\sigma}=\underline{0}`` forces ``\boldsymbol{\sigma}`` to be
 uniform between two consecutive interfaces. Searching for a stress uniform in
 each layer, the whole problem reduces to two statements.
@@ -497,7 +497,7 @@ membrane carries a surface stress
 ``\boldsymbol{\sigma}^{\mathrm s} = \lambda^{\mathrm s}\,\mathrm{tr}(\boldsymbol{\varepsilon}^{\mathrm s})
 \boldsymbol{p} + 2\mu^{\mathrm s}\,\boldsymbol{\varepsilon}^{\mathrm s}``, and the traction jump
 it produces is ``[\![\boldsymbol{\sigma}\cdot\underline{n}]\!] =
--\mathrm{div}_s\,\boldsymbol{\sigma}^{\mathrm s}``. On a **plane** interface with a
+-\underline{\operatorname{div}}_s\,\boldsymbol{\sigma}^{\mathrm s}``. On a **plane** interface with a
 uniform in-plane strain this divergence vanishes: *there is no traction jump
 at all*. The surface stress is driven by the in-plane strain, which is
 continuous and equal to ``\boldsymbol{E}``, so it adds straight to the

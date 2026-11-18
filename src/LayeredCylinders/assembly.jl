@@ -160,7 +160,7 @@ _axial_surface_flux(itf::SurfaceConductiveInterface, r) = 2 * itf.conductance * 
     _whole_flux(sol, external) -> (; t, a)
 
 Transverse (`t`) and axial (`a`) entries of the average gradient of the
-cylinder and of its average ``\\boldsymbol k\\cdot\\nabla T`` per unit remote
+cylinder and of its average ``\\boldsymbol k\\cdot\\underline{\\operatorname{grad}}\\,T`` per unit remote
 gradient. The axial gradient is uniform; the axial flux adds the one carried
 along each conducting surface, ``2 k^{\\mathrm s} r_k / r_N^2``.
 """

@@ -15,7 +15,7 @@
 # \begin{gathered}
 # \underline u(\underline x) \;\underset{\|\underline x\|\to\infty}{\approx}\;
 #   (\mathbb S_0 : \boldsymbol\Sigma)\cdot\underline x
-#   \;-\; b\,S_f\,\bigl(\nabla\boldsymbol G(\underline x):\mathbb C_0\cdot\underline n\bigr)
+#   \;-\; b\,S_f\,\bigl(\operatorname{\mathbf{grad}}\,\boldsymbol G(\underline x):\mathbb C_0\cdot\underline n\bigr)
 #         \cdot\underline U ,
 # \\
 # \underline U = \frac{\langle[\![\underline u]\!]\rangle}{b},\quad S_f = \pi a b .

@@ -2,15 +2,16 @@
 
 !!! info "Before this page"
     [Two-inclusion interaction tensors](@ref th-interaction),
-    [The cluster model](@ref th-cluster) and
-    [The equivalent inclusion method](@ref th-eim), where the two schemes of this
+    [The cluster model](@ref th-cluster),
+    [The equivalent inclusion method](@ref th-eim) and
+    [The multipole expansion method](@ref th-mem), where the schemes of this
     page are derived, and [Homogenization schemes](@ref man-schemes) for the
     `RVE` an assembly is compared with throughout.
 
-Two schemes of the package resolve the interaction between individual inclusions
-instead of averaging it: [`ClusterModel`](@ref) and [`EquivalentInclusion`](@ref). Both
-need to know *where* the inclusions are, so both act on a
-[`ParticleAssembly`](@ref) rather than on an `RVE`.
+Three schemes of the package resolve the interaction between individual inclusions
+instead of averaging it: [`ClusterModel`](@ref), [`EquivalentInclusion`](@ref) and
+[`MultipoleExpansion`](@ref). They need to know *where* the inclusions are, so they
+act on a [`ParticleAssembly`](@ref) rather than on an `RVE`.
 
 ![Positioned particles: the interaction of each pair, such as the one marked, enters the scheme](../assets/schemes/particle_assembly.svg)
 
@@ -182,6 +183,193 @@ transport needs nothing new:
 asm = cubic_lattice(:sc, Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(20.0));
                     fraction = 0.25)
 homogenize(asm, ClusterModel(), :K)
+```
+
+## Multipole expansion
+
+[`MultipoleExpansion`](@ref) expands the field around every sphere in solid
+harmonics up to the degree `nmax` ([theory](@ref th-mem)). The first two schemes
+keep one uniform polarization per inclusion; this one tends to the exact field
+of the assembly as `nmax` grows, at the price of ``N\,n_{\max}(n_{\max}+2)``
+unknowns for ``N`` spheres in conduction, three times as many in elasticity
+([theory](@ref th-mem-elasticity)). The matrix is isotropic.
+
+```@example mem_manual
+using MeanFieldHomogenization, TensND, LinearAlgebra
+
+matrix, spheres = Dict(:K => TensISO{3}(1.0)), Dict(:K => TensISO{3}(100.0))
+asm = cubic_lattice(:fcc, matrix, spheres; fraction = 0.4)
+k(scheme) = canonical_components(homogenize(asm, scheme, :K))[1, 1]
+(mori_tanaka = k(MoriTanaka()), dipoles = k(MultipoleExpansion(; nmax = 1)),
+    converged = k(MultipoleExpansion(; nmax = 9)))
+```
+
+The boundary of the assembly decides how the far field is closed:
+
+| boundary | what the scheme computes |
+| :-- | :-- |
+| [`PeriodicBox`](@ref) | the conductivity or the stiffness of the periodic medium, the images being summed by Ewald's method; the `cutoff` of the box is not used |
+| [`MixedBC`](@ref)`(shape)` | the finite assembly in the infinite matrix, replaced by the homogeneous inclusion of the same `shape` sending the same far field ([Maxwell](@ref th-scheme-maxwell)) |
+
+The application [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres)
+compares the scheme with published tables. The degree to ask for is found by raising it until the estimate settles. It grows
+as the spheres come closer: a few units for a dilute assembly, more than twenty for
+spheres nearly in contact with a high contrast.
+
+### Spheres with layers and interfaces
+
+A particle is a ball, an `Ellipsoid` of equal semi-axes with an isotropic
+property, or a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere).
+As in an `RVE`, a layered sphere carries its constituents in the geometry, and
+the dictionary of properties is left empty. It brings its interface models with
+it: here a resistance of Kapitza at the surface of each sphere of a simple cubic
+array.
+
+```@example mem_manual
+function array(interface)
+    asm = ParticleAssembly(; boundary = PeriodicBox(1.0))
+    add_matrix!(asm, matrix)
+    sphere = LayeredSphere((0.45,), (TensISO{3}(100.0),); interfaces = (interface,))
+    add_particle!(asm, :p, (0.0, 0.0, 0.0), sphere, Dict{Symbol, Any}())
+    return canonical_components(homogenize(asm, MultipoleExpansion(; nmax = 9), :K))[1, 1]
+end
+(perfect = array(PerfectInterface{Float64}()), resisting = array(KapitzaInterface(0.5)))
+```
+
+The resistance is high enough here for the spheres, a hundred times more
+conducting than the matrix, to lower the conductivity of the array.
+
+### Elasticity
+
+The same scheme gives the stiffness of a finite or of a periodic assembly; it
+needs `nmax ≥ 2`, the degree of the dipoles of elasticity. A layered sphere
+brings its spring and membrane interfaces:
+
+```@example mem_manual
+C(μ, ν) = TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)        # (3k, 2μ)
+function pair(interface)
+    asm = ParticleAssembly(; boundary = MixedBC(2.0))
+    add_matrix!(asm, Dict(:C => C(1.0, 0.3)))
+    sphere = LayeredSphere((0.6,), (C(50.0, 0.2),); interfaces = (interface,))
+    add_particle!(asm, :a, (0.0, 0.0, 0.7), sphere, Dict{Symbol, Any}())
+    add_particle!(asm, :b, (0.0, 0.0, -0.7), sphere, Dict{Symbol, Any}())
+    M = mandel(homogenize(asm, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
+    return (C1111 = M[1, 1], C3333 = M[3, 3])
+end
+(perfect = pair(PerfectInterface{Float64}()), spring = pair(SpringInterface(; sn = 0.5, st = 0.5)))
+```
+
+The pair is aligned with ``\underline{e}_3``, and the stiffness along it differs
+from the transverse one: an effect of the arrangement.
+
+A periodic array has the cubic symmetry of its lattice, with three independent
+moduli where an isotropic estimate has two:
+
+```@example mem_manual
+asm_el = cubic_lattice(:bcc, Dict(:C => C(1.0, 0.3)), Dict(:C => C(10.0, 0.3)); fraction = 0.4)
+M = mandel(homogenize(asm_el, MultipoleExpansion(; nmax = 6), :C), CanonicalBasis{3, Float64}())
+(C1122 = M[1, 2], C1111 = M[1, 1], C1212 = M[6, 6] / 2)
+```
+
+Spheroids of axis ``\underline{e}_3``, bonded perfectly or by springs, or empty,
+are taken in elasticity as well ([theory](@ref th-mem-spheroids-elasticity)):
+
+```@example mem_manual
+flat = ParticleAssembly(; boundary = PeriodicBox((2.5, 2.5, 1.0)))
+add_matrix!(flat, Dict(:C => C(1.0, 0.3)))
+add_particle!(flat, :p, (0.0, 0.0, 0.0), Ellipsoid(1.0, 1.0, 0.25), Dict(:C => C(10.0, 0.3)))
+M = mandel(homogenize(flat, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
+(C1111 = M[1, 1], C3333 = M[3, 3])
+```
+
+Penny-shaped cracks of normal ``\underline{e}_3`` are taken in conduction and in
+elasticity, alone or with spheroids ([theory](@ref th-mem-cracks)); a crack
+has no volume and its properties are not read, an insulating or traction-free
+crack being all the expansion knows:
+
+```@example mem_manual
+cracked = ParticleAssembly(; boundary = PeriodicBox((3.0, 3.0, 1.5)))
+add_matrix!(cracked, Dict(:C => C(1.0, 0.25)))
+add_particle!(cracked, :c, (0.0, 0.0, 0.0), EllipticCrack(1.0, 1.0), Dict{Symbol, Any}())
+D = inv(mandel(homogenize(cracked, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}()))
+(E33 = 1 / D[3, 3], E11 = 1 / D[1, 1])
+```
+
+Ellipsoids of three different semi-axes, aligned alike, follow
+([theory](@ref th-mem-ellipsoids-elasticity)); an [`InterfacedEllipsoid`](@ref)
+bonds one by springs:
+
+```@example mem_manual
+springs = ParticleAssembly(; boundary = MixedBC(Ellipsoid(2.0, 1.4, 0.7)))
+add_matrix!(springs, Dict(:C => C(1.0, 0.3)))
+add_particle!(springs, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, SpringInterface(5.0, 5.0)), Dict(:C => C(100.0, 0.2)))
+M = mandel(homogenize(springs, MultipoleExpansion(; nmax = 4), :C), CanonicalBasis{3, Float64}())
+(C1111 = M[1, 1], C2222 = M[2, 2], C3333 = M[3, 3])
+```
+
+### Spheroids
+
+In conduction the particles may be spheroids of revolution axis
+``\underline{e}_3``, all spheroids or all spheres: an [`Ellipsoid`](@ref) with
+two equal semi-axes along ``\underline{e}_1`` and ``\underline{e}_2``, or a
+[`LayeredSpheroid`](@ref) with its layers and interfaces
+([theory](@ref th-mem-spheroids)). A [`PeriodicBox`](@ref) may have three
+different periods, so that a lattice can follow the aspect ratio of its
+particles:
+
+```@example mem_manual
+oblate = ParticleAssembly(; boundary = PeriodicBox((1.0, 1.0, 1 / 3)))
+add_matrix!(oblate, Dict(:K => TensISO{3}(1.0)))
+add_particle!(oblate, :p, (0.0, 0.0, 0.0), Ellipsoid(0.4, 0.4, 0.4 / 3), Dict(:K => TensISO{3}(100.0)))
+K = canonical_components(homogenize(oblate, MultipoleExpansion(; nmax = 5), :K))
+K[1, 1], K[3, 3]
+```
+
+### Ellipsoids
+
+Ellipsoids of three different semi-axes are taken in conduction too, all
+aligned alike with the axes of the assembly ([theory](@ref th-mem-ellipsoids)).
+An imperfect interface on an ellipsoid is carried by an
+[`InterfacedEllipsoid`](@ref), which only this scheme takes:
+
+```@example mem_manual
+ellipsoids = ParticleAssembly(; boundary = MixedBC(Ellipsoid(2.0, 1.4, 0.7)))
+add_matrix!(ellipsoids, Dict(:K => TensISO{3}(1.0)))
+add_particle!(ellipsoids, :p, (0.0, 0.0, 0.0), InterfacedEllipsoid(1.5, 1.0, 0.5, KapitzaInterface(0.2)), Dict(:K => TensISO{3}(100.0)))
+diag(canonical_components(homogenize(ellipsoids, MultipoleExpansion(; nmax = 3), :K)))
+```
+
+### Anisotropic constituents
+
+In conduction the matrix may be orthotropic in the axes of the assembly and
+the particles of any anisotropic conductivity, perfectly bonded, the
+ellipsoids aligned with those axes ([theory](@ref th-mem-anisotropic)); a
+sphere in a transversely isotropic matrix is such a case:
+
+```@example mem_manual
+aniso = ParticleAssembly(; boundary = PeriodicBox(2.5))
+add_matrix!(aniso, Dict(:K => TensTI{2}(1.0, 0.5, (0.0, 0.0, 1.0))))
+add_particle!(aniso, :p, (0.0, 0.0, 0.0), Ellipsoid(1.0), Dict(:K => TensISO{3}(10.0)))
+diag(canonical_components(homogenize(aniso, MultipoleExpansion(; nmax = 4), :K)))
+```
+
+### Fields of the particles
+
+The fields of this section are available in conduction, for spheres.
+
+[`concentration_tensors`](@ref) gives the mean gradient and the mean flux of
+every particle per unit macroscopic gradient, the matrix taking the rest of the
+two averages, and [`multipole_coefficients`](@ref) the coefficients of the
+series themselves, from which the field is rebuilt at any point of the matrix:
+
+```@example mem_manual
+ct = concentration_tensors(asm, MultipoleExpansion(; nmax = 5), :K)
+canonical_components(ct.strain[:p1])[1, 1], canonical_components(ct.strain[:matrix])[1, 1]
+```
+
+```@example mem_manual
+c = multipole_coefficients(asm; scheme = MultipoleExpansion(; nmax = 5))
+c[:p1, 1, 0]        # the dipole along e₃, under the three unit gradients
 ```
 
 ## Interaction back-ends

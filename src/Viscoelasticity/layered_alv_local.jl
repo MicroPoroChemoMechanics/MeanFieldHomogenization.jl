@@ -192,7 +192,7 @@ unit remote gradient history: the relaxation operator of the region applied
 **on the left** of [`local_gradient_gradient_concentration_alv`](@ref),
 ``\\widetilde{\\mathbb C}(\\underline x)\\circ\\widetilde{\\mathbb A}(\\underline x)``, the stress per
 unit remote strain. In conduction it is the flux
-``\\underline q = -k\\,\\nabla T``, ``-\\widetilde k(\\underline x)\\circ\\widetilde{\\boldsymbol A}(\\underline x)``,
+``\\underline q = -k\\,\\underline{\\operatorname{grad}}\\,T``, ``-\\widetilde k(\\underline x)\\circ\\widetilde{\\boldsymbol A}(\\underline x)``,
 as in the elastic [`local_flux_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux_gradient_concentration).
 """
 function local_flux_gradient_concentration_alv(
@@ -251,7 +251,7 @@ end
 
 ``n\\times 3n`` Volterra block matrix of the temperature at a point of a
 [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) per unit remote gradient history,
-``T = f\\,(\\underline n\\cdot\\nabla T^{\\infty})``: the operator form of the elastic
+``T = f\\,(\\underline n\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty})``: the operator form of the elastic
 [`local_temperature`](@ref MeanFieldHomogenization.LayeredSpheres.local_temperature). It jumps across a [`KapitzaInterface`](@ref);
 `side` selects the limit.
 """

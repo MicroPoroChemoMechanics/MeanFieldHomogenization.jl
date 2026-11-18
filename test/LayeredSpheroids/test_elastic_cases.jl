@@ -324,7 +324,7 @@ end
         c = sqrt(1 - (1 / ω)^2)
         imp = LayeredSpheroid(
             (1.0,), (sqrt(1 - c^2),), (C₁,);
-            interfaces = (SpringInterface(10.0, 5.0),), Nseries = 4
+            interfaces = (MembraneInterface(10.0, 5.0),), Nseries = 4
         )
         @test_throws ArgumentError spheroid_strain_concentration(imp, C₀)
         tilted = LayeredSpheroid(

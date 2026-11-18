@@ -25,20 +25,20 @@ At the scale of the material, the filtration velocity ``\underline{V}`` and the
 pressure ``P`` of a fluid of viscosity ``\mu`` obey Darcy's law,
 
 ```math
-\nabla\cdot\underline{V} = 0 ,
+\operatorname{div}\,\underline{V} = 0 ,
 \qquad
-\underline{V} = -\frac{1}{\mu}\,\boldsymbol{k}^{\mathrm{hom}}\cdot\nabla P .
+\underline{V} = -\frac{1}{\mu}\,\boldsymbol{k}^{\mathrm{hom}}\cdot\underline{\operatorname{grad}}\,P .
 ```
 
 At the scale of the pores, a representative volume ``\Omega`` holds a fluid
 domain ``\Omega_f`` and a rigid solid ``\Omega_s``. The pressure gradient
-``\underline{F} = \nabla P`` acts as a uniform load on the Stokes flow in the
+``\underline{F} = \underline{\operatorname{grad}}\,P`` acts as a uniform load on the Stokes flow in the
 pores, with no slip on the solid and periodic fluctuations:
 
 ```math
-\nabla\cdot\boldsymbol{\sigma} = \underline{0} ,\quad
-\boldsymbol{\sigma} = -p\,\boldsymbol{1} + 2\mu\,\nabla^{s}\underline{v} ,\quad
-\nabla\cdot\underline{v} = 0 \quad\text{in } \Omega_f ,
+\underline{\operatorname{div}}\,\boldsymbol{\sigma} = \underline{0} ,\quad
+\boldsymbol{\sigma} = -p\,\boldsymbol{1} + 2\mu\,\operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline{v} ,\quad
+\operatorname{div}\,\underline{v} = 0 \quad\text{in } \Omega_f ,
 \qquad \underline{v} = \underline{0} \quad\text{on } \partial\Omega_s .
 ```
 
@@ -86,10 +86,10 @@ In the reference medium and in a porous inclusion of permeability ``k_1``, the
 body force is Brinkman's drag [brinkmanASR1949](@cite):
 
 ```math
-\nabla\cdot\boldsymbol{\sigma} + \underline{f} = \underline{0} ,\qquad
+\underline{\operatorname{div}}\,\boldsymbol{\sigma} + \underline{f} = \underline{0} ,\qquad
 \underline{f} = -\mu\,\boldsymbol{k}^{-1}\cdot\underline{v} ,\qquad
-\boldsymbol{\sigma} = -p\,\boldsymbol{1} + 2\mu\,\nabla^{s}\underline{v} ,\qquad
-\nabla\cdot\underline{v} = 0 ,
+\boldsymbol{\sigma} = -p\,\boldsymbol{1} + 2\mu\,\operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline{v} ,\qquad
+\operatorname{div}\,\underline{v} = 0 ,
 ```
 
 with ``\underline{v} \to \underline{V}_0`` far from the inclusion. A clear fluid is

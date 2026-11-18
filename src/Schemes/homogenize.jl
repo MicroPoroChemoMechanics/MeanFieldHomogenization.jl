@@ -172,6 +172,10 @@ const SCHEME_ALIAS = Dict{Symbol, Type{<:HomogenizationScheme}}(
     :eim => EquivalentInclusion, :EIM => EquivalentInclusion,
     :EquivalentInclusion => EquivalentInclusion,
     :equivalent_inclusion => EquivalentInclusion,
+    # Multipole expansion method (Kushch) — acts on a `ParticleAssembly`
+    :mem => MultipoleExpansion, :MEM => MultipoleExpansion,
+    :MultipoleExpansion => MultipoleExpansion,
+    :multipole_expansion => MultipoleExpansion,
     # Self-Consistent
     :self_consistent => SelfConsistent, :SelfConsistent => SelfConsistent,
     :sc => SelfConsistent, :SC => SelfConsistent,

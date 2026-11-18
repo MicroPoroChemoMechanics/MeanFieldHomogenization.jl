@@ -142,7 +142,7 @@ crack-opening-displacement tensor ``\boldsymbol B`` and the crack normal
 
 Every routine above serves conduction as well, under the same name: the
 methods on `::AbstractTens{2,3}` properties are the elastic formulas with
-``\mathbb C`` replaced by ``\boldsymbol K``, ``\boldsymbol\varepsilon`` by ``\nabla T`` and
+``\mathbb C`` replaced by ``\boldsymbol K``, ``\boldsymbol\varepsilon`` by ``\underline{\operatorname{grad}}\,T`` and
 ``\boldsymbol\sigma`` by ``-\underline q``. Each routine also answers to its name in
 elasticity, and the contributions to their names in conduction; these accept
 one order only:

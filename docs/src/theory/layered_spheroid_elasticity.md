@@ -24,9 +24,9 @@ matched, and the solver those add up to.
     ones written out here; cases II and III reuse them unchanged and differ
     only in their mode lists.
 
-    **Perfect interfaces only**, and the default axis ``\underline e_3``. The
-    interface restriction is not a gap to be filled:
-    [it is structural](@ref th-spheroid-imperfect).
+    **Perfect and spring interfaces**, and the default axis ``\underline e_3``.
+    A spring does not fit the exact projection of a perfect interface; it is
+    solved by a truncated one, [whose convergence is measured](@ref th-spheroid-imperfect).
 
 ## 1. Why this is a derivation and not a transcription
 
@@ -54,20 +54,20 @@ into ``\underline\varphi = (\varphi_1,\varphi_2,\varphi_3)`` and writing
 ``\Phi = \varphi_0 + \underline x\cdot\underline\varphi``:
 
 ```math
-2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi .
+2\mu\,\underline u = \underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\underline\varphi .
 ```
 
 **The stress follows in closed form, and this is what makes the three elementary
 problems share one implementation.** Each ``\varphi_i`` being harmonic,
-``\nabla^2\Phi = 2\operatorname{div}\underline\varphi``, so the trace collapses
+``\Delta\Phi = 2\operatorname{div}\,\underline\varphi``, so the trace collapses
 and
 
 ```math
 \operatorname{tr}\boldsymbol\varepsilon
-   = -\frac{1-2\nu}{\mu}\operatorname{div}\underline\varphi,
+   = -\frac{1-2\nu}{\mu}\operatorname{div}\,\underline\varphi,
 \qquad
-\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\underline\varphi)\,\boldsymbol 1
- + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}(\nabla\underline\varphi).\;}
+\boxed{\;\boldsymbol\sigma = -2\nu\,(\operatorname{div}\,\underline\varphi)\,\boldsymbol 1
+ + \operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\operatorname{sym}(\operatorname{\mathbf{grad}}\,\underline\varphi).\;}
 ```
 
 Nothing in either statement refers to a particular case. Checked for four
@@ -193,7 +193,7 @@ u_q &= \frac{\bar q}{2\mu\,c\,w}\Big[\partial_q\varphi_0
 ```
 
 The ``c`` in the denominator is the Lamé coefficient's — ``\chi_p = c\,w/\bar p``,
-so ``(\nabla f)_p = (\bar p / c\,w)\,\partial_p f``. Dropping it costs a factor
+so ``(\underline{\operatorname{grad}}\,f)_p = (\bar p / c\,w)\,\partial_p f``. Dropping it costs a factor
 ``c`` that no dimensional argument would catch, since the two terms in the
 bracket stay mutually consistent either way.
 
@@ -246,27 +246,27 @@ at_point.([uc[2] - u_p_ref, uc[3] - u_q_ref])
 
 Written out in the chart, ``\sigma_{qq}`` runs to ten lines. The structure
 behind it is one. Because ``\varphi_3`` is harmonic,
-``\nabla^2\Phi = 2\,\partial_z\varphi_3``, so the trace collapses:
+``\Delta\Phi = 2\,\partial_z\varphi_3``, so the trace collapses:
 
 ```math
 \begin{gathered}
 \operatorname{tr}\boldsymbol\varepsilon = -\frac{1-2\nu}{\mu}\,\partial_z\varphi_3,
 \\
 \boxed{\;\boldsymbol\sigma = -2\nu\,(\partial_z\varphi_3)\,\boldsymbol 1
- + \nabla\nabla\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\nabla\varphi_3\right).\;}
+ + \operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\operatorname{sym}\!\left(\underline e_3\otimes\underline{\operatorname{grad}}\,\varphi_3\right).\;}
 \end{gathered}
 ```
 
 Every spheroidal component is a projection of that single equation:
 
 ```math
-\sigma_{qq} = -2\nu\,\partial_z\varphi_3 + (\nabla\nabla\Phi)_{qq}
-              - 4(1-\nu)\,(\underline e_3\!\cdot\!\underline e_q)(\nabla\varphi_3)_q,
+\sigma_{qq} = -2\nu\,\partial_z\varphi_3 + (\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi)_{qq}
+              - 4(1-\nu)\,(\underline e_3\!\cdot\!\underline e_q)(\underline{\operatorname{grad}}\,\varphi_3)_q,
 ```
 ```math
-\sigma_{pq} = (\nabla\nabla\Phi)_{pq}
-   - 2(1-\nu)\Big[(\underline e_3\!\cdot\!\underline e_p)(\nabla\varphi_3)_q
-                + (\underline e_3\!\cdot\!\underline e_q)(\nabla\varphi_3)_p\Big],
+\sigma_{pq} = (\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,\Phi)_{pq}
+   - 2(1-\nu)\Big[(\underline e_3\!\cdot\!\underline e_p)(\underline{\operatorname{grad}}\,\varphi_3)_q
+                + (\underline e_3\!\cdot\!\underline e_q)(\underline{\operatorname{grad}}\,\varphi_3)_p\Big],
 ```
 
 with the three geometric factors
@@ -388,16 +388,16 @@ quoted — the expression is *linear* in the derivatives of ``F``, so each
 coefficient is unambiguous:
 
 ```math
-(\nabla F)_p = \frac{\bar p\,F_{,p}}{c\,w},\qquad
-(\nabla F)_q = \frac{\bar q\,F_{,q}}{c\,w},\qquad
-(\nabla\nabla F)_{\varphi\varphi} = \frac{q F_{,q} - p F_{,p}}{c^2 w^2},
+(\underline{\operatorname{grad}}\,F)_p = \frac{\bar p\,F_{,p}}{c\,w},\qquad
+(\underline{\operatorname{grad}}\,F)_q = \frac{\bar q\,F_{,q}}{c\,w},\qquad
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{\varphi\varphi} = \frac{q F_{,q} - p F_{,p}}{c^2 w^2},
 ```
 ```math
 \begin{aligned}
-(\nabla\nabla F)_{qq} &= \frac{\bar q^2 F_{,qq}}{c^2 w^2}
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{qq} &= \frac{\bar q^2 F_{,qq}}{c^2 w^2}
    + \frac{\bar p^2\,(q F_{,q} - p F_{,p})}{c^2 w^4},
 \\
-(\nabla\nabla F)_{pq} &= \frac{\bar p\,\bar q}{c^2}
+(\operatorname{\mathbf{grad}}\,\underline{\operatorname{grad}}\,F)_{pq} &= \frac{\bar p\,\bar q}{c^2}
    \left[\frac{F_{,pq}}{w^2} + \frac{p F_{,q} - q F_{,p}}{w^4}\right].
 \end{aligned}
 ```
@@ -422,7 +422,7 @@ T_p = w^2 \Phi_{,pq} + p\Phi_{,q} - q\Phi_{,p}
       - 2(1-\nu)\,c\,w^2\big(q\varphi_{3,q} + p\varphi_{3,p}\big).
 ```
 
-Both hold for harmonic potentials; ``T_q`` uses ``\nabla^2\Phi = 2\partial_z\varphi_3``
+Both hold for harmonic potentials; ``T_q`` uses ``\Delta\Phi = 2\partial_z\varphi_3``
 and would be false without it.
 
 **The conditions themselves.** A confocal interface shares its geometry, so
@@ -553,18 +553,18 @@ left out of it; with the right ``\varphi_0`` added, it moves nothing at all.
 Papkovich–Neuber is redundant in a precise way: for **any** harmonic ``\zeta``,
 
 ```math
-\underline\varphi = \nabla\zeta,\qquad
-\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\nabla\zeta
+\underline\varphi = \underline{\operatorname{grad}}\,\zeta,\qquad
+\varphi_0 = 4(1-\nu)\,\zeta - \underline x\cdot\underline{\operatorname{grad}}\,\zeta
 \quad\Longrightarrow\quad
 \Phi = \varphi_0 + \underline x\cdot\underline\varphi = 4(1-\nu)\,\zeta,
 \qquad
-2\mu\,\underline u = \nabla\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
+2\mu\,\underline u = \underline{\operatorname{grad}}\,\Phi - 4(1-\nu)\,\underline\varphi = \underline 0 .
 ```
 
-The four potentials are harmonic, as they must be: ``\nabla\zeta`` is, and
-``\Delta(\underline x\cdot\nabla\zeta) = 2\,\Delta\zeta + \underline x\cdot\nabla\Delta\zeta = 0``.
+The four potentials are harmonic, as they must be: ``\underline{\operatorname{grad}}\,\zeta`` is, and
+``\Delta(\underline x\cdot\underline{\operatorname{grad}}\,\zeta) = 2\,\Delta\zeta + \underline x\cdot\underline{\operatorname{grad}}\,\Delta\zeta = 0``.
 
-The families of a case admit such a ``\zeta`` only when ``\nabla\zeta`` has no
+The families of a case admit such a ``\zeta`` only when ``\underline{\operatorname{grad}}\,\zeta`` has no
 component outside the active potentials and their degrees:
 
 - **case I** keeps ``\varphi_3`` alone, so ``\zeta`` depends on ``z`` only, and a
@@ -722,31 +722,39 @@ surface integral on a confocal boundary:
 
 With perfect interfaces ``\underline u`` is continuous, so the *interior*
 boundaries cancel in pairs and only the outer surface survives — whatever
-``N`` is, and with no volume integral anywhere. A **single layer's** average is
-the difference of the two moments on its own boundaries, which is what a
-stiffness contribution tensor needs:
+``N`` is, and with no volume integral anywhere. Across a spring the boundaries
+do not cancel: they leave the opening ``[\![\underline u]\!]`` of the spring, and
+the moment taken on the side of the matrix of the outer surface counts all the
+openings, which is the convention of the package for a particle with
+imperfect interfaces. A **single layer's** average is the difference of the two
+moments on its own boundaries, and the stiffness contribution tensor follows
+from the average stress of the layers and the average strain of the whole
+particle,
 
 ```math
-\mathbb N_C = \sum_k f_k\,(\mathbb C_k - \mathbb C_0):\mathbb A_k ,
+\mathbb N_C = \sum_k f_k\,\mathbb C_k:\mathbb A_k - \mathbb C_0:\mathbb A ,
 ```
 
-irrecoverable from the total alone, the layers having different moduli. The
-inner term drops out on its own for the core: the confocal surface degenerates
-to the focal segment there and ``\mathrm dS \propto \bar q`` vanishes with it.
+which reduces to ``\sum_k f_k\,(\mathbb C_k - \mathbb C_0):\mathbb A_k`` with perfect
+interfaces; the layers having different moduli, it is irrecoverable from the
+total alone. The inner term drops out on its own for the core: the confocal
+surface degenerates to the focal segment there and ``\mathrm dS \propto \bar q``
+vanishes with it.
 
-The two approaches — layers from differences of their own boundary moments, the
-total from one moment on the outer boundary — are independent, so
-``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a restatement. It
-holds to the truncation accuracy.
+With perfect interfaces the two approaches — layers from differences of their
+own boundary moments, the total from one moment on the outer boundary — are
+independent, so ``\sum_k f_k\mathbb A_k = \mathbb A`` is a check rather than a
+restatement. It holds to the truncation accuracy.
 
-## [10. Imperfect interfaces, and why they do not fit](@id th-spheroid-imperfect)
+## [10. The spring interface](@id th-spheroid-imperfect)
 
 The conduction solver takes a Kapitza resistance or a surface conductance
-directly. The elastic one does not, and the reason is structural rather than a
-missing feature.
+directly, because the jump they impose projects exactly on the harmonics of the
+interface. The elastic spring does not, and the difference is worth stating
+before the remedy.
 
-Take a spring law, `[u_q] = s_n\,\sigma_{qq}`. Substituting the two verified
-forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
+Take the normal part of a spring law, `[u_q] = s_n\,\sigma_{qq}`. Substituting the
+two verified forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
 
 ```math
 \frac{U_q^{+}}{\mu^{+}} - \frac{U_q^{-}}{\mu^{-}}
@@ -757,13 +765,50 @@ forms `u_q = \bar q\,U_q/(2\mu c w)` and `\sigma_{qq} = T_q/(c^2w^4)`:
 rearrangement removes it: clearing it from one side plants it on the other. The
 condition therefore stops being a polynomial identity in ``p``, and with it go
 both the exactness of the Gauss projection and
-[the banding](@ref th-spheroid-banding) that makes truncation legitimate. A
-perfect interface escapes this because every geometric factor there is *shared*
-and cancels; a compliance is a new length scale that does not.
+[the banding](@ref th-spheroid-banding). A perfect interface escapes this
+because every geometric factor there is *shared* and cancels; a compliance is a
+new length scale that does not.
 
-**The approach that does work is a thin interphase** — an extra confocal layer,
-which the solver already handles. But the two are not interchangeable, and the
-difference is worth seeing. The normal thickness of a confocal shell is
+What remains is what [kushch2018](@citet) does: expand the interface conditions
+on the surface harmonics and truncate the infinite system that results. Here
+the spring law ``[\![\underline u]\!] = \mathbf{S}\cdot\underline t``, with
+``\mathbf{S} = s_n\,\underline e_q\otimes\underline e_q + s_t\,(\boldsymbol{1} - \underline e_q\otimes\underline e_q)``
+and the traction ``\underline t = \boldsymbol\sigma\cdot\underline e_q`` continuous,
+enters the displacement rows of the matching on the side of the matrix, as
+``\underline u - \mathbf{S}\cdot\underline t``, and the rows are projected as before.
+The projection is now a truncated one, which converges geometrically with the
+number ``D`` of degrees per family. The exact contribution tensor has the major
+symmetry, so its asymmetry measures the truncation:
+
+```@example spheroid_elastic
+using MeanFieldHomogenization: LayeredSpheroid, SpringInterface, property_contribution, mandel, CanonicalBasis
+iso(μ, ν) = TensND.TensISO{3}(2μ * (1 + ν) / (1 - 2ν), 2μ)
+C₀, C₁ = iso(1.0, 0.3), iso(100.0, 0.2)
+oblate = LayeredSpheroid((1 / 3,), (1.0,), (C₁,); interfaces = (SpringInterface(10.0, 10.0),))
+asymmetry(D) = (N = mandel(property_contribution(oblate, C₁, C₀; D), CanonicalBasis{3, Float64}());
+    round(LinearAlgebra.norm(N - transpose(N)) / LinearAlgebra.norm(N); sigdigits = 2))
+[(D, asymmetry(D)) for D in (6, 10, 16)]
+```
+
+The default is ``D = 16`` when an interface is a spring, 6 otherwise. With
+``\mu_1/\mu_0 = 100``, ``\nu_0 = 0.3``, ``\nu_1 = 0.2``, a fraction 0.3 and equal normal and
+tangential stiffnesses ``D_s = 10\,\mu_0/l_1``, [kushch2018](@citet) reports for
+aligned oblate spheroids of aspect ratio 1/3 the Maxwell estimate
+``C_{11}/\mu_0 = 4.9851`` and ``C_{33}/\mu_0 = 3.1216``; Mori–Tanaka on the
+same spheroid, which is that estimate for aligned spheroids, gives
+
+```@example spheroid_elastic
+using MeanFieldHomogenization: ParticleAssembly, MixedBC, Ellipsoid, add_matrix!, add_particle!, homogenize, MoriTanaka
+asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid(1 / cbrt(0.3), 1 / cbrt(0.3), 1 / (3 * cbrt(0.3)))))
+add_matrix!(asm, Dict(:C => C₀))
+add_particle!(asm, :p, (0.0, 0.0, 0.0), oblate, Dict(:C => C₁))
+M = mandel(homogenize(asm, MoriTanaka(), :C), CanonicalBasis{3, Float64}())
+round.((M[1, 1], M[3, 3]); digits = 4)
+```
+
+**A thin interphase** — an extra confocal layer — is the other way to model an
+imperfect bond. But the two are not interchangeable, and the difference is
+worth seeing. The normal thickness of a confocal shell is
 ``\chi_q\,\mathrm dq`` with ``\chi_q = c\,w/\bar q``, so
 
 ```math
@@ -824,8 +869,7 @@ runs into. Both relations, checked:
 
 ## 12. What is left to implement
 
-Not cases II and III — they are in. What is left is smaller and none of it is
-obstructed the way an imperfect interface is:
+Not cases II and III — they are in. What is left is smaller:
 
 - **Pointwise fields.** The solver returns the harmonic amplitudes, so
   ``\underline u``, ``\boldsymbol\varepsilon`` and ``\boldsymbol\sigma`` at a

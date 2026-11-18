@@ -260,7 +260,7 @@ Momentum balance and the decay condition at infinity give
 [barthelemyIJSS2016](@cite)
 
 ```math
-\mathrm{div}\bigl(\mathbb{C}\stackrel{\circ}{:}\boldsymbol{\varepsilon}(\underline{u})\bigr)
+\underline{\operatorname{div}}\bigl(\mathbb{C}\stackrel{\circ}{:}\boldsymbol{\varepsilon}(\underline{u})\bigr)
 - \boldsymbol{\tau}\cdot\underline{n}\,\delta_{\partial\mathcal{E}} = \underline{0},
 \qquad
 \lim_{\|\underline{x}\|\to\infty}\underline{u}(\underline{x}) = \underline{0},

@@ -134,7 +134,7 @@ import .Core: gradient_gradient_concentration, flux_gradient_concentration,
     gradient_flux_concentration, flux_flux_concentration, property_contribution,
     inverse_property_contribution, delta_property, delta_inverse_property,
     concentration_and_contribution, concentration_and_flux_average,
-    inverse_and_property_contribution, is_homogeneous_inclusion
+    inverse_and_property_contribution, is_homogeneous_inclusion, harmonic_response
 import .Core: strain_strain_concentration, stress_strain_concentration,
     strain_stress_concentration, stress_stress_concentration, stiffness_contribution,
     compliance_contribution, conductivity_contribution, resistivity_contribution,
@@ -259,6 +259,7 @@ export validate_surrogate, report_surrogate, component_labels
 
 # ── Concentration & contribution (Eshelby dilute, Kachanov-Sevostianov) ───────
 export gradient_gradient_concentration, flux_gradient_concentration, gradient_flux_concentration, flux_flux_concentration
+export harmonic_response
 export gradient_gradient_concentration, flux_gradient_concentration
 export gradient_flux_concentration, flux_flux_concentration
 export property_contribution, inverse_property_contribution
@@ -355,7 +356,7 @@ export ThicknessParameter, InterfaceParameter, thickness, interface_param
 
 # ── Assemblies : the positional cell of the N-body schemes ──────────────────
 export ParticleAssembly, Particle
-export AbstractAssemblyBoundary, MixedBC, PeriodicBox
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods, InterfacedEllipsoid
 export add_matrix!, add_particle!
 export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry
@@ -364,13 +365,14 @@ export particle_volume, particle_volume_fraction, inclusion_volume_fraction
 export assembly_volume, validate_assembly
 export cubic_lattice, random_assembly, max_packing_fraction
 export eim_bound_type, eim_polarizations, cluster_concentrations
+export multipole_coefficients, MultipoleCoefficients
 export CenterParameter, RadiusParameter, center_param, radius_param
 
 # ── Schemes : scheme types + entry point ─────────────────────────────────────
 export HomogenizationScheme
 export Voigt, Reuss, Laminated, Dilute, DiluteDual, MoriTanaka, Maxwell, PonteCastanedaWillis
 export SelfConsistent, AsymmetricSelfConsistent
-export ClusterModel, EquivalentInclusion
+export ClusterModel, EquivalentInclusion, MultipoleExpansion
 export AndersonDefault, NewtonDefault, AutoNonlinear
 export DifferentialTrajectory, Proportional, Sequential, CustomPath, Path, DifferentialScheme
 export homogenize, differential_path

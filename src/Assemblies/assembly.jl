@@ -56,12 +56,15 @@ MixedBC(radius::Real) = MixedBC(Elasticity.Ellipsoid(radius))
 
 """
     PeriodicBox(period; cutoff = 3 * period) <: AbstractAssemblyBoundary
+    PeriodicBox((L₁, L₂, L₃); cutoff = 3 * maximum(periods)) <: AbstractAssemblyBoundary
 
 Periodic elementary representative volume of
 [molinari1996](@cite): the cubic cell of side
 `period` tiles space, each particle carrying a family of periodic images, and
 the interaction sums are truncated to the images lying within `cutoff` of the
-receiver.
+receiver. A tuple of three periods gives a rectangular cell, which the
+[`MultipoleExpansion`](@ref) takes; the schemes that truncate the image sums
+([`ClusterModel`](@ref), [`EquivalentInclusion`](@ref)) take a cubic one.
 
 The cutoff is a **sphere**, not a box, and that is not cosmetic: Appendix B of
 [molinari1996](@citet) proves convergence from the vanishing of the interaction
@@ -74,17 +77,69 @@ degenerate case in which the cluster model collapses exactly onto Mori-Tanaka
 (their Appendix C) — a useful thing to be able to ask for.
 """
 struct PeriodicBox{T} <: AbstractAssemblyBoundary
-    period::T
+    periods::NTuple{3, T}
     cutoff::T
 end
 
-function PeriodicBox(period::Real; cutoff::Union{Nothing, Real} = nothing)
-    period > 0 || throw(ArgumentError("PeriodicBox: the period must be positive"))
-    c = cutoff === nothing ? 3 * period : cutoff
+"""
+    box_periods(b::PeriodicBox) -> NTuple{3}
+
+Periods of the cell along the three axes.
+"""
+box_periods(b::PeriodicBox) = b.periods
+
+PeriodicBox(period::Real; cutoff::Union{Nothing, Real} = nothing) = PeriodicBox((period, period, period); cutoff)
+
+function PeriodicBox(periods::NTuple{3, Real}; cutoff::Union{Nothing, Real} = nothing)
+    all(>(0), periods) || throw(ArgumentError("PeriodicBox: the periods must be positive, got $(periods)"))
+    c = cutoff === nothing ? 3 * maximum(periods) : cutoff
     c ≥ 0 || throw(ArgumentError("PeriodicBox: the cutoff must be non-negative"))
-    p, cc = promote(period, c)
-    return PeriodicBox(p, cc)
+    v = promote(periods..., c)
+    return PeriodicBox(v[1:3], v[4])
 end
+
+# The single period of a cubic cell, for the schemes that need one.
+function _cubic_period(b::PeriodicBox)
+    L = b.periods
+    L[1] == L[2] == L[3] || throw(
+        ArgumentError(
+            "PeriodicBox: this scheme sums the images of a cubic cell; the cell has the " *
+                "periods $(L)"
+        )
+    )
+    return L[1]
+end
+
+# ─── An ellipsoid with an interface ──────────────────────────────────────────
+
+"""
+    InterfacedEllipsoid(a₁, a₂, a₃, interface)
+
+Ellipsoid of semi-axes ``a_1``, ``a_2``, ``a_3`` along ``\\underline{e}_1``,
+``\\underline{e}_2``, ``\\underline{e}_3``, bonded to the matrix by `interface`
+(a [`KapitzaInterface`](@ref MeanFieldHomogenization.LayeredSpheres.KapitzaInterface) in conduction,
+or a [`PerfectInterface`](@ref MeanFieldHomogenization.LayeredSpheres.PerfectInterface)): the
+particle of a [`ParticleAssembly`](@ref) that carries an imperfect interface on an
+ellipsoid, which no layered inclusion of the package describes. Its property is
+given with [`add_particle!`](@ref) as for an
+[`Ellipsoid`](@ref MeanFieldHomogenization.Elasticity.Ellipsoid). Only
+[`MultipoleExpansion`](@ref) takes it ([theory](@ref th-mem-ellipsoids)).
+"""
+struct InterfacedEllipsoid{T <: Number, E <: Elasticity.Ellipsoid{3}, I <: LayeredSpheres.AbstractInterface} <: MFH_Core.AbstractInclusion{T}
+    ellipsoid::E
+    interface::I
+end
+
+function InterfacedEllipsoid(a₁::Real, a₂::Real, a₃::Real, interface::LayeredSpheres.AbstractInterface)
+    e = Elasticity.Ellipsoid(a₁, a₂, a₃)
+    e isa Elasticity.Ellipsoid{3} || throw(
+        ArgumentError("InterfacedEllipsoid: the semi-axes ($a₁, $a₂, $a₃) do not describe a solid ellipsoid")
+    )
+    return InterfacedEllipsoid{eltype(e.semi_axes), typeof(e), typeof(interface)}(e, interface)
+end
+
+MFH_Core.dimension(::InterfacedEllipsoid) = 3
+MFH_Core.shape_tensor(ie::InterfacedEllipsoid) = MFH_Core.shape_tensor(ie.ellipsoid)
 
 # ─── Particle ────────────────────────────────────────────────────────────────
 
@@ -310,7 +365,7 @@ _boundary_volume(b::MixedBC, ::ParticleAssembly) = Interactions._inclusion_volum
 
 function _boundary_volume(b::PeriodicBox, asm::ParticleAssembly)
     d = _assembly_dimension(asm)
-    return b.period^d
+    return prod(b.periods[1:d])
 end
 
 """
@@ -395,21 +450,100 @@ function _check_no_overlap(asm::ParticleAssembly)
     names = asm.particle_names
     for i in eachindex(names), j in (i + 1):lastindex(names)
         na, nb = names[i], names[j]
-        ra = _bounding_radius(asm.particles[na].geometry)
-        rb = _bounding_radius(asm.particles[nb].geometry)
+        ga, gb = asm.particles[na].geometry, asm.particles[nb].geometry
         ca, cb = asm.particles[na].center, asm.particles[nb].center
-        δ = sqrt(sum((ca[k] - cb[k])^2 for k in eachindex(ca)))
-        δ > ra + rb || throw(
+        r = [TensND.primal(cb[k] - ca[k]) for k in eachindex(ca)]
+        _disjoint(_envelope(ga), _envelope(gb), r) || throw(
             ArgumentError(
                 "ParticleAssembly: particles :$(na) and :$(nb) overlap " *
-                    "(center distance $(δ) ≤ $(ra) + $(rb))"
+                    "(center distance $(sqrt(sum(abs2, r))))"
             )
         )
     end
     return nothing
 end
 
+# The ellipsoidal envelope of a particle, as the matrix A² of {x : x·A⁻²·x ≤ 1}
+# in the canonical frame, or its bounding radius when it has none.
+_envelope(ell::Elasticity.Ellipsoid{3}) = _envelope_matrix(ell)
+_envelope(sphere::LayeredSpheres.LayeredSphere) = _envelope_matrix(sphere)
+_envelope(spheroid::LayeredSpheroids.LayeredSpheroid) = _envelope_matrix(spheroid)
+_envelope(geom) = _bounding_radius(geom)
+
+# A flat crack is the degenerate ellipsoid a² ℓ⊗ℓ + b² m⊗m of normal n.
+struct _FlatEnvelope{M <: AbstractMatrix, V <: AbstractVector}
+    A²::M
+    plane::M    # the columns ℓ, m
+    n::V
+end
+function _envelope(crack::Cracks.EllipticCrack)
+    B = TensND.primal.(Array(TensND.vecbasis(crack.basis)))
+    ℓ, m = B[:, 1], B[:, 2]
+    a, b = TensND.primal(crack.a), TensND.primal(crack.b)
+    return _FlatEnvelope(a^2 * ℓ * transpose(ℓ) + b^2 * m * transpose(m), B[:, 1:2], B[:, 3])
+end
+function _envelope_matrix(geom)
+    A = TensND.primal.(Array(TensND.canonical_components(MFH_Core.shape_tensor(geom))))
+    return A * A
+end
+
+# Two bounding balls are disjoint when the distance of their centers exceeds the
+# sum of their radii; two ellipsoids, when the contact function of Perram and
+# Wertheim,
+#     F(λ) = λ(1 − λ) r·[(1 − λ) A² + λ B²]⁻¹·r ,
+# concave on [0, 1], exceeds 1 at its maximum.
+_disjoint(ra::Real, rb::Real, r) = sqrt(sum(abs2, r)) > ra + rb
+function _disjoint(A::AbstractMatrix, B::AbstractMatrix, r)
+    F(λ) = λ * (1 - λ) * dot(r, ((1 - λ) * A + λ * B) \ r)
+    # golden-section search of the maximum of a concave function
+    a, b = 0.0, 1.0
+    φ = (sqrt(5.0) - 1) / 2
+    c, d = b - φ * (b - a), a + φ * (b - a)
+    Fc, Fd = F(c), F(d)
+    for _ in 1:80
+        if Fc < Fd
+            a, c, Fc = c, d, Fd
+            d = a + φ * (b - a)
+            Fd = F(d)
+        else
+            b, d, Fd = d, c, Fc
+            c = b - φ * (b - a)
+            Fc = F(c)
+        end
+    end
+    return max(Fc, Fd) > 1
+end
+
+# The sum (1 − λ) A² + λ B² is regular for λ in (0, 1) as soon as one of the two
+# is a solid ellipsoid or the two cracks are not parallel; two parallel cracks
+# are disjoint when their planes differ, and otherwise when their ellipses are,
+# in the common plane. The normals are compared exactly: the cracks of an
+# assembly that share an orientation share it by construction.
+_disjoint(A::_FlatEnvelope, B::AbstractMatrix, r) = _disjoint(A.A², B, r)
+_disjoint(A::AbstractMatrix, B::_FlatEnvelope, r) = _disjoint(A, B.A², r)
+function _disjoint(A::_FlatEnvelope, B::_FlatEnvelope, r)
+    iszero(cross(A.n, B.n)) || return _disjoint(A.A², B.A², r)
+    iszero(dot(A.n, r)) || return true
+    P = A.plane
+    return _disjoint(transpose(P) * A.A² * P, transpose(P) * B.A² * P, transpose(P) * r)
+end
+
 _bounding_radius(ell::Elasticity.Ellipsoid) = maximum(ell.semi_axes)
+_bounding_radius(ie::InterfacedEllipsoid) = _bounding_radius(ie.ellipsoid)
+_envelope(ie::InterfacedEllipsoid) = _envelope_matrix(ie)
+Interactions._inclusion_volume(ie::InterfacedEllipsoid) = Interactions._inclusion_volume(ie.ellipsoid)
+_bounding_radius(sphere::LayeredSpheres.LayeredSphere) = LayeredSpheres.outer_radius(sphere)
+_bounding_radius(spheroid::LayeredSpheroids.LayeredSpheroid) = maximum(LayeredSpheroids.outer_semiaxes(spheroid))
+_bounding_radius(crack::Cracks.EllipticCrack) = crack.a
+# A crack has no volume: it changes the fractions of nothing.
+Interactions._inclusion_volume(crack::Cracks.EllipticCrack) = zero(crack.a)
+
+# A layered sphere occupies its outer ball: that is the region the fractions
+# and the overlap check are about.
+Interactions._inclusion_volume(sphere::LayeredSpheres.LayeredSphere) =
+    4 * π * LayeredSpheres.outer_radius(sphere)^3 / 3
+Interactions._inclusion_volume(spheroid::LayeredSpheroids.LayeredSpheroid) =
+    4 * π * prod(LayeredSpheroids.outer_semiaxes(spheroid) .^ (1, 2)) / 3
 _bounding_radius(incl::MFH_Core.AbstractInclusion) = throw(
     ArgumentError(
         "ParticleAssembly: no bounding radius is defined for a " *
@@ -420,6 +554,28 @@ _bounding_radius(incl::MFH_Core.AbstractInclusion) = throw(
 # ─── The `AbstractHomogenizationCell` contract ───────────────────────────────
 
 MFH_Core.validate_cell(asm::ParticleAssembly) = validate_assembly(asm)
+
+# The two schemes built on one uniform polarization per inclusion need the Hill
+# tensor of each particle, which a layered sphere does not have.
+function MFH_Core.validate_cell(asm::ParticleAssembly, scheme::Union{ClusterModel, EquivalentInclusion})
+    validate_assembly(asm)
+    for nm in asm.particle_names
+        geom = asm.particles[nm].geometry
+        geom isa Union{LayeredSpheres.LayeredSphere, InterfacedEllipsoid} && throw(
+            ArgumentError(
+                "$(nameof(typeof(scheme))): particle :$(nm) is a $(nameof(typeof(geom))), which has no " *
+                    "Hill tensor; use MultipoleExpansion, which takes it with its interfaces"
+            )
+        )
+        geom isa Cracks.EllipticCrack && throw(
+            ArgumentError(
+                "$(nameof(typeof(scheme))): particle :$(nm) is a crack, which has no volume to " *
+                    "polarize; use MultipoleExpansion, which takes penny-shaped cracks"
+            )
+        )
+    end
+    return asm
+end
 
 MFH_Core.cell_member_names(asm::ParticleAssembly) =
     Symbol[asm.matrix_name; asm.particle_names...]

@@ -121,7 +121,7 @@ Thermal SIF (heat-flux intensity factor) of a ribbon crack:
 
 The driving vector is the transport twin of the remote stress of the elastic
 `sif`, i.e. ``\\boldsymbol{\\sigma}^{\\infty} \\equiv -\\underline{q}^{\\infty}
-= \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}``, per the package convention. Passing
+= \\boldsymbol{K}_0\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``, per the package convention. Passing
 the physical flux ``\\underline{q}^{\\infty}`` instead returns ``-K_T``; the kernel
 is linear in its third argument and takes no view of its own.
 """
@@ -178,7 +178,7 @@ end
 Temperature intensity factor (analog of displacement intensity
 factor) for a flat crack driven by the remote vector
 ``\\boldsymbol{\\sigma}^{\\infty} \\equiv -\\underline{q}^{\\infty}
- = \\boldsymbol{K}_0\\cdot\\nabla T^{\\infty}``:
+ = \\boldsymbol{K}_0\\cdot\\underline{\\operatorname{grad}}\\,T^{\\infty}``:
 
 ```math
 [\\![T]\\!]_{\\mathrm{avg}} = b\\,(\\underline{n}\\cdot\\boldsymbol{\\sigma}^{\\infty}) .

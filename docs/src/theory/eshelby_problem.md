@@ -86,7 +86,7 @@ diffusion, electric conduction, Darcy flow. The unknown is a scalar potential
 so the stress analog is taken to be **minus** the flux,
 
 ```math
-\boldsymbol{\sigma} \equiv -\,\underline{q} = \boldsymbol{K}\cdot\nabla T ,
+\boldsymbol{\sigma} \equiv -\,\underline{q} = \boldsymbol{K}\cdot\underline{\operatorname{grad}}\,T ,
 ```
 
 the convention fixed in
@@ -100,7 +100,7 @@ inside it, and an order-2 Hill tensor
 ``\mathbb{P}`` [willis1977](@cite):
 
 ```math
-\nabla T(\underline{x}) = -\,\boldsymbol{P}\cdot\underline{\tau}_q,
+\underline{\operatorname{grad}}\,T(\underline{x}) = -\,\boldsymbol{P}\cdot\underline{\tau}_q,
 \qquad
 \boldsymbol{S}^{\mathrm{E}} = \boldsymbol{P}\cdot\boldsymbol{K},
 \qquad
@@ -109,7 +109,7 @@ inside it, and an order-2 Hill tensor
 
 which is the elastic ``\boldsymbol{\varepsilon} = -\mathbb{P}:\boldsymbol{\tau}``
 above with ``(\boldsymbol{\varepsilon},\mathbb{P},\boldsymbol{\tau})`` replaced
-by ``(\nabla T,\boldsymbol{P},\underline{\tau}_q)`` — no sign changed.
+by ``(\underline{\operatorname{grad}}\,T,\boldsymbol{P},\underline{\tau}_q)`` — no sign changed.
 
 The two problems are handled by the same functions in `MeanFieldHomogenization`, which
 dispatch on the order of the property tensor passed in: an order-4

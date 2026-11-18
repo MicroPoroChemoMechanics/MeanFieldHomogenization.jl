@@ -149,7 +149,7 @@ does in elasticity.
 
 The order-2 objects follow the ``\\boldsymbol{\\sigma} \\equiv -\\underline{q}``
 convention of the package (see the notation page): the field this kernel
-transports is the gradient ``\\nabla T`` and the source is the flux
+transports is the gradient ``\\underline{\\operatorname{grad}}\\,T`` and the source is the flux
 polarization ``\\underline{\\tau}_q``, so every sign matches the elastic case
 symbol for symbol.
 """

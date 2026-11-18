@@ -82,6 +82,14 @@ pages = [
             "theory/laminate.md",
             "theory/cluster_model.md",
             "theory/eim.md",
+            "theory/multipole_expansion.md",
+            "theory/multipole_expansion_elasticity.md",
+            "theory/multipole_expansion_spheroids.md",
+            "theory/multipole_expansion_spheroids_elasticity.md",
+            "theory/multipole_expansion_ellipsoids.md",
+            "theory/multipole_expansion_ellipsoids_elasticity.md",
+            "theory/multipole_expansion_anisotropic.md",
+            "theory/multipole_expansion_cracks.md",
             # Not a scheme: what every scheme's concentration tensors give
             # beyond the effective stiffness.
             "theory/levin.md",
@@ -240,12 +248,14 @@ pages = [
         # builds on. A page may move within its section, not across chapters.
         "applications/index.md",
         "General concepts" => [
-            # Each of the first three reproduces one paper, which is why they
+            # Each of the first four reproduces published results, which is why they
             # are applications and not tutorials: the Hill tensor of a single
             # inclusion first, then the interactions between particles.
             "applications/generated/hill_transformation.md",
             "applications/generated/cluster_model.md",
             "applications/generated/eim_assembly.md",
+            "applications/generated/multipole_spheres.md",
+            "applications/generated/multipole_spheroids.md",
             # The Fourier reduction of the first is reused by the second.
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",

@@ -61,7 +61,7 @@ end
 ```
 
 The residual is the internal force ``\\int_\\Omega \\boldsymbol{\\sigma} :
-\\nabla^{\\rm s}\\delta\\underline{u}\\,{\\rm d}\\Omega``; external loads are the
+\\operatorname{\\mathbf{grad}}^{\\mathrm{s}}\\,\\delta\\underline{u}\\,{\\rm d}\\Omega``; external loads are the
 caller's business.
 
 !!! note "Plane strain"
@@ -106,12 +106,12 @@ The residual of the step is the momentum balance dualized by
 ``\\delta\\underline{u}`` and the fluid mass balance dualized by ``\\delta p``:
 
 ```math
-\\int_\\Omega \\boldsymbol{\\Sigma} : \\nabla^{\\rm s}\\delta\\underline{u}
+\\int_\\Omega \\boldsymbol{\\Sigma} : \\operatorname{\\mathbf{grad}}^{\\mathrm{s}}\\,\\delta\\underline{u}
    \\,{\\rm d}\\Omega ,
 \\qquad
 \\int_\\Omega \\Delta\\varphi\\,\\delta p\\,{\\rm d}\\Omega
- + \\Delta t \\int_\\Omega \\nabla\\delta p \\cdot
-   \\left(\\frac{\\boldsymbol{K}}{\\mu}\\cdot\\nabla p\\right){\\rm d}\\Omega ,
+ + \\Delta t \\int_\\Omega \\underline{\\operatorname{grad}}\\,\\delta p \\cdot
+   \\left(\\frac{\\boldsymbol{K}}{\\mu}\\cdot\\underline{\\operatorname{grad}}\\,p\\right){\\rm d}\\Omega ,
 ```
 
 external loads, imposed flow rates and well terms being the caller's business.

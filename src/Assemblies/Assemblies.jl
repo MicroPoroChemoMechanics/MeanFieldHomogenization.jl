@@ -29,6 +29,7 @@ Contents
                         onto the Kelvin-Mandel basis
 - `cluster_model.jl` : the Molinari & El Mouden kernel
 - `eim.jl`           : the equivalent-inclusion kernel
+- `mem.jl`           : the multipole expansion method of Kushch
 - `as_rve.jl`        : `RVE(asm)` — forget the positions, keep the fractions,
                         which is what makes every one-site scheme of the
                         package available on an assembly
@@ -41,16 +42,22 @@ using LinearAlgebra
 using StaticArrays
 using TensND
 using Random
+import ForwardDiff
 
 import ..Core
 using ..Core
 const MFH_Core = Core
 
 import ..Elasticity
+import ..Cracks
 import ..Interactions
 import ..Schemes
 using ..Schemes: HomogenizationScheme, ClusterModel, EquivalentInclusion,
-    AbstractParameter, MoriTanaka
+    MultipoleExpansion, AbstractParameter, MoriTanaka
+import ..LayeredSpheres
+import ..LayeredSpheroids
+using ..Core: harmonic_response
+using SpecialFunctions: logfactorial, loggamma
 
 # `add_matrix!`, `matrix_property` and `matrix_volume_fraction` are declared
 # HERE, not in `Schemes`: an `RVE` has no matrix to speak of — which phase is a
@@ -63,13 +70,22 @@ include("generators.jl")
 include("block_solve.jl")
 include("cluster_model.jl")
 include("eim.jl")
+include("mem.jl")
+include("mem_spheroids.jl")
+include("mem_ellipsoids.jl")
+include("mem_anisotropic.jl")
+include("mem_elasticity.jl")
+include("mem_shaped_elasticity.jl")
+include("mem_spheroid_elasticity.jl")
+include("mem_cracks.jl")
+include("mem_ellipsoid_elasticity.jl")
 include("concentrations.jl")
 include("as_rve.jl")
 include("parameters.jl")
 
 # ── The cell and its parts ──────────────────────────────────────────────────
 export ParticleAssembly, Particle
-export AbstractAssemblyBoundary, MixedBC, PeriodicBox
+export AbstractAssemblyBoundary, MixedBC, PeriodicBox, box_periods, InterfacedEllipsoid
 export add_matrix!, add_particle!
 export matrix_property, matrix_volume_fraction
 export particle_names, particle, particle_center, particle_geometry
@@ -82,6 +98,7 @@ export cubic_lattice, random_assembly, max_packing_fraction
 
 # ── Scheme-specific queries ─────────────────────────────────────────────────
 export eim_bound_type, eim_polarizations, cluster_concentrations
+export multipole_coefficients, MultipoleCoefficients
 
 # ── Parameter lenses ────────────────────────────────────────────────────────
 export CenterParameter, RadiusParameter, center_param, radius_param

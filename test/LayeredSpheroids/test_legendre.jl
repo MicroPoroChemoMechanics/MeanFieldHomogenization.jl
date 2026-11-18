@@ -113,22 +113,14 @@ end
         @test dvo == dvd
     end
 
-    @testset "the Q tables depend on Nmax, at roundoff" begin
-        # Not a defect, and worth pinning so nobody "fixes" it: `Pₙ` grows with
-        # the upward recurrence and is bit-identical whatever `Nmax` is asked
-        # for, but `Qₙ` is the MINIMAL solution and is built by Miller's
-        # downward recurrence, which starts above the highest degree requested
-        # and normalizes on a closed form. Change `Nmax` and the arithmetic path
-        # changes with it. The two agree to a few ulp, never bit-for-bit.
-        for kind in (:Q0, :Q1)
+    @testset "the tables do not depend on Nmax" begin
+        # each degree comes out of the same arithmetic whatever the highest
+        # degree asked for, the second kind included
+        for kind in (:P0, :Q0, :Q1)
             t6, _ = LSpd.legendre_table(kind, x, 6)
             t7, _ = LSpd.legendre_table(kind, x, 7)
-            @test t6 != t7[1:7]
-            @test t6 ≈ t7[1:7] rtol = 1.0e-14
+            @test t6 == t7[1:7]
         end
-        p6, _ = LSpd.legendre_table(:P0, x, 6)
-        p7, _ = LSpd.legendre_table(:P0, x, 7)
-        @test p6 == p7[1:7]
     end
 
     @test_throws ArgumentError LSpd.legendre_degrees(:P0, x, Int[])
@@ -180,38 +172,21 @@ end
     end
 
     @testset "Qₙ² tracks the witness at every degree" begin
-        # The error is uniform in `n`, which is what a normalization error looks
-        # like; an instability would grow with the degree.
-        for (x, tol) in ((1.02, 1.0e-10), (1.3, 1.0e-11), (2.5, 1.0e-13), (12.0, 1.0e-10))
+        # to the rounding, from close to the focal segment to far from it
+        for x in (1.02, 1.3, 2.5, 12.0)
             v, _ = LSpd.legendre_table(:Q2, x, 8)
             w = witness(:Q2, x, 8)
-            errs = [abs(v[n + 1] - w[n + 1]) / abs(w[n + 1]) for n in 0:8]
-            @test maximum(errs) < tol
-            # uniform: the spread across degrees stays within an order of
-            # magnitude of the worst case
-            @test maximum(errs) < 30 * max(minimum(errs), 1.0e-16)
+            @test maximum(abs(v[n + 1] - w[n + 1]) / abs(w[n + 1]) for n in 2:8) < 1.0e-13
         end
     end
 
-    @testset "the m = 2 recurrence starts at n = m, not below" begin
-        # Its leading coefficient `n - m + 1` vanishes at `n = m - 1`, so the
-        # seed has to reach degree 2. `Q₀²` and `Q₁²` satisfy the degenerate
-        # relation `Q₀² = x Q₁²` instead of stepping through it.
-        #
-        # Note the tolerance: when Miller runs it renormalizes the WHOLE
-        # sequence, so the exact closed forms seeded at degrees 0 and 1 come
-        # back carrying the `Q₂²` seed's cancellation. That is the right
-        # trade — what matters downstream is that the recurrence relation holds
-        # between neighboring degrees, not that one degree is exact in
-        # isolation.
-        x = 3.0
-        v, _ = LSpd.legendre_table(:Q2, x, 4)
-        @test v[1] ≈ x * v[2] rtol = 1.0e-13
-        @test v[2] ≈ 2 / (x^2 - 1) rtol = 1.0e-12
-        for kind in (:P2, :P2p)
-            vv, _ = LSpd.legendre_table(kind, kind === :P2p ? 0.4 : x, 4)
-            @test iszero(vv[1])
-            @test iszero(vv[2])
+    @testset "the degrees below the order are zero" begin
+        # the spheroid solution skips them (a part of order m above the
+        # degree contributes nothing), and the tables leave them at zero
+        for (kind, x) in ((:Q2, 3.0), (:P2, 3.0), (:P2p, 0.4), (:Q1, 3.0))
+            vv, dd = LSpd.legendre_table(kind, x, 4)
+            m = kind === :Q1 ? 1 : 2
+            @test all(iszero, vv[1:m]) && all(iszero, dd[1:m])
         end
     end
 

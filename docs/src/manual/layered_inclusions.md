@@ -175,7 +175,7 @@ families, and the transport fields come from `LayeredSphereTransportFields`.
     (the default) or `:inner` selects the limit; `layer = k` forces one.
 
 Three checks come free and are worth using on a new configuration:
-``\operatorname{div}\boldsymbol\sigma = \underline 0``, ``\boldsymbol\varepsilon = \operatorname{sym}\nabla\underline u``,
+``\underline{\operatorname{div}}\,\boldsymbol\sigma = \underline 0``, ``\boldsymbol\varepsilon = \operatorname{\mathbf{grad}}^{\mathrm{s}}\,\underline u``,
 and the continuity of tractions across every interface — with the displacement
 jump matching the interface law where there is one.
 

@@ -33,27 +33,29 @@ function _maxwell(rve::RVE, ds::UniformDistribution, m::Symbol, ::Val{p}; kw...)
     return _maxwell_kernel(rve, ds.shape, P₀, m, Val(p); kw...)
 end
 
-# 4th-order (elasticity)
-function _maxwell_kernel(
-        rve, shape, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p};
-        kw...
-    ) where {p}
-    Σ = _accumulate_contributions(rve, C₀, p, m; kw...)
-    P_d = hill_tensor(shape, C₀; kw...)
-    I4 = one(C₀)
-    return C₀ + Σ ⊡ inv(I4 - P_d ⊡ Σ)
+function _maxwell_kernel(rve, shape, P₀::TensND.AbstractTens, m::Symbol, ::Val{p}; kw...) where {p}
+    Σ = _accumulate_contributions(rve, P₀, p, m; kw...)
+    return _maxwell_closure(P₀, Σ, hill_tensor(shape, P₀; kw...))
 end
 
-# 2nd-order (conductivity)
-function _maxwell_kernel(
-        rve, shape, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p};
-        kw...
-    ) where {p}
-    Σ = _accumulate_contributions(rve, K₀, p, m; kw...)
-    P_d = hill_tensor(shape, K₀; kw...)
-    I2 = one(K₀)
-    return K₀ + Σ ⋅ inv(I2 - P_d ⋅ Σ)
-end
+"""
+    _maxwell_closure(P₀, Σ, P_d) -> AbstractTens
+
+Maxwell closure ``\\mathbb{P}_0 + \\boldsymbol{\\Sigma} : (\\mathbb{I} - \\mathbb{P}_{\\mathrm{d}} : \\boldsymbol{\\Sigma})^{-1}``
+from the sum `Σ` of the contribution tensors per unit volume and the Hill
+tensor `P_d` of the domain that holds the inclusions, at either tensor order.
+The sum may come from an `RVE` (one inclusion at a time) or from a resolved
+assembly, whose contributions account for the interactions.
+"""
+_maxwell_closure(P₀, Σ, P_d) = P₀ + _compose(Σ, _maxwell_remote_field(P₀, Σ, P_d))
+
+"""
+    _maxwell_remote_field(P₀, Σ, P_d) -> AbstractTens
+
+Remote field of the inclusions per unit macroscopic one in Maxwell's scheme,
+``(\\mathbb{I} - \\mathbb{P}_{\\mathrm{d}} : \\boldsymbol{\\Sigma})^{-1}``.
+"""
+_maxwell_remote_field(P₀, Σ, P_d) = inv(one(P₀) - _compose(P_d, Σ))
 
 # Helpers — shared with PCW and SC.
 

@@ -127,7 +127,7 @@ h = 1.0e-5
 dμ_dμM_FD = (eff_mu_vs_μM(μM₀ + h) - eff_mu_vs_μM(μM₀ - h)) / (2h)
 @printf "  AD = %+.6e   FD = %+.6e   rel_err = %.2e\n" dμ_dμM_AD dμ_dμM_FD abs(dμ_dμM_AD - dμ_dμM_FD) / abs(dμ_dμM_FD)
 
-# ## §3 Both at once — the joint gradient ``\nabla_{(f,\,k_M,\,\mu_M)}\,\mu^{\mathrm{hom}}``
+# ## §3 Both at once — the joint gradient ``\underline{\operatorname{grad}}_{(f,\,k_M,\,\mu_M)}\,\mu^{\mathrm{hom}}``
 #
 # The two patterns compose: one geometric parameter through the lens, two
 # material ones through the closure, in a single `ForwardDiff.gradient` — and

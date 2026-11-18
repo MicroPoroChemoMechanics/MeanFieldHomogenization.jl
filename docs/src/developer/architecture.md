@@ -25,7 +25,7 @@ declared in `src/Core/cells.jl` alongside the rest of the package's generics:
 | :--- | :--- | :--- |
 | `Schemes.RVE` | random, through the Eshelby auxiliary problem | every mean-field scheme |
 | `Laminates.Laminate` | periodic stack of parallel layers | `Laminated` (exact), `Voigt`, `Reuss` |
-| `Assemblies.ParticleAssembly` | individual particles at **known positions** | `ClusterModel`, `EquivalentInclusion`, and the bounds |
+| `Assemblies.ParticleAssembly` | individual particles at **known positions** | `ClusterModel`, `EquivalentInclusion`, `MultipoleExpansion`, and the bounds |
 
 A cell carries exactly the information its schemes need, which is why there are
 three of them rather than one wide type: adding positions to `RVE` would put a

@@ -27,7 +27,7 @@ typeface convention.
 Everything below is written once and read twice, in elasticity and in transport, using
 the dictionary of
 [Elasticity and transport: one set of formulas](@ref th-notation-sigma-q):
-``\boldsymbol{\varepsilon} \leftrightarrow \nabla T``,
+``\boldsymbol{\varepsilon} \leftrightarrow \underline{\operatorname{grad}}\,T``,
 ``\mathbb{C} \leftrightarrow \boldsymbol{K}``,
 ``\boldsymbol{\sigma} \equiv -\underline{q}``. Order-2 objects keep the bold typeface
 (``\boldsymbol{T}^{ab}``, ``\boldsymbol{G}^0``, ``\boldsymbol{P}``); no sign changes

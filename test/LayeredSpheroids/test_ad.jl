@@ -150,33 +150,6 @@ _probe(s, k₀, trans) = real(LSpd.spheroid_state_sequence(s, k₀, trans)[1][1]
     end
 end
 
-@testset "_q_recurrence_plan — the numeric/symbolic gate keeps its teeth" begin
-    plan = LSpd._q_recurrence_plan
-    # The gate that lets a symbolic type through must NOT be read as
-    # `is_hard_numeric(Tx)`: an oblate spheroid carries `q = iτ`, so `Tx` is
-    # `Complex{Float64}`, which is not hard numeric. Testing `Tx` itself would
-    # route every oblate case onto the upward recurrence — the very instability
-    # Miller's downward variant is here for.
-    @test first(plan(5.0, 12, Float64)) === :downward
-    # In BigFloat, near-degenerate charts make Miller too long and upward still
-    # accurate to a tenth of the digits (ρ ≈ 1.35, Nmax = 12).
-    x = (big(1.35) + 1 / big(1.35)) / 2
-    @test 2 * 12 * log(big(1.35)) > log(100)     # not the cheap-upward branch
-    @test plan(x, 12, BigFloat) == (:upward, 0)
-    @test first(plan(Float64(x), 12, Float64)) === :downward
-    @test first(plan(im * 5.0, 12, Complex{Float64})) === :downward
-    @test first(plan(im * 50.0, 12, Complex{Float64})) === :downward
-    @test first(plan(big(5.0), 12, BigFloat)) === :downward
-    D = ForwardDiff.Dual{Nothing, Float64, 1}
-    @test first(plan(D(5.0), 12, D)) === :downward
-    @test first(plan(Complex{D}(im * 5.0), 12, Complex{D})) === :downward
-    # Nearly degenerate: upward loses almost nothing, Miller would be ruinous.
-    @test first(plan(1.0001, 12, Float64)) === :upward
-    # Exact types have no cancellation to control, and `eps`/`ceil` are
-    # meaningless on them.
-    @test first(plan(Sym(5), 12, Sym)) === :upward
-end
-
 @testset "LayeredSpheroid — BigFloat" begin
     ax = (big(1.0), big(2.0))
     dk = (sqrt(big(0.75)), sqrt(big(3.75)))

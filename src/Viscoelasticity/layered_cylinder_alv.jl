@@ -294,7 +294,7 @@ _flux_entries_alv(::Val{2}, sol, cyl, layer::Int, external) = (_LC._check_layer(
 Volterra block matrix of the average flux of a [`LayeredCylinder`](@ref) per
 unit remote gradient history, against the aging reference `ref`: in elasticity
 the average stress per unit remote strain, in conduction the average of
-``\\boldsymbol k\\cdot\\nabla T`` per unit remote gradient. Without `layer`, the whole
+``\\boldsymbol k\\cdot\\underline{\\operatorname{grad}}\\,T`` per unit remote gradient. Without `layer`, the whole
 cylinder, with the surface stress (flux) of its membranes (conducting
 surfaces), that of the outer one when `external`. With `layer = k`, the
 material of layer ``k``: its relaxation operator applied on the left of its
@@ -409,7 +409,7 @@ local_gradient_gradient_concentration_alv(
 Volterra block matrix of the pointwise flux of a [`LayeredCylinder`](@ref) per
 unit remote gradient history: the relaxation operator of the region applied on
 the left of [`local_gradient_gradient_concentration_alv`](@ref). In conduction
-it is the flux ``\\underline q = -\\boldsymbol k\\cdot\\nabla T``, as in the elastic
+it is the flux ``\\underline q = -\\boldsymbol k\\cdot\\underline{\\operatorname{grad}}\\,T``, as in the elastic
 [`local_flux_gradient_concentration`](@ref MeanFieldHomogenization.LayeredSpheres.local_flux_gradient_concentration).
 """
 function local_flux_gradient_concentration_alv(

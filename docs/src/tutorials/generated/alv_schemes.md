@@ -112,9 +112,9 @@ the row sum of its ``(11,11)`` blocks:
 
 ```math
 J^{\mathrm{hom}}(t_i) = \sum_{j} \big[\widetilde{\mathbb{L}}\big]_{11,\,ij} ,
+```
 
 ``J^{\mathrm{hom}}`` being the uniaxial creep function of the composite.
-```
 
 ````@example alv_schemes
 function uniaxial_creep(R)

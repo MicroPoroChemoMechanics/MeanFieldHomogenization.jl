@@ -9,6 +9,7 @@ MeanFieldHomogenization.Assemblies
 ```@docs
 ParticleAssembly
 Particle
+InterfacedEllipsoid
 add_matrix!
 add_particle!
 validate_assembly
@@ -20,6 +21,7 @@ validate_assembly
 AbstractAssemblyBoundary
 MixedBC
 PeriodicBox
+box_periods
 ```
 
 ## The bridge to the one-site schemes
@@ -59,9 +61,12 @@ max_packing_fraction
 ```@docs
 ClusterModel
 EquivalentInclusion
+MultipoleExpansion
 eim_bound_type
 eim_polarizations
 cluster_concentrations
+multipole_coefficients
+MultipoleCoefficients
 ```
 
 ## Parameter lenses
