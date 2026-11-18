@@ -212,6 +212,8 @@ export cod_tensor, B_tensor
 export cod_from_compliance, compliance_from_cod
 export crack_density_factor
 export sif, dif
+export rice_cod_tensor, CircularFronts, AnnularCrack, RiceCrack, ArcShape, CircularArcCrack
+export saturn_ring_compliance
 
 # ── Custom (user-defined) inclusions ─────────────────────────────────────────
 export CustomInclusion, CustomShape, check_inclusion_interface

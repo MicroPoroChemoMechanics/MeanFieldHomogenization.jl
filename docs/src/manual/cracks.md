@@ -136,6 +136,43 @@ For the **time-dependent** (ALV) version with `Rn(t,t')` and
 [Viscoelasticity manual](@ref man-visco-cracks).
 References: [sevostianov2002, barthelemyIJES2019](@citet).
 
+## [Cracks from their intensity factors](@id man-rice-cracks)
+
+A crack whose intensity factors are known has a compliance contribution, by
+integrating its energy release rate along its growth
+([theory](@ref th-rice-contributions)). Three cracks are built on it, in an
+isotropic matrix:
+
+| type | geometry | density | contributions |
+| :--- | :------- | :------ | :------------ |
+| [`AnnularCrack`](@ref)`(a, c)` | penny of radius ``a`` bonded on the disc of radius ``c`` | ``N a^3`` | ``\boldsymbol{B}``, ``b``, ``\mathbb{H}``, ``\boldsymbol{R}``, `sif` at both fronts |
+| [`CircularArcCrack`](@ref)`(R, α)` | arc of circle of radius ``R``, half-angle ``\alpha``, unbounded along the axis | ``N (R\alpha)^2`` | ``\mathbb{H}``, ``\boldsymbol{R}`` (closed forms), `sif` at both tips |
+| [`saturn_ring_compliance`](@ref)`(a, c, C₀)` | spherical pore of radius ``a`` with a ring crack of length ``c`` | — | ``V H_{nnnn}`` only |
+
+```@example mancracks
+C₀ = iso_stiffness_E_nu(1.0, 0.25)
+K₀ = TensISO{3}(1.0)
+ann = AnnularCrack(1.0, 0.5)
+plotly_scene(shape_traces(ann); uid = "man-crack-annulus", height = 380,
+    title = "Annular crack: outer radius a, bonded disc of radius c")
+```
+
+```@example mancracks
+B = cod_tensor(ann, C₀)                        # Rice's formula along the growth of the inner front
+B_open = cod_tensor(ann, C₀; method = :opening) # the mean jumps of the final crack, one solve
+b = cod_tensor(ann, K₀)                        # conduction
+TensND.canonical_components(B), TensND.canonical_components(B_open), b
+```
+
+`AnnularCrack` and `CircularArcCrack` enter the schemes like any crack, by
+their density; the intensity factors being those of an isotropic matrix, a
+self-consistent reference must stay isotropic (`symmetrize = IsoSymmetrize()`).
+
+A user who knows the intensity factors of another flat crack whose fronts are
+circles gives them to [`RiceCrack`](@ref); for any flat front,
+[`rice_cod_tensor`](@ref) takes the front point by point. Worked examples:
+[Cracks from their intensity factors](@ref tut-rice-cracks).
+
 ## Where to go next
 
 [Layered inclusions](@ref man-layered) leaves the ellipsoid family for

@@ -53,6 +53,7 @@ pages = [
         "Cracks and degenerate shapes" => [
             "theory/cod_tensors.md",
             "theory/thermal_cracks.md",
+            "theory/rice_crack_contributions.md",
             "theory/degenerate_shapes.md",
         ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
@@ -181,6 +182,7 @@ pages = [
             "tutorials/cracks.md",
             "tutorials/generated/crack_routes.md",
             "tutorials/generated/crack_distributions.md",
+            "tutorials/generated/rice_cracks.md",
             "tutorials/fe_crack.md",
         ],
         "The generalized Eshelby problem — morphological patterns" => [

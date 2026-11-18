@@ -35,6 +35,10 @@ is purely local
 """
 function sif end
 
+# The point of the unit circle that locates the front point: `m̂` when not given.
+_front_point(::Nothing, m̂) = m̂
+_front_point(y₀, _) = y₀
+
 # Ribbon crack (paper eq. 737)
 Base.@constprop :aggressive function sif(
         crack::RibbonCrack{T}, C₀, Σ;
@@ -61,7 +65,7 @@ Base.@constprop :aggressive function sif(
 
     𝐒_inv = inv(a) * (l̂ ⊗ l̂) + inv(b) * (m̂ ⊗ m̂)
 
-    y0 = y₀ === nothing ? m̂ : y₀
+    y0 = _front_point(y₀, m̂)
     S⁻¹_y0 = 𝐒_inv ⋅ y0
     n_Sy = norm(S⁻¹_y0)
     ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
@@ -79,7 +83,7 @@ Base.@constprop :aggressive function sif(
     ribbon_ref = RibbonCrack(b, ℬ_ν)
     B_ℛ = cod_tensor(ribbon_ref, C₀; method = method, kw...)
 
-    𝐊 = (3 * T(π)^(T(3) / 2) * b / 8) * sqrt(b * n_Sy) *
+    𝐊 = (3 * T(π)^(T(3) / 2) * sqrt(b) / 8) * sqrt(b * n_Sy) *
         inv(B_ℛ) ⋅ B_ℰ ⋅ Σ ⋅ n̂
 
     Kᴵ = 𝐊 ⋅ n̂
@@ -150,7 +154,7 @@ Base.@constprop :aggressive function sif(
 
     𝐒_inv = inv(a) * (l̂ ⊗ l̂) + inv(b) * (m̂ ⊗ m̂)
 
-    y0 = y₀ === nothing ? m̂ : y₀
+    y0 = _front_point(y₀, m̂)
     S⁻¹_y0 = 𝐒_inv ⋅ y0
     n_Sy = norm(S⁻¹_y0)
     ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
@@ -168,7 +172,7 @@ Base.@constprop :aggressive function sif(
     ribbon_ref = RibbonCrack(b, ℬ_ν)
     b_ℛ = cod_tensor(ribbon_ref, K₀; method = method, kw...)
 
-    return (3 * T(π)^(T(3) / 2) * b / 8) * sqrt(b * n_Sy) *
+    return (3 * T(π)^(T(3) / 2) * sqrt(b) / 8) * sqrt(b * n_Sy) *
         (b_ℰ / b_ℛ) * (n̂ ⋅ σ∞)
 end
 

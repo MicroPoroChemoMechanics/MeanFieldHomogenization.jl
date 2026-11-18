@@ -29,4 +29,11 @@ MeanFieldHomogenization.sif
 MeanFieldHomogenization.dif
 MeanFieldHomogenization.compliance_from_cod
 MeanFieldHomogenization.cod_from_compliance
+MeanFieldHomogenization.rice_cod_tensor
+MeanFieldHomogenization.AnnularCrack
+MeanFieldHomogenization.RiceCrack
+MeanFieldHomogenization.Cracks.CircularFronts
+MeanFieldHomogenization.CircularArcCrack
+MeanFieldHomogenization.Cracks.ArcShape
+MeanFieldHomogenization.saturn_ring_compliance
 ```

@@ -42,8 +42,12 @@ const DIGITS = 3
 
 _js(x::Real) = string(round(Float64(x); digits = DIGITS))
 _jsvec(v) = "[" * join((_js(x) for x in v), ",") * "]"
-_jsmat(M) = "[" * join(("[" * join((_js(M[i, j]) for j in axes(M, 2)), ",") * "]"
-    for i in axes(M, 1)), ",") * "]"
+_jsmat(M) = "[" * join(
+    (
+        "[" * join((_js(M[i, j]) for j in axes(M, 2)), ",") * "]"
+            for i in axes(M, 1)
+    ), ","
+) * "]"
 _jsints(v) = "[" * join(v, ",") * "]"
 _jsstrs(v) = "[" * join(("\"" * string(s) * "\"" for s in v), ",") * "]"
 _jsbool(x::Bool) = x ? "true" : "false"
@@ -68,8 +72,8 @@ const FIG_BODY = "var(--mfh-fig-body)"
 # The part of a layout that puts a figure on the page rather than on a white
 # card: transparent paper, text and modebar in the theme's ink.
 const _THEMED_LAYOUT = """paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
-    font:{color:"$FIG_INK"},
-    modebar:{bgcolor:"rgba(0,0,0,0)",color:"$FIG_GUIDE",activecolor:"$FIG_INK"},"""
+font:{color:"$FIG_INK"},
+modebar:{bgcolor:"rgba(0,0,0,0)",color:"$FIG_GUIDE",activecolor:"$FIG_INK"},"""
 # ── Labels ───────────────────────────────────────────────────────────────────
 #
 # A label is anchored at a point of the scene but drawn in the SVG layer above
@@ -123,9 +127,9 @@ end
 const LABEL_FONT = "STIX Two Text, Cambria, Times New Roman, serif"
 
 _annotation(l::SceneLabel) =
-    """{x:$(_js(l.pos[1])),y:$(_js(l.pos[2])),z:$(_js(l.pos[3])),text:"$(l.text)",
-    showarrow:false,font:{family:"$LABEL_FONT",color:"$(l.color)",size:$(l.size)},
-    xanchor:"$(l.xanchor)",yanchor:"$(l.yanchor)",xshift:$(l.xshift),yshift:$(l.yshift)}"""
+"""{x:$(_js(l.pos[1])),y:$(_js(l.pos[2])),z:$(_js(l.pos[3])),text:"$(l.text)",
+showarrow:false,font:{family:"$LABEL_FONT",color:"$(l.color)",size:$(l.size)},
+xanchor:"$(l.xanchor)",yanchor:"$(l.yanchor)",xshift:$(l.xshift),yshift:$(l.yshift)}"""
 
 # ── The scene emitter ────────────────────────────────────────────────────────
 
@@ -220,12 +224,12 @@ function plotly_scene(
         uid, height,
         join(traces, ","),
         """{height:$height, margin:{l:0,r:0,t:$(isempty(title) ? 10 : 46),b:$(isempty(sliders) ? 0 : 64)},
-            $(_THEMED_LAYOUT) uirevision:"$uid",
-            $ttl showlegend:$(showlegend),
-            scene:{$aspect, bgcolor:"rgba(0,0,0,0)", hovermode:$hover,
-                   $cam
-                   xaxis:$(axis(xlabel, 1)), yaxis:$(axis(ylabel, 2)), zaxis:$(axis(zlabel, 3)),
-                   annotations:[$(join(map(_annotation, labels), ","))]}$sl}"""
+        $(_THEMED_LAYOUT) uirevision:"$uid",
+        $ttl showlegend:$(showlegend),
+        scene:{$aspect, bgcolor:"rgba(0,0,0,0)", hovermode:$hover,
+               $cam
+               xaxis:$(axis(xlabel, 1)), yaxis:$(axis(ylabel, 2)), zaxis:$(axis(zlabel, 3)),
+               annotations:[$(join(map(_annotation, labels), ","))]}$sl}"""
     )
 end
 
@@ -247,16 +251,16 @@ function plotly_surface(
     )
     cb = isempty(colorbar_title) ? "" : ",colorbar:{title:\"$colorbar_title\"}"
     trace = """{type:"surface", x:$(_jsvec(x)), y:$(_jsvec(y)), z:$(_jsmat(Z)),
-        colorscale:"$colorscale", reversescale:$(reversescale)$cb}"""
+    colorscale:"$colorscale", reversescale:$(reversescale)$cb}"""
     ## The axes of a response surface carry its variables, so they stay; only
     ## their colors follow the theme.
     axis(t) = "{title:{text:\"$t\"},color:\"$FIG_INK\",gridcolor:\"$FIG_GRID\",zerolinecolor:\"$FIG_GUIDE\"}"
     return _plotly_html(
         uid, height, trace,
         """{title:{text:"$title"}, height:$height, margin:{l:0,r:0,t:40,b:0},
-            $(_THEMED_LAYOUT) uirevision:"$uid",
-            scene:{bgcolor:"rgba(0,0,0,0)",
-                   xaxis:$(axis(xlabel)), yaxis:$(axis(ylabel)), zaxis:$(axis(zlabel))}}"""
+        $(_THEMED_LAYOUT) uirevision:"$uid",
+        scene:{bgcolor:"rgba(0,0,0,0)",
+               xaxis:$(axis(xlabel)), yaxis:$(axis(ylabel)), zaxis:$(axis(zlabel))}}"""
     )
 end
 
@@ -434,7 +438,7 @@ function section_figure(
         bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",steps:[$steps]}"""
     end
     off = """{label:"No cut",method:"update",args:[{visible:[false,false,false]},
-        {$(shown(0)),"xaxis.visible":false,"yaxis.visible":false},$idx]}"""
+    {$(shown(0)),"xaxis.visible":false,"yaxis.visible":false},$idx]}"""
     ons = map(enumerate(families)) do (i, f)
         a = cut_args(f, f.active)
         """{label:"$(f.name)",method:"update",args:[$(a[1:(end - 1)]),visible:[true,true,true]},
@@ -446,9 +450,9 @@ function section_figure(
     ## Plotly paints the pressed button near white whatever the theme, so the
     ## buttons keep a light face and dark text in both schemes.
     menus = """{type:"buttons",direction:"right",showactive:true,active:0,
-        x:0,xanchor:"left",y:1,yanchor:"top",pad:{t:0,r:0,l:0,b:0},
-        font:{color:"#24292f",size:12},bgcolor:"#e6e9ed",bordercolor:"#9da7b3",
-        buttons:[$off,$(join(ons, ","))]}"""
+    x:0,xanchor:"left",y:1,yanchor:"top",pad:{t:0,r:0,l:0,b:0},
+    font:{color:"#24292f",size:12},bgcolor:"#e6e9ed",bordercolor:"#9da7b3",
+    buttons:[$off,$(join(ons, ","))]}"""
     ttl = isempty(title) ? "" :
         "title:{text:\"$title\",x:0.02,xanchor:\"left\",font:{size:13}},"
     eye = isempty(_eye(camera)) ? "" : "camera:{$(_eye(camera))up:{x:0,y:0,z:1}},"
@@ -501,9 +505,9 @@ function surface_trace(
             "opacityscale:[[0,$(_js(opacity))],[$(_js(w / Wmax)),$(_js(opacity))],[1,0]]"
     end
     return """{type:"surface",x:$(_jsmat(X)),y:$(_jsmat(Y)),z:$(_jsmat(Z)),
-        $op,showscale:false,
-        colorscale:[[0,"$color"],[1,"$color"]]$lit,
-        contours:{x:{highlight:false},y:{highlight:false},z:{highlight:false}}$nm}"""
+    $op,showscale:false,
+    colorscale:[[0,"$color"],[1,"$color"]]$lit,
+    contours:{x:{highlight:false},y:{highlight:false},z:{highlight:false}}$nm}"""
 end
 
 """
@@ -521,9 +525,9 @@ function mesh_trace(
     )
     nm = isempty(name) ? "" : ",name:\"$name\",showlegend:true"
     return """{type:"mesh3d",x:$(_jsvec(@view V[1, :])),y:$(_jsvec(@view V[2, :])),
-        z:$(_jsvec(@view V[3, :])),
-        i:$(_jsints(@view F[1, :])),j:$(_jsints(@view F[2, :])),k:$(_jsints(@view F[3, :])),
-        color:"$color",opacity:$(_js(opacity)),flatshading:$(flatshading)$nm}"""
+    z:$(_jsvec(@view V[3, :])),
+    i:$(_jsints(@view F[1, :])),j:$(_jsints(@view F[2, :])),k:$(_jsints(@view F[3, :])),
+    color:"$color",opacity:$(_js(opacity)),flatshading:$(flatshading)$nm}"""
 end
 
 """
@@ -557,8 +561,8 @@ between.
 function marker_trace(pts; color::AbstractString = FIG_EDGE, size::Real = 5)
     P = _as_matrix(pts)
     return """{type:"scatter3d",mode:"markers",x:$(_jsvec(@view P[1, :])),
-        y:$(_jsvec(@view P[2, :])),z:$(_jsvec(@view P[3, :])),
-        marker:{size:$size,color:"$color"},showlegend:false}"""
+    y:$(_jsvec(@view P[2, :])),z:$(_jsvec(@view P[3, :])),
+    marker:{size:$size,color:"$color"},showlegend:false}"""
 end
 
 """
@@ -958,6 +962,62 @@ function shape_traces(
     return traces
 end
 
+function shape_traces(
+        cr::MeanFieldHomogenization.AnnularCrack;
+        color::AbstractString = "#8a6d3b", contact::AbstractString = "#7f8c8d",
+        opacity::Real = 0.9, normal::Bool = true,
+    )
+    a, c = Float64(cr.a), Float64(cr.c)
+    R = frame_matrix(cr.basis)
+    ring = (u, t) -> Tuple(R * [(c + (a - c) * t) * cos(u), (c + (a - c) * t) * sin(u), 0.0])
+    disc = (u, t) -> Tuple(R * [c * t * cos(u), c * t * sin(u), 0.0])
+    Xr, Yr, Zr = param_surface(ring, range(0, 2π; length = 61), range(0, 1; length = 5))
+    Xd, Yd, Zd = param_surface(disc, range(0, 2π; length = 41), range(0, 1; length = 4))
+    traces = SceneItem[
+        surface_trace(Xr, Yr, Zr; color = color, opacity = opacity, flat = true),
+        surface_trace(Xd, Yd, Zd; color = contact, opacity = 0.35, flat = true),
+    ]
+    if normal
+        append!(traces, arrow_trace((0.0, 0.0, 0.0), R[:, 3] .* (0.8 * a); size = 0.18 * a, label = "<u><i>n</i></u>"))
+    end
+    return traces
+end
+
+function shape_traces(
+        cr::MeanFieldHomogenization.CircularArcCrack;
+        color::AbstractString = "#8a6d3b", opacity::Real = 0.9,
+        length_shown::Real = 3.0, normal::Bool = true,
+    )
+    Rr, α = Float64(cr.R), Float64(cr.α)
+    Q = frame_matrix(cr.basis)
+    # the arc R (sin θ m + cos θ n), |θ| ≤ α, swept along the axis ℓ
+    f = (u, t) -> Tuple(Q * [length_shown * (t - 0.5), Rr * sin(u), Rr * cos(u)])
+    X, Y, Z = param_surface(f, range(-α, α; length = 41), range(0, 1; length = 5))
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    if normal
+        append!(traces, arrow_trace(Tuple(Q * [0.0, 0.0, Rr]), Q[:, 3] .* (0.6 * Rr); size = 0.12 * Rr, label = "<u><i>n</i></u>"))
+    end
+    return traces
+end
+
+"""
+    saturn_traces(a, c; color, pore) -> Vector{SceneItem}
+
+A spherical pore of radius `a` with an annular crack of length `c` in its
+equatorial plane, of normal ``\\underline{e}_3`` (see [`saturn_ring_compliance`](@ref)).
+"""
+function saturn_traces(a, c; color::AbstractString = "#8a6d3b", pore::AbstractString = "#4a90d9")
+    ring = (u, t) -> ((a + c * t) * cos(u), (a + c * t) * sin(u), 0.0)
+    Xr, Yr, Zr = param_surface(ring, range(0, 2π; length = 61), range(0, 1; length = 5))
+    X, Y, Z = ellipsoid_surface(a, a, a)
+    traces = SceneItem[
+        surface_trace(X, Y, Z; color = pore, opacity = 0.45),
+        surface_trace(Xr, Yr, Zr; color = color, opacity = 0.9, flat = true),
+    ]
+    append!(traces, arrow_trace((0.0, 0.0, a), (0.0, 0.0, 0.8 * (a + c)); size = 0.12 * (a + c), label = "<u><i>n</i></u>"))
+    return traces
+end
+
 # Azimuth at which a cutaway starts. Plotly's default camera looks down on the
 # +x +y octant, i.e. azimuth 45°, so a cutaway must *remove* the sector around
 # 45° for the opening to face the reader. Drawing `[0, 1.5π]` removes
@@ -1058,12 +1118,14 @@ function box_mesh(xspan, yspan, zspan)
     end
     # 0-based indices, as `mesh_trace` expects: two triangles per face.
     F = reshape(
-        [0, 1, 3, 0, 3, 2,      # z = z0
+        [
+            0, 1, 3, 0, 3, 2,      # z = z0
             4, 5, 7, 4, 7, 6,      # z = z1
             0, 1, 5, 0, 5, 4,      # y = y0
             2, 3, 7, 2, 7, 6,      # y = y1
             0, 2, 6, 0, 6, 4,      # x = x0
-            1, 3, 7, 1, 7, 5],     # x = x1
+            1, 3, 7, 1, 7, 5,
+        ],     # x = x1
         3, 12
     )
     return V, F
@@ -1170,9 +1232,11 @@ _ellipse(o, u, p, w, q; n::Integer = 97) =
 # where its label sits relative to its tip on screen.
 function _frame_arrows(R, v)
     items = SceneItem[]
-    shifts = ((xanchor = "center", yanchor = "bottom", xshift = 0, yshift = 6),
+    shifts = (
         (xanchor = "center", yanchor = "bottom", xshift = 0, yshift = 6),
-        (xanchor = "right", yanchor = "bottom", xshift = -6, yshift = 0))
+        (xanchor = "center", yanchor = "bottom", xshift = 0, yshift = 6),
+        (xanchor = "right", yanchor = "bottom", xshift = -6, yshift = 0),
+    )
     for k in 1:3
         append!(items, arrow_trace(zeros(3), v .* R[:, k]; size = 0.22 * v))
         push!(items, scene_label(v .* R[:, k], _VEC_LABELS[k]; color = FIG_VECTOR, shifts[k]...))
@@ -1198,8 +1262,10 @@ function _ribbon_face(b, R, L, solid)
     S = [s for s in ss, t in ts]
     f = (s, t) -> Tuple(s .* ℓ .+ t .* m)
     X, Y, Z = param_surface(f, ss, ts)
-    edge(s0, s1) = hcat(s0 .* ℓ .+ b .* m, s1 .* ℓ .+ b .* m, fill(NaN, 3),
-        s0 .* ℓ .- b .* m, s1 .* ℓ .- b .* m, fill(NaN, 3))
+    edge(s0, s1) = hcat(
+        s0 .* ℓ .+ b .* m, s1 .* ℓ .+ b .* m, fill(NaN, 3),
+        s0 .* ℓ .- b .* m, s1 .* ℓ .- b .* m, fill(NaN, 3)
+    )
     return SceneItem[
         surface_trace(X, Y, Z; color = FIG_EDGE, opacity = 0.2, flat = true, fade = (S, solid)),
         line_trace(edge(-solid, solid); color = FIG_EDGE, width = 5),
@@ -1388,10 +1454,10 @@ function _flattening(
         )
     end
     sliders = """{active:$(active - 1),x:0.1,len:0.8,pad:{t:6,b:6},
-        currentvalue:{prefix:"$symbol = ",font:{color:"$FIG_INK",size:14}},
-        font:{color:"$FIG_INK"},bgcolor:"$FIG_GRID",activebgcolor:"$FIG_GUIDE",
-        bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",
-        steps:[$(join(steps, ","))]}"""
+    currentvalue:{prefix:"$symbol = ",font:{color:"$FIG_INK",size:14}},
+    font:{color:"$FIG_INK"},bgcolor:"$FIG_GRID",activebgcolor:"$FIG_GUIDE",
+    bordercolor:"$FIG_GUIDE",tickcolor:"$FIG_GUIDE",
+    steps:[$(join(steps, ","))]}"""
     ## The ranges hold the thickest body of the slider, and stay put as it moves.
     (Xm, Ym, Zm), _ = geometry(maximum(cs))
     bounds = scene_bounds(permutedims(hcat(vec(Xm), vec(Ym), vec(Zm))), extent)
