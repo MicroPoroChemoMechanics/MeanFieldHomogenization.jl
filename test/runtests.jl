@@ -198,6 +198,9 @@ end
         include("Cracks/test_H_oracle.jl")
         include("Cracks/test_thermal.jl")
         include("Cracks/test_interface_stiffness.jl")
+        include("Cracks/test_rice.jl")
+        include("Cracks/test_annular.jl")
+        include("Cracks/test_arc.jl")
     end
 
     rungroup("Conductivity") && @testset "Conductivity" begin

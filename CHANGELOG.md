@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.27.1 — cracks from their intensity factors
+
+A patch release: new cracks and a corrected intensity factor.
+
+### Added
+
+- **The contribution of a crack from its intensity factors.** A crack whose
+  intensity factors are known along its growth now has a compliance and a
+  resistivity contribution: `rice_cod_tensor` integrates the energy release rate,
+  written `G = K·Bᴿ·K/π` with the COD tensor of the tangent ribbon, over the area
+  the front sweeps (Rice's internal variables, as used by Kachanov and
+  Sevostianov). The matrix enters only through `Bᴿ`, so any anisotropy is
+  accepted; a flat crack yields the COD tensor `B` of `cod_tensor`.
+- **`AnnularCrack(a, c)`**, a penny-shaped crack of radius `a` bonded on the
+  disc of radius `c`. Its intensity factors in opening, sliding and tearing, at
+  both fronts, are computed in an isotropic matrix by a Galerkin method on the
+  integral equations of the crack; `cod_tensor` integrates them along the growth
+  of the inner front (`method = :rice`), or reads the mean jumps of the final
+  crack (`method = :opening`), the two agreeing to the tolerance. Conduction
+  follows from the opening mode. `sif` gives the factors at both fronts.
+- **`CircularArcCrack(R, α)`**, a crack along an arc of circle, unbounded along
+  its axis: closed-form compliance and resistivity contributions, symbolic
+  arguments accepted, and the intensity factors at both tips.
+- **`saturn_ring_compliance(a, c, C₀)`**, the normal compliance of a spherical
+  pore with an annular crack in its equatorial plane.
+- **`RiceCrack`**, a crack defined by the user from the intensity factors of its
+  circular fronts.
+
+### Fixed
+
+- **`sif` of an elliptic crack was wrong unless its semi-minor axis was 1.** The
+  prefactor was written with `b` where the formula has `√b`, so the stress and
+  flux intensity factors of an elliptic crack were multiplied by `√b`: correct
+  for a unit penny, off by `√b` otherwise. The tests used unit cracks only; a
+  comparison with Irwin's closed form on a crack of semi-axes 2 and 0.6 now
+  checks it. The COD tensors, compliance contributions and schemes were not
+  affected.
+
 ## v0.27.0 — the multipole expansion method
 
 A minor release. The one-site and N-body schemes of the package keep one

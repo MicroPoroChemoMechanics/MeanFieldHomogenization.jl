@@ -301,7 +301,97 @@ levin_free_strain() = levin_sum(
     ),
 )
 
+"""
+The annular crack: a penny of radius a bonded on the disc of radius c, seen from
+above (left) and cut along a diameter (right); the inner front grows from r = a
+to r = c. Docs: theory/rice_crack_contributions.md.
+"""
+function annular_crack()
+    return sheet("geometry/annular_crack", 640, 330) do
+        c = Point(170, 170)
+        A, C, ρ = 125.0, 50.0, 88.0
+        disk(c, A; fill = tint(RED, 0.72), stroke = CRACK, lw = 2.0)
+        disk(c, C; fill = tint(SLATE, 0.8), stroke = CRACK, lw = 2.0)
+        disk(c, ρ; fill = nothing, stroke = CRACK, lw = 1.4, dash = [5, 4])
+        label(txt("bonded"), c + Point(0, -24); size = 13, color = INK)
+        # radii
+        for (r, θ, name) in ((A, -0.55, "a"), (C, 2.2, "c"))
+            q = c + Point(r * cos(θ), r * sin(θ))
+            @layer (setcolor(INK); setline(1.2); line(c, q, :stroke); circle(q, 2.4, :fill))
+            label(m(name), c + Point(0.6r * cos(θ), 0.6r * sin(θ)) + Point(10, -12); size = 18)
+        end
+        # the front at radius ρ, its outer normal ν = −e_r, the growth
+        f = c + Point(ρ * cos(0.9), ρ * sin(0.9))
+        arrow_ab(f, f - Point(30 * cos(0.9), 30 * sin(0.9)); color = VECTOR, lw = 2.0)
+        label(m("underline(nu)"), f - Point(30 * cos(0.9), 30 * sin(0.9)) + Point(-12, 4); size = 18, color = VECTOR)
+        label(m("rho"), c + Point(ρ * cos(1.6), ρ * sin(1.6)) + Point(-14, 6); size = 18, color = CRACK)
+        # the section along a diameter
+        y = 170.0
+        x0 = 470.0
+        s = 0.95
+        @layer begin
+            setcolor(tint(SLATE, 0.55))
+            setline(5)
+            line(Point(x0 - s * C, y), Point(x0 + s * C, y), :stroke)
+            setcolor(CRACK)
+            setline(5)
+            line(Point(x0 - s * A, y), Point(x0 - s * C, y), :stroke)
+            line(Point(x0 + s * C, y), Point(x0 + s * A, y), :stroke)
+        end
+        arrow_ab(Point(x0, y), Point(x0, y - 70); color = VECTOR, lw = 2.0)
+        label(m("underline(n)"), Point(x0 + 14, y - 66); size = 18, color = VECTOR, halign = :left)
+        for (xx, name) in ((x0 + s * A, "a"), (x0 + s * C, "c"))
+            label(m(name), Point(xx, y + 20); size = 17)
+        end
+        label(m("r"), Point(x0 + s * A + 18, y); size = 17, color = MUTED)
+        label(txt("growth of the inner front: from r = a to r = c"), Point(320, 312); size = 14, color = MUTED)
+    end
+end
+
+"""
+The circular arc crack of radius R and half-angle α, its frame (m, n) at the
+middle of the arc and the frame (n, ν) of a tip; the axis ℓ points out of the
+page. Docs: theory/rice_crack_contributions.md.
+"""
+function arc_crack()
+    return sheet("geometry/arc_crack", 460, 360) do
+        O = Point(230, 250)
+        R = 150.0
+        α = π / 3
+        disk(O, R; fill = nothing, stroke = GUIDE, lw = 1.2, dash = [5, 4])
+        # the arc: R (sin θ m + cos θ n), m to the right, n up
+        pt(θ, r = R) = O + Point(r * sin(θ), -r * cos(θ))
+        @layer begin
+            setcolor(CRACK)
+            setline(5)
+            pts = [pt(θ) for θ in range(-α, α; length = 60)]
+            poly(pts, :stroke)
+        end
+        @layer (setcolor(INK); circle(O, 3, :fill))
+        @layer (setcolor(INK); setline(1.0); setdash([4, 3]); line(O, pt(0), :stroke); line(O, pt(α), :stroke))
+        label(m("R"), O + Point(R * sin(α) / 2 + 10, -R * cos(α) / 2 + 8); size = 18)
+        @layer (setcolor(INK); setline(1.0); arc(O, 40, -π / 2, -π / 2 + α, :stroke))
+        label(m("alpha"), O + Point(22, -52); size = 18)
+        # the frame at the middle of the arc
+        mid = pt(0)
+        arrow_ab(mid, mid + Point(55, 0); color = VECTOR, lw = 2.0)
+        arrow_ab(mid, mid + Point(0, -55); color = VECTOR, lw = 2.0)
+        label(m("underline(m)"), mid + Point(62, 0); size = 18, color = VECTOR, halign = :left)
+        label(m("underline(n)"), mid + Point(10, -58); size = 18, color = VECTOR, halign = :left)
+        @layer (setcolor(VECTOR); setline(1.6); circle(mid, 7, :stroke); circle(mid, 2, :fill))
+        label(m("underline(ell)"), mid + Point(-14, 14); size = 18, color = VECTOR, halign = :right)
+        # the frame of the tip θ = α
+        tip = pt(α)
+        nt = Point(sin(α), -cos(α))
+        νt = Point(cos(α), sin(α))
+        arrow_ab(tip, tip + 48 * nt; color = VECTOR, lw = 2.0)
+        arrow_ab(tip, tip + 48 * νt; color = VECTOR, lw = 2.0)
+        label(m("underline(n)"), tip + 60 * nt; size = 18, color = VECTOR)
+        label(m("underline(nu)"), tip + 60 * νt; size = 18, color = VECTOR)
+    end
+end
+
 geometry_figures() = (
     eshelby_inclusion(), eshelby_inhomogeneity(), layered_sphere(), layered_cylinder(), layered_ellipsoid(),
-    levin_prestress(), levin_free_strain(),
+    levin_prestress(), levin_free_strain(), annular_crack(), arc_crack(),
 )

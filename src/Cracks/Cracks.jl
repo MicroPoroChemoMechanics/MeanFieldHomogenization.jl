@@ -15,6 +15,7 @@ using Tensors
 using QuadGK
 using ..Elliptic
 using Polynomials
+import ForwardDiff
 
 import ..Core
 using ..Core
@@ -42,6 +43,11 @@ include("cod_numerical.jl")
 include("compliance.jl")
 include("conductive.jl")
 include("sif.jl")
+include("rice.jl")
+include("annular_solver.jl")
+include("annular.jl")
+include("arc.jl")
+include("saturn.jl")
 include("api.jl")
 
 # ── Geometry ─────────────────────────────────────────────────────────────────
@@ -64,5 +70,11 @@ export inverse_and_property_contribution
 
 # ── SIF / DIF ────────────────────────────────────────────────────────────────
 export sif, dif
+
+# ── Contributions from intensity factors (Rice) ─────────────────────────────
+export rice_cod_tensor
+export CircularFronts, AnnularCrack, RiceCrack
+export ArcShape, CircularArcCrack
+export saturn_ring_compliance
 
 end # module

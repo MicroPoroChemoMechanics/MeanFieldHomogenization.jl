@@ -21,6 +21,8 @@ earlier figures, whose origin is kept below.
 | `geometry/eshelby_inclusion.svg` | `geometry.jl` | Echoes book, `img/eshelbypbincl.png` |
 | `geometry/eshelby_inhomogeneity.svg` | `geometry.jl` | Echoes book, `img/eshelbypb.png` |
 | `geometry/layered_sphere.svg` | `geometry.jl` | a hand-written SVG of this repository |
+| `geometry/annular_crack.svg` | `geometry.jl` | new |
+| `geometry/arc_crack.svg` | `geometry.jl` | new |
 | `geometry/layered_ellipsoid.svg` | `geometry.jl` | an earlier talk of the author's; the layers now drawn confocal, with their common foci |
 | `schemes/rve_decomposition.svg` | `schemes.jl` | Echoes book, `img/ver_ell_spn_dec.png` |
 | `schemes/rve_mori_tanaka.svg` | `schemes.jl` | Echoes book, `img/ver_ell_spn.png` |
