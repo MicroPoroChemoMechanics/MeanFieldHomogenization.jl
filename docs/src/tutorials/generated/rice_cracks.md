@@ -244,7 +244,9 @@ grown = RiceCrack(
     K_II = (ρ, ν) -> 4sqrt(ρ / π) / (2 - ν),
     K_III = (ρ, ν) -> 4(1 - ν) * sqrt(ρ / π) / (2 - ν)
 )
-display(TensND.canonical_components(cod_tensor(grown, C₀)) .- TensND.canonical_components(cod_tensor(PennyCrack(1.0), C₀)))
+B_rice = TensND.canonical_components(cod_tensor(grown, C₀))
+B_penny = TensND.canonical_components(cod_tensor(PennyCrack(1.0), C₀))
+(B_nn = (B_rice[3, 3], B_penny[3, 3]), B_tt = (B_rice[1, 1], B_penny[1, 1]))
 ````
 
 For any flat front, [`rice_cod_tensor`](@ref) takes the front point by point:
