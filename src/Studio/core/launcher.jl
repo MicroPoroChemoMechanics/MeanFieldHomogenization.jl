@@ -29,6 +29,28 @@ function Base.wait(h::StudioHandle)
     return nothing
 end
 
+# End the process on Ctrl-C. `Base.exit_on_sigint(true)` asks Julia to exit; on
+# Linux the system is asked first, so that Julia's exit is not run at all: with
+# the server's poller thread alive, that exit, started from a signal handler
+# that interrupted the event loop, now and then spins for ever (one Ctrl-C in
+# five on some runners). Julia keeps SIGINT blocked in every thread and reads
+# it from a listener thread; given back its default action and unblocked in
+# this thread, the signal ends the process in the kernel, the main thread being
+# served before the listener.
+function exit_on_interrupt!()
+    Base.exit_on_sigint(true)
+    Sys.islinux() && default_sigint!()
+    return nothing
+end
+
+function default_sigint!()
+    set = zeros(UInt8, 128)                       # a `sigset_t` of glibc or musl, at most
+    ccall(:sigemptyset, Cint, (Ptr{UInt8},), set)
+    ccall(:sigaddset, Cint, (Ptr{UInt8}, Cint), set, Base.SIGINT)
+    ccall(:signal, Ptr{Cvoid}, (Cint, Ptr{Cvoid}), Base.SIGINT, C_NULL)                  # SIG_DFL
+    return ccall(:pthread_sigmask, Cint, (Cint, Ptr{UInt8}, Ptr{Cvoid}), 1, set, C_NULL) == 0   # SIG_UNBLOCK
+end
+
 function Base.close(h::StudioHandle)
     h.closed && return nothing
     h.closed = true
@@ -148,7 +170,7 @@ function run_studio(
     # runs next, often one of the server's own, where it would be lost. Set
     # before the address is printed, the first moment a user may press it. At
     # the REPL the interrupt is raised in the waiting loop, or relayed to it.
-    wait && !isinteractive() && Base.exit_on_sigint(true)
+    wait && !isinteractive() && exit_on_interrupt!()
     token = Random.randstring(Random.RandomDevice(), 32)
     session = Session(app, token, String(host), Int(something(port, app.default_port)), compute, app.new_state(), managed)
     router = HTTP.Router()

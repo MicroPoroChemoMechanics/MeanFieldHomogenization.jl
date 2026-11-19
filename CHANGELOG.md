@@ -76,6 +76,15 @@ its own.
 - New dependencies: `FFTA` (a fast Fourier transform in pure Julia, MIT) and
   `Krylov`.
 
+### Fixed
+
+- **A studio run as a script always stops on Ctrl-C (Linux).** Now and then
+  (one run in five on some machines, on Julia 1.13 and 1.14) the process printed
+  its backtraces and then spun at full load instead of exiting: the exit of
+  Julia, started from the signal handler while the HTTP server's poller thread
+  was alive, never returned. The interrupt now ends the process through the
+  system, at once and without a backtrace.
+
 ### Documentation
 
 - Theory: *Approximation by Gaussians*, *Planar cracks of any contour* and
