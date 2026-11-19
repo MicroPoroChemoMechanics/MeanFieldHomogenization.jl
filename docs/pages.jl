@@ -56,14 +56,6 @@ pages = [
             "theory/rice_crack_contributions.md",
             "theory/degenerate_shapes.md",
         ],
-        # Shapes with no closed form: the integral equation of the heterogeneity
-        # solved on a regular grid of Gaussians. The approximation first, on its
-        # own, then the problems it is applied to.
-        "Arbitrary shapes by Gaussian approximation" => [
-            "theory/gaussian_approximation.md",
-            "theory/gaussian_cracks.md",
-            "theory/gaussian_volume.md",
-        ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
         # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
         # solved for its average concentration tensor. Any pattern admitting
@@ -99,6 +91,15 @@ pages = [
             # beyond the effective stiffness.
             "theory/levin.md",
         ],
+        # Shapes with no closed form, after the methods that resolve interactions:
+        # the integral equation of one crack or heterogeneity, solved on a regular
+        # grid of Gaussians. The approximation first, on its own, then the
+        # problems it is applied to.
+        "Arbitrary shapes by Gaussian approximation" => [
+            "theory/gaussian_approximation.md",
+            "theory/gaussian_cracks.md",
+            "theory/gaussian_volume.md",
+        ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
             # The permeability from the Stokes flow in the pores: the same
@@ -129,10 +130,15 @@ pages = [
             "manual/planar_cracks.md",
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
-            "manual/gaussian_inclusions.md",
             "manual/brinkman_inclusions.md",
-            "manual/fe_inclusions.md",
-            "manual/neural_inclusions.md",
+            # Three treatments of a shape with no closed form, all through the
+            # custom-inclusion interface: a grid of Gaussians, a mesh, a
+            # trained network.
+            "Shapes with no closed form" => [
+                "manual/gaussian_inclusions.md",
+                "manual/fe_inclusions.md",
+                "manual/neural_inclusions.md",
+            ],
         ],
         "Cells and schemes" => [
             "manual/schemes.md",

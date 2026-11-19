@@ -7,9 +7,10 @@
     [Hill polarization tensors](@ref th-hill-tensors) for the shape/moduli
     factorization exploited below.
 
-A trained network is a fourth way into the
+A trained network is one more way into the
 [custom-inclusion interface](@ref man-custom-inclusions), alongside the analytic
-families, the layered patterns and the
+families, the layered patterns, the
+[heterogeneities of any shape](@ref man-gaussian-inclusions) and the
 [finite-element inclusions](@ref man-fe-inclusions).
 
 ![A network that maps the parameters of a shape to the tensors of its response](../assets/nn/network_sketch.svg)

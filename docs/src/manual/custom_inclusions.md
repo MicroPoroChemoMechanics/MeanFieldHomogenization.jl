@@ -271,10 +271,14 @@ the flag asks whether a single ``\mathbb C_1`` describes the interior, and
 
 ## Where to go next
 
-The two pages that follow apply the interface to morphologies with no closed
-form: [Finite-element inclusions](@ref man-fe-inclusions) obtains the response
-from a mesh, [Neural-surrogate inclusions](@ref man-neural-inclusions) from a
-trained network. The tutorial
+[Brinkman inclusions](@ref man-brinkman), on the next page, enter through this
+interface with a size in place of a Hill tensor. The three pages after it apply
+the interface to shapes with no closed form:
+[Heterogeneities of any shape](@ref man-gaussian-inclusions) solves the integral
+equation of the shape on a grid of Gaussians,
+[Finite-element inclusions](@ref man-fe-inclusions) obtains the response from a
+mesh, [Neural-surrogate inclusions](@ref man-neural-inclusions) from a trained
+network. The tutorial
 [The custom-inclusion interface: three entry levels, one answer](@ref tut-custom-inclusion-contract)
 enters one morphology through each level and compares the three answers.
 

@@ -12,7 +12,7 @@ its own.
 - **`PlanarCrack(region)`**, a flat crack whose contour is any region of its
   plane. Until now a crack was an ellipse, a ribbon, a ring or an arc; a
   rectangle, a star, a contour read from an image, or a crack whose faces touch
-  on islands had no route. Its opening is the solution of the integral equation
+  on islands could not be computed. Its opening is the solution of the integral equation
   of the crack, expanded on Gaussians centered at the nodes of a regular grid
   (the approximation of Maz'ya and Schmidt, applied to cracks by Kanaun): the
   traction due to one Gaussian is known in closed form, the matrix is a
@@ -31,7 +31,7 @@ its own.
   is solved here for its polarization, which gives one symmetric system from the
   pore to the rigid inclusion, on a grid of Gaussians with the Green operator
   smoothed by a Gaussian in closed form. The inclusion supplies the two
-  concentration tensors of the custom-inclusion contract, in elasticity and in
+  concentration tensors of the custom-inclusion interface, in elasticity and in
   conduction, so every contribution tensor and every scheme follow. The
   reference medium is isotropic; the heterogeneity may be anisotropic. Against
   Eshelby's solution the default grid of 24 nodes is within 1 to 3 % for

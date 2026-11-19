@@ -49,7 +49,7 @@ Heterogeneity occupying the region `region` of space, described in the frame
 `basis`. Its concentration tensors are computed by the Gaussian approximation of
 the integral equation of the heterogeneity
 (see [Heterogeneities of any shape](@ref th-gaussian-volume)); it enters the
-schemes through the custom-inclusion contract.
+schemes through the custom-inclusion interface.
 """
 struct GaussianInclusion{T <: Number, R <: AbstractRegion{3}, B <: TensND.AbstractBasis} <: MFH_Core.AbstractCustomInclusion{T}
     region::R
@@ -205,7 +205,7 @@ _concentrations(g::GaussianInclusion, P₁, P₀) = _solve_concentrations(g, P�
 _from_local(A::SMatrix{3, 3}, basis) = TensND.Tens(A, basis)
 _from_local(A::SMatrix{6, 6}, basis) = TensND.from_mandel(A, basis)
 
-# ─── Gate B of the custom-inclusion contract ─────────────────────────────────
+# ─── Level B of the custom-inclusion interface ────────────────────────────────
 
 """
     gradient_gradient_concentration(g::GaussianInclusion, P₁, P₀)
@@ -213,7 +213,7 @@ _from_local(A::SMatrix{6, 6}, basis) = TensND.from_mandel(A, basis)
 
 Mean strain (or potential gradient) and mean stress (or flux) in a heterogeneity
 of any shape, of property `P₁`, per unit remote strain in an infinite medium of
-property `P₀`: the two concentration tensors of the custom-inclusion contract,
+property `P₀`: the two concentration tensors of the custom-inclusion interface,
 from which every contribution tensor and every scheme follow. One solve gives
 both, memoized by the inclusion for each pair of properties.
 """

@@ -65,8 +65,8 @@ Take ``u = 1`` in one dimension. The sum
 series in ``x/h``, whose coefficient of order ``\nu`` is the Fourier transform
 of ``\varphi`` taken at the frequency ``\nu/h`` and divided by ``h`` (Poisson's
 summation formula). The transform of a Gaussian is a Gaussian,
-``\int\varphi(x)\,\mathrm{e}^{-2\pi i\nu x/h}\,\mathrm{d}x
-= h\,\mathrm{e}^{-\pi^{2}H\nu^{2}}``, so that
+``\int\varphi(x)\,\mathrm{e}^{-2\pi i\nu x/h}\,\mathrm{d}x =
+h\,\mathrm{e}^{-\pi^{2}H\nu^{2}}``, so that
 
 ```math
 \sum_{m\in\mathbb{Z}} \varphi(x-mh)

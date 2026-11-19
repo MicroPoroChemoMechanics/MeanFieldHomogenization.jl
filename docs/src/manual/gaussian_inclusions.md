@@ -1,13 +1,26 @@
 # [Heterogeneities of any shape](@id man-gaussian-inclusions)
 
+!!! info "Before this page"
+    [Custom inclusions](@ref man-custom-inclusions), whose level B this
+    inclusion implements, and
+    [Concentration and contribution tensors](@ref th-concentration) for the two
+    tensors it returns.
+
+A shape with no closed form is treated in three ways, on this page and on the
+two that follow: its integral equation is solved on a grid of Gaussians, its
+Eshelby problem is solved on a mesh
+([Finite-element inclusions](@ref man-fe-inclusions)), or a network trained on
+such solutions is evaluated
+([Neural-surrogate inclusions](@ref man-neural-inclusions)). The three enter the
+schemes through the [custom-inclusion interface](@ref man-custom-inclusions);
+the [table](@ref man-gaussian-which) at the end of this page says which to
+choose.
+
 [`GaussianInclusion`](@ref) is a heterogeneity whose shape is any region of
 space: a torus, a concave particle, a shape given by a function or by voxels.
 Its concentration tensors are computed by the
 [Gaussian approximation](@ref th-gaussian-volume) of its integral equation, in
-elasticity and in conduction, and it enters the schemes through the
-[custom-inclusion contract](@ref man-custom-inclusions), as the
-[finite-element inclusions](@ref man-fe-inclusions) do. It needs neither a mesh
-nor an extension.
+elasticity and in conduction. It needs neither a mesh nor an extension.
 
 ```@setup mangaussincl
 using MeanFieldHomogenization
@@ -58,7 +71,7 @@ heatmap(θ[:, 24, :]'; aspect_ratio = :equal, color = :grays, colorbar = false, 
 
 ## Concentration tensors
 
-The two tensors of the contract, for a heterogeneity of property `P₁` in a
+The two tensors of the interface, for a heterogeneity of property `P₁` in a
 matrix of property `P₀`:
 
 ```@example mangaussincl
@@ -120,9 +133,9 @@ anything is allocated, when it would exceed `memory_limit`. Three limits:
 - a derivative with respect to the shape is refused; derivatives with respect
   to the properties are available through `ForwardDiff`.
 
-## Which route for a shape that is not an ellipsoid
+## [Choosing among the three](@id man-gaussian-which)
 
-| Need | Route |
+| Need | Page |
 | :--- | :--- |
 | any shape, no mesh, a few percent | [`GaussianInclusion`](@ref), this page |
 | an axisymmetric pore, to the accuracy of a mesh | [Finite-element inclusions](@ref man-fe-inclusions) |
@@ -132,5 +145,7 @@ anything is allocated, when it would exceed `memory_limit`. Three limits:
 ## Where to go next
 
 - [Heterogeneities of any shape](@ref th-gaussian-volume): the equations.
-- [Custom inclusions](@ref man-custom-inclusions): the contract this inclusion
+- [Custom inclusions](@ref man-custom-inclusions): the interface this inclusion
   enters through.
+- [Finite-element inclusions](@ref man-fe-inclusions), the next page: the same
+  problem solved on a mesh.
