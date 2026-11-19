@@ -270,6 +270,7 @@ pages = [
             # A crack of any contour, here a disk with contact islands, against
             # a published study and the annular crack.
             "applications/generated/crack_contacts.md",
+            "applications/generated/narrow_cracks.md",
             # Pore shapes again, now for the Stokes flow through them.
             "applications/generated/stokes_darcy_permeability.md",
         ],

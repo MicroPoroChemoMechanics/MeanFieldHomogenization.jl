@@ -29,6 +29,7 @@ the pages it builds on.
 | [Concave pores: superspheres and superspheroids](@ref app-concave-pores) | pores with no Eshelby solution, computed by finite elements and set against the only published data for this shape family |
 | [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy) | the permeability of granular, fibrous, tubular and double-porosity media from the Stokes flow in their pores, through size-dependent Brinkman inclusions |
 | [Cracks with contacts between their faces](@ref app-crack-contacts) | a circular crack whose faces touch on islands: one contact, regular patterns, clusters and random sets, by the Gaussian approximation of the crack equation, against a published study |
+| [Narrow cracks: rings, rectangles, bands](@ref app-narrow-cracks) | the plane strain model of a narrow crack and its end effects, on rings, rectangles, ellipses and curved bands, against published fits, the annular crack and the closed form of the ellipse |
 
 ## Cementitious materials
 

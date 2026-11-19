@@ -83,6 +83,9 @@ its own.
 - Application: *Cracks with contacts between their faces*, after Markov, Kanaun
   and Kachanov (2025): one contact against the annular crack, regular patterns,
   clusters, random sets, and the reduced crack density of a solid.
+- Application: *Narrow cracks: rings, rectangles, bands*, after Pronina, Markov
+  and Kachanov (2026): the plane strain model and its end effects, against the
+  published fits, the annular crack and the closed form of the ellipse.
 - Bibliography: the issue number of Kanaun and Levin (2009) corrected (7–8).
 
 ## v0.27.1 — cracks from their intensity factors
