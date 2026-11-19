@@ -23,6 +23,10 @@ interface stiffness, the compliance of a contrast.
 struct SampledKernel{m, T <: Number, d, N, L}
     samples::NTuple{N, Array{T, d}}
     blocks::Vector{SMatrix{m, m, T, L}}
+    # An inner constructor, so that no default outer one is generated: its
+    # `NTuple{N, Array{T, d}}` argument leaves `d` unbound for an empty tuple.
+    SampledKernel{m, T, d, N, L}(samples, blocks) where {m, T <: Number, d, N, L} =
+        new{m, T, d, N, L}(samples, blocks)
 end
 function SampledKernel(samples::Arrays{Ts, d}, blocks::Vector{SMatrix{m, m, Tb, L}}) where {Ts, d, m, Tb, L}
     T = promote_type(Ts, Tb)
