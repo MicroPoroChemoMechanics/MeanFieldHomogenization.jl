@@ -236,11 +236,13 @@ end
 
 """
     plotly_surface(x, y, Z; title, zlabel, uid, colorscale = "RdBu",
-                   reversescale = true, colorbar_title = "", height = 520)
+                   reversescale = true, colorbar_title = "", height = 520,
+                   aspect = nothing)
 
 A single interactive surface `Z[j, i]` over the grid `(x[i], y[j])` — the
 2½-D counterpart of [`plotly_scene`](@ref), used by the percolation maps of
-the cement-paste diffusion chapter.
+the cement-paste diffusion chapter. `aspect = (rx, ry, rz)` sets the proportions
+of the box of the scene; by default Plotly chooses them.
 """
 function plotly_surface(
         x, y, Z;
@@ -248,7 +250,10 @@ function plotly_surface(
         colorscale::AbstractString = "RdBu", reversescale::Bool = true,
         colorbar_title::AbstractString = "", height::Integer = 520,
         xlabel::AbstractString = "x", ylabel::AbstractString = "y",
+        aspect::Union{Nothing, NTuple{3, Real}} = nothing,
     )
+    box = aspect === nothing ? "" :
+        "aspectmode:\"manual\",aspectratio:{x:$(_js(aspect[1])),y:$(_js(aspect[2])),z:$(_js(aspect[3]))},"
     cb = isempty(colorbar_title) ? "" : ",colorbar:{title:\"$colorbar_title\"}"
     trace = """{type:"surface", x:$(_jsvec(x)), y:$(_jsvec(y)), z:$(_jsmat(Z)),
     colorscale:"$colorscale", reversescale:$(reversescale)$cb}"""
@@ -259,7 +264,7 @@ function plotly_surface(
         uid, height, trace,
         """{title:{text:"$title"}, height:$height, margin:{l:0,r:0,t:40,b:0},
         $(_THEMED_LAYOUT) uirevision:"$uid",
-        scene:{bgcolor:"rgba(0,0,0,0)",
+        scene:{bgcolor:"rgba(0,0,0,0)", $box
                xaxis:$(axis(xlabel)), yaxis:$(axis(ylabel)), zaxis:$(axis(zlabel))}}"""
     )
 end

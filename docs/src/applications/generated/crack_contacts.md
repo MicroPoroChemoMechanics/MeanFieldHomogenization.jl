@@ -198,14 +198,34 @@ under a unit normal traction (the jump of potential under a unit flux, times
 
 ````@example crack_contacts
 k, N, d = patterns[5]
-crack61 = crack_with(hexagon(k, d), 4.7 / N; n = 160)
+crack61 = crack_with(hexagon(k, d), 4.7 / N; n = 320)      ## 12 nodes on the radius of a contact
 n̂ = tens_basis(crack61.basis, 3)
+scale = k₀ * (1 - ν) / μ
 _, jump = crack_opening(crack61, K₀, n̂)
-x, y, Z = opening_surface(crack61, jump .* (k₀ * (1 - ν) / μ))
+x, y, Z = opening_surface(crack61, scale .* jump)
+every = 1:2:length(x)                                      ## one node out of two is enough to draw
 plotly_surface(
-    x, y, Z'; title = "Opening of a crack with 61 contacts, p = 4.7", zlabel = "normal opening",
-    xlabel = "x / a", ylabel = "y / a", uid = "app-contacts-61", colorscale = "Viridis", reversescale = false
+    x[every], y[every], Z[every, every]'; title = "Opening of a crack with 61 contacts, p = 4.7",
+    zlabel = "normal opening", xlabel = "x / a", ylabel = "y / a", uid = "app-contacts-61",
+    colorscale = "Viridis", reversescale = false, aspect = (1, 1, 0.45)
 )
+````
+
+The faces open between the contacts and, more widely, in the ring that the
+contacts leave free along the edge. The section of this surface by the
+diameter ``y = 0``, which crosses nine contacts, with the opening of the crack
+without contact (dashed):
+
+````@example crack_contacts
+row(y) = argmin(abs.(y))                                   ## the line of nodes next to y = 0
+_, jump⁰ = crack_opening(free, K₀, n̂)
+x⁰, y⁰, Z⁰ = opening_surface(free, scale .* jump⁰)
+plt = plot(
+    x⁰, Z⁰[:, row(y⁰)]; ls = :dash, color = :gray, label = "without contact",
+    xlabel = "x / a", ylabel = "normal opening", legend = :right
+)
+plot!(plt, x, Z[:, row(y)]; lw = 1.5, label = "61 contacts")
+plt
 ````
 
 ````@example crack_contacts
