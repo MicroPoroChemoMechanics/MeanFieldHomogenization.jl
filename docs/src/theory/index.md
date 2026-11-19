@@ -114,6 +114,17 @@ descriptor.
 | [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
 | [Degenerate shapes](@ref th-degenerate-shapes) | the closed forms of the Hill, Eshelby and crack opening tensors at the shapes where they reach ``0/0`` limits: sphere, disc, needle |
 
+## Arbitrary shapes by Gaussian approximation
+
+Beyond the ellipse, the opening of a crack is the solution of an integral
+equation. These pages solve it on a regular grid of Gaussians, without a mesh,
+and return the same ``\boldsymbol{B}`` and ``\mathbb{H}`` as the closed forms.
+
+| Page | What it adds |
+| :--- | :----------- |
+| [Approximation by Gaussians](@ref th-gaussian-approximation) | Maz'ya's quasi-interpolation: a function rebuilt from its samples, its error and its saturation level |
+| [Planar cracks of any contour](@ref th-gaussian-cracks) | the integral equation of a flat crack solved with it: kernel, edge, contacts, intensity factors |
+
 ## The generalized Eshelby problem: morphological patterns
 
 A composite pattern has **no Hill tensor** — the strain inside it is not

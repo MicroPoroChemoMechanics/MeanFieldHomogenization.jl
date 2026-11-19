@@ -56,6 +56,13 @@ pages = [
             "theory/rice_crack_contributions.md",
             "theory/degenerate_shapes.md",
         ],
+        # Shapes with no closed form: the integral equation of the heterogeneity
+        # solved on a regular grid of Gaussians. The approximation first, on its
+        # own, then the problems it is applied to.
+        "Arbitrary shapes by Gaussian approximation" => [
+            "theory/gaussian_approximation.md",
+            "theory/gaussian_cracks.md",
+        ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
         # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
         # solved for its average concentration tensor. Any pattern admitting
@@ -118,6 +125,7 @@ pages = [
             "manual/ellipsoidal_inclusions.md",
             "manual/cylindrical_inclusions.md",
             "manual/cracks.md",
+            "manual/planar_cracks.md",
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
             "manual/brinkman_inclusions.md",
@@ -368,6 +376,7 @@ pages = [
         "api/core.md",
         "api/elasticity.md",
         "api/cracks.md",
+        "api/gaussian_approximation.md",
         "api/conductivity.md",
         "api/concentration.md",
         "api/layered_sphere.md",

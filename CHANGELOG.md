@@ -1,5 +1,70 @@
 # Changelog
 
+## v0.28.0 — cracks of any contour
+
+A minor release: flat cracks of arbitrary contour, computed by a Gaussian
+approximation of their integral equation, and the local relation between the
+intensity factors as a function of its own.
+
+### Added
+
+- **`PlanarCrack(region)`**, a flat crack whose contour is any region of its
+  plane. Until now a crack was an ellipse, a ribbon, a ring or an arc; a
+  rectangle, a star, a contour read from an image, or a crack whose faces touch
+  on islands had no route. Its opening is the solution of the integral equation
+  of the crack, expanded on Gaussians centered at the nodes of a regular grid
+  (the approximation of Maz'ya and Schmidt, applied to cracks by Kanaun): the
+  traction due to one Gaussian is known in closed form, the matrix is a
+  convolution evaluated by FFT, and the contour enters only through the nodes it
+  contains, so no mesh is needed. `cod_tensor` returns the COD tensor in
+  elasticity and the thermal COD scalar in conduction, in a matrix of any
+  anisotropy (the kernel is the reduced kernel of the elliptic cracks); the
+  crack then enters every scheme as any other, with the density `N ℓ³` built on
+  its reference length. Against the exact ellipses in isotropic, transversely
+  isotropic and anisotropic matrices, tilted or not, and against the annular
+  crack, the default grid of 64 nodes is within 0.5 %.
+- **Describing a contour without a mesh.** `Disk`, `Ellipse`, `Rectangle`,
+  `Superellipse`, `Annulus`, `StarShape` and `Polygon`; set operations `∪`, `∩`
+  and `setdiff` on them (a contact island is the contour without the island);
+  `Region(inside, lo, hi)` for any function; `PixelRegion(mask, h)` for an
+  image.
+- **An edge located within the cell.** A Gaussian solution left alone puts the
+  edge of the crack about one grid step too far, an error of first order in the
+  step that reaches 10 % on a disk and 27 % on a ring of radii 1 and 1/2 at 64
+  nodes. The nodes of
+  the edge are held by a spring that depends on the fraction of their cell the
+  crack covers, calibrated on a line crack (`edge_rule`), and the mean openings
+  are extrapolated from two grids: the error falls to a few thousandths.
+- **Contacts and interface stiffness from the integral equation.** Faces bonded
+  on islands are a region with holes. Springs between the faces (`K_interface`,
+  `α_interface`) enter the equation as a block on every node, where the closed
+  form used for elliptic cracks assumes an ellipsoidal opening and is exact only
+  in its two limits.
+- **`crack_opening`**, the opening field of a `PlanarCrack`, and **`sif`** at
+  any regular point of its front, in elasticity and conduction.
+- **`sif_from_dif(N, ν, n, C₀)`**: the stress intensity factor from the local
+  displacement intensity factor, `K = π (Bᴿ)⁻¹·N`, with the COD tensor of the
+  ribbon tangent to the front. The relation is local and holds for any contour
+  and any anisotropy; it was written only inside `sif` of the elliptic crack,
+  which now calls it.
+- **Derivatives through the solve.** `ForwardDiff` duals carried by the
+  properties of the matrix go through the iterative solve by the
+  implicit-function theorem, nested duals included. A derivative with respect to
+  the contour is refused with an error rather than returned as zero.
+- `quasi_interpolate`, `GaussianGrid`, `saturation_error`: Maz'ya's
+  quasi-interpolation itself, used by the documentation page that introduces it.
+
+### Changed
+
+- New dependencies: `FFTA` (a fast Fourier transform in pure Julia, MIT) and
+  `Krylov`.
+
+### Documentation
+
+- Theory: *Approximation by Gaussians* and *Planar cracks of any contour*;
+  manual: *Planar cracks of any contour*.
+- Bibliography: the issue number of Kanaun and Levin (2009) corrected (7–8).
+
 ## v0.27.1 — cracks from their intensity factors
 
 A patch release: new cracks and a corrected intensity factor.

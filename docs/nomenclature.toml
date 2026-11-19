@@ -2402,3 +2402,83 @@ label = "κ_n"
 name = "far-field factor of the decaying spheroidal harmonics of degree n, c^{n+1}/(2n+1)!!"
 unit = ""
 pages = ["theory/multipole_expansion_spheroids.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'h'
+label = "h"
+name = "step of the grid of nodes of a Gaussian approximation"
+unit = "m"
+pages = ["theory/gaussian_approximation.md", "theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = 'H'
+label = "H"
+name = "shape parameter of the Gaussians: their width is h √H"
+unit = "1"
+pages = ["theory/gaussian_approximation.md", "theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\varphi'
+label = "φ"
+name = "generating function of the Gaussian approximation, one Gaussian per node"
+unit = "1"
+pages = ["theory/gaussian_approximation.md", "theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\epsilon_{\mathrm{sat}}'
+label = "ε<sub>sat</sub>"
+name = "saturation error of the Gaussian approximation, the part of its error that the step does not reduce"
+unit = "1"
+pages = ["theory/gaussian_approximation.md", "theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\boldsymbol{T}'
+label = "<b>T</b>"
+name = "kernel of the integral equation of a flat crack per unit wave number, as a function of the direction of the wave vector"
+unit = "Pa"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\boldsymbol{A}'
+label = "<b>A</b>"
+name = "traction due to the Gaussian of one node of a flat crack, per unit opening coefficient"
+unit = "Pa m⁻¹"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = 'Z_k'
+label = "Z<sub>k</sub>"
+name = "radial profile of the harmonic 2k of the traction due to a planar Gaussian"
+unit = "1"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\ell'
+label = "ℓ"
+name = "reference length that normalizes the COD tensor of a crack of any contour, and defines its density"
+unit = "m"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = '\gamma'
+label = "γ"
+name = "spring coefficient of the nodes of the edge of a Gaussian crack"
+unit = "1"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Cracks"
+tex = 'c_0'
+label = "c<sub>0</sub>"
+name = "distance, in grid steps, between the edge of a Gaussian crack and the edge of its region"
+unit = "1"
+pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]

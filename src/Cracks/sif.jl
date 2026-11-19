@@ -53,43 +53,83 @@ Base.@constprop :aggressive function sif(
     return 𝐊, (Kᴵ, Kᴵᴵ, Kᴵᴵᴵ)
 end
 
-# Elliptical crack (paper eq. 719)
+# Unit outward normal ν to the front of an elliptic crack at the point of
+# direction `y₀` of the unit circle, and the scale √(b ‖S⁻¹·y₀‖) of its local
+# intensity factors.
+function _ellipse_front(crack::EllipticCrack, y₀)
+    ℬ = crack_basis(crack)
+    l̂, m̂ = TensND.tens_basis(ℬ, 1), TensND.tens_basis(ℬ, 2)
+    S⁻¹_y0 = (inv(crack.a) * (l̂ ⊗ l̂) + inv(crack.b) * (m̂ ⊗ m̂)) ⋅ _front_point(y₀, m̂)
+    n_Sy = norm(S⁻¹_y0)
+    return TensND.express(S⁻¹_y0 / n_Sy, ℬ), sqrt(crack.b * n_Sy)
+end
+
+# The frame (τ, ν, n) of the ribbon tangent to a front of outward normal ν in the
+# plane of normal n, as a TensND basis, and its vector τ = n × ν.
+function _front_frame(ν̂, n̂)
+    ℬ = TensND.get_basis(ν̂)
+    τ̂ = TensND.Tens(TensND.express(n̂, ℬ) × ν̂, ℬ)
+    return TensND.Basis(
+            hcat(
+                TensND.canonical_components(τ̂), TensND.canonical_components(ν̂),
+                TensND.canonical_components(n̂)
+            )
+        ), τ̂
+end
+
+"""
+    sif_from_dif(N, ν, n, C₀; kw...) -> (𝐊, (Kᴵ, Kᴵᴵ, Kᴵᴵᴵ))
+    sif_from_dif(N, ν, n, K₀; kw...) -> K_T
+
+Stress intensity factor vector at a point of a crack front from the local
+displacement intensity factor ``\\underline{N}`` there:
+
+```math
+\\underline{K} = \\pi\\,\\bigl(\\boldsymbol{B}^{\\mathcal{R}}(\\underline{\\nu},
+    \\underline{n})\\bigr)^{-1}\\cdot\\underline{N},
+\\qquad
+[\\![\\underline{u}]\\!] \\simeq 4\\sqrt{\\tfrac{2}{\\pi}}\\;\\underline{N}\\,\\sqrt{s}
+\\quad (s \\to 0),
+```
+
+``s`` the distance to the front inside the crack, ``\\underline{\\nu}`` the unit
+outward normal to the front in the plane of the crack, of normal
+``\\underline{n}``, and ``\\boldsymbol{B}^{\\mathcal{R}}`` the COD tensor of the
+ribbon crack tangent to the front in the matrix `C₀`. The relation is local
+[kanaun1981, kunin1983, kanaunlevin2009](@cite): it holds at any regular point of
+the front of a flat crack of any contour, in a matrix of any anisotropy. The
+modes are read on ``(\\underline{n}, \\underline{\\nu}, \\underline{\\tau})``,
+``\\underline{\\tau} = \\underline{n}\\times\\underline{\\nu}``.
+
+In conduction (`K₀` of order 2), ``N`` is the scalar intensity factor of the
+potential jump and ``K_T = \\pi N / b^{\\mathcal{R}}``.
+
+`ν` and `n` are order-1 TensND tensors; `kw...` goes to [`cod_tensor`](@ref) of
+the ribbon.
+"""
+function sif_from_dif(N::TensND.AbstractTens{1, 3}, ν̂, n̂, C₀::TensND.AbstractTens{4, 3}; kw...)
+    ℬ_ν, τ̂ = _front_frame(ν̂, n̂)
+    B_ℛ = cod_tensor(RibbonCrack(one(eltype(ν̂)), ℬ_ν), C₀; kw...)
+    𝐊 = oftype(one(eltype(N)), π) * (inv(B_ℛ) ⋅ N)
+    return 𝐊, (𝐊 ⋅ n̂, 𝐊 ⋅ ν̂, 𝐊 ⋅ τ̂)
+end
+
+function sif_from_dif(N::Number, ν̂, n̂, K₀::TensND.AbstractTens{2, 3}; kw...)
+    ℬ_ν, _ = _front_frame(ν̂, n̂)
+    return oftype(N, π) * N / cod_tensor(RibbonCrack(one(eltype(ν̂)), ℬ_ν), K₀; kw...)
+end
+
+# Elliptical crack (paper eq. 719): its local displacement intensity factor is
+# (3√π/8) √b √(b ‖S⁻¹·y₀‖) 𝐁ᴱ·𝚺·n, then the local relation above.
 Base.@constprop :aggressive function sif(
         crack::EllipticCrack{T}, C₀, Σ;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
-    a = crack.a
-    b = crack.b
-    ℬ = crack_basis(crack)
-    l̂, m̂, n̂ = (TensND.tens_basis(ℬ, i) for i in 1:3)
-
-    𝐒_inv = inv(a) * (l̂ ⊗ l̂) + inv(b) * (m̂ ⊗ m̂)
-
-    y0 = _front_point(y₀, m̂)
-    S⁻¹_y0 = 𝐒_inv ⋅ y0
-    n_Sy = norm(S⁻¹_y0)
-    ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
-    τ̂ = TensND.Tens(TensND.express(n̂, ℬ) × TensND.express(ν̂, ℬ), ℬ)
-
-    ℬ_ν = TensND.Basis(
-        hcat(
-            TensND.canonical_components(τ̂),
-            TensND.canonical_components(ν̂),
-            TensND.canonical_components(n̂)
-        )
-    )
-
+    n̂ = TensND.tens_basis(crack_basis(crack), 3)
+    ν̂, scale = _ellipse_front(crack, y₀)
     B_ℰ = cod_tensor(crack, C₀; method = method, kw...)
-    ribbon_ref = RibbonCrack(b, ℬ_ν)
-    B_ℛ = cod_tensor(ribbon_ref, C₀; method = method, kw...)
-
-    𝐊 = (3 * T(π)^(T(3) / 2) * sqrt(b) / 8) * sqrt(b * n_Sy) *
-        inv(B_ℛ) ⋅ B_ℰ ⋅ Σ ⋅ n̂
-
-    Kᴵ = 𝐊 ⋅ n̂
-    Kᴵᴵ = 𝐊 ⋅ ν̂
-    Kᴵᴵᴵ = 𝐊 ⋅ τ̂
-    return 𝐊, (Kᴵ, Kᴵᴵ, Kᴵᴵᴵ)
+    N = (3 * sqrt(T(π)) * sqrt(crack.b) / 8) * scale * (B_ℰ ⋅ Σ ⋅ n̂)
+    return sif_from_dif(N, ν̂, n̂, C₀; method = method, kw...)
 end
 
 # =============================================================================
@@ -147,33 +187,11 @@ Base.@constprop :aggressive function sif(
         σ∞;
         y₀ = nothing, method::Symbol = :auto, kw...
     ) where {T}
-    a = crack.a
-    b = crack.b
-    ℬ = crack_basis(crack)
-    l̂, m̂, n̂ = (TensND.tens_basis(ℬ, i) for i in 1:3)
-
-    𝐒_inv = inv(a) * (l̂ ⊗ l̂) + inv(b) * (m̂ ⊗ m̂)
-
-    y0 = _front_point(y₀, m̂)
-    S⁻¹_y0 = 𝐒_inv ⋅ y0
-    n_Sy = norm(S⁻¹_y0)
-    ν̂ = TensND.express(S⁻¹_y0 / n_Sy, ℬ)
-    τ̂ = TensND.Tens(TensND.express(n̂, ℬ) × TensND.express(ν̂, ℬ), ℬ)
-
-    ℬ_ν = TensND.Basis(
-        hcat(
-            TensND.canonical_components(τ̂),
-            TensND.canonical_components(ν̂),
-            TensND.canonical_components(n̂)
-        )
-    )
-
+    n̂ = TensND.tens_basis(crack_basis(crack), 3)
+    ν̂, scale = _ellipse_front(crack, y₀)
     b_ℰ = cod_tensor(crack, K₀; method = method, kw...)
-    ribbon_ref = RibbonCrack(b, ℬ_ν)
-    b_ℛ = cod_tensor(ribbon_ref, K₀; method = method, kw...)
-
-    return (3 * T(π)^(T(3) / 2) * sqrt(b) / 8) * sqrt(b * n_Sy) *
-        (b_ℰ / b_ℛ) * (n̂ ⋅ σ∞)
+    N = (3 * sqrt(T(π)) * sqrt(crack.b) / 8) * scale * b_ℰ * (n̂ ⋅ σ∞)
+    return sif_from_dif(N, ν̂, n̂, K₀; method = method, kw...)
 end
 
 """

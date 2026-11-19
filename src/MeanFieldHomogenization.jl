@@ -155,6 +155,10 @@ include("CustomInclusions/CustomInclusions.jl")
 include("Brinkman/Brinkman.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
+# `GaussianApproximation`: cracks and heterogeneities of arbitrary shape, their
+# integral equations solved on a regular grid of Gaussians. It reuses the
+# response cache of `FiniteElements`.
+include("GaussianApproximation/GaussianApproximation.jl")
 # `Constitutive` turns a whole cell + scheme into a Gauss-point material law, so
 # it comes after every inclusion family a microstructure may hold. It is the
 # mirror image of `FiniteElements`: there the FE code is inside MFH, here MFH is
@@ -169,6 +173,7 @@ using .CustomInclusions
 using .Brinkman
 using .FiniteElements
 using .NeuralInclusions
+using .GaussianApproximation
 using .Constitutive
 using .MaterialLaws
 
@@ -211,7 +216,7 @@ export crack_basis, aspect_ratio, semi_major, semi_minor, crack_normal
 export cod_tensor, B_tensor
 export cod_from_compliance, compliance_from_cod
 export crack_density_factor
-export sif, dif
+export sif, dif, sif_from_dif
 export rice_cod_tensor, CircularFronts, AnnularCrack, RiceCrack, ArcShape, CircularArcCrack
 export saturn_ring_compliance
 
@@ -254,6 +259,13 @@ export TriSurface, node_count, triangle_count
 export octant_patch, unit_octahedron, project_to_shape!, shape_surface, relax_surface!
 export mesh_area, mesh_volume, edge_lengths, mesh_quality
 export boundary_chains, patch_corners
+# ── Arbitrary shapes by Gaussian approximation ───────────────────────────────
+export GaussianGrid, gaussian_generator, saturation_error, QuasiInterpolant, quasi_interpolate
+export AbstractRegion, bounding_box, measure, inside_nodes, coverage
+export Ellipse, Disk, Superellipse, Rectangle, StarShape, Polygon, Annulus
+export Region, PixelRegion, UnionRegion, IntersectionRegion, DifferenceRegion
+export edge_rule, ContourShape, PlanarCrack, crack_area, crack_opening
+
 export DimensionlessHill, AnchoredHill, AffineHill
 export SampleBox, Dataset, generate_dataset, fit_scaling
 export TrainingOptions, train_surrogate, assemble_surrogate

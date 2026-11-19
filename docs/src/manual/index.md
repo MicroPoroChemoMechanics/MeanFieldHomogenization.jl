@@ -22,6 +22,7 @@ recurrence, a mesh, a network — and every one of them ends up in the same
 | an ellipsoid, or one of its limits | [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions) | Eshelby's closed form |
 | a fiber, a cylinder | [Cylindrical inclusions](@ref man-cylindrical-inclusions) | the same, in the cylindrical limit |
 | a crack, a family of cracks | [Cracks](@ref man-cracks) | the crack-opening tensor and its algebra |
+| a flat crack of any contour, contacts between its faces | [Planar cracks of any contour](@ref man-planar-cracks) | its integral equation, solved on a grid of Gaussians |
 | a coated particle, an interphase | [Layered inclusions](@ref man-layered) | a recurrence over the layers |
 | anything else, from your own code | [Custom inclusions](@ref man-custom-inclusions) | you supply it, through one of three entry levels |
 | a shape with no closed form | [Finite-element inclusions](@ref man-fe-inclusions) | one Eshelby cell, solved |
