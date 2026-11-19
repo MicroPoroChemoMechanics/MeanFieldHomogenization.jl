@@ -198,6 +198,8 @@ Sys.iswindows() || @testset "Ctrl-C stops a studio run as a script" begin
     stopped = !process_running(p)
     stopped || kill(p, Base.SIGKILL)
     @test stopped
+    # on Linux the system ends it, Julia's own exit being left out
+    Sys.islinux() && @test p.termsignal == Base.SIGINT
     rm(log; force = true)
 end
 

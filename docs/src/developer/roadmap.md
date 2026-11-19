@@ -55,6 +55,19 @@ package already does is described in the [manual](@ref man-index) and the
   - **transport for the crack**, the 3 + 3 declination being elastic only.
   - **solid** supershape inclusions, which would need the inclusion meshed too
     and would enter level B with two measured tensors.
+- **Gaussian approximation** (see [Planar cracks of any contour](@ref th-gaussian-cracks)
+  and [Heterogeneities of any shape](@ref th-gaussian-volume)):
+  - an **anisotropic reference medium for `GaussianInclusion`**: the smoothed
+    Green operator as a plane-wave integral over the unit sphere, with the
+    Fourier symbol the Hill tensors already use.
+  - the **layer next to the surface of a heterogeneity**, which limits the
+    accuracy to a few percent: subtracting the uniform part of the polarization
+    and applying to it the Hill field of the sharp shape.
+  - **cracks that interact, or are not flat**: Gaussians in the tangent plane of
+    each node, a dense system, and the cell in an effective field of
+    Markov and Kanaun [markovkanaun2014, kanaunmarkov2014](@cite).
+  - intensity factors of a `PlanarCrack` within less than the percent they
+    reach, by a fit that knows the next term of the expansion at the front.
 - **Neural-surrogate inclusions** (see
   [Neural-surrogate inclusions](@ref man-neural-inclusions)):
   - a `_reference_medium` for `GradientConcentrationTI` / `FluxConcentrationTI`, deliberately

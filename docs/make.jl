@@ -371,6 +371,7 @@ const DOC_MODULES = [
     MeanFieldHomogenization.CustomInclusions,
     MeanFieldHomogenization.FiniteElements,
     MeanFieldHomogenization.NeuralInclusions,
+    MeanFieldHomogenization.GaussianApproximation,
 ]
 
 # ── 3. a DRAFT build, which is the one that closes the class ────────────────

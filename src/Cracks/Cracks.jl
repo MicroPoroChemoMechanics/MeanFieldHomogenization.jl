@@ -69,7 +69,7 @@ export inverse_and_property_contribution
 # exports — nothing to re-export here.)
 
 # ── SIF / DIF ────────────────────────────────────────────────────────────────
-export sif, dif
+export sif, dif, sif_from_dif
 
 # ── Contributions from intensity factors (Rice) ─────────────────────────────
 export rice_cod_tensor

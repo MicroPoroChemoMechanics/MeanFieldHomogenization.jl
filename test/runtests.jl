@@ -117,7 +117,7 @@ const TEST_PARTS = Dict(
     "polycrystals" => ("Polycrystals",),
     "patterns" => (
         "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "Superspheres",
-        "FiniteElementInclusions",
+        "FiniteElementInclusions", "GaussianApproximation",
     ),
     "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
 )
@@ -300,6 +300,15 @@ end
     rungroup("Superspheres") && @testset "Superspheres" begin
         include("Superspheres/test_shapes.jl")
         include("Superspheres/test_surface_mesh.jl")
+    end
+
+    # Cracks and heterogeneities of arbitrary shape, by Gaussian approximation
+    # of their integral equations.
+    rungroup("GaussianApproximation") && @testset "GaussianApproximation" begin
+        include("GaussianApproximation/test_gaussian_core.jl")
+        include("GaussianApproximation/test_regions.jl")
+        include("GaussianApproximation/test_planar_crack.jl")
+        include("GaussianApproximation/test_gaussian_inclusion.jl")
     end
 
     # Finite-element inclusions: skipped when the Ferrite stack is unavailable
