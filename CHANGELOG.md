@@ -16,10 +16,16 @@ A patch release.
 
 ### Documentation
 
-- The opening of the crack with 61 contacts, in
-  *Cracks with contacts between their faces*, is computed on 320 nodes across
-  and drawn with its section along a diameter. *Approximation by Gaussians*
-  gains a figure of a function rebuilt with three grid steps, and the gap to it.
+- *Cracks with contacts between their faces*: the opening of the crack with 61
+  contacts is computed on 320 nodes across and drawn with its section along a
+  diameter, for the contact radius of the published case and for half of it. A
+  new section measures the sensitivity to the grid step: a grid has to resolve
+  the openings between the contacts, with about six steps. The curves of the
+  reduction factor against the contact density, whose densest points had
+  openings of two to three steps and were 15 to 20 % too high, are now computed
+  on a grid that follows the radius of the contacts.
+- *Approximation by Gaussians* gains a figure of a function rebuilt with three
+  grid steps, and the gap to it.
 - Three inline formulas of the Gaussian approximation pages were cut by a line
   wrap and left as raw LaTeX; a check run before each push now refuses such a
   wrap. The theory section on the Gaussian approximation comes after the

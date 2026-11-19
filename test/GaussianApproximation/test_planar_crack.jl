@@ -152,8 +152,9 @@ end
     approx = MeanFieldHomogenization.Cracks._apply_interface_stiffness(cod_tensor(PennyCrack(1.0), GP_C), Kmid, 1.0)
     @test 1.0e-3 < _gp_err(cod_tensor(free, GP_C; K_interface = Kmid), approx) < 0.1
 
-    # opening field: its integral is π ℓ³ 𝐁·𝚺·n on the grid it is computed on,
-    # up to the part of the edge Gaussians that lies outside the crack
+    # opening field: the integral of the Gaussians is π ℓ³ 𝐁·𝚺·n on the grid it
+    # is computed on, exactly; the sum of the field over the nodes of the crack
+    # leaves out the part of the edge Gaussians that lies outside it
     one_grid = PlanarCrack(Disk(1.0); n = 32, extrapolate = false, euler_angles = GP_ANGLES)
     n̂ = TensND.tens_basis(one_grid.basis, 3)
     l̂ = TensND.tens_basis(one_grid.basis, 1)
@@ -161,13 +162,16 @@ end
     x, u = crack_opening(one_grid, GP_C, Σ)
     @test length(x) == length(u) == length(first(one_grid.levels).inside)
     h = first(one_grid.levels).grid.h
-    @test h^2 * sum(u) ≈ π * TensND.components(cod_tensor(one_grid, GP_C) ⋅ Σ ⋅ n̂, one_grid.basis) rtol = 3.0e-2
+    mean_opening = π * TensND.components(cod_tensor(one_grid, GP_C) ⋅ Σ ⋅ n̂, one_grid.basis)
+    @test h^2 * sum(GP._opening_coefficients(one_grid, GP_C, Σ)) ≈ mean_opening rtol = 1.0e-8
+    @test h^2 * sum(u) ≈ mean_opening rtol = 3.0e-2
     xT, uT = crack_opening(one_grid, GP_K, 2.0 * n̂)
     # the same values laid on the grid, for a surface plot
     gx, gy, Z = opening_surface(one_grid, uT)
     @test size(Z) == (length(gx), length(gy)) && sum(Z) ≈ sum(uT) && count(!iszero, Z) == length(uT)
     @test gx[2] - gx[1] ≈ h && first(gx) ≈ -1 + h / 2
     @test_throws DimensionMismatch opening_surface(one_grid, uT[1:3])
+    @test h^2 * sum(GP._opening_coefficients(one_grid, GP_K, 2.0 * n̂)) ≈ 2π * cod_tensor(one_grid, GP_K) rtol = 1.0e-8
     @test h^2 * sum(uT) ≈ 2π * cod_tensor(one_grid, GP_K) rtol = 3.0e-2
     # elliptic profile of the penny-shaped crack, away from the edge
     flat = PlanarCrack(Disk(1.0); n = 64)
