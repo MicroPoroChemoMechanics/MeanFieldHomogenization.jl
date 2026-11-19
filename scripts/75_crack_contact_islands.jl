@@ -30,6 +30,10 @@ using Random
 using Plots
 gr()
 
+## Interactive 3-D helpers; `pkgdir` rather than `@__DIR__` so the include also
+## resolves inside a Documenter `@example` block.
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+
 # The matrix is isotropic, of Young modulus ``E``, Poisson ratio ``\nu``, shear
 # modulus ``\mu`` and conductivity ``k_0``. The crack has the radius ``a = 1``.
 
@@ -169,11 +173,11 @@ plot(left, right; layout = (1, 2), size = (780, 330))
 k, N, d = patterns[5]
 crack61 = crack_with(hexagon(k, d), 4.7 / N; n = 160)
 n̂ = tens_basis(crack61.basis, 3)
-x, jump = crack_opening(crack61, K₀, n̂)
-scatter(
-    first.(x), last.(x); zcolor = jump .* (k₀ * (1 - ν) / μ), markersize = 1.6, markerstrokewidth = 0,
-    aspect_ratio = :equal, label = "", colorbar_title = "normal opening", xlabel = "x / a", ylabel = "y / a",
-    size = (560, 460)
+_, jump = crack_opening(crack61, K₀, n̂)
+x, y, Z = opening_surface(crack61, jump .* (k₀ * (1 - ν) / μ))
+plotly_surface(
+    x, y, Z'; title = "Opening of a crack with 61 contacts, p = 4.7", zlabel = "normal opening",
+    xlabel = "x / a", ylabel = "y / a", uid = "app-contacts-61", colorscale = "Viridis", reversescale = false
 )
 
 #-

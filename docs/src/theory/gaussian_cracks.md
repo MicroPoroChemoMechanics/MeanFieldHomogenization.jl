@@ -209,6 +209,9 @@ with ``\underline{u}_m = \underline{0}`` at the others:
 ```
 
 The contour enters through the list of the nodes inside it, and nowhere else.
+
+![A square grid of nodes over a crack with a bonded island: nodes inside, nodes of the cells cut by an edge, the footprint of one Gaussian; on a line of nodes, the spring that holds the node of a cut cell](../assets/theory/gaussian_crack_grid.svg)
+
 The matrix is symmetric positive definite, as the kernel is; it depends on
 ``m-m'`` only, so its product by a vector is a discrete convolution, evaluated
 by fast Fourier transform on arrays padded with zeros to twice the size of the

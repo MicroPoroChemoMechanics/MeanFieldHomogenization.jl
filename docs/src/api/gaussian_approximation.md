@@ -53,6 +53,7 @@ MeanFieldHomogenization.PlanarCrack
 MeanFieldHomogenization.ContourShape
 MeanFieldHomogenization.crack_area
 MeanFieldHomogenization.crack_opening
+MeanFieldHomogenization.opening_surface
 MeanFieldHomogenization.edge_rule
 MeanFieldHomogenization.sif_from_dif
 ```

@@ -13,6 +13,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Plots
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
 ```
 
 ## Describing a contour
@@ -175,13 +176,16 @@ E_nu(best_fit_iso(C_hom))
 
 [`crack_opening`](@ref) returns the opening on the finest grid: the positions of
 the nodes and, at each, the displacement jump in the frame of the crack.
+[`opening_surface`](@ref) lays one of its components on the grid. A disk with a
+contact island, under a unit normal traction:
 
 ```@example manplanar
 crack = PlanarCrack(setdiff(Disk(1.0), Disk(0.25; center = (0.35, 0.0))); size = 1.0)
 n̂ = tens_basis(crack.basis, 3)
-x, u = crack_opening(crack, C₀, n̂ ⊗ n̂)                     # unit normal traction
-scatter(first.(x), last.(x); zcolor = last.(u), markersize = 2.2, markerstrokewidth = 0,
-    aspect_ratio = :equal, label = "", colorbar_title = "normal opening", xlabel = "x", ylabel = "y")
+points, u = crack_opening(crack, C₀, n̂ ⊗ n̂)
+x, y, Z = opening_surface(crack, last.(u))                 # the normal component
+plotly_surface(x, y, Z'; title = "Opening of a disk with a contact island", zlabel = "normal opening",
+    uid = "man-planar-opening", colorscale = "Viridis", reversescale = false)
 ```
 
 [`sif`](@ref) gives the intensity factors at a point of the front, from its

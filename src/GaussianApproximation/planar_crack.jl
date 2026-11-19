@@ -270,6 +270,25 @@ function crack_opening(
     return [node(l.grid, I) for I in l.inside], vec(W) * TensND.components(σ, crack.basis)[3]
 end
 
+"""
+    opening_surface(crack::PlanarCrack, values) -> (x, y, Z)
+
+The values that [`crack_opening`](@ref) returns at the nodes of the crack, laid
+on its grid: the coordinates `x` and `y` of the lines of nodes in the plane of
+the crack and the matrix `Z[i, j]` of the value at `(x[i], y[j])`, zero where
+the faces do not open. For a surface plot.
+"""
+function opening_surface(crack::PlanarCrack, values::AbstractVector{<:Number})
+    l = first(crack.levels)
+    length(values) == length(l.inside) || throw(
+        DimensionMismatch("$(length(values)) values for the $(length(l.inside)) nodes of the crack")
+    )
+    Z = zeros(eltype(values), l.grid.dims)
+    Z[l.inside] .= values
+    x, y = (l.grid.lo[k] .+ ((1:l.grid.dims[k]) .- 0.5) .* l.grid.h for k in 1:2)
+    return x, y, Z
+end
+
 # ─── Intensity factors ───────────────────────────────────────────────────────
 
 # Value at the point `x` of the plane of the field carried by the nodes of a level.

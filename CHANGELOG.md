@@ -56,8 +56,9 @@ its own.
   `α_interface`) enter the equation as a block on every node, where the closed
   form used for elliptic cracks assumes an ellipsoidal opening and is exact only
   in its two limits.
-- **`crack_opening`**, the opening field of a `PlanarCrack`, and **`sif`** at
-  any regular point of its front, in elasticity and conduction.
+- **`crack_opening`**, the opening field of a `PlanarCrack` (`opening_surface`
+  lays it on its grid for a surface plot), and **`sif`** at any regular point of
+  its front, in elasticity and conduction.
 - **`sif_from_dif(N, ν, n, C₀)`**: the stress intensity factor from the local
   displacement intensity factor, `K = π (Bᴿ)⁻¹·N`, with the COD tensor of the
   ribbon tangent to the front. The relation is local and holds for any contour

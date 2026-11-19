@@ -14,6 +14,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Plots
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
 ```
 
 ## Describing a shape
@@ -32,6 +33,13 @@ A shape is an [`AbstractRegion`](@ref) of space, built as the contour of a
 
 `GaussianInclusion` also takes an `Ellipsoid`, a `Supersphere` or a
 `Superspheroid` directly.
+
+```@example mangaussincl
+surface = param_surface((u, v) -> ((1 + 0.35cos(v)) * cos(u), (1 + 0.35cos(v)) * sin(u), 0.35sin(v)),
+    range(0, 2π; length = 61), range(0, 2π; length = 25))
+plotly_scene([surface_trace(surface...; color = "#4063D8")]; uid = "man-gauss-torus", height = 380,
+    title = "Torus(1.0, 0.35)")
+```
 
 ```@example mangaussincl
 torus = GaussianInclusion(Torus(1.0, 0.35); n = 16)

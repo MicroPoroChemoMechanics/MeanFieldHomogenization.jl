@@ -49,7 +49,7 @@ export GaussianGrid, gaussian_generator, saturation_error, QuasiInterpolant, qua
 export AbstractRegion, bounding_box, measure, inside_nodes, coverage
 export Ellipse, Disk, Superellipse, Rectangle, StarShape, Polygon, Annulus
 export Region, PixelRegion, UnionRegion, IntersectionRegion, DifferenceRegion
-export edge_rule, ContourShape, PlanarCrack, crack_area, crack_opening
+export edge_rule, ContourShape, PlanarCrack, crack_area, crack_opening, opening_surface
 export Torus, GaussianInclusion, inclusion_volume
 
 end # module
