@@ -39,8 +39,8 @@ end
 
 Second gradient of the smoothed harmonic potential ``\\Phi_0`` at the distance
 `ρ` (in grid steps) of its node, in the direction ``\\underline{n}``:
-``\\operatorname{grad}\\operatorname{grad}\\Phi_0 = \\alpha\\,\\boldsymbol{1}
-+ \\beta\\,\\underline{n}\\otimes\\underline{n}``. At the node,
+``\\operatorname{grad}\\operatorname{grad}\\Phi_0 = \\alpha\\,\\boldsymbol{1} +
+\\beta\\,\\underline{n}\\otimes\\underline{n}``. At the node,
 ``\\alpha = -1/(3(\\pi H)^{3/2})`` and ``\\beta = 0``.
 """
 function radial_hessian(ρ, H)

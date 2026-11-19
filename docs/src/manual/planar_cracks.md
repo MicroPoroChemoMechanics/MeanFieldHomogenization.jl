@@ -83,8 +83,8 @@ then the normal.
 **The reference length.** ``\boldsymbol{B}`` is normalized by a length ``\ell``,
 `crack.size`, exactly as the COD tensor of a penny-shaped crack is by its
 radius:
-``\pi\ell^{3}\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n}
-= \int[\![\underline{u}]\!]\,\mathrm{d}S``. The crack density of a family is
+``\pi\ell^{3}\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n} =
+\int[\![\underline{u}]\!]\,\mathrm{d}S``. The crack density of a family is
 ``\varepsilon = N\ell^{3}`` with the same ``\ell``. By default ``\ell`` is the
 radius of the disk of the same area; `size = …` sets it. The contribution of a
 family, ``\propto\varepsilon\,\boldsymbol{B}``, does not depend on the choice.
@@ -218,9 +218,9 @@ ForwardDiff.derivative(B_of, 0.3)
 A derivative with respect to the contour is refused with an error: the nodes a
 contour contains do not vary continuously with it.
 
-## Which route for a crack that is not an ellipse
+## Cracks that are not ellipses: which type
 
-| The crack | Route |
+| The crack | Type |
 | :--- | :--- |
 | any flat contour, with or without contacts | [`PlanarCrack`](@ref), this page |
 | a ring | [`AnnularCrack`](@ref) (Galerkin, isotropic matrix), or `PlanarCrack(Annulus(a, c))` |

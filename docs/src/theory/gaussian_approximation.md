@@ -56,7 +56,40 @@ plt
 
 The two curves separate near the ends of the interval, where the Gaussians of
 the nodes that would lie outside are missing: (1) is a statement about the
-interior of the grid.
+interior of the grid. Inside, ten nodes are too few for this function: ``u_h``
+smooths its extrema.
+
+Both defects go with a grid that extends beyond the interval and a smaller
+step. Below, the nodes cover ``[-1, 2]`` and the function is rebuilt on
+``[0, 1]`` with the steps ``h = 1/10``, ``1/20`` and ``1/40``; the lower panel
+is the gap ``u_h - u``.
+
+```@example gaussapprox
+extended(n) = quasi_interpolate(x -> u(x[1]), GaussianGrid((-1.0,), (2.0,), 3n; H = 2.0))   # h = 1/n
+
+xs = range(0, 1; length = 400)
+top = plot(xs, u.(xs); label = "u", lw = 4, color = :lightgray, legend = :bottomleft)
+bottom = plot(; xlabel = "x", ylabel = "u_h - u", legend = false)
+for (color, (n, style)) in enumerate(((10, :dot), (20, :dash), (40, :solid)))
+    uh = extended(n)
+    plot!(top, xs, [uh((x,)) for x in xs]; label = "u_h, h = 1/$n", lw = 1.5, ls = style, color)
+    plot!(bottom, xs, [uh((x,)) - u(x) for x in xs]; lw = 1.5, ls = style, color)
+end
+plot(top, bottom; layout = @layout([a{0.62h}; b]), size = (700, 560))
+```
+
+With forty nodes per unit length the two curves are superposed. The largest gap
+on the interval, for each step:
+
+```@example gaussapprox
+for n in (10, 20, 40, 80)
+    uh = extended(n)
+    println("h = 1/", n, "   max |u_h - u| = ", round(maximum(abs(uh((x,)) - u(x)) for x in xs); sigdigits = 3))
+end
+```
+
+Halving the step divides the gap by four. Section 3 gives the law, and the
+level below which no refinement goes.
 
 ## 2. The sum of the Gaussians is not one
 
@@ -65,8 +98,8 @@ Take ``u = 1`` in one dimension. The sum
 series in ``x/h``, whose coefficient of order ``\nu`` is the Fourier transform
 of ``\varphi`` taken at the frequency ``\nu/h`` and divided by ``h`` (Poisson's
 summation formula). The transform of a Gaussian is a Gaussian,
-``\int\varphi(x)\,\mathrm{e}^{-2\pi i\nu x/h}\,\mathrm{d}x
-= h\,\mathrm{e}^{-\pi^{2}H\nu^{2}}``, so that
+``\int\varphi(x)\,\mathrm{e}^{-2\pi i\nu x/h}\,\mathrm{d}x =
+h\,\mathrm{e}^{-\pi^{2}H\nu^{2}}``, so that
 
 ```math
 \sum_{m\in\mathbb{Z}} \varphi(x-mh)

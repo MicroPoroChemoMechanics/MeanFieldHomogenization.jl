@@ -148,6 +148,18 @@ check_tree() {
         fi
     fi
 
+    # An inline formula cut by a line wrap: a wrapped line that begins with a
+    # list or heading marker starts a Markdown block and leaves raw LaTeX on
+    # the page. No build reports it; the script's header shows the fix.
+    local math="$dir/.github/scripts/check_inline_math.py"
+    if [ -n "$py" ] && [ -f "$math" ] && [ -d "$dir/docs/src" ]; then
+        if ! (cd "$dir" && $py "$math"); then
+            echo "▸ inline formulas: the push is refused. End the previous line" >&2
+            echo "▸ with the operator, as the message above says." >&2
+            failed=1
+        fi
+    fi
+
     # ── Spelling, over the whole tree, exactly as `Spelling.yml` does ───────
     local tool="$dir/.github/scripts/spelling_tool.py"
     if [ -f "$tool" ] && [ -f "$dir/.spelling.json" ]; then

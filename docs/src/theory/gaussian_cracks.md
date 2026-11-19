@@ -75,8 +75,8 @@ as for elliptic cracks.
 
 **Conduction.** The jump of the potential ``[\![T]\!]`` of an insulating crack
 obeys (1) with a scalar kernel. With the conductivity ``\boldsymbol{K}_0`` and
-``\hat{\boldsymbol{Q}}(\underline{\xi}) = \boldsymbol{K}_0
-- \boldsymbol{K}_0\cdot\underline{\xi}\otimes\underline{\xi}\cdot\boldsymbol{K}_0
+``\hat{\boldsymbol{Q}}(\underline{\xi}) = \boldsymbol{K}_0 -
+\boldsymbol{K}_0\cdot\underline{\xi}\otimes\underline{\xi}\cdot\boldsymbol{K}_0
 /(\underline{\xi}\cdot\boldsymbol{K}_0\cdot\underline{\xi})``, put
 ``\underline{\xi} = \underline{\xi}^{\star}+\zeta\,\underline{n}``,
 ``k_{nn} = \underline{n}\cdot\boldsymbol{K}_0\cdot\underline{n}``,
@@ -132,8 +132,8 @@ By (1), the traction at ``\underline{x}`` due to the Gaussian of a node is
 In polar coordinates, and since ``\boldsymbol{T}`` has the period ``\pi``, the
 integral over ``\xi`` is that of ``\xi^{2}\hat{\varphi}(\xi)\cos(\xi t)`` with
 ``t = \underline{e}(\theta)\cdot\underline{x}``. It follows from
-``\int_0^\infty\mathrm{e}^{-s\xi^{2}}\cos(\xi t)\,\mathrm{d}\xi
-= \tfrac12\sqrt{\pi/s}\;\mathrm{e}^{-t^{2}/(4s)}`` by a derivative with respect
+``\int_0^\infty\mathrm{e}^{-s\xi^{2}}\cos(\xi t)\,\mathrm{d}\xi =
+\tfrac12\sqrt{\pi/s}\;\mathrm{e}^{-t^{2}/(4s)}`` by a derivative with respect
 to ``s``:
 
 ```math
@@ -155,12 +155,12 @@ With ``\underline{x} = \rho\,h\,\underline{e}(\vartheta)``, so that
 
 ``\boldsymbol{T}`` being periodic of period ``\pi``, it is a Fourier series in
 ``2\theta``,
-``\boldsymbol{T}(\theta) = \sum_{k\ge0}\bigl[\boldsymbol{T}^{c}_{k}\cos 2k\theta
-+ \boldsymbol{T}^{s}_{k}\sin 2k\theta\bigr]``, and each harmonic of (4)
+``\boldsymbol{T}(\theta) = \sum_{k\ge0}\bigl[\boldsymbol{T}^{c}_{k}\cos 2k\theta +
+\boldsymbol{T}^{s}_{k}\sin 2k\theta\bigr]``, and each harmonic of (4)
 integrates in closed form. With ``z = \rho^{2}/H`` and the modified Bessel
 functions ``I_k`` taken at ``z/2``,
-``\int_0^{2\pi}\cos 2k\phi\;\mathrm{e}^{-z\cos^{2}\phi}\,\mathrm{d}\phi
-= 2\pi(-1)^{k}\,\mathrm{e}^{-z/2}I_k``, and a derivative with respect to ``z``
+``\int_0^{2\pi}\cos 2k\phi\;\mathrm{e}^{-z\cos^{2}\phi}\,\mathrm{d}\phi =
+2\pi(-1)^{k}\,\mathrm{e}^{-z/2}I_k``, and a derivative with respect to ``z``
 gives the same integral weighted by ``\cos^{2}\phi``. Hence
 
 ```math
@@ -381,10 +381,10 @@ The relation does not hold at a corner of the contour.
 
 ## 8. Derivatives
 
-The system (6) reads ``\boldsymbol{\mathsf{A}}(p)\,\boldsymbol{\mathsf{u}}
-= \boldsymbol{\mathsf{t}}`` with ``p`` a property of the matrix. Its derivative,
-``\boldsymbol{\mathsf{A}}\,\partial_p\boldsymbol{\mathsf{u}}
-= \partial_p\boldsymbol{\mathsf{t}}-(\partial_p\boldsymbol{\mathsf{A}})\,\boldsymbol{\mathsf{u}}``,
+The system (6) reads ``\boldsymbol{\mathsf{A}}(p)\,\boldsymbol{\mathsf{u}} =
+\boldsymbol{\mathsf{t}}`` with ``p`` a property of the matrix. Its derivative,
+``\boldsymbol{\mathsf{A}}\,\partial_p\boldsymbol{\mathsf{u}} =
+\partial_p\boldsymbol{\mathsf{t}}-(\partial_p\boldsymbol{\mathsf{A}})\,\boldsymbol{\mathsf{u}}``,
 is one more solve with the same matrix. `ForwardDiff` duals carried by
 ``\mathbb{C}_0`` are propagated that way, nested ones included, and the
 derivatives are exact for the discrete system. A derivative with respect to the
@@ -394,8 +394,8 @@ contour is refused: the list of nodes is not a continuous function of it.
 
 - [Planar cracks of any contour](@ref man-planar-cracks), in the manual: the
   ways to describe a contour, and the functions.
-- [Contributions from intensity factors](@ref th-rice-contributions): the other
-  route to a non-elliptic crack, when its intensity factors are known.
+- [Contributions from intensity factors](@ref th-rice-contributions): another
+  description of a non-elliptic crack, when its intensity factors are known.
 
 ## References
 

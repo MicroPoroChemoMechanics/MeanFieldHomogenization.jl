@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.28.1 — the opening of a planar crack is its field
+
+A patch release.
+
+### Fixed
+
+- **`crack_opening` of a `PlanarCrack` returns the opening itself.** It returned
+  the coefficients of the Gaussians at the nodes, which are not the field they
+  add up to: on the nodes next to the edge of the crack and of its contacts the
+  coefficients overshoot, and a surface drawn from them showed spikes along
+  every edge. The function now returns the sum of the Gaussians at each node.
+  Away from the edges the two agree to the second order in the grid step;
+  `cod_tensor` and `sif`, which are built on the coefficients, are unchanged.
+
+### Documentation
+
+- *Cracks with contacts between their faces*: the opening of the crack with 61
+  contacts is computed on 320 nodes across and drawn with its section along a
+  diameter, for the contact radius of the published case and for half of it. A
+  new section measures the sensitivity to the grid step: a grid has to resolve
+  the openings between the contacts, with about six steps. The curves of the
+  reduction factor against the contact density, whose densest points had
+  openings of two to three steps and were 15 to 20 % too high, are now computed
+  on a grid that follows the radius of the contacts.
+- *Approximation by Gaussians* gains a figure of a function rebuilt with three
+  grid steps, and the gap to it.
+- Three inline formulas of the Gaussian approximation pages were cut by a line
+  wrap and left as raw LaTeX; a check run before each push now refuses such a
+  wrap. The theory section on the Gaussian approximation comes after the
+  homogenization schemes, and the manual gathers the three treatments of a
+  shape with no closed form in one subsection.
+
 ## v0.28.0 — cracks and heterogeneities of any shape
 
 A minor release: flat cracks of arbitrary contour and heterogeneities of
@@ -12,7 +44,7 @@ its own.
 - **`PlanarCrack(region)`**, a flat crack whose contour is any region of its
   plane. Until now a crack was an ellipse, a ribbon, a ring or an arc; a
   rectangle, a star, a contour read from an image, or a crack whose faces touch
-  on islands had no route. Its opening is the solution of the integral equation
+  on islands could not be computed. Its opening is the solution of the integral equation
   of the crack, expanded on Gaussians centered at the nodes of a regular grid
   (the approximation of Maz'ya and Schmidt, applied to cracks by Kanaun): the
   traction due to one Gaussian is known in closed form, the matrix is a
@@ -31,7 +63,7 @@ its own.
   is solved here for its polarization, which gives one symmetric system from the
   pore to the rigid inclusion, on a grid of Gaussians with the Green operator
   smoothed by a Gaussian in closed form. The inclusion supplies the two
-  concentration tensors of the custom-inclusion contract, in elasticity and in
+  concentration tensors of the custom-inclusion interface, in elasticity and in
   conduction, so every contribution tensor and every scheme follow. The
   reference medium is isotropic; the heterogeneity may be anisotropic. Against
   Eshelby's solution the default grid of 24 nodes is within 1 to 3 % for

@@ -581,6 +581,8 @@ cell against the closed form, and
 [A recycled-concrete aggregate](@ref app-recycled-aggregate) works the
 axisymmetric case through the whole calculation.
 
+- [Heterogeneities of any shape](@ref man-gaussian-inclusions) — the previous
+  page: a shape of any kind without a mesh, to a few percent
 - [Custom inclusions](@ref man-custom-inclusions) — the interface these
   implement, and its three entry levels
 - [Adding a new inclusion](@ref dev-adding-inclusion) — the full developer

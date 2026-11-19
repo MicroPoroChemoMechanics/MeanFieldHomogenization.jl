@@ -246,8 +246,19 @@ the remote ``\\boldsymbol{\\sigma} \\equiv -\\underline{q}``), on its finest gri
 the positions of the nodes in the plane of the crack, and at each node the
 displacement jump as its three components in the frame of the crack (a scalar
 in conduction).
+
+The jump is the sum of the Gaussians taken at the node, not the coefficient of
+the Gaussian centered there: the two differ next to the edge of the crack and of
+its contacts, where the coefficients are not smooth.
 """
-function crack_opening(
+function crack_opening(crack::PlanarCrack, P₀::TensND.AbstractTens, loading::TensND.AbstractTens; kw...)
+    l = first(crack.levels)
+    return [node(l.grid, I) for I in l.inside], _nodal_field(l, _opening_coefficients(crack, P₀, loading; kw...))
+end
+
+# The coefficients of the Gaussians of the finest level under a loading: what
+# the opening is the sum of, and what the intensity factors are read on.
+function _opening_coefficients(
         crack::PlanarCrack, C₀::TensND.AbstractTens{4, 3}, Σ::TensND.AbstractTens{2, 3};
         K_interface::Union{Nothing, TensND.AbstractTens{2, 3}} = nothing, angles::Integer = 32
     )
@@ -257,17 +268,33 @@ function crack_opening(
     t = SMatrix{3, 3}(TensND.components(Σ, crack.basis))[:, 3]
     N = length(l.inside)
     u = W * t
-    return [node(l.grid, I) for I in l.inside], [SVector(u[j], u[N + j], u[2N + j]) for j in 1:N]
+    return [SVector(u[j], u[N + j], u[2N + j]) for j in 1:N]
 end
 
-function crack_opening(
+function _opening_coefficients(
         crack::PlanarCrack, K₀::TensND.AbstractTens{2, 3}, σ::TensND.AbstractTens{1, 3};
         α_interface::Union{Nothing, Real} = nothing, angles::Integer = 32
     )
     l = first(crack.levels)
     hs = symbol_harmonics(_crack_symbol(K₀, crack.basis), Val(1); angles)
     W = _level_openings(l, hs, _onsite(α_interface, crack.basis, Val(1)), crack.rtol)
-    return [node(l.grid, I) for I in l.inside], vec(W) * TensND.components(σ, crack.basis)[3]
+    return vec(W) * TensND.components(σ, crack.basis)[3]
+end
+
+# The field at the nodes of a level from the coefficients of its Gaussians:
+# u_h(x_m) = Σ_m′ u_m′ φ(x_m - x_m′), summed over the neighbors within the
+# distance where φ is below the rounding of a Float64.
+function _nodal_field(l::CrackLevel, coefficients::AbstractVector)
+    g = l.grid
+    r = ceil(Int, sqrt(37 * g.H))
+    w = [gaussian_generator((k * g.h)^2, g.h, g.H, Val(1)) for k in (-r):r]
+    U = zeros(eltype(coefficients), g.dims)
+    U[l.inside] .= coefficients
+    box = CartesianIndices(U)
+    neighbors = CartesianIndices((-r:r, -r:r))
+    return map(l.inside) do I
+        sum(w[Δ[1] + r + 1] * w[Δ[2] + r + 1] * U[I + Δ] for Δ in neighbors if I + Δ in box)
+    end
 end
 
 """
@@ -330,7 +357,7 @@ function Cracks.sif(
         crack::PlanarCrack, C₀::TensND.AbstractTens{4, 3}, Σ::TensND.AbstractTens{2, 3};
         point, normal, window = (3, 10), K_interface = nothing, kw...
     )
-    _, u = crack_opening(crack, C₀, Σ; K_interface)
+    u = _opening_coefficients(crack, C₀, Σ; K_interface)
     N′ = _front_coefficient(crack, u, point, normal, window)
     ν̂, n̂ = _front_vectors(crack, normal)
     N = TensND.Tens(N′ / (4 * sqrt(2 / π)), crack.basis)
@@ -341,7 +368,7 @@ function Cracks.sif(
         crack::PlanarCrack, K₀::TensND.AbstractTens{2, 3}, σ::TensND.AbstractTens{1, 3};
         point, normal, window = (3, 10), α_interface = nothing, kw...
     )
-    _, u = crack_opening(crack, K₀, σ; α_interface)
+    u = _opening_coefficients(crack, K₀, σ; α_interface)
     N′ = only(_front_coefficient(crack, SVector.(u), point, normal, window))
     ν̂, n̂ = _front_vectors(crack, normal)
     return Cracks.sif_from_dif(N′ / (4 * sqrt(2 / π)), ν̂, n̂, K₀; kw...)

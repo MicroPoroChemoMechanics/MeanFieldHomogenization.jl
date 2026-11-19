@@ -55,7 +55,7 @@ heterogeneity and negative for a softer one.
 
 **What the schemes need.** Let ``\mathbb{T}`` be the mean of
 ``\boldsymbol{\tau}`` over ``\Omega`` per unit ``\boldsymbol{E}``. The two
-concentration tensors of the [custom-inclusion contract](@ref man-custom-inclusions)
+concentration tensors of the [custom-inclusion interface](@ref man-custom-inclusions)
 follow, without the inverse of ``\mathbb{C}_1``:
 
 ```math
@@ -124,9 +124,9 @@ The gradients of a function of ``\rho`` in the direction
 ```
 
 and a combination of ``\boldsymbol{1}\otimes\boldsymbol{1}+2\mathbb{I}``,
-``\boldsymbol{1}\otimes\boldsymbol{N}+\boldsymbol{N}\otimes\boldsymbol{1}
-+2(\boldsymbol{1}\stackrel{s}{\boxtimes}\boldsymbol{N}
-+\boldsymbol{N}\stackrel{s}{\boxtimes}\boldsymbol{1})`` and
+``\boldsymbol{1}\otimes\boldsymbol{N}+\boldsymbol{N}\otimes\boldsymbol{1} +
+2(\boldsymbol{1}\stackrel{s}{\boxtimes}\boldsymbol{N} +
+\boldsymbol{N}\stackrel{s}{\boxtimes}\boldsymbol{1})`` and
 ``\boldsymbol{N}\otimes\boldsymbol{N}`` for the fourth gradient
 (see `radial_fourth_gradient`).
 
@@ -215,8 +215,8 @@ beyond a contrast of ``10^{4}`` the solve is slow, and a contrast of
 
 - [Heterogeneities of any shape](@ref man-gaussian-inclusions), in the manual.
 - [Finite-element inclusions](@ref man-fe-inclusions) and
-  [Neural-surrogate inclusions](@ref man-neural-inclusions): the other routes
-  to a shape with no closed form.
+  [Neural-surrogate inclusions](@ref man-neural-inclusions): the two other
+  treatments of a shape with no closed form.
 
 ## References
 

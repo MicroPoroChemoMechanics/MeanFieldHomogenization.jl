@@ -14,7 +14,7 @@ else readable.
 
 Everything a scheme needs from a phase is one response tensor. What differs
 between the pages below is *how* that tensor is obtained — a closed form, a
-recurrence, a mesh, a network — and every one of them ends up in the same
+recurrence, a grid of Gaussians, a mesh, a network — and every one of them ends up in the same
 `add_phase!` call.
 
 | Your morphology | Page | How the response is obtained |

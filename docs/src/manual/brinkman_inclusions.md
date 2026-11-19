@@ -162,3 +162,7 @@ to granular, fibrous, tubular and double-porosity media, and compares the
 schemes. The derivation of their concentration tensors is in
 [Permeability from Stokes flow](@ref th-brinkman), and the API in
 [Brinkman inclusions](@ref api-brinkman).
+
+The pages that follow return to elasticity and conduction, for shapes with no
+closed form, starting with
+[Heterogeneities of any shape](@ref man-gaussian-inclusions).

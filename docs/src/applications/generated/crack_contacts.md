@@ -57,7 +57,8 @@ nothing #hide
 
 A crack with contacts is the disk without the disks of the contacts. `n` is
 the number of nodes across the crack; a contact needs about three nodes on its
-radius to be seen.
+radius to be seen, and the faces about six steps of the grid to open between
+two contacts ([below](@ref app-contacts-grid)).
 
 ````@example crack_contacts
 contacts(centers, l) = reduce(∪, [Disk(l; center = c) for c in centers])
@@ -173,12 +174,16 @@ plot(panels...; layout = (1, 5), size = (780, 180))
 Two measures of the amount of contact are used: ``p = N l/a``, the sum of the
 radii, and ``\tilde p = N l^{2}/a^{2}``, the fraction of the area in contact.
 Each pattern is computed for the radii that the grid resolves
-(``l \ge 0.05\,a``) and that leave the contacts apart (``2l < 0.9\,d``).
+(``l \ge 0.05\,a``) and that leave the contacts apart (``2l \le 0.8\,d``).
+The grid is refined with the radius, so that the faces keep at least six
+steps of the grid to open between two contacts
+([below](@ref app-contacts-grid)).
 
 ````@example crack_contacts
+nodes_for(opening) = max(128, 2 * ceil(Int, 6 / opening))      ## h = 2a / n
 curves = map(patterns) do (k, N, d)
-    ls = range(max(0.05, 0.3 / N), 0.45 * d; length = 6)
-    (N, ls, [λ(crack_with(hexagon(k, d), l)) for l in ls])
+    ls = range(max(0.05, 0.3 / N), 0.4 * d; length = 6)
+    (N, ls, [λ(crack_with(hexagon(k, d), l; n = nodes_for(d - 2l))) for l in ls])
 end
 
 left = plot(; xlabel = "p = N l / a", ylabel = "reduction factor λ", ylims = (0, 1), legend = :topright)
@@ -198,19 +203,116 @@ under a unit normal traction (the jump of potential under a unit flux, times
 
 ````@example crack_contacts
 k, N, d = patterns[5]
-crack61 = crack_with(hexagon(k, d), 4.7 / N; n = 160)
+crack61 = crack_with(hexagon(k, d), 4.7 / N; n = 320)      ## 12 nodes on the radius of a contact
 n̂ = tens_basis(crack61.basis, 3)
+scale = k₀ * (1 - ν) / μ
 _, jump = crack_opening(crack61, K₀, n̂)
-x, y, Z = opening_surface(crack61, jump .* (k₀ * (1 - ν) / μ))
+x, y, Z = opening_surface(crack61, scale .* jump)
+every = 1:2:length(x)                                      ## one node out of two is enough to draw
 plotly_surface(
-    x, y, Z'; title = "Opening of a crack with 61 contacts, p = 4.7", zlabel = "normal opening",
-    xlabel = "x / a", ylabel = "y / a", uid = "app-contacts-61", colorscale = "Viridis", reversescale = false
+    x[every], y[every], Z[every, every]'; title = "Opening of a crack with 61 contacts, p = 4.7",
+    zlabel = "normal opening", xlabel = "x / a", ylabel = "y / a", uid = "app-contacts-61",
+    colorscale = "Viridis", reversescale = false, aspect = (1, 1, 0.45)
 )
+````
+
+The faces open between the contacts and, more widely, in the ring that the
+contacts leave free along the edge. The section of this surface by the
+diameter ``y = 0``, which crosses nine contacts, with the opening of the crack
+without contact (dashed):
+
+````@example crack_contacts
+row(y) = argmin(abs.(y))                                   ## the line of nodes next to y = 0
+_, jump⁰ = crack_opening(free, K₀, n̂)
+x⁰, y⁰, Z⁰ = opening_surface(free, scale .* jump⁰)
+plt = plot(
+    x⁰, Z⁰[:, row(y⁰)]; ls = :dash, color = :gray, label = "without contact",
+    xlabel = "x / a", ylabel = "normal opening", legend = :right
+)
+plot!(plt, x, Z[:, row(y)]; lw = 1.5, label = "61 contacts")
+plt
 ````
 
 ````@example crack_contacts
 @printf("61 contacts, p = 4.7:  λ = %.4f, equivalent radius ã/a = %.3f\n", λ(crack61), λ(crack61)^(1 / 3))
 ````
+
+The contacts, of diameter ``0.154\,a``, are ``0.222\,a`` apart: the faces
+open over ``0.068\,a`` between two of them. The figure of the paper for this
+case (its Fig. 8) shows, along the same diameter, openings about twice as wide
+as the contacts, and about a quarter as high as the opening of the free crack
+at its center; these values are read on the figure. Contacts of half the
+radius, ``l = 0.0385\,a`` (``p = 2.35``, ``\tilde p = 0.09``), on the same
+lattice, give such a profile:
+
+````@example crack_contacts
+half61 = crack_with(hexagon(k, d), 4.7 / 2N; n = 320)
+_, jump½ = crack_opening(half61, K₀, n̂)
+x½, y½, Z½ = opening_surface(half61, scale .* jump½)
+plt = plot(
+    x⁰, Z⁰[:, row(y⁰)]; ls = :dash, color = :gray, label = "without contact",
+    xlabel = "x / a", ylabel = "normal opening", legend = :right
+)
+plot!(plt, x½, Z½[:, row(y½)]; lw = 1.5, color = 2, label = "61 contacts, l = 0.0385 a")
+plot!(plt, x, Z[:, row(y)]; lw = 1.5, color = 1, label = "61 contacts, l = 0.077 a")
+plt
+````
+
+The opening midway between two contacts, as a fraction of the opening of the
+free crack at its center, and the reduction factor:
+
+````@example crack_contacts
+between(x, y, Z) = Z[argmin(abs.(x .- d / 2)), row(y)] / maximum(Z⁰)
+@printf("l = 0.077 a:   opening ratio %.3f,  λ = %.3f\n", between(x, y, Z), λ(crack61))
+@printf("l = 0.0385 a:  opening ratio %.3f,  λ = %.3f\n", between(x½, y½, Z½), λ(half61))
+````
+
+Both reduction factors lie on the curve of the paper for 61 contacts (its
+Fig. 9), within what can be read on it.
+
+### [Sensitivity to the grid step](@id app-contacts-grid)
+
+With the contacts of radius ``l = 0.077\,a``, the faces open over
+``0.068\,a`` between two contacts: 2.7 steps of the grid for `n = 80` nodes
+across the crack, 11 for `n = 320`. The reduction factor and the opening
+between two contacts are computed again on four grids.
+`extrapolate = false` keeps the result of one grid; by default `PlanarCrack`
+combines two grids, the second one twice as coarse
+([theory](@ref th-gaussian-cracks)).
+
+````@example crack_contacts
+function on_grid(n)
+    region = setdiff(Disk(1.0), contacts(hexagon(k, d), 4.7 / N))
+    two_grids = PlanarCrack(region; size = 1.0, n)
+    one_grid = PlanarCrack(region; size = 1.0, n, extrapolate = false)
+    _, jumpₙ = crack_opening(two_grids, K₀, n̂)
+    return (; n, λ = λ(two_grids), λ₁ = λ(one_grid), ratio = between(opening_surface(two_grids, scale .* jumpₙ)...))
+end
+grids = map(on_grid, (80, 160, 240, 320))
+for g in grids
+    @printf(
+        "n = %3d (%4.1f steps across an opening):  λ = %.4f   one grid alone %.4f   opening ratio %.4f\n",
+        g.n, g.n * (d - 2 * 4.7 / N) / 2, g.λ, g.λ₁, g.ratio
+    )
+end
+````
+
+````@example crack_contacts
+plt = plot(; xlabel = "nodes across the crack", ylabel = "reduction factor λ", legend = :topright)
+plot!(plt, [g.n for g in grids], [g.λ₁ for g in grids]; marker = :square, ls = :dash, label = "one grid")
+plot!(plt, [g.n for g in grids], [g.λ for g in grids]; marker = :circle, lw = 2, label = "two grids (default)")
+plt
+````
+
+From `n = 160` on, the reduction factor and the opening vary by less than
+1 %. At `n = 80` the coarser of the two grids has little more than one step
+across an opening and no longer resolves it: the two grids together then do
+worse than the fine one alone. What a grid has to resolve is the opening
+between the contacts rather than the contacts. On a dense lattice every
+opening is narrow, which is why the grid of the curves above follows the
+radius of the contacts. In a cluster or in a random draw, a narrow opening is
+the exception, between two contacts that happen to be close, and carries
+little of the opening of the crack.
 
 ## Contacts gathered in a cluster
 
