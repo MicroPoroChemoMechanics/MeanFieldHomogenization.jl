@@ -267,6 +267,9 @@ pages = [
             # The Fourier reduction of the first is reused by the second.
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",
+            # A crack of any contour, here a disk with contact islands, against
+            # a published study and the annular crack.
+            "applications/generated/crack_contacts.md",
             # Pore shapes again, now for the Stokes flow through them.
             "applications/generated/stokes_darcy_permeability.md",
         ],

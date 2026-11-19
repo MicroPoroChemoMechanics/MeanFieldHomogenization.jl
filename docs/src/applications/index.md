@@ -28,6 +28,7 @@ the pages it builds on.
 | [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate) | an old aggregate wrapped in a shell of adhered mortar, off center, solved by finite elements and checked against the concentric layered sphere |
 | [Concave pores: superspheres and superspheroids](@ref app-concave-pores) | pores with no Eshelby solution, computed by finite elements and set against the only published data for this shape family |
 | [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy) | the permeability of granular, fibrous, tubular and double-porosity media from the Stokes flow in their pores, through size-dependent Brinkman inclusions |
+| [Cracks with contacts between their faces](@ref app-crack-contacts) | a circular crack whose faces touch on islands: one contact, regular patterns, clusters and random sets, by the Gaussian approximation of the crack equation, against a published study |
 
 ## Cementitious materials
 

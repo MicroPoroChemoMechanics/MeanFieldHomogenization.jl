@@ -80,6 +80,9 @@ its own.
 - Theory: *Approximation by Gaussians*, *Planar cracks of any contour* and
   *Heterogeneities of any shape*; manual: *Planar cracks of any contour* and
   *Heterogeneities of any shape*.
+- Application: *Cracks with contacts between their faces*, after Markov, Kanaun
+  and Kachanov (2025): one contact against the annular crack, regular patterns,
+  clusters, random sets, and the reduced crack density of a solid.
 - Bibliography: the issue number of Kanaun and Levin (2009) corrected (7–8).
 
 ## v0.27.1 — cracks from their intensity factors
