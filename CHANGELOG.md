@@ -1,10 +1,11 @@
 # Changelog
 
-## v0.28.0 — cracks of any contour
+## v0.28.0 — cracks and heterogeneities of any shape
 
-A minor release: flat cracks of arbitrary contour, computed by a Gaussian
-approximation of their integral equation, and the local relation between the
-intensity factors as a function of its own.
+A minor release: flat cracks of arbitrary contour and heterogeneities of
+arbitrary shape, computed by a Gaussian approximation of their integral
+equations, and the local relation between the intensity factors as a function of
+its own.
 
 ### Added
 
@@ -23,6 +24,21 @@ intensity factors as a function of its own.
   its reference length. Against the exact ellipses in isotropic, transversely
   isotropic and anisotropic matrices, tilted or not, and against the annular
   crack, the default grid of 64 nodes is within 0.5 %.
+- **`GaussianInclusion(region)`**, a heterogeneity whose shape is any region of
+  space: a torus, a concave particle, a function, voxels of a tomography. Shapes
+  without a closed form needed a finite-element cell, with a mesher and an
+  extension, or a trained surrogate. The integral equation of the heterogeneity
+  is solved here for its polarization, which gives one symmetric system from the
+  pore to the rigid inclusion, on a grid of Gaussians with the Green operator
+  smoothed by a Gaussian in closed form. The inclusion supplies the two
+  concentration tensors of the custom-inclusion contract, in elasticity and in
+  conduction, so every contribution tensor and every scheme follow. The
+  reference medium is isotropic; the heterogeneity may be anisotropic. Against
+  Eshelby's solution the default grid of 24 nodes is within 1 to 3 % for
+  contrasts between 10⁻⁴ and 10³: the accuracy of the published implementations
+  of the method, in seconds.
+- `Region(shape)` for an `Ellipsoid`, a `Supersphere` or a `Superspheroid`, and
+  `Torus(R, a)`: regions of space.
 - **Describing a contour without a mesh.** `Disk`, `Ellipse`, `Rectangle`,
   `Superellipse`, `Annulus`, `StarShape` and `Polygon`; set operations `∪`, `∩`
   and `setdiff` on them (a contact island is the contour without the island);
@@ -61,8 +77,9 @@ intensity factors as a function of its own.
 
 ### Documentation
 
-- Theory: *Approximation by Gaussians* and *Planar cracks of any contour*;
-  manual: *Planar cracks of any contour*.
+- Theory: *Approximation by Gaussians*, *Planar cracks of any contour* and
+  *Heterogeneities of any shape*; manual: *Planar cracks of any contour* and
+  *Heterogeneities of any shape*.
 - Bibliography: the issue number of Kanaun and Levin (2009) corrected (7–8).
 
 ## v0.27.1 — cracks from their intensity factors

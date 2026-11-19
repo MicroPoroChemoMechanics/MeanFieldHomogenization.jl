@@ -308,6 +308,7 @@ end
         include("GaussianApproximation/test_gaussian_core.jl")
         include("GaussianApproximation/test_regions.jl")
         include("GaussianApproximation/test_planar_crack.jl")
+        include("GaussianApproximation/test_gaussian_inclusion.jl")
     end
 
     # Finite-element inclusions: skipped when the Ferrite stack is unavailable

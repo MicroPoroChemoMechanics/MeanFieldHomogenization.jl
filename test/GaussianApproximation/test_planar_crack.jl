@@ -23,7 +23,7 @@ using ForwardDiff
 
 const GP = MeanFieldHomogenization.GaussianApproximation
 const GP_C = MeanFieldHomogenization.iso_stiffness_E_nu(10.0, 0.3)
-const GP_TI = TensND.TensTI{4}(50.0, 10.0, 30.0, 100.0, 60.0, (0.0, 0.0, 1.0))
+const GP_TI = TensND.TensTI{4}(30.0, 8.0, 5.0, 12.0, 4.0, (0.0, 0.0, 1.0))
 const GP_K = TensISO{3}(2.5)
 const GP_Ka = TensND.Tens([3.0 0.4 0.1; 0.4 2.0 0.3; 0.1 0.3 1.0])
 const GP_ℬ = CanonicalBasis{3, Float64}()

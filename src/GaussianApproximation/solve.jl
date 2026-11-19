@@ -14,31 +14,33 @@
 """
     SampledKernel{m, T}
 
-Kernel of a Gaussian system: the `samples` of its symmetric `m × m` block at the
-differences of nodes (see [`sample_kernel`](@ref)) and a block `onsite` added on
-every node (an interface stiffness; zero by default).
+Matrix of a Gaussian system on the nodes it keeps: the `samples` of the
+symmetric `m × m` block of its kernel at the differences of nodes (see
+[`sample_kernel`](@ref)), and one more `m × m` block per node, added on the
+diagonal (`blocks[j]` on the `j`-th node kept): the spring of an edge node, an
+interface stiffness, the compliance of a contrast.
 """
 struct SampledKernel{m, T <: Number, d, N, L}
     samples::NTuple{N, Array{T, d}}
-    onsite::SMatrix{m, m, T, L}
+    blocks::Vector{SMatrix{m, m, T, L}}
 end
-SampledKernel(samples::Arrays{T, d}, ::Val{m}) where {T, d, m} =
-    SampledKernel(samples, zero(SMatrix{m, m, T}))
-function SampledKernel(samples::Arrays{Ts, d}, onsite::SMatrix{m, m, To, L}) where {Ts, d, m, To, L}
-    T = promote_type(Ts, To)
+function SampledKernel(samples::Arrays{Ts, d}, blocks::Vector{SMatrix{m, m, Tb, L}}) where {Ts, d, m, Tb, L}
+    T = promote_type(Ts, Tb)
     return SampledKernel{m, T, d, length(samples), L}(
-        map(s -> convert(Array{T, d}, s), samples), SMatrix{m, m, T, L}(onsite)
+        map(s -> convert(Array{T, d}, s), samples), convert(Vector{SMatrix{m, m, T, L}}, blocks)
     )
 end
 
-# The kernel at zero distance, the center of each sample array.
-_self_block(K::SampledKernel{m, T, d, N, L}) where {m, T, d, N, L} =
-    SMatrix{m, m, T, L}(ntuple(k -> (s = K.samples[_pair(fldmod1(k, m)...)]; s[(length(s) + 1) ÷ 2]), Val(L)))
+"""
+    self_block(samples, Val(m)) -> SMatrix
+
+The kernel at zero distance, read at the center of its `samples`.
+"""
+self_block(samples::Arrays{T, d}, ::Val{m}) where {T, d, m} =
+    SMatrix{m, m, T}(ntuple(k -> (s = samples[_pair(fldmod1(k, m)...)]; s[(length(s) + 1) ÷ 2]), Val(m * m)))
 
 # The matrix of the system: scatter the unknowns on the grid, convolve, gather,
-# and add on node j the block `spring[j] * self + onsite`, where `self` is the
-# kernel at zero distance and the springs hold the nodes of an edge
-# (`edge_rule.jl`).
+# and add the block of each node.
 struct MaskedConvolution{d, m, L, C <: GridConvolution{d, m}}
     conv::C
     inside::Vector{CartesianIndex{d}}
@@ -47,12 +49,13 @@ struct MaskedConvolution{d, m, L, C <: GridConvolution{d, m}}
     Y::NTuple{m, Array{Float64, d}}
 end
 
-function MaskedConvolution(K::SampledKernel{m, Float64}, inside, spring) where {m}
+function MaskedConvolution(K::SampledKernel{m, Float64}, inside) where {m}
+    length(inside) == length(K.blocks) || throw(
+        DimensionMismatch("the kernel holds $(length(K.blocks)) node blocks for $(length(inside)) nodes")
+    )
     conv = GridConvolution(K.samples, Val(m))
-    self = _self_block(K)
     return MaskedConvolution(
-        conv, inside, [s * self + K.onsite for s in spring],
-        ntuple(_ -> zeros(conv.dims), Val(m)), ntuple(_ -> zeros(conv.dims), Val(m))
+        conv, inside, K.blocks, ntuple(_ -> zeros(conv.dims), Val(m)), ntuple(_ -> zeros(conv.dims), Val(m))
     )
 end
 
@@ -86,7 +89,8 @@ end
 struct BlockJacobi{m, L}
     inverses::Vector{SMatrix{m, m, Float64, L}}
 end
-BlockJacobi(A::MaskedConvolution, self) = BlockJacobi([inv(self + B) for B in A.blocks])
+BlockJacobi(K::SampledKernel{m, Float64}) where {m} =
+    (self = self_block(K.samples, Val(m)); BlockJacobi([inv(self + B) for B in K.blocks]))
 Base.eltype(::BlockJacobi) = Float64
 Base.size(M::BlockJacobi{m}) where {m} = (m * length(M.inverses), m * length(M.inverses))
 Base.size(M::BlockJacobi, i::Integer) = size(M)[i]
@@ -94,61 +98,63 @@ LinearAlgebra.mul!(y::AbstractVector{Float64}, M::BlockJacobi, x::AbstractVector
     _add_blocks!(fill!(y, 0), M.inverses, x)
 
 """
-    masked_product(kernel::SampledKernel, inside, spring, W) -> Matrix
+    masked_product(kernel::SampledKernel, inside, W) -> Matrix
 
 Product of the matrix of the Gaussian system (the `kernel` restricted to the
-nodes `inside`, held by the springs `spring`) by each column of `W`.
+nodes `inside`) by each column of `W`.
 """
-masked_product(K::SampledKernel, inside, spring, W::AbstractMatrix) =
-    _masked_product(_common_eltype(K, W)..., inside, spring)
+masked_product(K::SampledKernel, inside, W::AbstractMatrix) = _masked_product(_common_eltype(K, W)..., inside)
 
 """
-    gaussian_solve(kernel::SampledKernel, inside, spring, R; symmetric=true, rtol=1e-10, itmax=0) -> Matrix
+    gaussian_solve(kernel::SampledKernel, inside, R; method=:cg, rtol=1e-10, itmax=0) -> Matrix
 
 Solution `W` of the Gaussian system for each column of the right-hand sides `R`
-(`m` components per inside node, component after component), the node `j` held
-by the spring `spring[j]` times the kernel at zero distance. The kernel may
-carry `ForwardDiff` duals, nested or not: the derivatives of `W` are then exact
-for the discrete system, by the implicit-function theorem.
+(`m` components per node kept, component after component). The kernel may carry
+`ForwardDiff` duals, nested or not: the derivatives of `W` are then exact for
+the discrete system, by the implicit-function theorem.
 
-`symmetric = true` (a positive kernel, as that of a crack) uses the conjugate
-gradient; `false` uses GMRES. `itmax = 0` leaves the limit to the solver.
+`method` is `:cg` (conjugate gradient with a block-Jacobi preconditioner, for a
+positive definite matrix, as that of a crack), `:minres` (symmetric, of any
+sign) or `:gmres`. `itmax = 0` leaves the limit to the solver.
 """
-gaussian_solve(K::SampledKernel, inside, spring, R::AbstractMatrix; kw...) =
-    _gaussian_solve(_common_eltype(K, R)..., inside, spring; kw...)
+gaussian_solve(K::SampledKernel, inside, R::AbstractMatrix; kw...) =
+    _gaussian_solve(_common_eltype(K, R)..., inside; kw...)
 
 # Kernel and right-hand sides brought to one number type.
 function _common_eltype(K::SampledKernel{m, Tk, d, N, L}, R::AbstractMatrix{Tr}) where {m, Tk, d, N, L, Tr}
     T = promote_type(Tk, Tr)
-    return SampledKernel{m, T, d, N, L}(map(s -> convert(Array{T, d}, s), K.samples), SMatrix{m, m, T, L}(K.onsite)),
-        convert(Matrix{T}, R)
+    return SampledKernel{m, T, d, N, L}(
+            map(s -> convert(Array{T, d}, s), K.samples), convert(Vector{SMatrix{m, m, T, L}}, K.blocks)
+        ), convert(Matrix{T}, R)
 end
 
 # The FFT plans of `GridConvolution` are not inferred from the size of the grid:
 # the matrix is built here and handed to a function that is compiled for its
 # type, and the result is asserted.
-function _masked_product(K::SampledKernel{m, Float64}, W::Matrix{Float64}, inside, spring) where {m}
-    return _product_columns(MaskedConvolution(K, inside, spring), W)::Matrix{Float64}
+function _masked_product(K::SampledKernel{m, Float64}, W::Matrix{Float64}, inside) where {m}
+    return _product_columns(MaskedConvolution(K, inside), W)::Matrix{Float64}
 end
 _product_columns(A, W) = reduce(hcat, [mul!(similar(w, Float64), A, w) for w in eachcol(W)])
 
 function _gaussian_solve(
-        K::SampledKernel{m, Float64}, R::Matrix{Float64}, inside, spring;
-        symmetric::Bool = true, rtol::Float64 = 1.0e-10, itmax::Int = 0
+        K::SampledKernel{m, Float64}, R::Matrix{Float64}, inside;
+        method::Symbol = :cg, rtol::Float64 = 1.0e-10, itmax::Int = 0
     ) where {m}
-    A = MaskedConvolution(K, inside, spring)
-    M = BlockJacobi(A, _self_block(K))
-    # `symmetric` is a run-time Boolean: a static branch per value
+    A = MaskedConvolution(K, inside)
+    # `method` is a run-time Symbol: a static branch per value
     return (
-        symmetric ? _solve_columns(A, M, R, Val(true), rtol, itmax) :
-            _solve_columns(A, M, R, Val(false), rtol, itmax)
+        method === :cg ? _solve_columns(A, BlockJacobi(K), R, Val(:cg), rtol, itmax) :
+            method === :minres ? _solve_columns(A, I, R, Val(:minres), rtol, itmax) :
+            method === :gmres ? _solve_columns(A, BlockJacobi(K), R, Val(:gmres), rtol, itmax) :
+            throw(ArgumentError("unknown method :$method for the Gaussian system; use :cg, :minres or :gmres"))
     )::Matrix{Float64}
 end
 _solve_columns(A, M, R, method::Val, rtol, itmax) =
     reduce(hcat, [_krylov(A, M, collect(r), method, rtol, itmax) for r in eachcol(R)])
 
-_krylov(A, M, r, ::Val{true}, rtol, itmax) = _converged(Krylov.cg(A, r; M, atol = 0.0, rtol, itmax)...)
-_krylov(A, M, r, ::Val{false}, rtol, itmax) = _converged(Krylov.gmres(A, r; M, atol = 0.0, rtol, itmax)...)
+_krylov(A, M, r, ::Val{:cg}, rtol, itmax) = _converged(Krylov.cg(A, r; M, atol = 0.0, rtol, itmax)...)
+_krylov(A, M, r, ::Val{:minres}, rtol, itmax) = _converged(Krylov.minres(A, r; M, atol = 0.0, rtol, itmax)...)
+_krylov(A, M, r, ::Val{:gmres}, rtol, itmax) = _converged(Krylov.gmres(A, r; M, atol = 0.0, rtol, itmax)...)
 
 # The iteration limit reached before the tolerance: never a silently wrong field.
 _converged(w, stats) = stats.solved ? w : error(
@@ -160,34 +166,34 @@ _converged(w, stats) = stats.solved ? w : error(
 # The value type V may itself be a dual: both recurse down to Float64.
 _values(a::AbstractArray) = ForwardDiff.value.(a)
 _partials(a::AbstractArray, i) = ForwardDiff.partials.(a, i)
-_values(K::SampledKernel) = SampledKernel(map(_values, K.samples), _values(K.onsite))
-_partials(K::SampledKernel, i) = SampledKernel(map(s -> _partials(s, i), K.samples), _partials(K.onsite, i))
+_values(K::SampledKernel) = SampledKernel(map(_values, K.samples), map(_values, K.blocks))
+_partials(K::SampledKernel, i) = SampledKernel(map(s -> _partials(s, i), K.samples), map(b -> _partials(b, i), K.blocks))
 _duals(::Type{D}, v, p::NTuple{P}) where {D, P} =
     [D(v[j], ForwardDiff.Partials(ntuple(i -> p[i][j], Val(P)))) for j in CartesianIndices(v)]
 
 function _masked_product(
-        K::SampledKernel{m, D}, W::Matrix{D}, inside, spring
+        K::SampledKernel{m, D}, W::Matrix{D}, inside
     ) where {m, Tg, V, P, D <: ForwardDiff.Dual{Tg, V, P}}
     K₀, W₀ = _values(K), _values(W)
     parts = ntuple(Val(P)) do i
-        _masked_product(K₀, _partials(W, i), inside, spring) + _masked_product(_partials(K, i), W₀, inside, spring)
+        _masked_product(K₀, _partials(W, i), inside) + _masked_product(_partials(K, i), W₀, inside)
     end
-    return _duals(D, _masked_product(K₀, W₀, inside, spring), parts)
+    return _duals(D, _masked_product(K₀, W₀, inside), parts)
 end
 
 function _gaussian_solve(
-        K::SampledKernel{m, D}, R::Matrix{D}, inside, spring; kw...
+        K::SampledKernel{m, D}, R::Matrix{D}, inside; kw...
     ) where {m, Tg, V, P, D <: ForwardDiff.Dual{Tg, V, P}}
     K₀ = _values(K)
-    W₀ = _gaussian_solve(K₀, _values(R), inside, spring; kw...)
+    W₀ = _gaussian_solve(K₀, _values(R), inside; kw...)
     parts = ntuple(Val(P)) do i
-        _gaussian_solve(K₀, _partials(R, i) - _masked_product(_partials(K, i), W₀, inside, spring), inside, spring; kw...)
+        _gaussian_solve(K₀, _partials(R, i) - _masked_product(_partials(K, i), W₀, inside), inside; kw...)
     end
     return _duals(D, W₀, parts)
 end
 
 # An iterative solve stops on a comparison, which a symbolic number cannot decide.
-_gaussian_solve(::SampledKernel{m, T}, ::Matrix{T}, inside, spring; kw...) where {m, T} = throw(
+_gaussian_solve(::SampledKernel{m, T}, ::Matrix{T}, inside; kw...) where {m, T} = throw(
     ArgumentError(
         "the Gaussian system is solved iteratively, for floating-point numbers and " *
             "ForwardDiff duals only; got the number type $T."

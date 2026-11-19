@@ -79,30 +79,33 @@ end
 const _EDGE_RULES = Dict{Float64, Tuple{Float64, Float64}}()
 const _EDGE_RULE_LOCK = ReentrantLock()
 
-# Unit vectors of the ring that probes the erosion of a planar region.
-const _RING = [SVector(reverse(sincos(2π * k / 12))) for k in 0:11]
+# Unit vectors that probe the erosion of a region: twelve around the circle in the
+# plane, the axes and the diagonals of the cube in space.
+_ring(::Val{2}) = [SVector(reverse(sincos(2π * k / 12))) for k in 0:11]
+_ring(::Val{3}) = [normalize(SVector{3, Float64}(Tuple(I))) for I in CartesianIndices((-1:1, -1:1, -1:1)) if !iszero(I)]
 
-# Is `y` in the region eroded by δ: in the region with the ring of radius δ around it?
-_in_eroded(y, region, δ) = y ∈ region && all(u -> (y + δ * u) ∈ region, _RING)
+# Is `y` in the region eroded by δ: in the region with the probes at the distance δ around it?
+_in_eroded(y, region, δ, ring) = y ∈ region && (iszero(δ) || all(u -> (y + δ * u) ∈ region, ring))
 
 """
-    coverage(region, grid; erosion=0, samples=6) -> Matrix
+    coverage(region, grid; erosion=0, samples=6) -> Array
 
-Fraction of each cell of the planar `grid` covered by `region` eroded by the
-distance `erosion`, counted on `samples × samples` points per cell. A cell and
-its eight neighbors that all agree at their centers are not subdivided.
+Fraction of each cell of `grid` covered by `region` eroded by the distance
+`erosion`, counted on `samples` points per direction and per cell. A cell and
+its neighbors that all agree at their centers are not subdivided.
 """
-function coverage(region::AbstractRegion{2}, grid::GaussianGrid{2}; erosion::Real = 0, samples::Integer = 6)
+function coverage(region::AbstractRegion{d}, grid::GaussianGrid{d}; erosion::Real = 0, samples::Integer = 6) where {d}
     R = CartesianIndices(grid.dims)
-    center = [_in_eroded(node(grid, I), region, erosion) for I in R]
-    offsets = [SVector(i - 0.5, j - 0.5) / samples .- 0.5 for i in 1:samples, j in 1:samples]
-    near = CartesianIndices((-1:1, -1:1))
+    ring = _ring(Val(d))
+    center = [_in_eroded(node(grid, I), region, erosion, ring) for I in R]
+    offsets = [(SVector{d, Int}(Tuple(J)) .- 0.5) / samples .- 0.5 for J in CartesianIndices(ntuple(_ -> samples, Val(d)))]
+    near = CartesianIndices(ntuple(_ -> -1:1, Val(d)))
     return map(R) do I
         around = (center[I + Δ] for Δ in near if checkbounds(Bool, center, I + Δ))
         # a cell on the side of the box may be cut by the contour without a neighbor to tell
-        uniform = allequal(around) && all(k -> 1 < I[k] < grid.dims[k], 1:2)
+        uniform = allequal(around) && all(k -> 1 < I[k] < grid.dims[k], 1:d)
         uniform && return Float64(center[I])
         x = node(grid, I)
-        count(o -> _in_eroded(x + grid.h * o, region, erosion), offsets) / samples^2
+        count(o -> _in_eroded(x + grid.h * o, region, erosion, ring), offsets) / samples^d
     end
 end

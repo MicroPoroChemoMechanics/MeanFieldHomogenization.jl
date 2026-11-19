@@ -62,6 +62,7 @@ pages = [
         "Arbitrary shapes by Gaussian approximation" => [
             "theory/gaussian_approximation.md",
             "theory/gaussian_cracks.md",
+            "theory/gaussian_volume.md",
         ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
         # Hill tensor: it is a *pattern* whose generalized Eshelby problem is
@@ -128,6 +129,7 @@ pages = [
             "manual/planar_cracks.md",
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
+            "manual/gaussian_inclusions.md",
             "manual/brinkman_inclusions.md",
             "manual/fe_inclusions.md",
             "manual/neural_inclusions.md",

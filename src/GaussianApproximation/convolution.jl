@@ -25,16 +25,21 @@ const Arrays{T, d} = Tuple{Array{T, d}, Vararg{Array{T, d}}}
 Values of the symmetric `m × m` block `kernel(Δ)` at every difference of nodes
 `Δ` (a tuple of integers) of a grid of size `dims`: one array of size `2n - 1`
 per direction and per component of the upper triangle, the difference `Δ` stored
-at index `Δ + n`.
+at index `Δ + n`. The kernel is even: it is evaluated on half of the differences.
 """
-function sample_kernel(kernel::F, dims::NTuple{d, Int}, ::Val{m}) where {F, d, m}
+function sample_kernel(kernel::F, dims::NTuple{d, Int}, vm::Val{m}) where {F, d, m}
     Δs = CartesianIndices(map(n -> (1 - n):(n - 1), dims))
-    blocks = [kernel(Tuple(Δ)) for Δ in Δs]
-    return ntuple(Val((m * (m + 1)) ÷ 2)) do k
-        q = ceil(Int, (sqrt(8k + 1) - 1) / 2)
-        p = k - (q * (q - 1)) ÷ 2
-        [B[p, q] for B in blocks]
+    off = CartesianIndex(dims)
+    T = eltype(kernel(Tuple(first(Δs))))
+    samples = ntuple(_ -> Array{T, d}(undef, size(Δs)), Val((m * (m + 1)) ÷ 2))
+    # the first half of the differences, in the order of the indices, and the center
+    for Δ in Iterators.take(Δs, (length(Δs) + 1) ÷ 2)
+        B = kernel(Tuple(Δ))
+        for q in 1:m, p in 1:q
+            samples[_pair(p, q)][Δ + off] = samples[_pair(p, q)][off - Δ] = B[p, q]
+        end
     end
+    return samples
 end
 
 """

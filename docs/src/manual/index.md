@@ -25,6 +25,7 @@ recurrence, a mesh, a network — and every one of them ends up in the same
 | a flat crack of any contour, contacts between its faces | [Planar cracks of any contour](@ref man-planar-cracks) | its integral equation, solved on a grid of Gaussians |
 | a coated particle, an interphase | [Layered inclusions](@ref man-layered) | a recurrence over the layers |
 | anything else, from your own code | [Custom inclusions](@ref man-custom-inclusions) | you supply it, through one of three entry levels |
+| a shape of any kind, without a mesh | [Heterogeneities of any shape](@ref man-gaussian-inclusions) | its integral equation, solved on a grid of Gaussians |
 | a shape with no closed form | [Finite-element inclusions](@ref man-fe-inclusions) | one Eshelby cell, solved |
 | the same, but cheap and differentiable | [Neural-surrogate inclusions](@ref man-neural-inclusions) | a network trained on it |
 

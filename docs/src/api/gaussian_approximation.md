@@ -1,9 +1,12 @@
 # [API — Arbitrary shapes by Gaussian approximation](@id api-gaussian-approximation)
 
-Cracks of arbitrary contour, by the Gaussian approximation of their integral
-equation: see [Approximation by Gaussians](@ref th-gaussian-approximation) and
-[Planar cracks of any contour](@ref th-gaussian-cracks) for the theory, and the
-[manual page](@ref man-planar-cracks) for the usage. The crack functions
+Cracks of arbitrary contour and heterogeneities of arbitrary shape, by the
+Gaussian approximation of their integral equations: see
+[Approximation by Gaussians](@ref th-gaussian-approximation),
+[Planar cracks of any contour](@ref th-gaussian-cracks) and
+[Heterogeneities of any shape](@ref th-gaussian-volume) for the theory, and the
+manual pages ([cracks](@ref man-planar-cracks),
+[heterogeneities](@ref man-gaussian-inclusions)) for the usage. The crack functions
 (`cod_tensor`, `sif`, the contributions) are those of
 [API — Cracks](@ref api-cracks).
 
@@ -54,6 +57,18 @@ MeanFieldHomogenization.edge_rule
 MeanFieldHomogenization.sif_from_dif
 ```
 
+## Heterogeneities
+
+```@docs
+MeanFieldHomogenization.GaussianInclusion
+MeanFieldHomogenization.Torus
+MeanFieldHomogenization.inclusion_volume
+MeanFieldHomogenization.GaussianApproximation.GaussianShape
+MeanFieldHomogenization.GaussianApproximation.smoothed_green_operator
+MeanFieldHomogenization.GaussianApproximation.radial_hessian
+MeanFieldHomogenization.GaussianApproximation.radial_fourth_gradient
+```
+
 ## Kernel and solver
 
 ```@docs
@@ -62,6 +77,7 @@ MeanFieldHomogenization.GaussianApproximation.SymbolHarmonics
 MeanFieldHomogenization.GaussianApproximation.symbol_harmonics
 MeanFieldHomogenization.GaussianApproximation.sample_kernel
 MeanFieldHomogenization.GaussianApproximation.SampledKernel
+MeanFieldHomogenization.GaussianApproximation.self_block
 MeanFieldHomogenization.GaussianApproximation.GridConvolution
 MeanFieldHomogenization.GaussianApproximation.convolve!
 MeanFieldHomogenization.GaussianApproximation.convolve_direct

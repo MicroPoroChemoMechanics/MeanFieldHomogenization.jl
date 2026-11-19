@@ -85,14 +85,12 @@ end
 end
 
 # The dense matrix of the masked system, generic in the number type.
-function _gc_dense(K::GC.SampledKernel{m, T}, inside, spring) where {m, T}
+function _gc_dense(K::GC.SampledKernel{m, T}, inside) where {m, T}
     N = length(inside)
-    self = GC._self_block(K)
     A = zeros(T, m * N, m * N)
     off = CartesianIndex(map(s -> (s + 1) ÷ 2, size(first(K.samples))))
     for (i, I) in enumerate(inside), (j, J) in enumerate(inside), p in 1:m, q in 1:m
-        A[(p - 1) * N + i, (q - 1) * N + j] = K.samples[GC._pair(p, q)][I - J + off] +
-            (i == j) * (spring[i] * self[p, q] + K.onsite[p, q])
+        A[(p - 1) * N + i, (q - 1) * N + j] = K.samples[GC._pair(p, q)][I - J + off] + (i == j) * K.blocks[i][p, q]
     end
     return A
 end
@@ -101,41 +99,53 @@ end
     dims, m = (6, 5), 2
     inside = [I for I in CartesianIndices(dims) if isodd(I[1] + 2 * I[2]) || I[1] > 2]
     N = length(inside)
-    spring = [0.3 * mod(k, 3) for k in 1:N]
     onsite = SMatrix{2, 2}(0.4, 0.1, 0.1, 0.2)
-    kernel(p) = GC.SampledKernel(GC.sample_kernel(_gc_kernel(Val(m), p), dims, Val(m)), p * onsite)
+    # a block per node: a multiple of the kernel at zero distance, plus a constant one
+    function kernel(p; sign = 1)
+        samples = GC.sample_kernel(_gc_kernel(Val(m), p), dims, Val(m))
+        self = GC.self_block(samples, Val(m))
+        return GC.SampledKernel(samples, [sign * (0.3 * mod(k, 3) * self + p * onsite) for k in 1:N])
+    end
     R = randn(m * N, 2)
-    K, A = kernel(0.7), _gc_dense(kernel(0.7), inside, spring)
-    @test issymmetric(A)
-    @test GC.masked_product(K, inside, spring, R) ≈ A * R rtol = 1.0e-11
-    @test GC.gaussian_solve(K, inside, spring, R; rtol = 1.0e-12) ≈ A \ R rtol = 1.0e-9
-    @test GC.gaussian_solve(K, inside, spring, R; rtol = 1.0e-12, symmetric = false) ≈ A \ R rtol = 1.0e-9
-    # no on-site block by default
-    @test iszero(GC.SampledKernel(K.samples, Val(m)).onsite)
+    K, A = kernel(0.7), _gc_dense(kernel(0.7), inside)
+    @test issymmetric(A) && isposdef(A)
+    @test GC.self_block(K.samples, Val(m)) ≈ _gc_kernel(Val(m), 0.7)((0, 0))
+    @test GC.masked_product(K, inside, R) ≈ A * R rtol = 1.0e-11
+    for method in (:cg, :minres, :gmres)
+        @test GC.gaussian_solve(K, inside, R; rtol = 1.0e-12, method) ≈ A \ R rtol = 1.0e-8
+    end
+    # a symmetric matrix that is not positive: MINRES
+    Kneg = kernel(0.7; sign = -8)
+    Aneg = _gc_dense(Kneg, inside)
+    @test !isposdef(Aneg) && !isposdef(-Aneg)
+    @test GC.gaussian_solve(Kneg, inside, R; rtol = 1.0e-12, method = :minres) ≈ Aneg \ R rtol = 1.0e-7
+    @test_throws ArgumentError GC.gaussian_solve(K, inside, R; method = :lu)
+    # one block per node kept
+    @test_throws DimensionMismatch GC.gaussian_solve(GC.SampledKernel(K.samples, K.blocks[1:3]), inside, R)
     # a solve that does not converge is an error, not a field
-    @test_throws ErrorException GC.gaussian_solve(K, inside, spring, R; itmax = 1)
+    @test_throws ErrorException GC.gaussian_solve(K, inside, R; itmax = 1)
     # numbers an iteration cannot compare are refused
-    @test_throws ArgumentError GC.gaussian_solve(GC.SampledKernel(map(s -> big.(s), K.samples), Val(m)), inside, spring, R)
+    @test_throws ArgumentError GC.gaussian_solve(GC.SampledKernel(map(s -> big.(s), K.samples), K.blocks), inside, R)
 
     # derivatives: the implicit-function theorem against ForwardDiff through the dense solve
-    f(p) = sum(abs2, GC.gaussian_solve(kernel(p), inside, spring, (1 + p^2) * R; rtol = 1.0e-13))
-    fdense(p) = (k = kernel(p); sum(abs2, _gc_dense(k, inside, spring) \ ((1 + p^2) * R)))
+    f(p) = sum(abs2, GC.gaussian_solve(kernel(p), inside, (1 + p^2) * R; rtol = 1.0e-13))
+    fdense(p) = (k = kernel(p); sum(abs2, _gc_dense(k, inside) \ ((1 + p^2) * R)))
     @test ForwardDiff.derivative(f, 0.7) ≈ ForwardDiff.derivative(fdense, 0.7) rtol = 1.0e-8
     # nested, under two tags
     @test ForwardDiff.derivative(p -> ForwardDiff.derivative(f, p), 0.7) ≈
         ForwardDiff.derivative(p -> ForwardDiff.derivative(fdense, p), 0.7) rtol = 1.0e-7
     # a gradient: two partials, in the kernel and in the right-hand side
-    g(v) = sum(GC.gaussian_solve(kernel(v[1]), inside, spring, v[2] * R; rtol = 1.0e-13))
-    gdense(v) = sum(_gc_dense(kernel(v[1]), inside, spring) \ (v[2] * R))
+    g(v) = sum(GC.gaussian_solve(kernel(v[1]), inside, v[2] * R; rtol = 1.0e-13))
+    gdense(v) = sum(_gc_dense(kernel(v[1]), inside) \ (v[2] * R))
     @test ForwardDiff.gradient(g, [0.7, 1.3]) ≈ ForwardDiff.gradient(gdense, [0.7, 1.3]) rtol = 1.0e-8
     # the product alone
-    @test ForwardDiff.derivative(p -> sum(GC.masked_product(kernel(p), inside, spring, p * R)), 0.7) ≈
-        ForwardDiff.derivative(p -> sum(_gc_dense(kernel(p), inside, spring) * (p * R)), 0.7) rtol = 1.0e-10
+    @test ForwardDiff.derivative(p -> sum(GC.masked_product(kernel(p), inside, p * R)), 0.7) ≈
+        ForwardDiff.derivative(p -> sum(_gc_dense(kernel(p), inside) * (p * R)), 0.7) rtol = 1.0e-10
 
     @testset "inference" begin
         C = GC.GridConvolution(K.samples, Val(m))
         X = ntuple(_ -> randn(dims), m)
         @inferred GC.convolve!(ntuple(_ -> zeros(dims), m), C, X)
-        @inferred GC.gaussian_solve(K, inside, spring, R)
+        @inferred GC.gaussian_solve(K, inside, R)
     end
 end

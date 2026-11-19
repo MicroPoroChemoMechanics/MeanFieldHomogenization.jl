@@ -207,30 +207,74 @@ measure(r::Polygon) = (
 # ─── Any function, any image ─────────────────────────────────────────────────
 
 """
-    Region(inside, lo, hi)
+    Region(inside, lo, hi; measure=nothing)
 
 Region defined by any function: `inside(x)` returns `true` for the points of the
 region, all contained in the box of corners `lo` and `hi`. The dimension is the
-length of the corners.
+length of the corners. `measure` is its area or volume when it is known.
 
 ```julia
 Region(x -> x[1]^4 + x[2]^4 ≤ 1 && x[1] + x[2] < 1.2, (-1, -1), (1, 1))
 ```
 """
-struct Region{d, T <: Number, F} <: AbstractRegion{d}
+struct Region{d, T <: Number, F, M <: Union{Nothing, T}} <: AbstractRegion{d}
     inside::F
     lo::SVector{d, T}
     hi::SVector{d, T}
+    measure::M
 end
-function Region(inside::F, lo, hi) where {F}
+function Region(inside::F, lo, hi; measure = nothing) where {F}
     d = length(lo)
     length(hi) == d || throw(DimensionMismatch("the corners have lengths $d and $(length(hi))"))
     T = TensND.float_like(promote_type(eltype(lo), eltype(hi)))
-    return Region{d, T, F}(inside, SVector{d, T}(lo), SVector{d, T}(hi))
+    M = _measure_as(T, measure)
+    return Region{d, T, F, typeof(M)}(inside, SVector{d, T}(lo), SVector{d, T}(hi), M)
 end
+_measure_as(::Type{T}, ::Nothing) where {T} = nothing
+_measure_as(::Type{T}, measure) where {T} = T(measure)
 
 Base.in(x, r::Region{d}) where {d} = r.inside(SVector{d}(x))::Bool
 bounding_box(r::Region) = (r.lo, r.hi)
+measure(r::Region) = r.measure
+
+# ─── Regions of space from the shapes of the package ─────────────────────────
+
+"""
+    Region(shape)
+
+The region of space occupied by a shape of the package, in the frame of the
+shape for a [`Supersphere`](@ref) or a [`Superspheroid`](@ref), with its
+orientation for an [`Ellipsoid`](@ref).
+"""
+function Region(e::Elasticity.Ellipsoid{3})
+    a = SVector{3}(e.semi_axes)
+    P = SMatrix{3, 3}(TensND.vecbasis(e.basis, Val(:cov)))
+    half = sqrt.((P .^ 2) * (a .^ 2))               # half-extents of the box along the axes
+    return Region(x -> sum(abs2, (transpose(P) * x) ./ a) ≤ 1, -half, half; measure = 4 * π * prod(a) / 3)
+end
+function Region(s::Superspheres.AbstractSuperShape)
+    half = _half_extents(s)
+    return Region(x -> Superspheres.level_set(s, x) ≤ 0, -half, half; measure = Superspheres.shape_volume(s))
+end
+_half_extents(s::Superspheres.Supersphere) = SVector(s.a, s.a, s.a)
+_half_extents(s::Superspheres.Superspheroid) = SVector(s.a, s.a, s.c)
+
+"""
+    Torus(R, a; center=(0, 0, 0))
+
+Torus of axis ``\\underline{e}_3``: the points at a distance less than `a` from
+the circle of radius `R` (``a < R``).
+"""
+function Torus(R, a; center = (0, 0, 0))
+    is_hard_numeric(promote_type(typeof(R), typeof(a))) && !(0 < a < R) &&
+        throw(ArgumentError("a torus needs 0 < a < R (tube and circle radii), got R = $R, a = $a"))
+    c = SVector{3}(center)
+    half = SVector(R + a, R + a, a)
+    return Region(
+        x -> (y = x - c; (hypot(y[1], y[2]) - R)^2 + y[3]^2 ≤ a^2), c - half, c + half;
+        measure = 2 * π^2 * R * a^2
+    )
+end
 
 """
     PixelRegion(mask, h; lo=zeros)

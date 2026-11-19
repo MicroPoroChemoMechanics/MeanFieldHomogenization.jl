@@ -103,7 +103,7 @@ cod_tensor(tilted, TensISO{3}(2.5))
 **Anisotropic matrix**: nothing changes in the call.
 
 ```@example manplanar
-C_ti = TensTI{4}(50.0, 10.0, 30.0, 100.0, 60.0, (0.0, 0.0, 1.0))
+C_ti = TensTI{4}(30.0, 8.0, 5.0, 12.0, 4.0, (0.0, 0.0, 1.0))
 round.(get_array(cod_tensor(tilted, C_ti)); sigdigits = 4)
 ```
 

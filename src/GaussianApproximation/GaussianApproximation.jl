@@ -22,10 +22,14 @@ using TensND
 import ForwardDiff
 import Krylov
 import FFTA
-using SpecialFunctions: besselix, gamma, dawson
+using SpecialFunctions: besselix, gamma, dawson, erf
+import Tensors
+using Tensors: Vec, SymmetricTensor, symmetric, otimesu, otimesl, tomandel, ⊗
 
 import ..Core as MFH_Core
 import ..Cracks
+import ..Elasticity
+import ..Superspheres
 import ..Schemes
 import ..FiniteElements: FECache, _fe_memo, _fe_cache
 using ..Elliptic: is_hard_numeric
@@ -38,11 +42,14 @@ include("solve.jl")
 include("kernels_crack.jl")
 include("edge_rule.jl")
 include("planar_crack.jl")
+include("kernels_volume.jl")
+include("gaussian_inclusion.jl")
 
 export GaussianGrid, gaussian_generator, saturation_error, QuasiInterpolant, quasi_interpolate
 export AbstractRegion, bounding_box, measure, inside_nodes, coverage
 export Ellipse, Disk, Superellipse, Rectangle, StarShape, Polygon, Annulus
 export Region, PixelRegion, UnionRegion, IntersectionRegion, DifferenceRegion
 export edge_rule, ContourShape, PlanarCrack, crack_area, crack_opening
+export Torus, GaussianInclusion, inclusion_volume
 
 end # module

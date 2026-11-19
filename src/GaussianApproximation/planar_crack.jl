@@ -161,7 +161,10 @@ _extrapolate(v, levels) = length(levels) == 1 ? first(v) :
 function _level_openings(l::CrackLevel, hs::SymbolHarmonics{m}, onsite, rtol) where {m}
     N = length(l.inside)
     R = kron(Matrix(I, m, m), ones(N))
-    return gaussian_solve(SampledKernel(_harmonic_samples(l.grid, hs, Val(m)), onsite), l.inside, l.spring, R; rtol)
+    samples = _harmonic_samples(l.grid, hs, Val(m))
+    # on each node: the spring of the edge rule, and the interface stiffness
+    self = self_block(samples, Val(m))
+    return gaussian_solve(SampledKernel(samples, [s * self + onsite for s in l.spring]), l.inside, R; rtol)
 end
 
 # ∫ [[u]] dS / (π ℓ³) under the m unit loads: the m × m matrix of the mean openings.
