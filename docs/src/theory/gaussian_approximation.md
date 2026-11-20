@@ -56,7 +56,8 @@ plt
 
 The two curves separate near the ends of the interval, where the Gaussians of
 the nodes that would lie outside are missing: (1) is a statement about the
-interior of the grid. Inside, ten nodes are too few for this function: ``u_h``
+interior of the grid, and [Section 4](@ref th-gaussian-ends) measures what
+happens at its ends. Inside, ten nodes are too few for this function: ``u_h``
 smooths its extrema.
 
 Both defects go with a grid that extends beyond the interval and a smaller
@@ -181,7 +182,91 @@ With ``H = 1`` the error stops near ``10^{-4}``; with ``H = 2`` it follows
 ``H h^{2}|u''|/4`` over the whole range. The price of a larger ``H`` is on the
 same figure: the smoothing error is proportional to ``H``.
 
-## 4. Why Gaussians, for an integral equation
+## [4. At the ends of the grid](@id th-gaussian-ends)
+
+The estimate (3) holds for nodes that fill the space [mazya1996](@cite). On an
+interval, the Gaussians of the nodes that would lie beyond its ends are missing,
+and the first figure of this page shows the result. This section quantifies it.
+
+Let the nodes fill the half-line ``x > 0``: ``x_m = (m-\tfrac12)h``,
+``m \ge 1``. Replacing the sum over the nodes by an integral over the half-line,
+divided by ``h``, the sum of the generating functions is no longer one:
+
+```math
+s(x) = \sum_{m\ge 1}\varphi(x-x_m)
+\simeq \frac{1}{2}\left[1+\operatorname{erf}\frac{x}{h\sqrt{H}}\right].
+\tag{4}
+```
+
+It is one half at the end of the grid and reaches one a few widths
+``h\sqrt{H}`` of a Gaussian further in. The first moment, which vanished in
+Section 3, no longer does:
+``\sum_{m\ge1}(x_m-x)\,\varphi(x-x_m) \simeq \tfrac{h}{2}\sqrt{H/\pi}\;\mathrm{e}^{-x^{2}/(Hh^{2})}``.
+The expansion of ``u(x_m)`` around ``x`` then gives
+
+```math
+u_h(x) \simeq s(x)\,u(x)
++ \frac{h}{2}\sqrt{\frac{H}{\pi}}\;\mathrm{e}^{-x^{2}/(Hh^{2})}\,u'(x) + O(h^{2}).
+\tag{5}
+```
+
+At the end of the grid ``u_h`` is half of ``u``, whatever the function and
+whatever the step: the error there is of order one, and refining the grid does
+not reduce it. Only the layer where it occurs narrows, in proportion to ``h``.
+A polynomial shows it. Drawn against the distance to the end counted in steps,
+the ratio ``u_h/u`` comes down to the curve (4) as the step decreases:
+
+```@example gaussapprox
+using SpecialFunctions: erf
+
+p(x) = 1 + 2x - 3x^2 + x^3
+on_interval(f, n) = quasi_interpolate(x -> f(x[1]), GaussianGrid((0.0,), (1.0,), n; H = 2.0))   # no node outside [0, 1]
+law(ξ) = (1 + erf(ξ / sqrt(2.0))) / 2                       # (4), with H = 2
+
+ξs = range(0, 5; length = 200)                              # distance to the end, in steps
+plt = plot(; xlabel = "x / h", ylabel = "u_h / u", legend = :bottomright)
+for n in (20, 40, 80)
+    ph = on_interval(p, n)
+    plot!(plt, ξs, [ph((ξ / n,)) / p(ξ / n) for ξ in ξs]; lw = 1.5, label = "h = 1/$n")
+end
+plot!(plt, ξs, law.(ξs); ls = :dash, color = :black, label = "(4)")
+plt
+```
+
+The ratio at the end itself, and the largest gap between the sum of the
+Gaussians and (4), which measures what the replacement of the sum by an
+integral leaves out:
+
+```@example gaussapprox
+for n in (20, 40, 80)
+    println("h = 1/", n, "   u_h(0) / u(0) = ", round(on_interval(p, n)((0.0,)) / p(0.0); digits = 4))
+end
+ones_h = on_interval(x -> 1.0, 80)
+println("largest gap between the sum of the Gaussians and (4): ",
+    round(maximum(abs(ones_h((ξ / 80,)) - law(ξ)) for ξ in ξs); sigdigits = 2))
+```
+
+The ratio tends to one half as the second term of (5) says, in proportion to
+``h``, and (4) itself holds to about one percent. In dimension ``d`` the sum of the Gaussians is a product of such factors:
+``u_h`` is half of ``u`` on a face of the grid, and a quarter of it at a corner
+of a rectangular grid.
+
+Three situations follow.
+
+- **The function is known beyond the ends.** The grid is extended by a few
+  widths ``h\sqrt{H}``, as in the second figure of Section 1: ``s`` is one over
+  the whole interval and (3) holds again.
+- **The function is known on the interval only.** It has to be continued beyond
+  the ends before it is sampled, and ``u_h`` is worth near the ends what the
+  continuation is worth.
+- **The function is the unknown of an integral equation and vanishes at the
+  edge of its domain**, as the opening of a crack does. Nothing can be sampled
+  outside, and the Gaussians of the last nodes spread the unknown beyond the
+  edge, whose position is then known to within a step. The
+  [next page](@ref th-gaussian-cracks), §4, corrects it by a rule on the nodes
+  of the edge.
+
+## 5. Why Gaussians, for an integral equation
 
 The unknown of an integral equation, for instance the opening of a crack, is
 expanded as in (1), with unknown coefficients ``u_m`` in place of the samples.
@@ -215,10 +300,3 @@ crack. With 64 nodes across the crack this is a relative error of
   of a crack solved with this approximation.
 - [Planar cracks of any contour](@ref man-planar-cracks), in the manual:
   describing a contour and computing with it.
-
-## References
-
-```@bibliography
-Pages = ["gaussian_approximation.md"]
-Canonical = false
-```

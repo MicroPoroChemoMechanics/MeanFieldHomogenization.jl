@@ -217,10 +217,3 @@ beyond a contrast of ``10^{4}`` the solve is slow, and a contrast of
 - [Finite-element inclusions](@ref man-fe-inclusions) and
   [Neural-surrogate inclusions](@ref man-neural-inclusions): the two other
   treatments of a shape with no closed form.
-
-## References
-
-```@bibliography
-Pages = ["gaussian_volume.md"]
-Canonical = false
-```

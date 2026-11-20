@@ -396,10 +396,3 @@ with_contacts = crack_with(cluster(0.5), l₇; n = 96)
 #   a disk.
 # - [Cracks from their intensity factors](@ref tut-rice-cracks): the annular
 #   crack and its intensity factors.
-#
-# ## References
-#
-# ```@bibliography
-# Pages = ["crack_contacts.md"]
-# Canonical = false
-# ```

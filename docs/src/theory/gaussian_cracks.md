@@ -396,10 +396,3 @@ contour is refused: the list of nodes is not a continuous function of it.
   ways to describe a contour, and the functions.
 - [Contributions from intensity factors](@ref th-rice-contributions): another
   description of a non-elliptic crack, when its intensity factors are known.
-
-## References
-
-```@bibliography
-Pages = ["gaussian_cracks.md"]
-Canonical = false
-```

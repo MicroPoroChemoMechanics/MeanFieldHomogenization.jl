@@ -432,10 +432,3 @@ response depends on their size.
 - [Finite-element inclusions](@ref man-fe-inclusions) — how to use the type.
 - [Neural-surrogate inclusions](@ref man-neural-inclusions) — the trained models
   that replace the solve.
-
-## References
-
-```@bibliography
-Pages = ["concave_pores.md"]
-Canonical = false
-```

@@ -443,13 +443,6 @@ behaves as a solid with free cracks of the density ``\lambda\,\varepsilon``.
 - [Cracks from their intensity factors](@ref tut-rice-cracks): the annular
   crack and its intensity factors.
 
-## References
-
-```@bibliography
-Pages = ["crack_contacts.md"]
-Canonical = false
-```
-
 ---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*

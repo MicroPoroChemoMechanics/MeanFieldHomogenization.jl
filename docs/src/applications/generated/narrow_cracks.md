@@ -264,13 +264,6 @@ is approached as the band lengthens, exactly as for the rectangle.
 - [Planar cracks of any contour](@ref man-planar-cracks): the ways to describe
   a contour.
 
-## References
-
-```@bibliography
-Pages = ["narrow_cracks.md"]
-Canonical = false
-```
-
 ---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*

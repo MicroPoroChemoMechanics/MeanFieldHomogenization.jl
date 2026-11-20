@@ -231,10 +231,3 @@ end
 #   same solver on a disk with islands.
 # - [Planar cracks of any contour](@ref man-planar-cracks): the ways to describe
 #   a contour.
-#
-# ## References
-#
-# ```@bibliography
-# Pages = ["narrow_cracks.md"]
-# Canonical = false
-# ```
