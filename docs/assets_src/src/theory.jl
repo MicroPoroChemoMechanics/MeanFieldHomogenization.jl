@@ -161,4 +161,68 @@ function theory_gaussian_crack(; path = "theory/gaussian_crack_grid", panel::Boo
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack())
+"Image of the circle of radius `ρ` by the map of coefficients `ms`, as points around `c` at the scale `s`."
+function mapped_circle(c::Point, s, ms, ρ; n = 361)
+    ω(ζ) = ζ + sum(m * ζ^(-k) for (k, m) in ms)
+    return [(z = ω(ρ * cis(θ)); c + Point(s * real(z), -s * imag(z))) for θ in range(0, 2π; length = n)]
+end
+
+"Image of the ray of angle `θ`, from the circle to the radius `ρ`."
+function mapped_ray(c::Point, s, ms, θ, ρ; n = 40)
+    ω(ζ) = ζ + sum(m * ζ^(-k) for (k, m) in ms)
+    return [(z = ω(r * cis(θ)); c + Point(s * real(z), -s * imag(z))) for r in range(1, ρ; length = n)]
+end
+
+"One plane of the map: the matrix, the hole of contour the image of the unit circle, and the images of circles and rays."
+function map_plane(c::Point, s, ms; ρmax = 1.9)
+    @layer begin
+        setcolor(MATRIX)
+        poly(mapped_circle(c, s, ms, ρmax), :fill; close = true)
+        setcolor(PORE)
+        poly(mapped_circle(c, s, ms, 1.0), :fill; close = true)
+        setcolor(GUIDE)
+        setline(0.8)
+        foreach(ρ -> poly(mapped_circle(c, s, ms, ρ), :stroke; close = true), (1.3, 1.6))
+        foreach(θ -> poly(mapped_ray(c, s, ms, θ, ρmax), :stroke), range(0, 2π; length = 13)[1:12])
+        setcolor(INK)
+        setline(2.0)
+        poly(mapped_circle(c, s, ms, 1.0), :stroke; close = true)
+    end
+    return nothing
+end
+
+"The conformal map of the outside of the unit disk onto the outside of a hole, and four holes it gives."
+function theory_conformal_map(; path = "theory/conformal_map", panel::Bool = true)
+    square = [(3, 1 / 6), (7, 1 / 56), (11, 1 / 176)]
+    return sheet(path, 720, 400; panel = panel) do
+        map_plane(Point(170, 135), 62, [(1, 0.0)])
+        map_plane(Point(540, 135), 62, square)
+        label(m("zeta"), Point(170, 135); size = 17)
+        label(m("abs(zeta) = 1"), Point(170, 62); size = 13, bg = MATRIX)
+        label(txt("hole"), Point(540, 135); size = 12, color = MUTED)
+        label(txt("matrix"), Point(540, 30); size = 12, color = MUTED, bg = MATRIX)
+        label(m("z = x_2 + upright(i) x_3"), Point(650, 250); size = 13, color = MUTED)
+        arrow_ab(Point(300, 135), Point(410, 135); color = VECTOR, lw = 1.8)
+        label(m("z = omega(zeta)"), Point(355, 118); size = 15, color = VECTOR)
+        @layer (setcolor(PANEL_EDGE); setline(1.2); line(Point(20, 268), Point(700, 268), :stroke))
+        holes = (
+            ([(1, 0.4)], m("m_1 = 2 slash 5")),
+            ([(2, 1 / 4)], m("m_2 = 1 slash 4")),
+            (square, txt("square, 3 terms")),
+            ([(4, 1 / 10), (9, 1 / 75)], txt("pentagon, 2 terms")),
+        )
+        for (i, (ms, name)) in enumerate(holes)
+            c = Point(90 + 180 * (i - 1), 325)
+            @layer begin
+                setcolor(tint(ORANGE, 0.75))
+                poly(mapped_circle(c, 30, ms, 1.0), :fill; close = true)
+                setcolor(INK)
+                setline(1.6)
+                poly(mapped_circle(c, 30, ms, 1.0), :stroke; close = true)
+            end
+            label(name, c + Point(0, 58); size = 12, color = MUTED)
+        end
+    end
+end
+
+theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map())

@@ -39,7 +39,7 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # whereas these exist to reproduce a particular paper's numbers and are read for
 # the comparison. Listed by page name, so the routing is visible here rather
 # than implied by the navigation in `make.jl`.
-const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks"])
+const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "conformal_holes", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks"])
 
 # The chapter on material laws (`MaterialLaws`) is written as one script per
 # model, theory and code together, under `scripts/material_laws/`; its pages,
@@ -78,6 +78,7 @@ const PUBLISHED_SCRIPTS = [
     "48_itz_elastic_limit.jl" => "itz_elastic_limit",
     "70_symmetrization_showcase.jl" => "symmetrization",
     "71_brinkman_permeability.jl" => "stokes_darcy_permeability",
+    "73_conformal_holes.jl" => "conformal_holes",
     "75_crack_contact_islands.jl" => "crack_contacts",
     "76_narrow_cracks.jl" => "narrow_cracks",
     "77_supersphere_pore_routes.jl" => "pore_routes",

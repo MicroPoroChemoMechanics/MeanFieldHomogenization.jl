@@ -108,6 +108,9 @@ pages = [
             # A shape that is not an ellipsoid and has an exact series: the torus,
             # in the toroidal coordinates of TensND.
             "theory/toroidal_inclusions.md",
+            # Cylindrical cavities whose section is given by a conformal map:
+            # finite complex potentials.
+            "theory/conformal_mapping.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
         # non-aging problem onto an elastic one, and the aging case, where
@@ -138,6 +141,7 @@ pages = [
             "manual/custom_inclusions.md",
             "manual/brinkman_inclusions.md",
             "manual/toroidal_inclusions.md",
+            "manual/conformal_holes.md",
             # Three treatments of a shape with no closed form, all through the
             # custom-inclusion interface: a grid of Gaussians, a mesh, a
             # trained network.
@@ -285,6 +289,8 @@ pages = [
             "applications/generated/pore_routes.md",
             # A pore that is not an ellipsoid and has a series: the torus.
             "applications/generated/insulating_torus.md",
+            # Prismatic pores of polygonal section, by a conformal map.
+            "applications/generated/conformal_holes.md",
             # A crack of any contour, here a disk with contact islands, against
             # a published study and the annular crack.
             "applications/generated/crack_contacts.md",

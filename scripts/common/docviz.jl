@@ -884,8 +884,8 @@ end
 
 Draw a `MeanFieldHomogenization` inclusion object.  Implemented for [`Ellipsoid`](@ref),
 [`Cylinder`](@ref), [`EllipticCrack`](@ref), [`RibbonCrack`](@ref),
-[`LayeredSphere`](@ref), [`LayeredSpheroid`](@ref) and [`InsulatingTorus`](@ref),
-so a figure and the
+[`LayeredSphere`](@ref), [`LayeredSpheroid`](@ref), [`InsulatingTorus`](@ref) and
+[`ConformalHole`](@ref), so a figure and the
 computation it illustrates are driven by the *same* object.
 """
 function shape_traces end
@@ -1094,6 +1094,22 @@ function shape_traces(
     X, Y, Z = param_surface(f, range(0, 2π; length = nu), range(0, 2π; length = nv))
     traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
     axis && append!(traces, arrow_trace((0.0, 0.0, 0.0), F[:, 3] .* (0.9 * R₀); size = 0.15 * R₀, label = label))
+    return traces
+end
+
+function shape_traces(
+        h::MeanFieldHomogenization.ConformalHole;
+        color::AbstractString = "#f0ad4e", opacity::Real = 0.8, length::Real = 4.0, axis::Bool = true,
+        label = "<u><i>e</i></u><sub>1</sub>", nu::Integer = 241,
+    )
+    m = ComplexF64.(h.coefficients)
+    contour(u) = cis(u) + sum(m[k] * cis(-k * u) for k in eachindex(m))
+    F = frame_matrix(h.basis)
+    # the axis is the first vector of the basis, the complex plane that of the two others
+    f = (u, x) -> (z = contour(u); Tuple(F * [x, real(z), imag(z)]))
+    X, Y, Z = param_surface(f, range(0, 2π; length = nu), range(-length / 2, length / 2; length = 2))
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    axis && append!(traces, arrow_trace(Tuple(F[:, 1] .* (length / 2)), F[:, 1] .* (0.3 * length); size = 0.08 * length, label = label))
     return traces
 end
 

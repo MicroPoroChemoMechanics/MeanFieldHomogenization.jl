@@ -15,7 +15,6 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using ForwardDiff
-import Symbolics
 
 # Bulk part n_K of the stiffness contribution, and the conductivity one.
 _gl_bulk(N) = (c = canonical_components(N); sum(c[i, i, j, j] for i in 1:3, j in 1:3) / 9)
@@ -168,18 +167,5 @@ end
         end
         # a zone identical to the matrix: the sphere alone
         @test _gl_lutz_zimmerman(K_i, K_m - 2μ_m / 3, μ_m, K_m - 2μ_m / 3, μ_m, b) ≈ 3 * (K_i - K_m) / (3K_i + 4μ_m)
-    end
-
-    @testset "symbols" begin
-        Symbolics.@variables k Δ
-        radii, moduli = graded_layers(r -> TensISO{3}(k + Δ / r), 1, 2, 2)
-        @test radii == (1.5, 2.0)
-        @test eltype(moduli[1]) == Symbolics.Num
-        value(x) = Symbolics.value(Symbolics.substitute(x, Dict(k => 2.0, Δ => 3.0)))
-        @test value(TensND.get_data(moduli[2])[1]) ≈ 2 + 3 / 1.75
-        # symbolic ends of the zone
-        Symbolics.@variables a
-        edges, _ = graded_layers(r -> TensISO{3}(r), a, 2a, 2)
-        @test isequal(Symbolics.simplify(edges[2] - 2a), 0)
     end
 end

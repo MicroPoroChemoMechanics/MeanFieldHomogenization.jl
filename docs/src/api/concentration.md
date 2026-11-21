@@ -124,6 +124,20 @@ MeanFieldHomogenization.InsulatingTorus
 MeanFieldHomogenization.ToroidalShape
 ```
 
+## Conformal holes
+
+A cylindrical cavity whose cross-section is given by a conformal map with a
+finite number of terms, entered through the concentration level (B) of the
+custom-inclusion interface; see [Conformal holes](@ref man-conformal-holes)
+and [Holes given by a conformal map](@ref th-conformal-mapping).
+
+```@docs
+MeanFieldHomogenization.ConformalHoles
+MeanFieldHomogenization.ConformalHole
+MeanFieldHomogenization.ConformalShape
+MeanFieldHomogenization.polygon_map
+```
+
 ## Finite-element inclusions
 
 Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh` serve

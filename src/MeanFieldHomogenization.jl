@@ -156,6 +156,8 @@ include("Brinkman/Brinkman.jl")
 # Toroidal inclusions: series of toroidal harmonics in the chart of TensND,
 # entered through the same contract.
 include("ToroidalInclusions/ToroidalInclusions.jl")
+# Holes of the plane given by a conformal map, through the same contract.
+include("ConformalHoles/ConformalHoles.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
 # `GaussianApproximation`: cracks and heterogeneities of arbitrary shape, their
@@ -175,6 +177,7 @@ using .Superspheres
 using .CustomInclusions
 using .Brinkman
 using .ToroidalInclusions
+using .ConformalHoles
 using .FiniteElements
 using .NeuralInclusions
 using .GaussianApproximation
@@ -230,6 +233,7 @@ export BrinkmanMedium, BrinkmanPorous, BrinkmanFluid, BrinkmanSolid
 export BrinkmanForm, ResistanceForm, PermeabilityForm
 export AbstractBrinkmanInclusion, BrinkmanSphere, BrinkmanCylinder, BrinkmanLayer, BrinkmanCoatedSphere
 export InsulatingTorus, ToroidalShape
+export ConformalHole, ConformalShape, polygon_map
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb

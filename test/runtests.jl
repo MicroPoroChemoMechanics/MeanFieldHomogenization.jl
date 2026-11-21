@@ -271,6 +271,9 @@ end
         include("CustomInclusions/test_brinkman.jl")
         # Toroidal inclusions enter through the same contract.
         include("CustomInclusions/test_toroidal_inclusions.jl")
+        # Cylindrical cavities of conformal cross-section, likewise.
+        include("CustomInclusions/test_conformal_holes.jl")
+        HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_conformal_holes_symbolic.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_brinkman_symbolic.jl")
     end
 
