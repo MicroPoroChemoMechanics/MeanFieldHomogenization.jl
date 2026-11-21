@@ -31,6 +31,9 @@ recurrence, a grid of Gaussians, a mesh, a network — and every one of them end
 
 [The inclusion gallery](@ref man-inclusion-gallery) draws them, if you would
 rather recognize a shape than read a table.
+[Choosing an inclusion](@ref man-choosing-inclusion) compares the routes: the
+reference medium each accepts, the derivatives it gives, its accuracy and its
+cost.
 
 ## The rest
 

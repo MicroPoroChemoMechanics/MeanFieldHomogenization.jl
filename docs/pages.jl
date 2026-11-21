@@ -124,6 +124,9 @@ pages = [
         "manual/index.md",
         "Inclusions" => [
             "manual/inclusion_gallery.md",
+            # The routes compared (closed form, layered pattern, custom, grid,
+            # mesh, network) before the page of each.
+            "manual/choosing_an_inclusion.md",
             "manual/ellipsoidal_inclusions.md",
             "manual/cylindrical_inclusions.md",
             "manual/cracks.md",
