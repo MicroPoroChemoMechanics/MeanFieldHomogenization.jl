@@ -233,7 +233,93 @@ A_t=\frac{2\sqrt2}{\pi}\,\frac{\sinh^3\alpha_0}{\cosh\alpha_0}\sum_{n\ge0}\bigl(
 the amplitudes being those of the series of sines for ``A_n`` and of the
 series of cosines for ``A_t``.
 
-## 7. Values
+## 7. The same tensor from the integral over the torus
+
+The definition of ``\boldsymbol{A}`` in section 1 gives a second expression of
+the two components, which does not use the far field. On the torus,
+``\mathrm{d}S=a^2\sinh\alpha_0\,\mathrm{d}\varphi\,\mathrm{d}\beta/\delta^2``,
+and the components of the normal along the axis and along
+``\underline{e}_1`` are
+
+```math
+\nu_3=\frac{\sinh\alpha_0\,\sin\beta}{\delta},
+\qquad
+\nu_1=\frac{\cosh\alpha_0\cos\beta-1}{\delta}\,\cos\varphi .
+```
+
+The remote part of the temperature contributes
+``\oint x_i\,\nu_i\,\mathrm{d}S=|\Omega|``, that is 1 to each component. The
+perturbation ``a\sqrt\delta\,\cos m\varphi\sum_nb_n\,P^m_{n-1/2}\,w_n`` adds
+
+```math
+A_n-1=\frac{2\pi\,a^3\sinh^2\alpha_0}{|\Omega|}\sum_{n\ge1}b_n\,P_{n-1/2}\int_{-\pi}^{\pi}\frac{\sin\beta\,\sin n\beta}{\delta^{5/2}}\,\mathrm{d}\beta,
+\qquad
+A_t-1=\frac{\pi\,a^3\sinh\alpha_0}{|\Omega|}\sum_{n\ge0}b_n\,P^1_{n-1/2}\int_{-\pi}^{\pi}\frac{(\cosh\alpha_0\cos\beta-1)\,\cos n\beta}{\delta^{5/2}}\,\mathrm{d}\beta .
+```
+
+The two integrals are Fourier coefficients, read on the series of section 3
+and on their derivatives with respect to ``\alpha``. With
+``Q^{1\prime}_{n-1/2}`` the derivative of ``Q^1_{n-1/2}(\cosh\alpha)`` with
+respect to ``\alpha``,
+
+```math
+\frac{\sin\beta}{\delta^{5/2}}=-\frac{8\sqrt2}{3\pi\,\sinh\alpha}\sum_{n\ge1}n\,Q^1_{n-1/2}\,\sin n\beta,
+\qquad
+\frac{1}{\delta^{3/2}}=-\frac{2\sqrt2}{\pi\,\sinh\alpha}\sum_{n\ge0}\epsilon_n\,Q^1_{n-1/2}\,\cos n\beta,
+\qquad
+\frac{1}{\delta^{5/2}}=\frac{4\sqrt2}{3\pi\,\sinh^2\alpha}\sum_{n\ge0}\epsilon_n\,\bigl(Q^{1\prime}_{n-1/2}-\coth\alpha\,Q^1_{n-1/2}\bigr)\cos n\beta ,
+```
+
+and, since ``\cosh\alpha\cos\beta-1=\sinh^2\alpha-\cosh\alpha\,\delta``,
+
+```math
+\frac{\cosh\alpha\cos\beta-1}{\delta^{5/2}}=\frac{2\sqrt2}{3\pi}\sum_{n\ge0}\epsilon_n\,\bigl(2\,Q^{1\prime}_{n-1/2}+\coth\alpha\,Q^1_{n-1/2}\bigr)\cos n\beta .
+```
+
+With ``a^3/|\Omega|=\sinh^3\alpha_0/(2\pi^2\cosh\alpha_0)``, all functions
+being taken at ``\alpha_0``,
+
+```math
+A_n=1-\frac{8\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge1}n\,b_n\,P_{n-1/2}\,Q^1_{n-1/2},
+\qquad
+A_t=1+\frac{2\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge0}b_n\,P^1_{n-1/2}\,\bigl(2\,Q^{1\prime}_{n-1/2}+\coth\alpha_0\,Q^1_{n-1/2}\bigr) .
+```
+
+These sums and those of section 6 are equal for the amplitudes that satisfy
+the condition on the torus, and for those only: the equality is a check of the
+solution, here for ``r/R=1/2``.
+
+```@example thtorus
+using MeanFieldHomogenization, TensND
+TI = MeanFieldHomogenization.ToroidalInclusions
+α₀ = acosh(2.0)
+sh, ch, N, c = sinh(α₀), cosh(α₀), TI._series_length(α₀), 4 * sqrt(2) / π
+
+b = TI._neumann_amplitudes(Val(:sine), 0, [c * n for n in 0:(N + 1)], α₀)
+P, Q¹ = toroidal_P(N, 0, α₀), toroidal_Q(N, 1, α₀)
+far = c * sh^3 / ch * sum(n * b[n] for n in 1:N)
+surface = 1 - 8 * sqrt(2) / (3π) * sh^4 / ch * sum(n * b[n] * P[n + 1] * Q¹[n + 1] for n in 1:N)
+(far, surface)
+```
+
+```@example thtorus
+b = TI._neumann_amplitudes(Val(:cosine), 1, [-(n == 0 ? c / 2 : c) for n in 0:(N + 1)], α₀)
+P¹, Q¹, dQ¹ = toroidal_P(N, 1, α₀), toroidal_Q(N, 1, α₀), toroidal_dQ(N, 1, α₀)
+far = c / 2 * sh^3 / ch * sum((n^2 - 1 / 4) * b[n + 1] for n in 0:N)
+surface = 1 + 2 * sqrt(2) / (3π) * sh^4 / ch * sum(b[n + 1] * P¹[n + 1] * (2 * dQ¹[n + 1] + ch / sh * Q¹[n + 1]) for n in 0:N)
+(far, surface)
+```
+
+[Radi and Sevostianov](@cite radiPRSA2016) write the perturbation with the
+amplitudes ``B_n=-\pi\,b_n/(4\sqrt2)`` along the axis and
+``\epsilon_n\,C_n=-\pi\,b_n/(2\sqrt2)`` across it. Their closed form of the
+``B_n`` (their equations 3.17 and 3.18) and their elimination for the ``C_n``
+(4.9 to 4.11) return the amplitudes computed here, and their integrals over
+the torus (5.5 and 5.8) are those above. The two expressions of this section
+are the values of these integrals; they stand for the expressions printed as
+(5.6) and (5.9) in the article, which differ from them.
+
+## 8. Values
 
 ```@example thtorus
 using MeanFieldHomogenization, TensND
@@ -270,10 +356,12 @@ components(0.99)
 
 For comparison, the insulating sphere has ``A=3/2`` in every direction.
 
-## 8. Scope
+## 9. Scope
 
 The series solves the problem in an isotropic matrix, for a torus of circular
 cross-section that conducts nothing. The number of terms is set by the value of
 ``\alpha_0``: the radii are numbers or dual numbers, and the derivatives with
 respect to them go through the solve. [`InsulatingTorus`](@ref) is the
-inclusion; [A torus in a matrix](@ref man-toroidal-inclusions) shows its use.
+inclusion; [Toroidal inclusions](@ref man-toroidal-inclusions) shows its use, and
+[Ring-shaped pores in a conducting matrix](@ref app-insulating-torus) compares
+it with published values and with spheroids of the same volume.

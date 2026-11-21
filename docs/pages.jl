@@ -283,6 +283,8 @@ pages = [
             # The same pore by the four routes to a shape with no closed form,
             # against a published table.
             "applications/generated/pore_routes.md",
+            # A pore that is not an ellipsoid and has a series: the torus.
+            "applications/generated/insulating_torus.md",
             # A crack of any contour, here a disk with contact islands, against
             # a published study and the annular crack.
             "applications/generated/crack_contacts.md",

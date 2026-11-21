@@ -8,8 +8,11 @@
 #      and its normal derivative vanishes on the torus;
 #   3. the mean gradient over the pore as an integral of the temperature over
 #      its surface;
-#   4. the same torus on a grid of Gaussians;
-#   5. the homogeneity of degree 0 in (R, r) and extended precision for AD.
+#   4. the amplitudes of Radi & Sevostianov (2016), a closed form along the axis
+#      and an elimination without pivoting across it, and the closed form of
+#      the surface integral;
+#   5. the same torus on a grid of Gaussians;
+#   6. the homogeneity of degree 0 in (R, r) and extended precision for AD.
 # =============================================================================
 
 using Test
@@ -99,6 +102,49 @@ end
             A = TI._insulating_torus_concentration(α₀)
             @test A[2] ≈ Aₙ rtol = 1.0e-9
             @test A[1] ≈ Aₜ rtol = 1.0e-9
+        end
+    end
+
+    @testset "the published amplitudes and the surface integral in closed form" begin
+        # Radi & Sevostianov (2016) write the perturbation with the amplitudes
+        # Bₙ = -bₙ/c (along the axis) and εₙCₙ = -2bₙ/c (across it), c = 4√2/π.
+        c = 4 * sqrt(2) / π
+        for λ in (0.05, 0.2, 0.5, 0.8, 0.95)
+            α₀ = acosh(1 / λ)
+            sh, ch = sinh(α₀), cosh(α₀)
+            N = TI._series_length(α₀)
+            Aₜ, Aₙ = TI._insulating_torus_concentration(α₀)
+
+            # along the axis: their closed form (3.17)-(3.18)
+            P, dP, dQ = toroidal_P(N + 1, 0, α₀), toroidal_dP(N + 1, 0, α₀), toroidal_dQ(N + 1, 0, α₀)
+            ρ = dQ ./ dP
+            ξ = sum(m^2 / (4m^2 - 1) * ρ[m + 1] for m in 1:(N + 1)) / (ρ[1] / 2 - sum(ρ[m + 1] / (4m^2 - 1) for m in 1:(N + 1)))
+            B = [(ξ + n^2) / (2n - 1) * ρ[n + 1] - 2 * sum((ξ + m^2) / (4m^2 - 1) * ρ[m + 1] for m in n:(N + 1)) for n in 1:N]
+            b = TI._neumann_amplitudes(Val(:sine), 0, [c * n for n in 0:(N + 1)], α₀)
+            @test -b / c ≈ B atol = 1.0e-12
+            # the integral over the torus, term by term
+            @test Aₙ ≈ 1 - 8 * sqrt(2) / (3π) * sh^4 / ch * sum(n * b[n] * P[n + 1] * dQ[n + 1] for n in 1:N) rtol = 1.0e-11
+
+            # across the axis: their elimination (4.9)-(4.11), Cₙ - aₙCₙ₊₁ - cₙCₙ₋₁ = -dₙ
+            P¹, dP¹ = toroidal_P(N + 1, 1, α₀), toroidal_dP(N + 1, 1, α₀)
+            Q¹, dQ¹ = toroidal_Q(N + 1, 1, α₀), toroidal_dQ(N + 1, 1, α₀)
+            D = [P¹[n + 1] * sh + 2 * dP¹[n + 1] * ch for n in 0:N]
+            a = [(n == 0 ? 2 : 1) * dP¹[n + 2] / D[n + 1] for n in 0:N]
+            l = [n == 0 ? 0.0 : dP¹[n] / D[n + 1] for n in 0:N]
+            d = [(Q¹[n + 1] * sh + 2 * dQ¹[n + 1] * ch - (n == 0 ? 2 * dQ¹[2] : dQ¹[n + 2] + dQ¹[n])) / D[n + 1] for n in 0:N]
+            β, Y, C = zeros(N + 1), zeros(N + 1), zeros(N + 1)
+            Y[1] = d[1]
+            for n in 1:N
+                β[n + 1] = l[n + 1] * a[n] / (1 - β[n])
+                Y[n + 1] = (d[n + 1] + l[n + 1] * Y[n]) / (1 - β[n + 1])
+            end
+            C[N + 1] = -Y[N + 1]
+            for n in (N - 1):-1:0
+                C[n + 1] = -Y[n + 1] + a[n + 1] / (1 - β[n + 1]) * C[n + 2]
+            end
+            b¹ = TI._neumann_amplitudes(Val(:cosine), 1, [-(n == 0 ? c / 2 : c) for n in 0:(N + 1)], α₀)
+            @test -b¹ / c ≈ [n == 0 ? C[1] / 2 : C[n + 1] for n in 0:N] atol = 1.0e-11
+            @test Aₜ ≈ 1 + 2 * sqrt(2) / (3π) * sh^4 / ch * sum(b¹[n + 1] * P¹[n + 1] * (2 * dQ¹[n + 1] + ch / sh * Q¹[n + 1]) for n in 0:N) rtol = 1.0e-11
         end
     end
 

@@ -1,0 +1,69 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "radiPRSA2016",
+  "doi": "10.1098/rspa.2015.0781",
+  "citation": "Radi, E., Sevostianov, I. (2016). Toroidal insulating inhomogeneity in an infinite space and related problems. Proceedings of the Royal Society A 472, 20150781.",
+  "location": "Figure 7(a), p. 11"
+ },
+ "transcription": {
+  "from": "the figure of the published article (PDF), an embedded image of 384 x 387 pixels: mean ordinate of the colored pixels of each curve at eight abscissas, the axes located on the frame of the plot",
+  "checked_against_source": true,
+  "note": "Ordinates of the two curves of Fig. 7(a): the components of the temperature flux over the surface of the torus, -k phi_z / (q0 R^3) for a remote flux q0 along the axis (solid line) and -k phi_y / (q0 R^3) for a remote flux across it (dashed line), against lambda = r/R. phi is the integral of T n over the surface of the torus (Eq. 5.1), k the conductivity of the matrix and R the radius of the center line. One pixel is 0.105 on the ordinate and 0.0026 on the abscissa; the lines are 3 to 5 pixels thick. Below lambda = 0.3 the curves are not distinct from the axis at this resolution and are not read. Figures 7(b), 8 and 9 of the article are not transcribed."
+ },
+ "quantities": {
+  "reading_uncertainty": {
+   "value": 0.5,
+   "unit": "1",
+   "kind": "estimated",
+   "uncertainty": null,
+   "location": "Figure 7(a)",
+   "description": "Uncertainty of an ordinate read on the image: the thickness of the plotted line."
+  }
+ },
+ "tables": {
+  "surface_flux": [
+   {
+    "lambda": 0.3,
+    "minus_k_phi_z": 3.88,
+    "minus_k_phi_y": 2.34
+   },
+   {
+    "lambda": 0.4,
+    "minus_k_phi_z": 6.75,
+    "minus_k_phi_y": 4.17
+   },
+   {
+    "lambda": 0.5,
+    "minus_k_phi_z": 10.43,
+    "minus_k_phi_y": 6.54
+   },
+   {
+    "lambda": 0.6,
+    "minus_k_phi_z": 14.97,
+    "minus_k_phi_y": 9.46
+   },
+   {
+    "lambda": 0.7,
+    "minus_k_phi_z": 20.31,
+    "minus_k_phi_y": 12.95
+   },
+   {
+    "lambda": 0.8,
+    "minus_k_phi_z": 26.42,
+    "minus_k_phi_y": 17.04
+   },
+   {
+    "lambda": 0.9,
+    "minus_k_phi_z": 33.12,
+    "minus_k_phi_y": 21.89
+   },
+   {
+    "lambda": 0.98,
+    "minus_k_phi_z": 38.59,
+    "minus_k_phi_y": 26.85
+   }
+  ]
+ },
+ "notes": []
+}

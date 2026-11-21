@@ -109,5 +109,8 @@ ForwardDiff.derivative(axial, 0.35)
 ## Where to go next
 
 - [Toroidal inclusions](@ref th-toroidal-inclusions): the derivation.
+- [Ring-shaped pores in a conducting matrix](@ref app-insulating-torus): the
+  tensor against the ratio of the radii, published values, and the
+  conductivity of a matrix with such pores.
 - [Choosing an inclusion](@ref man-choosing-inclusion): the torus among the
   other routes.
