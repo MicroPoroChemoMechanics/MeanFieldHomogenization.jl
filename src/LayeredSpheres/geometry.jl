@@ -156,6 +156,56 @@ Outermost radius of the composite sphere.
 """
 outer_radius(sphere::LayeredSphere) = sphere.radii[end]
 
+# ── Layers that follow a radial profile ─────────────────────────────────────
+
+"""
+    graded_layers(profile, edges) -> (radii, moduli)
+    graded_layers(profile, r_in, r_out, n) -> (radii, moduli)
+
+Uniform layers that stand for a zone whose moduli vary with the radius.
+
+`profile(r)` returns the modulus at the radius `r`, a stiffness or a
+conductivity tensor. The zone between `edges[1]` and `edges[end]` is cut at the
+radii `edges`, ascending, and each layer takes the modulus of the profile at
+its mid-radius. The second form cuts `[r_in, r_out]` into `n` layers of equal
+thickness. The result holds the outer radius and the modulus of each layer,
+ready to be appended to those of a core:
+
+```jldoctest
+julia> using MeanFieldHomogenization, TensND
+
+julia> radii, moduli = graded_layers(r -> TensISO{3}(2 - 1 / r), 1.0, 2.0, 4);
+
+julia> radii
+(1.25, 1.5, 1.75, 2.0)
+
+julia> sphere = LayeredSphere((1.0, radii...), (TensISO{3}(5.0), moduli...));
+
+julia> layer_count(sphere)
+5
+```
+
+The response of the layered inclusion tends to that of the graded one as the
+square of the thickness of the layers. The same radii and moduli serve a
+`LayeredCylinder`.
+
+The number of layers is part of the type of the result: with `edges` given as
+a tuple the call is inferred, with a vector or with `n` it is not, and the
+inclusion built from it is the function barrier.
+"""
+function graded_layers(profile::F, edges::Tuple{Number, Number, Vararg{Number}}) where {F}
+    inner, outer = Base.front(edges), Base.tail(edges)
+    return outer, map((a, b) -> profile((a + b) / 2), inner, outer)
+end
+graded_layers(profile::F, edges::AbstractVector{<:Number}) where {F} = graded_layers(profile, Tuple(edges))
+function graded_layers(profile::F, r_in::Number, r_out::Number, n::Integer) where {F}
+    n ≥ 1 || throw(ArgumentError("graded_layers needs at least one layer; got n = $n"))
+    return graded_layers(profile, ntuple(j -> r_in + (r_out - r_in) * (j - 1) / n, n + 1))
+end
+graded_layers(::Any, edges::Union{Tuple{}, Tuple{Number}}) = throw(
+    ArgumentError("graded_layers needs two radii at least, the two ends of the zone; got $(edges)")
+)
+
 # ── AbstractInclusion interface ──────────────────────────────────────────────
 
 MFH_Core.dimension(::LayeredSphere) = 3

@@ -298,6 +298,7 @@ export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
+export graded_layers
 export layer_gradient_average, sphere_gradient_average, cumulative_strain_average
 export layer_flux_average, sphere_flux_average
 export layer_strain_average, sphere_strain_average

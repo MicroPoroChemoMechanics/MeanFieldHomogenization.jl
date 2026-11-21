@@ -194,6 +194,29 @@ matrix ([Layered sphere, section 9](@ref th-layered-sphere)). The tutorials
 and [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields)
 work through one in detail.
 
+#### A zone whose moduli vary with the radius
+
+An interphase is often not a uniform shell: its moduli vary from those at the
+surface of the particle to those of the matrix. Such a zone is entered as thin
+uniform layers that follow its profile. `graded_layers` cuts it and reads the
+profile at the mid-radius of each layer:
+
+```@example manlayered_graded
+using MeanFieldHomogenization, TensND
+a, K_m = 1.0, 2.0                                       # radius of the particle, conductivity of the matrix
+profile(r) = TensISO{3}(K_m * (1 - 0.5 * (a / r)^10))   # conductivity halved at the particle
+radii, moduli = graded_layers(profile, a, 3a, 40)       # 40 layers of equal thickness between a and 3a
+particle = LayeredSphere((a, radii...), (TensISO{3}(10.0), moduli...))
+layer_count(particle)
+```
+
+The radii may also be given, as a vector or a tuple, to refine the layers
+where the profile is steep. The response of the layers tends to that of the
+graded zone as the square of their thickness;
+[A graded interphase around a spherical particle](@ref app-graded-interphase)
+measures it against an exact solution. The radii and moduli returned serve a
+`LayeredCylinder` as well.
+
 ### [Coaxial cylinders](@id man-layered-cylinders)
 
 [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder)
@@ -317,6 +340,8 @@ and
 work through the three geometries, and
 [The interfacial transition zone in concrete](@ref app-itz-concrete) uses a
 coated sphere for an aggregate and its transition zone.
+[A graded interphase around a spherical particle](@ref app-graded-interphase)
+replaces the uniform shell by a zone whose moduli vary with the radius.
 
 - [Layered spheres](@ref th-layered-sphere),
   [Layered cylinder](@ref th-layered-cylinder),

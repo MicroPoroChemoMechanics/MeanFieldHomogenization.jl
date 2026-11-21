@@ -304,6 +304,8 @@ pages = [
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/generated/itz_elastic_limit.md",
+            # The uniform shell replaced by a zone that varies with the radius.
+            "applications/generated/graded_interphase.md",
         ],
         # Particles in contact through interfaces: sliding platelets, then
         # frictional contacts between rigid grains, then deformable grains.

@@ -361,6 +361,8 @@ end
         include("LayeredSpheres/test_interface_jumps.jl")
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
+        include("LayeredSpheres/test_graded_layers.jl")
+        include("LayeredSpheres/test_neutral.jl")
         include("LayeredSpheres/test_harmonic_response.jl")
         include("LayeredSpheres/test_harmonic_response_elastic.jl")
         include("LayeredSpheres/test_christensen.jl")
