@@ -173,8 +173,8 @@ const network = load_surrogate(model_path("supershape_pore_elastic"))
 network_pore(p) = FESupershapePore(Supersphere(1.0, p); elastic = network)
 contribution(network_pore(1.0)), exact_sphere
 
-# The network was trained on cells of the third level, and it carries their
-# error in the concave range.
+# The network was trained on cells of the fourth level, in a cell of radius
+# ``4a``: it follows the cell, with its error in the concave range.
 
 # ## Route 4: a grid of Gaussians
 #
@@ -220,11 +220,12 @@ end
 # Three observations.
 #
 # - **For a convex pore the routes agree.** From the sphere to ``p = 2.5`` the
-#   cell is within 0.2 % of the published values and the network within 0.5 %.
+#   cell is within 0.2 % of the published values and the network within 0.3 %.
 #   The grid of Gaussians is within 4 %.
 # - **A concave pore separates them.** At ``p = 0.4`` the finest cell is 2 %
-#   below the published value and still rising with the refinement; the network,
-#   trained on a coarser cell, is 6 % below; the grid of 16 nodes is 32 % below.
+#   below the published value and still rising with the refinement, and the
+#   network trained on such cells is at the same distance; the grid of 16 nodes
+#   is 32 % below.
 # - **The published table is itself a computation.** Its authors report, for
 #   the spheroid, an error below 1 % except at the two flattest shapes. It is
 #   the reference of this page because it is the finest of the four meshes, not

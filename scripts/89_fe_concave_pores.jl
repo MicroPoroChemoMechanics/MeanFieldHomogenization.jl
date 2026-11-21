@@ -95,9 +95,12 @@ println("\nThe sphere is the control: V*(1) = 4π/3 = ", 4π / 3, ".")
 # makes this loop a matter of minutes: the three coordinate planes are mirror
 # planes of a supersphere, so an eighth of the domain carries the whole answer.
 
+# Level 4 and a cell of radius `4a`: a concave pore is not converged at level 3
+# (`E₀H₁₁₁₁` of `p = 0.4` moves by 7 % from level 3 to 4), and the elastic
+# answer of the sphere is 0.4 % off at `3a`, against 0.08 % at `4a`.
 const CELL = FECellMeshOptions(;
-    level = 3, outer_level = 3, radius_ratio = 3.0, relax = 20,
-    octant = true, max_dofs = 150_000, min_free_gb = 4.0,
+    level = 4, outer_level = 3, radius_ratio = 4.0, relax = 20,
+    octant = true, max_dofs = 150_000, min_free_gb = 2.5,
 )
 
 "Compliance and resistivity contribution tensors of the cavity, this package's way."
@@ -107,7 +110,8 @@ function contributions(p)
     # manual. Passing the matrix's own moduli is the documented way to say so.
     H = inverse_property_contribution(pore, C₀, C₀)
     R = inverse_property_contribution(pore, KK₀, KK₀)
-    return (; H, R, pore)
+    GC.gc()                 ## the sparse factors of this cell are released before the next one
+    return (; H, R)
 end
 
 println("\n", "="^78)
