@@ -269,6 +269,8 @@ end
         # Brinkman inclusions are clients of that contract: the Stokes-to-Darcy
         # permeability against the closed-form estimates of Bignonnet (2022).
         include("CustomInclusions/test_brinkman.jl")
+        # Toroidal inclusions enter through the same contract.
+        include("CustomInclusions/test_toroidal_inclusions.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_brinkman_symbolic.jl")
     end
 

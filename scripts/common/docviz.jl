@@ -884,7 +884,8 @@ end
 
 Draw a `MeanFieldHomogenization` inclusion object.  Implemented for [`Ellipsoid`](@ref),
 [`Cylinder`](@ref), [`EllipticCrack`](@ref), [`RibbonCrack`](@ref),
-[`LayeredSphere`](@ref) and [`LayeredSpheroid`](@ref), so a figure and the
+[`LayeredSphere`](@ref), [`LayeredSpheroid`](@ref) and [`InsulatingTorus`](@ref),
+so a figure and the
 computation it illustrates are driven by the *same* object.
 """
 function shape_traces end
@@ -1079,6 +1080,20 @@ function shape_traces(
         base = R[:, 3] .* (len * (1 + 0.3 * (N - 1)) / 2)
         append!(traces, arrow_trace(Tuple(base), Tuple(R[:, 3] .* (1.2 * last(radii))); size = 0.35 * last(radii), label = "<u><i>n</i></u>"))
     end
+    return traces
+end
+
+function shape_traces(
+        t::MeanFieldHomogenization.InsulatingTorus;
+        color::AbstractString = "#f0ad4e", opacity::Real = 0.7, axis::Bool = true,
+        label = "<u><i>n</i></u>", nu::Integer = 61, nv::Integer = 25,
+    )
+    R₀, r₀ = Float64(t.R), Float64(t.r)
+    F = frame_matrix(t.basis)
+    f = (u, v) -> Tuple(F * [(R₀ + r₀ * cos(v)) * cos(u), (R₀ + r₀ * cos(v)) * sin(u), r₀ * sin(v)])
+    X, Y, Z = param_surface(f, range(0, 2π; length = nu), range(0, 2π; length = nv))
+    traces = SceneItem[surface_trace(X, Y, Z; color = color, opacity = opacity)]
+    axis && append!(traces, arrow_trace((0.0, 0.0, 0.0), F[:, 3] .* (0.9 * R₀); size = 0.15 * R₀, label = label))
     return traces
 end
 

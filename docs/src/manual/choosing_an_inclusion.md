@@ -38,6 +38,7 @@ response is computed, and therefore by what they allow.
 | ellipsoid and its limits | [`Ellipsoid`](@ref), `Cylinder` | A | closed form, or a quadrature for a general anisotropy | [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions), [Cylindrical inclusions](@ref man-cylindrical-inclusions) |
 | elliptical and ribbon cracks | [`EllipticCrack`](@ref), `RibbonCrack` | density | the crack-opening tensor | [Cracks](@ref man-cracks) |
 | layered patterns | `LayeredSphere`, `LayeredCylinder`, `LayeredSpheroid` | B | exact recurrence over the layers, or a series of harmonics | [Layered inclusions](@ref man-layered) |
+| toroidal pore (conduction) | [`InsulatingTorus`](@ref) | B | series of toroidal harmonics, exact to rounding | [Toroidal inclusions](@ref man-toroidal-inclusions) |
 | your own formula, table or solver | [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion), or a subtype of [`AbstractCustomInclusion`](@ref) | A, B or C | what you supply | [Custom inclusions](@ref man-custom-inclusions) |
 | flat crack of any contour | [`PlanarCrack`](@ref) | density | integral equation of the crack on a grid of Gaussians | [Planar cracks of any contour](@ref man-planar-cracks) |
 | any region of space | [`GaussianInclusion`](@ref) | B | integral equation of the heterogeneity on a grid of Gaussians | [Heterogeneities of any shape](@ref man-gaussian-inclusions) |
@@ -55,6 +56,7 @@ morphology of your own enters the same way.
 | ellipsoid and its limits | any anisotropy | shape and properties | exact | none |
 | elliptical and ribbon cracks | any anisotropy | shape and properties | exact | none |
 | layered patterns | isotropic; transversely isotropic about the axis for the cylinder | shape and properties | exact | none |
+| toroidal pore (conduction) | isotropic | shape | exact | none |
 | your own formula, table or solver | what your code accepts | those your code propagates | yours | yours |
 | flat crack of any contour | any anisotropy | properties; the contour is refused | controlled by the grid, with an extrapolation between two grids | one solve per reference medium |
 | any region of space | isotropic | properties; the shape is refused | a few percent for a convex shape, more for a concave one | seconds in conduction, tens of seconds in elasticity |
@@ -89,6 +91,7 @@ an ellipsoid, where the exact answer is known.
 | :--- | :--- |
 | the shape is an ellipsoid, a cylinder, an elliptical or a ribbon crack | the closed form |
 | a coated particle with concentric, coaxial or confocal layers | a layered pattern |
+| a ring-shaped pore, in conduction | `InsulatingTorus` |
 | the contribution tensors of the shape are published, or a formula is known | `CustomInclusion`, at the level the source gives |
 | the response comes from a solver of your own | a subtype of `AbstractCustomInclusion` |
 | a flat crack that is not an ellipse, or whose faces touch | `PlanarCrack` |

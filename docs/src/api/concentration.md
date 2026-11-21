@@ -111,6 +111,19 @@ MeanFieldHomogenization.ResistanceForm
 MeanFieldHomogenization.PermeabilityForm
 ```
 
+## Toroidal inclusions
+
+A ring-shaped pore of the conduction problem, solved by a series of toroidal
+harmonics and entered through the concentration level (B) of the
+custom-inclusion interface; see [Toroidal inclusions](@ref man-toroidal-inclusions)
+and [Toroidal inclusions](@ref th-toroidal-inclusions).
+
+```@docs
+MeanFieldHomogenization.ToroidalInclusions
+MeanFieldHomogenization.InsulatingTorus
+MeanFieldHomogenization.ToroidalShape
+```
+
 ## Finite-element inclusions
 
 Requires a finite-element backend: `Ferrite`, `FerriteGmsh` and `Gmsh` serve

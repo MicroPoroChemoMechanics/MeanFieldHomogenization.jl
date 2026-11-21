@@ -153,6 +153,9 @@ include("CustomInclusions/CustomInclusions.jl")
 # Brinkman inclusions: the Stokes-to-Darcy auxiliary problems, entered through
 # the custom-inclusion contract above.
 include("Brinkman/Brinkman.jl")
+# Toroidal inclusions: series of toroidal harmonics in the chart of TensND,
+# entered through the same contract.
+include("ToroidalInclusions/ToroidalInclusions.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
 # `GaussianApproximation`: cracks and heterogeneities of arbitrary shape, their
@@ -171,6 +174,7 @@ include("MaterialLaws/MaterialLaws.jl")
 using .Superspheres
 using .CustomInclusions
 using .Brinkman
+using .ToroidalInclusions
 using .FiniteElements
 using .NeuralInclusions
 using .GaussianApproximation
@@ -225,6 +229,7 @@ export CustomInclusion, CustomShape, check_inclusion_interface
 export BrinkmanMedium, BrinkmanPorous, BrinkmanFluid, BrinkmanSolid
 export BrinkmanForm, ResistanceForm, PermeabilityForm
 export AbstractBrinkmanInclusion, BrinkmanSphere, BrinkmanCylinder, BrinkmanLayer, BrinkmanCoatedSphere
+export InsulatingTorus, ToroidalShape
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb

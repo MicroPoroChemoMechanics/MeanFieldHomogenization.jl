@@ -105,6 +105,9 @@ pages = [
             # The permeability from the Stokes flow in the pores: the same
             # schemes, fed with size-dependent Brinkman inclusions.
             "theory/brinkman.md",
+            # A shape that is not an ellipsoid and has an exact series: the torus,
+            # in the toroidal coordinates of TensND.
+            "theory/toroidal_inclusions.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
         # non-aging problem onto an elastic one, and the aging case, where
@@ -134,6 +137,7 @@ pages = [
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
             "manual/brinkman_inclusions.md",
+            "manual/toroidal_inclusions.md",
             # Three treatments of a shape with no closed form, all through the
             # custom-inclusion interface: a grid of Gaussians, a mesh, a
             # trained network.
