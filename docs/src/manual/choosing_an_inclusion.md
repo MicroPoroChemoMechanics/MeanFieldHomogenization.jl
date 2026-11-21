@@ -57,7 +57,7 @@ morphology of your own enters the same way.
 | layered patterns | isotropic; transversely isotropic about the axis for the cylinder | shape and properties | exact | none |
 | your own formula, table or solver | what your code accepts | those your code propagates | yours | yours |
 | flat crack of any contour | any anisotropy | properties; the contour is refused | controlled by the grid, with an extrapolation between two grids | one solve per reference medium |
-| any region of space | isotropic | properties; the shape is refused | a few percent | seconds in conduction, tens of seconds in elasticity |
+| any region of space | isotropic | properties; the shape is refused | a few percent for a convex shape, more for a concave one | seconds in conduction, tens of seconds in elasticity |
 | a meshed cell | isotropic | refused | that of the mesh, reported by the inclusion | one factorization per reference medium, kept |
 | a trained network | isotropic | shape and properties | that of the fit, stored with the model | none |
 
@@ -108,6 +108,6 @@ differentiated, deserves a type: the fields of a subtype of
   above goes through.
 - [The custom-inclusion interface: three entry levels, one answer](@ref tut-custom-inclusion-contract):
   one morphology entered at each level.
-- [Concave pores: superspheres and superspheroids](@ref app-concave-pores): a
-  shape with no closed form, treated by finite elements and compared with
-  published values.
+- [A concave pore through every route](@ref app-pore-routes): one shape with
+  no closed form, by a published table, a mesh, a network and a grid, with the
+  deviations measured.

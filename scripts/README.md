@@ -55,7 +55,7 @@ three-scale model (`common/quasibrittle_strength.jl`), used by both the demo scr
 | 40–49 | Strength & multiscale |
 | 50–59 | Viscoelasticity & ALV |
 | 60–69 | ALV cracks, interfaces, cross-validations & the Laplace-Carson route |
-| 70–79 | Symmetrization showcases (70), Stokes-to-Darcy permeability (71) |
+| 70–79 | Symmetrization showcases (70), Stokes-to-Darcy permeability (71), a concave pore by every route (77) |
 | 80–89 | Custom (user-defined) inclusions, finite-element and neural-surrogate coupling |
 | 90–99 | Interacting particle assemblies: EIM & cluster model |
 

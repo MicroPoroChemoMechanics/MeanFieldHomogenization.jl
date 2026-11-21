@@ -13,6 +13,7 @@
 #      docs/src/assets/fe/cell_mesh_3d.png
 #      docs/src/assets/fe/axi_pore_mesh.png
 #      docs/src/assets/fe/cell_results.md.in    (tables, pasted into the pages)
+#      docs/src/assets/fe/supersphere_convergence.json   (section `convergence`)
 # =============================================================================
 
 import Pkg
@@ -200,6 +201,43 @@ want("cost") && let
         flush(stdout)
     end
     println(report)
+end
+
+# ─── Convergence of the elastic contribution of a supersphere ────────────────
+
+# Read by `scripts/77_supersphere_pore_routes.jl`, which sets these values beside
+# the published ones: the documentation build does not mesh.
+want("convergence") && let
+    println("── convergence of a superspherical pore, elasticity ────────────")
+    rows = String[]
+    for p in (0.4, 0.5, 0.7, 1.0, 1.5, 2.5), lvl in (2, 3, 4)
+        o = FECellMeshOptions(;
+            level = lvl, outer_level = 3, radius_ratio = 6.0, relax = 20,
+            octant = true, max_dofs = 400_000, min_free_gb = 3.0,
+        )
+        pore = FESupershapePore(Supersphere(1.0, p); opts = o)
+        H = canonical_components(inverse_property_contribution(pore, C₀, C₀))
+        rep = fe_cell_mesh_report(pore)
+        push!(
+            rows, @sprintf(
+                "  {\"p\": %.2f, \"level\": %d, \"dofs\": %d, \"H1111\": %.6f, \"H1122\": %.6f, \"H1212\": %.6f}",
+                p, lvl, 3 * rep.nnodes, Em * H[1, 1, 1, 1], Em * H[1, 1, 2, 2], Em * H[1, 2, 1, 2],
+            )
+        )
+        println(rows[end])
+        flush(stdout)
+        GC.gc()
+    end
+    open(joinpath(OUT, "supersphere_convergence.json"), "w") do io
+        println(io, "{")
+        println(io, " \"generator\": \"scripts/fe/make_cell_figures.jl convergence\",")
+        println(io, " \"description\": \"E0 H of a superspherical pore of unit semi-axis, one octant of the cell, radius ratio 6, outer level 3, matrix Poisson ratio ", νm, "\",")
+        println(io, " \"nu0\": ", νm, ",")
+        println(io, " \"rows\": [")
+        println(io, join(rows, ",\n"))
+        println(io, " ]")
+        println(io, "}")
+    end
 end
 
 # ─── The axisymmetric cavity ─────────────────────────────────────────────────

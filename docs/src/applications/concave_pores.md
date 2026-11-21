@@ -419,6 +419,10 @@ julia scripts/89_fe_concave_pores.jl      # the comparison, live
 
 ## Where to go next
 
+[A concave pore through every route](@ref app-pore-routes) sets the cell of this
+page beside a published table, a network and a grid of Gaussians, component by
+component.
+
 The two cells of this page are the teachers of the supersphere and superspheroid
 surrogates described in [Neural-surrogate inclusions](@ref man-neural-inclusions),
 which replace the solve inside a scheme. The shape of the pores matters still

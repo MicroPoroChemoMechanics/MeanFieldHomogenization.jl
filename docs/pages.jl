@@ -276,6 +276,9 @@ pages = [
             # The Fourier reduction of the first is reused by the second.
             "applications/recycled_aggregate.md",
             "applications/concave_pores.md",
+            # The same pore by the four routes to a shape with no closed form,
+            # against a published table.
+            "applications/generated/pore_routes.md",
             # A crack of any contour, here a disk with contact islands, against
             # a published study and the annular crack.
             "applications/generated/crack_contacts.md",
