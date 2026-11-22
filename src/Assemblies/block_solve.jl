@@ -24,15 +24,14 @@
 # =============================================================================
 
 """
-    _mandel_size(P₀) -> Int
+    _block_size(P₀) -> Int
 
-Number of Kelvin-Mandel components carried by a tensor of the same order and
-dimension as the reference property `P₀`.
+Size of the matrix of a tensor of the order and dimension of the reference
+property `P₀`: the Kelvin-Mandel components of a symmetric second-order tensor
+at order 4, the components of a vector at order 2.
 """
-_mandel_size(::TensND.AbstractTens{4, 3}) = 6
-_mandel_size(::TensND.AbstractTens{4, 2}) = 3
-_mandel_size(::TensND.AbstractTens{2, 3}) = 3
-_mandel_size(::TensND.AbstractTens{2, 2}) = 2
+_block_size(::TensND.AbstractTens{4, d}) where {d} = d * (d + 1) ÷ 2
+_block_size(::TensND.AbstractTens{2, d}) where {d} = d
 
 # ─── Flattening ──────────────────────────────────────────────────────────────
 #
@@ -69,7 +68,7 @@ radius work.
 """
 function _solve_tensor_system(blocks, rhs, P₀::TensND.AbstractTens)
     n = length(rhs)
-    m = _mandel_size(P₀)
+    m = _block_size(P₀)
     Mb = [[_to_mandel(blocks[i][k], P₀) for k in 1:n] for i in 1:n]
     Rb = [_to_mandel(rhs[i], P₀) for i in 1:n]
     # `hcat` and `vcat` promote across the blocks they join: the blocks live in an

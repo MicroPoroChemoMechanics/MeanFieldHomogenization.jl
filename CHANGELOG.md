@@ -59,6 +59,10 @@ says which route to an inclusion's response fits which situation.
   circular holes takes 13 µs, against 110 µs for the same medium described in
   three dimensions as aligned cylinders. `IsoSymmetrize` on a phase of the
   plane averages over the orientations of the plane.
+- An assembly of particles checks that the domain of a `MixedBC` has the
+  dimension of the particles: disks in the ball of `MixedBC(radius)` gave
+  volume fractions against a volume, and are now refused with the way out,
+  `MixedBC(Ellipsoid(radius; dim = 2))`.
 - **`graded_layers(profile, r_in, r_out, n)`**, which cuts a zone whose moduli
   vary with the radius into thin uniform layers for a `LayeredSphere` or a
   `LayeredCylinder`: an interphase that is not a uniform shell. The response of
