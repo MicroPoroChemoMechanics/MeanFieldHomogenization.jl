@@ -431,9 +431,11 @@ _same_orientation(::Val{:ortho}, a, b) = isequal(TensND.frame(a), TensND.frame(b
 _same_orientation(::Val, a, b) = true
 
 _state_length(::Val, t) = length(TensND.get_data(t))
-_state_length(::Val{:full_4}, t) = 36
-# A conductivity is symmetric: its Mandel vector has 6 components.
-_state_length(::Val{:full_2}, t) = 6
+# Size of a Kelvin-Mandel vector in the dimension of `t`: 6 in space, 3 in the plane.
+_mandel_size(t) = (d = TensND.get_dim(t); d * (d + 1) ÷ 2)
+_state_length(::Val{:full_4}, t) = _mandel_size(t)^2
+# A conductivity is symmetric: its state is its Mandel vector.
+_state_length(::Val{:full_2}, t) = _mandel_size(t)
 
 _symmetry_tag(::TensND.TensISO{4}) = Val(:iso_4)
 _symmetry_tag(::TensND.TensISO{2}) = Val(:iso_2)
@@ -442,8 +444,8 @@ _symmetry_tag(::TensND.TensOrtho) = Val(:ortho)
 # Fully-anisotropic 4-tensor (`TensCanonical`, `Tens`, …) — flatten
 # the full 6×6 Mandel matrix as the ODE state (36 components ; not
 # minimal but generic).
-_symmetry_tag(::TensND.AbstractTens{4, 3}) = Val(:full_4)
-_symmetry_tag(::TensND.AbstractTens{2, 3}) = Val(:full_2)
+_symmetry_tag(::TensND.AbstractTens{4}) = Val(:full_4)
+_symmetry_tag(::TensND.AbstractTens{2}) = Val(:full_2)
 
 # Flatten / reconstruct: TensND's `to_vector` / `from_vector`, the coefficients
 # of a structured class (with its axis or frame), the canonical Kelvin-Mandel
@@ -464,7 +466,7 @@ _reconstruct_tens(::Val, proto::TensND.AbstractTens, u) = TensND.from_vector(pro
 # (symmetrize honored through `_phase_dilute_concentration`).
 function _diff_dilute_correction(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{4, 3}; kw...
+        P_curr::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -476,7 +478,7 @@ end
 
 function _diff_dilute_correction(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{2, 3}; kw...
+        P_curr::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -491,7 +493,7 @@ end
 # so the RHS multiplies by `dε/dτ` directly.
 function _diff_crack_density_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{4, 3}; kw...
+        P_curr::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
@@ -506,7 +508,7 @@ end
 
 function _diff_crack_density_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{2, 3}; kw...
+        P_curr::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
@@ -530,7 +532,7 @@ end
 # Unit-amount compliance contribution `ℍ_i(C)` of a solid inclusion phase.
 function _diff_compliance_correction(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{4, 3}; kw...
+        P_curr::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -542,7 +544,7 @@ end
 
 function _diff_compliance_correction(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{2, 3}; kw...
+        P_curr::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -556,7 +558,7 @@ end
 # crack, whose compliance contribution is finite by construction.
 function _diff_crack_density_compliance_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{4, 3}; kw...
+        P_curr::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
@@ -568,7 +570,7 @@ end
 
 function _diff_crack_density_compliance_kernel(
         rve::RVE, name::Symbol, prop::Symbol,
-        P_curr::TensND.AbstractTens{2, 3}; kw...
+        P_curr::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)

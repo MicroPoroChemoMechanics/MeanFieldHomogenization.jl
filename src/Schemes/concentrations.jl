@@ -88,11 +88,11 @@ function Base.show(io::IO, ct::ConcentrationTensors)
 end
 
 # Order-agnostic composition: double contraction at order 4, single at order 2.
-_compose(A::TensND.AbstractTens{4, 3}, B) = A ⊡ B
-_compose(A::TensND.AbstractTens{2, 3}, B) = A ⋅ B
+_compose(A::TensND.AbstractTens{4}, B) = A ⊡ B
+_compose(A::TensND.AbstractTens{2}, B) = A ⋅ B
 
-const _ConcentrationTensors4 = ConcentrationTensors{<:TensND.AbstractTens{4, 3}}
-const _ConcentrationTensors2 = ConcentrationTensors{<:TensND.AbstractTens{2, 3}}
+const _ConcentrationTensors4 = ConcentrationTensors{<:TensND.AbstractTens{4}}
+const _ConcentrationTensors2 = ConcentrationTensors{<:TensND.AbstractTens{2}}
 
 # ── Entry points ────────────────────────────────────────────────────────────
 
@@ -183,7 +183,7 @@ _phase_weight(::AbstractAmount, rve::RVE, name::Symbol) = volume_fraction(rve, n
 # Compliance (resistivity) contribution of a crack family per unit density,
 # geometric prefactor included.
 function _crack_compliance_per_density(
-        rve::RVE, name::Symbol, P_ref::TensND.AbstractTens{4, 3}; kw...
+        rve::RVE, name::Symbol, P_ref::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
@@ -194,7 +194,7 @@ function _crack_compliance_per_density(
 end
 
 function _crack_compliance_per_density(
-        rve::RVE, name::Symbol, P_ref::TensND.AbstractTens{2, 3}; kw...
+        rve::RVE, name::Symbol, P_ref::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     sym = phase_symmetrize(rve, name)
@@ -447,16 +447,16 @@ function _dual_contribution(N, P₀)
     return -_compose(_compose(S₀, N), S₀)
 end
 
-_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{4, 3}) =
+_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{4}) =
     (; K_interface = _crack_interface_K4(rve, name))
-_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{2, 3}) =
+_crack_interface_kw(rve::RVE, name::Symbol, ::TensND.AbstractTens{2}) =
     (; α_interface = _crack_interface_α(rve, name))
 
 # A crack contribution per unit density, geometric prefactor included.
-_delta_primal(geom, N::TensND.AbstractTens{4, 3}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
-_delta_primal(geom, N::TensND.AbstractTens{2, 3}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
-_delta_dual(geom, H::TensND.AbstractTens{4, 3}) = delta_inverse_property(geom, H, one(eltype(H)))
-_delta_dual(geom, H::TensND.AbstractTens{2, 3}) = delta_inverse_property(geom, H, one(eltype(H)))
+_delta_primal(geom, N::TensND.AbstractTens{4}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
+_delta_primal(geom, N::TensND.AbstractTens{2}) = MFH_Core.delta_property(geom, N, one(eltype(N)))
+_delta_dual(geom, H::TensND.AbstractTens{4}) = delta_inverse_property(geom, H, one(eltype(H)))
+_delta_dual(geom, H::TensND.AbstractTens{2}) = delta_inverse_property(geom, H, one(eltype(H)))
 
 # The block of phase `k` in the state: its strain (part 0) or stress (part 1)
 # concentration tensor, weighted by its amount per unit target amount, as a
@@ -468,12 +468,12 @@ function _flat_block(y, q, k, part)
 end
 
 # Kelvin–Mandel matrix in the canonical basis at order 4, components at order 2.
-_flat_matrix(t::TensND.AbstractTens{4, 3}) =
-    Matrix(TensND.mandel(t, TensND.CanonicalBasis{3, eltype(t)}()))
-_flat_matrix(t::TensND.AbstractTens{2, 3}) = Matrix(TensND.canonical_components(t))
+_flat_matrix(t::TensND.AbstractTens{4}) =
+    Matrix(TensND.mandel(t, TensND.CanonicalBasis{TensND.get_dim(t), eltype(t)}()))
+_flat_matrix(t::TensND.AbstractTens{2}) = Matrix(TensND.canonical_components(t))
 
-_from_flat(M::AbstractMatrix, ::TensND.AbstractTens{4, 3}) = TensND.from_mandel(Matrix(M))
-_from_flat(M::AbstractMatrix, ::TensND.AbstractTens{2, 3}) = TensND.TensCanonical(Matrix(M))
+_from_flat(M::AbstractMatrix, ::TensND.AbstractTens{4}) = TensND.from_mandel(Matrix(M))
+_from_flat(M::AbstractMatrix, ::TensND.AbstractTens{2}) = TensND.TensCanonical(Matrix(M))
 
 # ── Readers ─────────────────────────────────────────────────────────────────
 #
@@ -704,12 +704,12 @@ function _levin_sum(concentration, ct::ConcentrationTensors, loads::AbstractDict
 end
 
 # A load of each phase contracts the concentration tensor from the left.
-_load_contract(x::TensND.AbstractTens{2, 3}, A::TensND.AbstractTens{4, 3}) = x ⊡ A
-_load_contract(x::TensND.AbstractTens{1, 3}, A::TensND.AbstractTens{2, 3}) = x ⋅ A
+_load_contract(x::TensND.AbstractTens{2}, A::TensND.AbstractTens{4}) = x ⊡ A
+_load_contract(x::TensND.AbstractTens{1}, A::TensND.AbstractTens{2}) = x ⋅ A
 
 # The zero of the macroscopic load, in the element type of the estimate.
-_zero_load(ct::_ConcentrationTensors4) = zero(TensND.tens_Id2(Val(3), Val(eltype(ct.effective))))
-_zero_load(ct::_ConcentrationTensors2) = TensND.Tens(zeros(eltype(ct.effective), 3))
+_zero_load(ct::_ConcentrationTensors4) = zero(TensND.tens_Id2(Val(TensND.get_dim(ct.effective)), Val(eltype(ct.effective))))
+_zero_load(ct::_ConcentrationTensors2) = TensND.Tens(zeros(eltype(ct.effective), TensND.get_dim(ct.effective)))
 
 function _check_material_phase(ct::ConcentrationTensors, name::Symbol)
     _check_phase(ct, name) in ct.cracks && throw(

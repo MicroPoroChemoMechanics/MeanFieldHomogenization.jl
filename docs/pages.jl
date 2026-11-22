@@ -153,6 +153,8 @@ pages = [
         ],
         "Cells and schemes" => [
             "manual/schemes.md",
+            # Two-dimensional media through the same schemes.
+            "manual/plane_problems.md",
             "manual/particle_assemblies.md",
             "manual/multiscale.md",
         ],

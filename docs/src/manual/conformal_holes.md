@@ -9,9 +9,9 @@
 A [`ConformalHole`](@ref) is an infinite cylindrical cavity whose
 cross-section is given by a conformal map with a finite number of terms: a
 prismatic pore with rounded corners, a star-shaped channel, a slot. It is a
-cavity in elasticity and an insulator in conduction, in an isotropic matrix.
-Its field is not uniform and it has no Hill tensor; its concentration tensors
-are exact.
+cavity in elasticity and an insulator in conduction, in a matrix that is
+isotropic or transversely isotropic about the axis of the cavity. Its field is
+not uniform and it has no Hill tensor; its concentration tensors are exact.
 
 ```@setup manconformal
 using MeanFieldHomogenization
@@ -120,9 +120,51 @@ tidy(TensND.mandel(C))
 ```
 
 The effective stiffness has the symmetry of the square about the axis of the
-pores. Randomly oriented pores are obtained with `symmetrize = IsoSymmetrize()`
-on the phase, which the self-consistent and differential schemes need: the
-hole is solved in an isotropic medium only.
+pores.
+
+The self-consistent and the differential schemes solve the hole in their own
+estimate. The hole accepts it when it is isotropic in the plane of the
+section, that is transversely isotropic about the axis of the pores
+([Holes given by a conformal map](@ref th-conformal-mapping), section 7): for
+sections with an axis of symmetry of order 3, or of order 5 and more, and for
+any section oriented at random in the plane with
+`symmetrize = TISymmetrize(axis)`. Triangular pores, then square ones turned
+at random about ``\underline{e}_1``:
+
+```@example manconformal
+function porous(hole; kw...)
+    rve = RVE()
+    add_phase!(rve, :matrix, Cylinder(1.0, 1.0), Dict(:C => C₀); fraction = :rest)
+    add_phase!(rve, :pores, hole, Dict(:C => void); fraction = 0.1, kw...)
+    return rve
+end
+C_triangles = homogenize(porous(ConformalHole(polygon_map(3, 20)...)), SelfConsistent(), :C)
+C_squares = homogenize(porous(square; symmetrize = TISymmetrize((1.0, 0.0, 0.0))), SelfConsistent(), :C)
+tidy(TensND.mandel(C_triangles))
+```
+
+```@example manconformal
+tidy(TensND.mandel(C_squares))
+```
+
+The matrix is here a phase of circular section, `Cylinder(1.0, 1.0)`, so that
+the medium is invariant along the axis. Pores oriented at random in space are
+obtained with `symmetrize = IsoSymmetrize()`.
+
+## In a cell of the plane
+
+When the moduli of the plane are what is wanted, the hole is placed in a
+two-dimensional cell, whose properties are tensors of the plane
+([Plane problems](@ref man-plane-problems)): it is then its section, and its
+tensors are those of the plane. A plate with square holes, in plane stress:
+
+```@example manconformal
+c = plane_stress_stiffness(C₀)             # the stiffness of the plate
+plate = RVE()
+add_phase!(plate, :matrix, Ellipsoid(1.0; dim = 2), Dict(:C => c); fraction = :rest)
+add_phase!(plate, :holes, square, Dict(:C => 0 * c); fraction = 0.1)
+tidy(TensND.mandel(homogenize(plate, MoriTanaka(), :C)))
+```
 
 ## Derivatives
 
@@ -140,7 +182,8 @@ ForwardDiff.derivative(modulus, 0.1)
 
 ## What is not covered
 
-- an anisotropic reference medium, refused with a message;
+- a reference medium that is anisotropic in the plane of the section, refused
+  with a message;
 - a section that conducts or carries stress: the hole is empty;
 - a corner, which a finite map rounds: the tensors converge with the number of
   terms ([Prismatic pores with corners](@ref app-conformal-holes));
@@ -153,5 +196,7 @@ ForwardDiff.derivative(modulus, 0.1)
 - [Holes given by a conformal map](@ref th-conformal-mapping): the derivation.
 - [Prismatic pores with corners](@ref app-conformal-holes): published values,
   polygons, and the effect of the shape of the section.
+- [Plane problems](@ref man-plane-problems): sheets and long bodies with such
+  holes, in plane stress and in plane strain, as cells of the plane.
 - [Choosing an inclusion](@ref man-choosing-inclusion): the hole among the
   other routes.

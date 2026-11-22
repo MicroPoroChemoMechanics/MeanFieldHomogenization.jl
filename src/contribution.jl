@@ -40,8 +40,8 @@ See [kachanov2018](@citet).
 """
 function property_contribution(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
@@ -69,8 +69,8 @@ See [kachanov2018](@citet).
 """
 function inverse_property_contribution(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     S₀ = inv(C₀)
@@ -84,7 +84,7 @@ Dilute **effective stiffness correction** ``\\Delta\\mathbb{C} = f\\,\\mathbb{N}
 size-independent contribution tensor ``\\mathbb{N}`` and the volume fraction ``f``
 of inclusions sharing that contribution.
 """
-delta_property(N::TensND.AbstractTens{4, 3}, f) = f * N
+delta_property(N::TensND.AbstractTens{4}, f) = f * N
 
 """
     delta_inverse_property(H, f) -> Tens{4,3}
@@ -95,7 +95,7 @@ size-independent contribution tensor ``\\mathbb{H}`` and the volume fraction ``f
 which use the Budiansky density convention and apply a geometric
 prefactor.)
 """
-delta_inverse_property(H::TensND.AbstractTens{4, 3}, f) = f * H
+delta_inverse_property(H::TensND.AbstractTens{4}, f) = f * H
 
 # =============================================================================
 #  Conductivity contribution (2-tensor fields)
@@ -121,8 +121,8 @@ instead — see [`property_contribution`](@ref).
 """
 function property_contribution(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
@@ -146,8 +146,8 @@ heterogeneous one — see [`inverse_property_contribution`](@ref).
 """
 function inverse_property_contribution(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     R₀ = inv(K₀)
@@ -160,7 +160,7 @@ end
 Dilute effective conductivity correction ``\\Delta\\boldsymbol{K} = f\\,\\boldsymbol{N}``,
 with ``\\boldsymbol{N}`` the conductivity contribution `N_K`.
 """
-delta_property(N::TensND.AbstractTens{2, 3}, f) = f * N
+delta_property(N::TensND.AbstractTens{2}, f) = f * N
 
 """
     delta_inverse_property(H_R, f) -> Tens{2,3}
@@ -170,7 +170,7 @@ with ``\\boldsymbol{H}`` the resistivity contribution `H_R`.  Generic
 2-argument method; for cracks, see the 3-argument
 `delta_inverse_property(crack, R, ε)` with the Budiansky density prefactor.
 """
-delta_inverse_property(H::TensND.AbstractTens{2, 3}, f) = f * H
+delta_inverse_property(H::TensND.AbstractTens{2}, f) = f * H
 
 # =============================================================================
 #  Bundled two-argument contributions of a flat inclusion.
@@ -183,14 +183,14 @@ delta_inverse_property(H::TensND.AbstractTens{2, 3}, f) = f * H
 # =============================================================================
 
 inverse_and_property_contribution(
-    incl::AbstractInclusion, C₀::TensND.AbstractTens{4, 3}; kw...
+    incl::AbstractInclusion, C₀::TensND.AbstractTens{4}; kw...
 ) = (
     inverse_property_contribution(incl, C₀; kw...),
     property_contribution(incl, C₀; kw...),
 )
 
 inverse_and_property_contribution(
-    incl::AbstractInclusion, K₀::TensND.AbstractTens{2, 3}; kw...
+    incl::AbstractInclusion, K₀::TensND.AbstractTens{2}; kw...
 ) = (
     inverse_property_contribution(incl, K₀; kw...),
     property_contribution(incl, K₀; kw...),

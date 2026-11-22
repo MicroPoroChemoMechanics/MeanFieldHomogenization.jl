@@ -6,20 +6,24 @@
     whose cylindrical case is the elliptic section recovered below.
 
 An infinite cylindrical cavity whose cross-section is not an ellipse has no
-Hill tensor. In an isotropic matrix its response is nonetheless exact when the
-outside of the section is the image of the outside of a disk by a map with a
-finite number of terms: the complex potentials of plane elasticity are then
-finite sums. This page derives the concentration tensors of such a cavity; the
-method is that of [Muskhelishvili](@cite muskhelishvili1977), and the syntax is
-given in [Conformal holes](@ref man-conformal-holes).
+Hill tensor. In a matrix that is isotropic in the plane of the section its
+response is nonetheless exact when the outside of the section is the image of
+the outside of a disk by a map with a finite number of terms: the complex
+potentials of plane elasticity are then finite sums. This page derives the
+concentration tensors of such a cavity. The complex representation of plane
+elasticity and its use with a conformal map are those of
+[Muskhelishvili](@cite muskhelishvili1977), whose sections and equations are
+quoted where they are used; the syntax is given in
+[Conformal holes](@ref man-conformal-holes).
 
 ## 1. The cavity and its three problems
 
 The cavity is a cylinder of axis ``\underline{e}_1``. Its section, in the plane
 ``(\underline{e}_2,\underline{e}_3)``, is described by the complex variable
 ``z=x_2+\mathrm{i}\,x_3``. The matrix is isotropic, of shear modulus ``\mu``,
-Poisson ratio ``\nu`` and Young modulus ``E``; the surface of the cavity is
-free. The mean strain of the cavity is defined from the displacement of its
+Poisson ratio ``\nu`` and Young modulus ``E``, up to section 7, which extends
+the result to a transversely isotropic matrix of axis ``\underline{e}_1``; the
+surface of the cavity is free. The mean strain of the cavity is defined from the displacement of its
 surface, of outward normal ``\underline{n}``,
 
 ```math
@@ -48,7 +52,11 @@ z=\omega(\zeta)=R\,\Bigl(\zeta+\sum_{k=1}^{N}m_k\,\zeta^{-k}\Bigr),\qquad|\zeta|
 
 with complex coefficients ``m_k``; the contour of the hole is the image of the
 circle ``\zeta=\sigma=\mathrm{e}^{\mathrm{i}\theta}``. The length ``R`` sets the
-size and is taken equal to 1 below.
+size and is taken equal to 1 below. Mapping the outside of the hole on the
+outside of the disk keeps the point at infinity at infinity; the same hole is
+often described from the inside of the disk, by ``\zeta\to1/\zeta``
+([muskhelishvili1977](@cite), section 48, equations (48.15) and (48.15′) for
+the hypotrochoid).
 
 ![The outside of the unit disk and its image, the outside of a hole; four holes given by one, two or three terms](../assets/theory/conformal_map.svg)
 
@@ -92,8 +100,8 @@ Cut after a few terms, the map is a polygon with rounded corners.
 ## 3. Plane strain: the potentials
 
 In plane strain the stress and the displacement derive from two functions
-``\varphi`` and ``\psi``, holomorphic in the matrix
-[muskhelishvili1977](@cite). With ``\kappa=3-4\nu``,
+``\varphi`` and ``\psi``, holomorphic in the matrix ([muskhelishvili1977](@cite),
+section 32, equations (32.1) and (32.9)). With ``\kappa=3-4\nu``,
 
 ```math
 \sigma_{22}+\sigma_{33}=4\operatorname{Re}\varphi'(z),
@@ -103,14 +111,15 @@ In plane strain the stress and the displacement derive from two functions
 
 and the resultant of the forces applied to an arc of the contour, from a fixed
 point to ``z``, is ``-\mathrm{i}\,\bigl(\varphi+z\,\overline{\varphi'}+\overline{\psi}\bigr)``
-up to a constant. The contour of the hole is free: with the constant included
-in ``\psi``,
+up to a constant (section 33, equation (33.1)). The contour of the hole is
+free: with the constant included in ``\psi``,
 
 ```math
 \varphi(z)+z\,\overline{\varphi'(z)}+\overline{\psi(z)}=0\quad\text{on the contour} .
 ```
 
-Far from the hole the stress is uniform:
+Far from the hole the stress is uniform, and no resultant force acts on the
+hole (section 36, equations (36.4), (36.5) and (36.8)):
 
 ```math
 \varphi\simeq\Gamma\,z,\qquad\psi\simeq\Gamma'\,z,
@@ -120,7 +129,8 @@ Far from the hole the stress is uniform:
 ```
 
 In the variable ``\zeta`` the potentials are
-``\Phi(\zeta)=\varphi(\omega(\zeta))`` and ``\Psi(\zeta)=\psi(\omega(\zeta))``,
+``\Phi(\zeta)=\varphi(\omega(\zeta))`` and ``\Psi(\zeta)=\psi(\omega(\zeta))``
+(section 50),
 
 ```math
 \Phi(\zeta)=\Gamma\,\zeta+\sum_{k\ge1}a_k\,\zeta^{-k},
@@ -131,7 +141,8 @@ In the variable ``\zeta`` the potentials are
 and ``\varphi'(z)=\Phi'(\zeta)/\omega'(\zeta)``. On the circle
 ``\bar\sigma=1/\sigma``, so that ``\overline{\omega(\sigma)}=\bar\omega(1/\sigma)``
 with ``\bar\omega(1/\zeta)=\zeta^{-1}+\sum_k\overline{m_k}\,\zeta^{k}``. The
-conjugate of the condition on the contour is then
+conjugate of the condition on the contour, equation (51.1) of
+[muskhelishvili1977](@cite) with no applied force, is then
 
 ```math
 \overline{\Phi(\sigma)}+F(\sigma)+\Psi(\sigma)=0,
@@ -177,6 +188,13 @@ W_{jl}=l\sum_{k=j+l+1}^{N}\overline{m_k}\,g_{k-j-l-1} ,
 
 a linear system on their real and imaginary parts, of size ``2N``. For the
 circle, ``N=1`` and ``m_1=0``, it reduces to ``a_1=-\overline{\Gamma'}``.
+
+The identification of the powers of ``\sigma`` is the method of series of
+[muskhelishvili1977](@cite) (section 63). The same reference solves the problem
+of a map with a finite number of terms by Cauchy integrals (section 84), and
+gives the ellipse in closed form (section 82); the system above is the form the
+solution takes for a free hole under a uniform remote stress, written for any
+number of terms.
 
 ## 4. Plane strain: the mean strain of the hole
 
@@ -270,7 +288,70 @@ the matrix,
 The three contributions make up ``\mathbb{H}``, and
 ``\mathbb{A}=\mathbb{H}:\mathbb{C}_0``.
 
-## 7. Checks
+## 7. A matrix isotropic in the plane of the section only
+
+Nothing above uses the isotropy of the matrix outside the plane of the section.
+Let the matrix be transversely isotropic about the axis ``\underline{e}_1`` of
+the cavity, with Hill's moduli: ``k=(C_{2222}+C_{2233})/2`` the plane-strain
+bulk modulus, ``m=(C_{2222}-C_{2233})/2`` the shear modulus of the plane,
+``l=C_{1122}``, ``n=C_{1111}`` and ``p=C_{1212}`` the shear modulus along the
+axis. The three problems keep their solutions, with other constants.
+
+- *Plane strain.* The law of the plane is
+  ``\sigma_{\alpha\beta}=(k-m)\,\varepsilon_{\gamma\gamma}\,\delta_{\alpha\beta}+2m\,\varepsilon_{\alpha\beta}``,
+  that of an isotropic material with ``\lambda+\mu=k`` and ``\mu=m``. Since
+  ``\kappa=(\lambda+3\mu)/(\lambda+\mu)`` ([muskhelishvili1977](@cite),
+  equation (32.2)), the factor of section 4 becomes
+
+  ```math
+  \frac{\kappa+1}{\mu}=2\,\Bigl(\frac1m+\frac1k\Bigr) ,
+  ```
+
+  and the remote axial stress of this state is
+  ``\nu_a\,(\Sigma_{22}+\Sigma_{33})`` with ``\nu_a=l/(2k)``.
+- *Shear along the axis.* The displacement ``u_1`` is harmonic as before, the
+  two shear stresses being ``\sigma_{1\beta}=p\,\partial u_1/\partial x_\beta``:
+  ``\mu`` is replaced by ``p``.
+- *Axial stress.* A uniform axial stress ``\sigma_{11}`` strains the matrix by
+  ``\sigma_{11}/E_a`` along the axis and ``-\nu_a\,\sigma_{11}/E_a`` across it,
+  with ``E_a=n-l^2/k``: ``E`` and ``\nu`` of section 6 are replaced by ``E_a``
+  and ``\nu_a``.
+
+In conduction the same holds: the problem of section 5 involves the
+conductivity of the plane only, and ``\boldsymbol{A}^{s}`` does not depend on
+it.
+
+A material with aligned cavities whose sections have an axis of symmetry of
+order 3, or of order 5 and more, or are oriented at random in the plane, is
+such a medium. The
+self-consistent and the differential schemes, whose reference medium is the
+estimate itself, therefore apply to these cavities
+([Prismatic pores with corners](@ref app-conformal-holes)).
+
+## 8. A plate in plane stress
+
+A thin plate loaded in its plane is in a state of generalized plane stress.
+The mean fields through its thickness satisfy the equations of plane strain
+with ``\lambda`` replaced by ``\lambda^*=2\lambda\mu/(\lambda+2\mu)`` and
+``\mu`` unchanged ([muskhelishvili1977](@cite), section 26, equation (26.3)), so that
+``\kappa`` becomes
+
+```math
+\kappa^*=\frac{3-\nu}{1+\nu},\qquad\frac{\kappa^*+1}{\mu}=\frac{8}{E}
+```
+
+(equation (32.2′)). The compliance of a hole in a plate is thus that of
+section 4 with the factor ``8/E`` in place of ``4(1-\nu)/\mu=8(1-\nu^2)/E``.
+In a cell of the plane the hole is given the stiffness of the plane of its
+matrix, ``2k\,\mathbb{J}+2\mu\,\mathbb{K}`` in plane strain or
+``2k^*\,\mathbb{J}+2\mu\,\mathbb{K}`` in plane stress, and the factor is
+``2\,(1/\mu+1/k)`` or ``2\,(1/\mu+1/k^*)``
+([Plane problems](@ref man-plane-problems)). The compliance of a hole in a
+plate is not the plane-strain one with a zero axial stress added as in
+section 6: there the axial stress vanishes on average only, and the two
+results differ except under a hydrostatic stress of the plane.
+
+## 9. Checks
 
 The ellipse is the elliptic cylinder of the package, obtained from its Hill
 tensor: the two routes agree on every component.
@@ -307,12 +388,34 @@ compressibility = sum(H[i, i, j, j] * Σ[j] for i in 2:3, j in 1:3)
 compressibility, 2 * (1 - ν) / μ * (1 + n * m^2) / (1 - n * m^2)
 ```
 
-## 8. Scope
+A transversely isotropic matrix about the axis: the circular cylinder of the
+package, from its Hill tensor in that matrix, agrees with the map on every
+component.
 
-The solution is exact for an isotropic matrix and a map with a finite number
-of terms. A corner is reached in the limit of an infinite map only: a cut map
+```@example thconformal
+Cₜ = ti_from_constants(5.2, 1.9, 1.4, 9.0, 1.1, (1.0, 0.0, 0.0))   # C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃, axis third
+A_map = gradient_gradient_concentration(ConformalHole(()), 0 * Cₜ, Cₜ)
+A_hill = gradient_gradient_concentration(Cylinder(1.0, 1.0), 0 * Cₜ, Cₜ)
+maximum(abs, canonical_components(A_map) - canonical_components(A_hill))
+```
+
+A circular hole in a plate, in plane stress: under a tension ``\Sigma_{22}``
+its strains are ``3\Sigma_{22}/E`` and ``-\Sigma_{22}/E``, the values of
+section 4 with ``8/E``.
+
+```@example thconformal
+E = young_modulus(C₀)
+c = plane_stress_stiffness(C₀)                    # the stiffness of the plate, a tensor of the plane
+H = canonical_components(inverse_property_contribution(ConformalHole(()), 0 * c, c))
+E * H[1, 1, 1, 1], E * H[2, 2, 1, 1]
+```
+
+## 10. Scope
+
+The solution is exact for a matrix that is isotropic, or transversely isotropic
+about the axis of the cavity, and for a map with a finite number of terms. A corner is reached in the limit of an infinite map only: a cut map
 rounds it, and the tensors converge with the number of terms
 ([Prismatic pores with corners](@ref app-conformal-holes)). The coefficients
 are numbers, dual numbers or symbols. [`ConformalHole`](@ref) is the
-inclusion; an anisotropic matrix and holes that interact are outside the
-method as it is written here.
+inclusion; a matrix that is anisotropic in the plane of the section and holes
+that interact are outside the method as it is written here.

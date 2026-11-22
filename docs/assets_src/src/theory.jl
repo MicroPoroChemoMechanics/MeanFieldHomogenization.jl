@@ -225,4 +225,66 @@ function theory_conformal_map(; path = "theory/conformal_map", panel::Bool = tru
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map())
+"A block of matrix whose front face, of side `a` and center `c`, carries the sections `holes`, extruded by the vector `depth`."
+function extruded_block(c::Point, a, depth::Point, holes)
+    h = a / 2
+    front = [c + Point(-h, -h), c + Point(h, -h), c + Point(h, h), c + Point(-h, h)]
+    @layer begin
+        setline(1.4)
+        # the top and the side, then the front face over them
+        for face in ([front[1], front[2], front[2] + depth, front[1] + depth], [front[2], front[3], front[3] + depth, front[2] + depth])
+            setcolor(tint(BLUE, 0.78))
+            poly(face, :fill; close = true)
+            setcolor(INK)
+            poly(face, :stroke; close = true)
+        end
+        setcolor(MATRIX)
+        poly(front, :fill; close = true)
+        setcolor(INK)
+        poly(front, :stroke; close = true)
+        for (offset, s, ms) in holes
+            setcolor(PORE)
+            poly(mapped_circle(c + offset, s, ms, 1.0), :fill; close = true)
+            setcolor(INK)
+            poly(mapped_circle(c + offset, s, ms, 1.0), :stroke; close = true)
+        end
+    end
+    return nothing
+end
+
+"""
+    theory_plane_problem(; path = "theory/plane_problem")
+
+The two states of a plane problem and the section they share: a long prism, in
+plane strain, a thin plate, in plane stress, and the plane of the section with
+its holes.
+"""
+function theory_plane_problem(; path = "theory/plane_problem", panel::Bool = true)
+    holes = ((Point(-24, -20), 15, [(1, 0.0)]), (Point(22, 22), 16, [(2, 0.25)]), (Point(26, -30), 9, [(1, 0.45)]))
+    return sheet(path, 720, 330; panel = panel) do
+        # plane strain: a long prism
+        extruded_block(Point(115, 185), 120, Point(70, -50), holes)
+        arrow_ab(Point(175, 125), Point(231, 85); color = VECTOR, lw = 1.8)
+        label(m("underline(e)_1"), Point(262, 84); size = 15, color = VECTOR)
+        label(txt("plane strain"), Point(130, 278); size = 14)
+        label(m("epsilon_(1 1) = epsilon_(1 2) = epsilon_(1 3) = 0"), Point(130, 302); size = 13, color = MUTED)
+        # the section
+        c = Point(380, 185)
+        extruded_block(c, 120, Point(0, 0), holes)
+        arrow_ab(c + Point(-60, 60), c + Point(-10, 60); color = VECTOR, lw = 1.8)
+        arrow_ab(c + Point(-60, 60), c + Point(-60, 10); color = VECTOR, lw = 1.8)
+        label(m("underline(e)_2"), c + Point(-8, 74); size = 15, color = VECTOR)
+        label(m("underline(e)_3"), c + Point(-42, 18); size = 15, color = VECTOR)
+        label(txt("the section"), Point(380, 278); size = 14)
+        label(m("k, mu quad \"or\" quad k^*, mu"), Point(380, 302); size = 13, color = MUTED)
+        # plane stress: a thin plate
+        extruded_block(Point(600, 185), 120, Point(13, -9), holes)
+        label(txt("plane stress"), Point(605, 278); size = 14)
+        label(m("sigma_(1 1) = sigma_(1 2) = sigma_(1 3) = 0"), Point(605, 302); size = 13, color = MUTED)
+        # both lead to the same problem of the plane
+        arrow_ab(Point(262, 185), Point(306, 185); color = GUIDE, lw = 1.6)
+        arrow_ab(Point(528, 185), Point(454, 185); color = GUIDE, lw = 1.6)
+    end
+end
+
+theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem())

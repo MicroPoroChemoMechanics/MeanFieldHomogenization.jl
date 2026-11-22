@@ -34,18 +34,32 @@ Apply the **exact** orientation average declared by `sym` to `t`.
 `axis` (`TensTI{4,T,8}` / `TensTI{2,T,3}`, non-major-symmetric content
 preserved). Implemented for tensor orders 4 (elasticity) and 2
 (conductivity).
+
+In a two-dimensional cell `IsoSymmetrize` is the average over the rotations
+and the reflections of the plane, the projection onto ``\\mathbb J`` and
+``\\mathbb K`` (resp. onto the identity): the average over the rotations alone
+for a section that has a mirror line, as an ellipse has.
 """
 _apply_symmetrize(t::TensND.AbstractTens, ::NoSymmetrize) = t
 
-_apply_symmetrize(t::TensND.AbstractTens{4, 3}, ::IsoSymmetrize) =
+_apply_symmetrize(t::TensND.AbstractTens{4}, ::IsoSymmetrize) =
     MFH_Core.isotropify(t)
-_apply_symmetrize(t::TensND.AbstractTens{2, 3}, ::IsoSymmetrize) =
+_apply_symmetrize(t::TensND.AbstractTens{2}, ::IsoSymmetrize) =
     MFH_Core.isotropify(t)
 
 _apply_symmetrize(t::TensND.AbstractTens{4, 3}, sym::TISymmetrize) =
     MFH_Core.transverse_isotropify(t, sym.axis)
 _apply_symmetrize(t::TensND.AbstractTens{2, 3}, sym::TISymmetrize) =
     MFH_Core.transverse_isotropify(t, sym.axis)
+
+# In the plane the rotations are those about its normal: their average is the
+# isotropic one.
+_apply_symmetrize(t::TensND.AbstractTens{order, 2}, ::TISymmetrize) where {order} = throw(
+    ArgumentError(
+        "`TISymmetrize` averages about an axis of space; in a two-dimensional cell the " *
+            "orientations of the plane are averaged with `IsoSymmetrize()`"
+    )
+)
 
 # =============================================================================
 #  Reference-medium projection for the concentration-tensor computation.

@@ -94,13 +94,11 @@ Two keywords are forwarded through `homogenize` to the conversion:
     which is the clearest statement that the assembly is the richer object rather
     than a variant of it. `Laminated` is refused on both.
 
-!!! note "In 2D, only the N-body schemes and the bounds"
-    The bridge inherits the `RVE`'s own capabilities exactly, and outside
-    `Voigt` / `Reuss` the one-site family is implemented for **3D properties
-    only**. A plane-strain assembly therefore answers `ClusterModel`,
-    `EquivalentInclusion`, `Voigt` and `Reuss`; `MoriTanaka` and the rest raise
-    the same `MethodError` they would raise on a hand-built 2D `RVE`. This is a
-    limitation of the one-site kernels, not of the conversion.
+!!! note "In 2D too"
+    The bridge inherits the `RVE`'s own capabilities exactly. A plane assembly
+    answers the one-site schemes as a cell of the plane does
+    ([Plane problems](@ref man-plane-problems)), besides `ClusterModel` and
+    `EquivalentInclusion`.
 
 Derived quantities remain available on the assembly itself:
 

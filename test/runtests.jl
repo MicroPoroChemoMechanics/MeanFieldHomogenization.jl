@@ -274,6 +274,9 @@ end
         # Cylindrical cavities of conformal cross-section, likewise.
         include("CustomInclusions/test_conformal_holes.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_conformal_holes_symbolic.jl")
+        # Two-dimensional problems through the three-dimensional schemes: their
+        # phases are the cylinders and the holes above.
+        include("Schemes/test_plane_problems.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_brinkman_symbolic.jl")
     end
 

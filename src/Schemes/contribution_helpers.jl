@@ -54,8 +54,8 @@ rotation, so the two orders coincide exactly).
 """
 function _phase_stress_strain_average(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3},
-        A_dil::TensND.AbstractTens{4, 3}; kw...
+        P₀::TensND.AbstractTens{4},
+        A_dil::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -74,8 +74,8 @@ end
 
 function _phase_stress_strain_average(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3},
-        A_dil::TensND.AbstractTens{2, 3}; kw...
+        P₀::TensND.AbstractTens{2},
+        A_dil::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     P_i = phase_property(rve, name, prop)
@@ -111,7 +111,7 @@ end
 # A phase with a volume: its contribution weighted by its fraction. A crack
 # family: its contribution per unit density, times the density.
 function _stiffness_contribution(
-        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4}, sym; kw...
     )
     geom = rve.phases[name].geometry
     N = MFH_Core.property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
@@ -119,7 +119,7 @@ function _stiffness_contribution(
 end
 
 function _stiffness_contribution(
-        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4}, sym; kw...
     )
     geom = rve.phases[name].geometry
     N = MFH_Core.property_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
@@ -127,7 +127,7 @@ function _stiffness_contribution(
 end
 
 function _stiffness_contribution(
-        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2}, sym; kw...
     )
     geom = rve.phases[name].geometry
     N = MFH_Core.property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
@@ -135,7 +135,7 @@ function _stiffness_contribution(
 end
 
 function _stiffness_contribution(
-        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2}, sym; kw...
     )
     geom = rve.phases[name].geometry
     N = MFH_Core.property_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
@@ -191,7 +191,7 @@ end
 
 # As `_stiffness_contribution`, for the compliance (resistivity for `:K`).
 function _compliance_contribution(
-        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{4}, sym; kw...
     )
     geom = rve.phases[name].geometry
     H = inverse_property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
@@ -199,7 +199,7 @@ function _compliance_contribution(
 end
 
 function _compliance_contribution(
-        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4, 3}, sym; kw...
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{4}, sym; kw...
     )
     geom = rve.phases[name].geometry
     H = inverse_property_contribution(geom, P₀; K_interface = _crack_interface_K4(rve, name), kw...)
@@ -207,7 +207,7 @@ function _compliance_contribution(
 end
 
 function _compliance_contribution(
-        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+        ::AbstractAmount, rve, name, prop, P₀::TensND.AbstractTens{2}, sym; kw...
     )
     geom = rve.phases[name].geometry
     R = MFH_Core.inverse_property_contribution(geom, phase_property(rve, name, prop), P₀; kw...)
@@ -215,7 +215,7 @@ function _compliance_contribution(
 end
 
 function _compliance_contribution(
-        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2, 3}, sym; kw...
+        a::CrackDensity, rve, name, prop, P₀::TensND.AbstractTens{2}, sym; kw...
     )
     geom = rve.phases[name].geometry
     R = inverse_property_contribution(geom, P₀; α_interface = _crack_interface_α(rve, name), kw...)
@@ -240,7 +240,7 @@ short-circuit on `geom isa AbstractCrack`.
 """
 function _phase_dilute_concentration(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        P₀::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     geom isa MFH_Core.AbstractCrack && return zero(P₀)   # caller must handle cracks separately
@@ -253,7 +253,7 @@ end
 
 function _phase_dilute_concentration(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
+        P₀::TensND.AbstractTens{2}; kw...
     )
     geom = rve.phases[name].geometry
     geom isa MFH_Core.AbstractCrack && return zero(P₀)
@@ -373,7 +373,7 @@ end
 # =============================================================================
 
 # A property of the RVE: a stiffness (order 4) or a conductivity (order 2).
-const _PropertyTens = Union{TensND.AbstractTens{4, 3}, TensND.AbstractTens{2, 3}}
+const _PropertyTens = Union{TensND.AbstractTens{4}, TensND.AbstractTens{2}}
 
 # The weighted sums of the schemes, past a function barrier: the phase terms
 # come out of the RVE's heterogeneous containers untyped, and one call compiled
@@ -419,7 +419,7 @@ end
 """
 function _phase_compliance_and_contribution(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        P₀::TensND.AbstractTens{4}; kw...
     )
     return _compliance_and_contribution(
         rve.phases[name].geometry, P₀, phase_symmetrize(rve, name),
@@ -429,7 +429,7 @@ end
 
 function _phase_compliance_and_contribution(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{2, 3}; kw...
+        P₀::TensND.AbstractTens{2}; kw...
     )
     return _compliance_and_contribution(
         rve.phases[name].geometry, P₀, phase_symmetrize(rve, name),

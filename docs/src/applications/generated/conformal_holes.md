@@ -19,7 +19,8 @@ takes prismatic pores whose section is a hypotrochoid or a polygon, compares
 their compressibility and their shear compliance with the values published by
 [Ekneligoda and Zimmerman](@cite ekneligodaPRSA2006) for maps of two to four
 terms, carries the polygons to the limit of the map, and ends with the
-stiffness and the conductivity of a matrix that contains such pores.
+stiffness and the conductivity of a matrix that contains such pores, a
+perforated plate included.
 
 ````@example conformal_holes
 using MeanFieldHomogenization
@@ -129,14 +130,26 @@ end
 The compressibilities agree to the digits printed, and so do the shear
 compliances of the maps of two terms and of the last map of three terms. For
 the two other maps of three terms the values computed here are 1.3 % and
-5.6 % above the published ones. The test suite of the package checks the
-potentials of such maps against a direct solution of the condition on the
-contour, by collocation.
+5.6 % above the tabulated ones. The closed form of the
+[article](@cite ekneligodaPRSA2008) settles the matter: its equations (3.22)
+to (3.30) and (4.9), written for a threefold axis, reduce to
+
+````@example conformal_holes
+closed_form(m₂, m₅) = 2 / ((1 - 3m₅^2) * (1 - 2m₂^2 - 5m₅^2))
+println("shear compliance                closed form   computed   2/(1 - 2m₂² - 5m₅²)")
+for row in published_2008["three_terms"]
+    @printf "%s   %8.4f   %8.4f   %8.4f\n" name(row) closed_form(row["m1"], row["m2"]) shear_compliance(pore(row)) 2 / (1 - 2 * row["m1"]^2 - 5 * row["m2"]^2)
+end
+````
+
+The formula of the article gives the values computed here for the three maps.
+The two tabulated values that differ are those of the last column, the same
+formula without its factor ``1/(1 - 3\,m_5^2)``.
 
 For the hypotrochoid the system of the potentials is solved by hand, which
 gives closed forms: the compressibility ``2\,(1 + n\,m^2)/(1 - n\,m^2)``,
 recalled in the article, and, for ``n \ge 4``, the shear compliance
-``2/\bigl((1 - (n-2)\,m^2)(1 - n\,m^2)\bigr)``:
+``2/\bigl((1 - (n-2)\,m^2)(1 - n\,m^2)\bigr)``, its equation (4.8):
 
 ````@example conformal_holes
 n, m = 4, 1 / 10
@@ -179,8 +192,10 @@ for row in published_2008["quasi_polygons"]
 end
 ````
 
-The values agree, except for the pentagon with one term, which is the
-hypotrochoid ``n = 4``, ``m = 1/10`` of the closed form above.
+The values agree, except for the pentagon with one term. It is the
+hypotrochoid ``n = 4``, ``m = 1/10`` computed above: equation (4.8) of the
+article gives 2.1259 as well, and its Table 1 quotes 2.1260 from
+[Kachanov, Tsukrov and Shafiro](@cite kachanovAMR1994).
 
 At the limit of the map, beside the values the first article extrapolates
 from three and four terms and those it computes by boundary elements:
@@ -233,6 +248,89 @@ plot(bulk, shear; layout = (1, 2), size = (760, 340), left_margin = 4Plots.mm, b
 The fewer the sides, the softer the porous material: at equal porosity a
 triangular section lowers the plane bulk modulus markedly more than a
 circular one, and a hexagonal section is hardly told from it.
+
+## The schemes whose reference is the estimate
+
+The scheme of Mori and Tanaka solves each pore in the matrix. The
+self-consistent and the differential schemes solve it in their own estimate,
+which aligned pores make transversely isotropic about their axis when the
+section has an axis of symmetry of order 3, or of order 5 and more. Such a
+medium is isotropic in the plane of the section, and the pore is solved in it
+as in an isotropic one
+([Holes given by a conformal map](@ref th-conformal-mapping), section 7).
+The medium is here seen in its plane: the cell holds the stiffness of the
+plane of the matrix, a tensor of dimension 2, and the pores as their
+sections ([Plane problems](@ref man-plane-problems)).
+
+````@example conformal_holes
+const disk = Ellipsoid(1.0; dim = 2)
+function plane_cell(c, hole, f; kw...)
+    rve = RVE()
+    add_phase!(rve, :matrix, disk, Dict(:C => c); fraction = :rest)
+    add_phase!(rve, :pores, hole, Dict(:C => 0 * c); fraction = f, kw...)
+    return rve
+end
+const c_strain = plane_strain_stiffness(C₀)
+schemes = ["Mori-Tanaka" => MoriTanaka(), "differential" => DifferentialScheme(), "self-consistent" => SelfConsistent()]
+fs = range(0, 0.25; length = 11)
+plane_bulk(t) = (c = canonical_components(t); (c[1, 1, 1, 1] + c[1, 1, 2, 2]) / 2)
+panels = map(["circle" => ConformalHole(()), "triangle" => polygon(3, 100)]) do (name, hole)
+    panel = plot(; xlabel = "porosity f", ylabel = "k / k₀", title = name, titlefontsize = 9, legend = name == "circle" ? :bottomleft : false, ylims = (0, 1))
+    for (label, scheme) in schemes
+        plot!(panel, fs, [plane_bulk(homogenize(plane_cell(c_strain, hole, f), scheme, :C)) / k_matrix for f in fs]; lw = 2, label)
+    end
+    panel
+end
+plot(panels...; layout = (1, 2), size = (760, 340), left_margin = 4Plots.mm, bottom_margin = 4Plots.mm)
+````
+
+The three schemes share their tangent at the origin, which the compressibility
+of the pore fixes, and part as the porosity grows; the self-consistent
+estimate of the triangular pores vanishes at a porosity below that of the
+circular ones.
+
+A square section has a fourfold axis only, and aligned square pores leave the
+plane anisotropic. Oriented at random in the plane, by the average declared
+on the phase, they give an isotropic plane again:
+
+````@example conformal_holes
+at_random = plane_cell(c_strain, polygon(4, 100), 0.1; symmetrize = IsoSymmetrize())
+bulk_shear(isotropify(homogenize(at_random, SelfConsistent(), :C))) ./ (k_matrix, μ_matrix)
+````
+
+## A perforated plate
+
+A thin plate loaded in its plane is in plane stress. Its mean fields satisfy
+the equations of plane strain with another bulk modulus, and the cell is the
+same with the plane-stress stiffness of the plate. Young's modulus of a plate
+with holes of four sections, by the self-consistent scheme. The estimate is a
+general tensor of the plane, which these sections leave isotropic: its moduli
+are read on its isotropic part.
+
+````@example conformal_holes
+const c_stress = plane_stress_stiffness(C₀)
+plate_modulus(cell) = first(plane_strain_to_plane_stress(young_poisson(isotropify(homogenize(cell, SelfConsistent(), :C)))...))
+E₀ = young_modulus(C₀)
+shapes = [
+    "circle" => f -> plane_cell(c_stress, ConformalHole(()), f), "hexagon" => f -> plane_cell(c_stress, polygon(6, 100), f),
+    "square, at random" => f -> plane_cell(c_stress, polygon(4, 100), f; symmetrize = IsoSymmetrize()),
+    "triangle" => f -> plane_cell(c_stress, polygon(3, 100), f),
+]
+plate = plot(; xlabel = "porosity f", ylabel = "E / E₀", title = "Perforated plate, self-consistent scheme", titlefontsize = 10, legend = :topright, size = (600, 340))
+for (name, cell) in shapes
+    plot!(plate, fs, [plate_modulus(cell(f)) / E₀ for f in fs]; lw = 2, label = name)
+end
+plate
+````
+
+For circular holes the estimate is the line ``1 - 3f``, whatever Poisson's
+ratio of the plate:
+
+````@example conformal_holes
+plate_modulus(plane_cell(c_stress, ConformalHole(()), 0.1)) / E₀
+````
+
+## Conduction
 
 In conduction the answer is one number. A regular polygon has no term
 ``m_1``, so that the gradient concentration tensor of an insulating prismatic

@@ -10,6 +10,9 @@
 #      & Zimmerman (2006, 2008), data/literature/ekneligodaPRSA200{6,8}.json;
 #   4. exact properties: symmetry of the compliance, rotation of the hole,
 #      isotropy in the plane of a hole with a threefold axis.
+#   5. a transversely isotropic matrix about the axis of the hole: the
+#      cylinder of the package in that matrix, the uniform solution under an
+#      axial stress, and the equation of the self-consistent scheme.
 # =============================================================================
 
 using Test
@@ -252,6 +255,69 @@ end
         @test canonical_components(homogenize(cell(hole), Dilute(), :C)) ≈ canonical_components(_ch_C₀ - f * (_ch_C₀ ⊡ A)) rtol = 1.0e-10
     end
 
+    @testset "a transversely isotropic matrix about the axis" begin
+        e₁ = (1.0, 0.0, 0.0)
+        # C₁₁₁₁, C₁₁₂₂, C₁₁₃₃, C₃₃₃₃, C₂₃₂₃ in a frame whose third axis is the axis
+        Cti = ti_from_constants(5.2, 1.9, 1.4, 9.0, 1.1, e₁)
+        A(hole, C₀ = Cti) = canonical_components(gradient_gradient_concentration(hole, 0 * C₀, C₀))
+        # the circular and the elliptic cylinders of the package, in that matrix
+        @test A(ConformalHole(())) ≈ A(Cylinder(1.0, 1.0)) rtol = 1.0e-9
+        @test A(ConformalHole((0.5,))) ≈ A(Cylinder(3.0, 1.0)) rtol = 1.0e-8
+        # an isotropic matrix written as a transversely isotropic one
+        Ciso = ti_from_constants(_ch_K + 4 * _ch_μ / 3, _ch_K - 2 * _ch_μ / 3, _ch_K - 2 * _ch_μ / 3, _ch_K + 4 * _ch_μ / 3, _ch_μ, e₁)
+        square = ConformalHole(polygon_map(4, 3)...)
+        @test A(square, Ciso) ≈ _ch_A(square) rtol = 1.0e-12
+        # a remote strain whose stress is axial is not disturbed by the cavity
+        ε = inv(Cti) ⊡ Tens([1.0 0 0; 0 0 0; 0 0 0])
+        @test canonical_components(gradient_gradient_concentration(square, 0 * Cti, Cti) ⊡ ε) ≈ canonical_components(ε) rtol = 1.0e-12
+        # a strain of the plane: the hole in the isotropic material that behaves
+        # as the matrix does in that plane, under plane strain
+        k, m = (5.2 + 1.9) / 2, (5.2 - 1.9) / 2
+        Cplane = iso_stiffness(k - m / 3, m)
+        Ati, Aplane = A(square), _ch_A(square, Cplane)
+        @test Ati[2:3, 2:3, 2:3, 2:3] ≈ Aplane[2:3, 2:3, 2:3, 2:3] rtol = 1.0e-12
+        @test all(abs.(Ati[1, 1, 2:3, 2:3]) .< 1.0e-13)
+        # the axis and the matrix tilted together; the matrix as a general tensor
+        angles = (0.4, 1.1, -0.7)
+        tilted = ConformalHole(polygon_map(4, 3)...; euler_angles = angles)
+        axis = Tuple(TensND.vecbasis(inclusion_basis(tilted))[:, 1])
+        Ctilted = ti_from_constants(5.2, 1.9, 1.4, 9.0, 1.1, axis)
+        R = TensND.vecbasis(inclusion_basis(tilted))
+        rotated = [sum(R[i, a] * R[j, b] * R[k, c] * R[l, d] * A(square)[a, b, c, d] for a in 1:3, b in 1:3, c in 1:3, d in 1:3) for i in 1:3, j in 1:3, k in 1:3, l in 1:3]
+        @test A(tilted, Ctilted) ≈ rotated rtol = 1.0e-10
+        @test A(tilted, Tens(canonical_components(Ctilted))) ≈ rotated rtol = 1.0e-10
+        # conduction: the section is insulating whatever the two conductivities
+        Kti = TensND.TensTI{2}(1.3, 4.0, e₁)
+        @test canonical_components(gradient_gradient_concentration(square, 0 * Kti, Kti)) ≈
+            canonical_components(gradient_gradient_concentration(square, 0 * _ch_k₀, _ch_k₀)) rtol = 1.0e-14
+        @test iszero(canonical_components(flux_gradient_concentration(square, 0 * Kti, Kti)))
+        @test iszero(canonical_components(flux_gradient_concentration(square, 0 * Cti, Cti)))
+        # an operator without major symmetry (ℓ₃ ≠ ℓ₄): the axial solution again
+        L = TensND.TensTI{4}(9.0, 7.1, 1.4 * sqrt(2), 1.9 * sqrt(2), 3.3, 2.2, e₁)
+        εL = inv(L) ⊡ Tens([1.0 0 0; 0 0 0; 0 0 0])
+        @test canonical_components(gradient_gradient_concentration(square, 0 * L, L) ⊡ εL) ≈ canonical_components(εL) rtol = 1.0e-12
+        # derivatives with respect to the moduli of the matrix, against the cylinder
+        modulus(hole) = x -> canonical_components(gradient_gradient_concentration(hole, 0 * Cti, ti_from_constants(5.2, 1.9, x, 9.0, 1.1, e₁)))[2, 2, 1, 1]
+        @test ForwardDiff.derivative(modulus(ConformalHole(())), 1.4) ≈ ForwardDiff.derivative(modulus(Cylinder(1.0, 1.0)), 1.4) rtol = 1.0e-8
+        @inferred gradient_gradient_concentration(square, 0 * Cti, Cti)
+        @inferred gradient_gradient_concentration(square, 0 * Kti, Kti)
+
+        # Aligned pores with a threefold or a sixfold axis leave the medium
+        # transversely isotropic: the self-consistent and the differential
+        # schemes run, and the first satisfies its equation: the matrix is a sphere
+        # in the estimate, and C : ⟨A⟩ = ⟨C : A⟩ with the tensors of the two phases.
+        f = 0.15
+        cell(pore) = (rve = RVE(); add_phase!(rve, :matrix, Ellipsoid(1.0), Dict(:C => _ch_C₀); fraction = :rest); add_phase!(rve, :pores, pore, Dict(:C => 0 * _ch_C₀); fraction = f); rve)
+        triangle = ConformalHole(polygon_map(3, 4)...)
+        Csc = homogenize(cell(triangle), SelfConsistent(), :C)
+        Apore = gradient_gradient_concentration(triangle, 0 * _ch_C₀, Csc)
+        Amatrix = gradient_gradient_concentration(Ellipsoid(1.0), _ch_C₀, Csc)
+        @test canonical_components(Csc ⊡ ((1 - f) * Amatrix + f * Apore)) ≈ canonical_components((1 - f) * (_ch_C₀ ⊡ Amatrix)) rtol = 1.0e-7
+        for scheme in (SelfConsistent(), DifferentialScheme())
+            @test canonical_components(homogenize(cell(ConformalHole(())), scheme, :C)) ≈ canonical_components(homogenize(cell(Cylinder(1.0, 1.0)), scheme, :C)) rtol = 1.0e-6
+        end
+    end
+
     @testset "what is refused" begin
         @test_throws DomainError ConformalHole(2 => 0.6)                # 2 × 0.6 > 1: the map folds
         @test_throws DomainError ConformalHole((0.5, 0.3))
@@ -259,8 +325,11 @@ end
         @test_throws ArgumentError ConformalHole(0 => 0.1)
         @test ConformalHole(2 => 0.5) isa ConformalHole                 # the cusped limit
         hole = ConformalHole((0.3,))
+        # transversely isotropic about another axis than that of the hole, or orthotropic
         Cti = TensND.TensTI{4}(5.0, 1.0, 1.2, 6.0, 1.5, (0.0, 0.0, 1.0))
         @test_throws ArgumentError gradient_gradient_concentration(hole, Cti, Cti)
+        Cortho = Tens(canonical_components(_ch_C₀) .+ [(i == j == k == l == 2) * 0.7 for i in 1:3, j in 1:3, k in 1:3, l in 1:3])
+        @test_throws ArgumentError gradient_gradient_concentration(hole, Cortho, Cortho)
         @test_throws ArgumentError flux_gradient_concentration(hole, Cti, Cti)
         Kti = TensND.TensTI{2}(1.0, 2.0, (0.0, 0.0, 1.0))
         @test_throws ArgumentError gradient_gradient_concentration(hole, Kti, Kti)

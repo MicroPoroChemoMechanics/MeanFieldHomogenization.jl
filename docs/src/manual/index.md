@@ -26,6 +26,7 @@ recurrence, a grid of Gaussians, a mesh, a network — and every one of them end
 | a coated particle, an interphase | [Layered inclusions](@ref man-layered) | a recurrence over the layers |
 | a ring-shaped pore | [Toroidal inclusions](@ref man-toroidal-inclusions) | a series of toroidal harmonics |
 | a prismatic pore whose section is not an ellipse | [Conformal holes](@ref man-conformal-holes) | complex potentials on a conformal map |
+| a two-dimensional medium, in plane strain or in plane stress | [Plane problems](@ref man-plane-problems) | the schemes on cylinders, after a change of moduli |
 | anything else, from your own code | [Custom inclusions](@ref man-custom-inclusions) | you supply it, through one of three entry levels |
 | a shape of any kind, without a mesh | [Heterogeneities of any shape](@ref man-gaussian-inclusions) | its integral equation, solved on a grid of Gaussians |
 | a shape with no closed form | [Finite-element inclusions](@ref man-fe-inclusions) | one Eshelby cell, solved |

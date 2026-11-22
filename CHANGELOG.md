@@ -3,8 +3,9 @@
 ## v0.29.0 — inclusions that are not ellipsoids, solved exactly
 
 A minor release: two inclusion types whose response is exact although they have
-no Hill tensor, a helper for graded interphases, and a page that says which
-route to an inclusion's response fits which situation.
+no Hill tensor, two-dimensional cells in plane strain and in plane stress
+through the existing schemes, a helper for graded interphases, and a page that
+says which route to an inclusion's response fits which situation.
 
 ### Added
 
@@ -25,9 +26,29 @@ route to an inclusion's response fits which situation.
   complex potentials of the plane-strain problem are finite sums, obtained from
   a linear system; the antiplane shear and the conduction around the insulating
   section are closed forms; the axial extension is undisturbed. Elasticity and
-  conduction, isotropic matrix, any orientation; coefficients are numbers,
-  duals or symbols. **`polygon_map(n, terms)`** gives the terms of the map of a
-  regular polygon.
+  conduction, any orientation; coefficients are numbers, duals or symbols. The
+  matrix is isotropic, or transversely isotropic about the axis of the cavity,
+  which leaves it isotropic in the plane of the section: the self-consistent
+  and the differential schemes, whose reference is their own estimate,
+  therefore apply to aligned cavities. In a two-dimensional cell the hole is
+  its section, with tensors of the plane. Its linear system depends on the map
+  alone and is solved once, when the hole is built. **`polygon_map(n, terms)`**
+  gives the terms of the map of a regular polygon.
+- **Two-dimensional cells.** The schemes (dilute, Mori-Tanaka,
+  self-consistent, differential and the others) now run on tensors of the
+  plane as they do in space: a cell whose phases are `Ellipsoid(r; dim = 2)`,
+  `Ellipsoid(a, b; angle)` or `ConformalHole` and whose properties are
+  `TensISO{4,2}` or `TensISO{2,2}` is homogenized by `homogenize`, in elasticity
+  and in conduction. They were three-dimensional only, although the Hill tensors
+  of the plane existed. Nothing is written twice: the signatures of the
+  concentration tensors, of the contributions and of the schemes no longer fix
+  the dimension, and the tensors of the plane are dispatched to the same code.
+  Plane strain and plane stress are the two stiffnesses of the plane of a
+  material, which TensND builds (`plane_strain_stiffness`,
+  `plane_stress_stiffness`). A self-consistent estimate of a sheet with
+  circular holes takes 13 µs, against 110 µs for the same medium described in
+  three dimensions as aligned cylinders. `IsoSymmetrize` on a phase of the
+  plane averages over the orientations of the plane.
 - **`graded_layers(profile, r_in, r_out, n)`**, which cuts a zone whose moduli
   vary with the radius into thin uniform layers for a `LayeredSphere` or a
   `LayeredCylinder`: an interphase that is not a uniform shell. The response of
@@ -36,8 +57,9 @@ route to an inclusion's response fits which situation.
 
 ### Changed
 
-- **TensND 0.14 is required**, for its toroidal coordinates and toroidal
-  functions.
+- **TensND 0.14.1 is required**, for its toroidal coordinates and toroidal
+  functions and for the plane-strain and plane-stress stiffnesses of a
+  transversely isotropic material.
 - **The two neural surrogates of the superspherical pore are retrained**, on
   finite-element cells of the fourth level of subdivision and of radius `4a`.
   At the third level a concave pore was not converged: `E₀ H₁₁₁₁` of the
@@ -60,12 +82,19 @@ route to an inclusion's response fits which situation.
   its radii, published values, spheroids of the same volume, schemes);
   *Prismatic pores with corners* (published compressibilities and shear
   compliances of holes given by maps of two to four terms, polygons carried to
-  the limit of the map, the stiffness of a matrix with prismatic pores);
+  the limit of the map, the stiffness of a matrix with prismatic pores by
+  three schemes, a perforated plate in plane stress);
   *A graded interphase around a spherical particle* (the layers against an
   exact Frobenius series, in elasticity and in conduction, and the shear
   modulus, which the series does not give).
 - New theory pages *Toroidal inclusions* and *Holes given by a conformal map*,
-  with complete derivations, and the manual pages of the two inclusions.
+  with complete derivations, and the manual pages of the two inclusions. The
+  second quotes the sections and the equations of Muskhelishvili's book at
+  each step, and treats the matrix isotropic in the plane only and the plate in
+  plane stress.
+- *Plane problems*, a new manual page: the two states and their stiffnesses
+  of the plane, the cell of a plane medium, sheets with holes against their
+  closed forms, the same medium as aligned cylinders in three dimensions.
 - The tables of *Concave pores* are recomputed on the converged cells.
 
 ### Tests
@@ -74,7 +103,12 @@ route to an inclusion's response fits which situation.
   amplitudes, the surface integral, the published analytical amplitudes and a
   grid of Gaussians; the conformal hole against the elliptic `Cylinder` on
   every component, an independent collocation of the boundary condition, closed
-  forms and published tables; the graded layers against two exact solutions;
+  forms and published tables, and in a transversely isotropic matrix against
+  the cylinder of the package and the equation of the self-consistent scheme;
+  the cells of the plane against the scheme of Mori and Tanaka written by hand
+  with the Hill tensor of the disk, against the closed forms of a sheet with
+  circular holes and against the block of the plane of the same medium in three
+  dimensions; the graded layers against two exact solutions;
   neutral inhomogeneities (resistive interface, conducting surface, Hashin's
   coating) as exact zeros of the layered sphere. Published values are stored
   under `data/literature/`.
