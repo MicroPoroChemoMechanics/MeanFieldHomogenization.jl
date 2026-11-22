@@ -9,43 +9,50 @@
  "transcription": {
   "from": "the published article (PDF), read on the page text and compared with the image of the page",
   "checked_against_source": true,
-  "note": "Normalized shear compliance G H1212 / (1 - nu) of a hole in a plane-strain matrix: the shear strain of the hole, in the engineering sense of the article, under a unit shear stress in the plane; it is 2 for a circular hole. The maps are those of Ekneligoda and Zimmerman (2006): z = zeta + m1 zeta^(-2) (Table 2) and z = zeta + m1 zeta^(-2) + m2 zeta^(-5) (Table 3), written from the outside of the unit disk. Table 1 gives quasi-polygons, the map of the regular polygon cut after two or three terms, the term zeta counted; only the column 'present' of the article is stored. The value of the square is averaged over the directions of the shear."
+  "note": "Normalized shear compliance G H1212 / (1 - nu) of a hole in a plane-strain matrix: the shear strain of the hole, in the engineering sense of the article, under a unit shear stress in the plane; it is 2 for a circular hole. The maps are those of Ekneligoda and Zimmerman (2006): z = zeta + m1 zeta^(-2) (Table 2) and z = zeta + m1 zeta^(-2) + m2 zeta^(-5) (Table 3), written from the outside of the unit disk. Table 1 gives quasi-polygons, the map of the regular polygon cut after two or three terms, the term zeta counted; only the column 'present' of the article is stored. The value of the square is averaged over the directions of the shear. The rows 'scaling_law' are those of the article's equation (6.1), 1 + (1/2) P^2/(2 pi A), with P the perimeter and A the area of the pore."
  },
  "quantities": {},
  "tables": {
   "two_terms": [
    {
     "m1": 0.1111111111111111,
-    "analytical": 2.0507
+    "analytical": 2.0507,
+    "scaling_law": 2.0506
    },
    {
     "m1": 0.2,
-    "analytical": 2.1739
+    "analytical": 2.1739,
+    "scaling_law": 2.1763
    },
    {
     "m1": 0.3333333333333333,
-    "analytical": 2.5715
+    "analytical": 2.5715,
+    "scaling_law": 2.5968
    },
    {
     "m1": 0.5,
-    "analytical": 4.0
+    "analytical": 4.0,
+    "scaling_law": 4.2418
    }
   ],
   "three_terms": [
    {
     "m1": 0.3333333333333333,
     "m2": 0.06666666666666667,
-    "analytical": 2.6471
+    "analytical": 2.6471,
+    "scaling_law": 2.8163
    },
    {
     "m1": 0.16666666666666666,
     "m2": 0.13333333333333333,
-    "analytical": 2.3377
+    "analytical": 2.3377,
+    "scaling_law": 2.5733
    },
    {
     "m1": 0.1111111111111111,
     "m2": 0.15555555555555556,
-    "analytical": 2.5243
+    "analytical": 2.5243,
+    "scaling_law": 2.6347
    }
   ],
   "quasi_polygons": [

@@ -57,7 +57,7 @@ says which route to an inclusion's response fits which situation.
 
 ### Changed
 
-- **TensND 0.14.1 is required**, for its toroidal coordinates and toroidal
+- **TensND 0.15 is required**, for its toroidal coordinates and toroidal
   functions and for the plane-strain and plane-stress stiffnesses of a
   transversely isotropic material.
 - **The two neural surrogates of the superspherical pore are retrained**, on
@@ -82,8 +82,10 @@ says which route to an inclusion's response fits which situation.
   its radii, published values, spheroids of the same volume, schemes);
   *Prismatic pores with corners* (published compressibilities and shear
   compliances of holes given by maps of two to four terms, polygons carried to
-  the limit of the map, the stiffness of a matrix with prismatic pores by
-  three schemes, a perforated plate in plane stress);
+  the limit of the map, the shear compliance against the direction of the
+  shear and the scaling law on the perimeter of the second article, the
+  stiffness of a matrix with prismatic pores by three schemes, a perforated
+  plate in plane stress);
   *A graded interphase around a spherical particle* (the layers against an
   exact Frobenius series, in elasticity and in conduction, and the shear
   modulus, which the series does not give).

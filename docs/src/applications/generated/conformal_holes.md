@@ -156,6 +156,61 @@ n, m = 4, 1 / 10
 shear_compliance(ConformalHole(n => m)), 2 / ((1 - (n - 2) * m^2) * (1 - n * m^2))
 ````
 
+## The shear compliance against the direction of the shear
+
+A section with a fourfold axis is not isotropic in its plane: its shear
+compliance depends on the angle ``\theta`` between the shear and the pore.
+For the hypotrochoid ``n = 3`` the [article](@cite ekneligodaPRSA2008) finds
+(its equation (5.5)) the mean value above multiplied by
+``1 - m\cos4\theta``. Turning the pore by ``-\theta`` is turning the shear
+by ``\theta``; a coefficient ``m_k`` of a pore turned by ``\alpha`` is
+``m_k\,\mathrm{e}^{\mathrm{i}(k+1)\alpha}``.
+
+````@example conformal_holes
+turned(hole, α) = ConformalHole(Tuple(m * cis((k + 1) * α) for (k, m) in pairs(hole.coefficients)))
+pure_shear(hole) = 2 * μ₀ * compliance(hole)[2, 3, 2, 3] / (1 - ν₀)
+m₃ = 0.2
+square_like = ConformalHole(3 => m₃)
+θs = range(0, π; length = 73)
+plot(
+    θs, [pure_shear(turned(square_like, -θ)) for θ in θs]; lw = 2, label = "computed",
+    xlabel = "angle θ of the shear", ylabel = "normalized shear compliance", size = (600, 340),
+    xticks = ([0, π / 4, π / 2, 3π / 4, π], ["0", "π/4", "π/2", "3π/4", "π"]), title = "Hypotrochoid n = 3, m = $m₃", titlefontsize = 10,
+)
+plot!(θs, [2 * (1 - m₃ * cos(4θ)) / ((1 - m₃^2) * (1 - 3 * m₃^2)) for θ in θs]; ls = :dash, lw = 2, label = "equation (5.5) of the article")
+````
+
+## A scaling law on the perimeter
+
+The same article proposes to estimate the shear compliance of a pore from
+its perimeter ``P`` and its area ``A`` alone, by ``1 + P^2/(4\pi A)`` (its
+equation (6.1)), exact for the circle. The perimeter of the image of the unit
+circle is the integral of ``|\omega'|``:
+
+````@example conformal_holes
+perimeter(hole; n = 4096) = 2π / n * sum(abs(1 - sum(k * m * ζ^(-k - 1) for (k, m) in pairs(hole.coefficients))) for ζ in cis.(2π .* (0:(n - 1)) ./ n))
+area(hole) = π * (1 - sum(k * abs2(m) for (k, m) in pairs(hole.coefficients)))
+scaling_law(hole) = 1 + perimeter(hole)^2 / (4π * area(hole))
+println("                                scaling law: published, computed   exact shear compliance")
+for row in [published_2008["two_terms"]; published_2008["three_terms"]]
+    @printf "%s   %8.4f   %8.4f            %8.4f\n" name(row) row["scaling_law"] scaling_law(pore(row)) shear_compliance(pore(row))
+end
+````
+
+The published values of the law are recovered to within 0.002. Against the
+exact compliance, the law is within 1 % up to ``m_2 = 1/3`` and 6 % above it
+for the section with cusps:
+
+````@example conformal_holes
+family = [ConformalHole(2 => m) for m in range(0, 0.5; length = 26)]
+scatter(
+    [perimeter(h)^2 / (2π * area(h)) for h in family], shear_compliance.(family); label = "hypotrochoids n = 2, exact",
+    xlabel = "P² / (2π A)", ylabel = "normalized shear compliance", legend = :topleft, size = (600, 340), markersize = 3,
+)
+scatter!([perimeter(pore(r))^2 / (2π * area(pore(r))) for r in published_2008["three_terms"]], [shear_compliance(pore(r)) for r in published_2008["three_terms"]]; label = "maps of three terms, exact", marker = :diamond)
+plot!([2, 6.6], [2, 4.3]; ls = :dash, color = :black, label = "1 + P²/(4π A)")
+````
+
 ## Regular polygons
 
 The map of a regular polygon has infinitely many terms. The articles keep
