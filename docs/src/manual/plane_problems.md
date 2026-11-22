@@ -200,6 +200,14 @@ crack = RibbonCrack(1.0; angle = 0.0)
 canonical_components(cod_tensor(crack, c)), π / 70.0
 ```
 
+The intensity factors at its tips, in opening and in sliding, are
+``\underline{K}=\sqrt{\pi b}\,\boldsymbol{\Sigma}\cdot\underline{n}`` under
+the remote stress ``\boldsymbol{\Sigma}``:
+
+```@example manplane
+last(sif(crack, c, Tens([0.0 0.5; 0.5 1.0]))), sqrt(π) .* (1.0, 0.5)
+```
+
 A sheet with parallel cracks, normal to the second axis, at the density
 ``\rho``: without interaction between the cracks its compliance across them is
 ``(1+2\pi\rho)/E`` and the one along them is unchanged
@@ -315,8 +323,7 @@ end
 ## What is not covered
 
 - aging viscoelasticity in the plane;
-- laminates, the stress intensity factors of a crack, and conducting cracks
-  ([`ConductiveCrack`](@ref)) in the plane;
+- laminates and conducting cracks ([`ConductiveCrack`](@ref)) in the plane;
 - the average over the rotations alone of a section without a mirror line:
   `IsoSymmetrize` also averages over the reflections;
 - the inclusions that are three-dimensional by nature: spheres and spheroids

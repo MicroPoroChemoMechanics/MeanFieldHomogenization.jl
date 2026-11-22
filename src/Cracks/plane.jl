@@ -29,6 +29,12 @@ function _plane_normal(crack::RibbonCrack)
     return SVector(e[2, 3], e[3, 3])
 end
 
+# Direction of the segment, in the axes of the plane: the tip is at ±b along it.
+function _plane_direction(crack::RibbonCrack)
+    e = TensND.vecbasis(crack_basis(crack))
+    return SVector(e[2, 2], e[3, 2])
+end
+
 # A tensor of the plane as that of a medium invariant along e₁, in plane strain:
 # the block of the plane, and out-of-plane moduli that do not enter the problem
 # of the plane (no coupling with the axis, shear moduli along it of the same
@@ -157,4 +163,28 @@ end
 function inverse_and_property_contribution(crack::MFH_Core.AbstractCrack, κ₀::_Plane2; kw...)
     R = inverse_property_contribution(crack, κ₀; kw...)
     return (R, -(κ₀ ⋅ R ⋅ κ₀))
+end
+
+# ── Intensity factors ────────────────────────────────────────────────────────
+
+"""
+    sif(crack::RibbonCrack, C₀::AbstractTens{4,2}, Σ::AbstractTens{2,2}) -> (𝐊, (Kᴵ, Kᴵᴵ))
+    sif(crack::RibbonCrack, K₀::AbstractTens{2,2}, σ∞::AbstractTens{1,2}) -> Real
+
+The intensity factors of a segment of half-length `b` in a two-dimensional
+cell, ``\\underline{K} = \\sqrt{\\pi b}\\,\\boldsymbol{\\Sigma}\\cdot\\underline{n}``
+with its opening and sliding modes on the normal and on the direction of the
+segment, and, in conduction,
+``K_T = \\sqrt{\\pi b}\\;\\underline{n}\\cdot\\boldsymbol{\\sigma}^{\\infty}``. They do not
+depend on the properties of the medium, which only says that the problem is
+that of the plane.
+"""
+function sif(crack::RibbonCrack, ::_Plane4, Σ::_Plane2; kw...)
+    n, m = _plane_normal(crack), _plane_direction(crack)
+    𝐊 = sqrt(oftype(float(crack.b), π) * crack.b) * (SMatrix{2, 2}(TensND.canonical_components(Σ)) * n)
+    return TensND.Tens(𝐊), (transpose(𝐊) * n, transpose(𝐊) * m)
+end
+function sif(crack::RibbonCrack, ::_Plane2, σ∞::TensND.AbstractTens{1, 2}; kw...)
+    n = _plane_normal(crack)
+    return sqrt(oftype(float(crack.b), π) * crack.b) * (transpose(n) * SVector{2}(TensND.canonical_components(σ∞)))
 end

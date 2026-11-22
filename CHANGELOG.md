@@ -59,6 +59,8 @@ says which route to an inclusion's response fits which situation.
   circular holes takes 13 µs, against 110 µs for the same medium described in
   three dimensions as aligned cylinders. `IsoSymmetrize` on a phase of the
   plane averages over the orientations of the plane.
+- `sif` of a crack of the plane: the opening and sliding intensity factors of
+  a `RibbonCrack` in a two-dimensional cell, and its flux intensity factor.
 - An assembly of particles checks that the domain of a `MixedBC` has the
   dimension of the particles: disks in the ball of `MixedBC(radius)` gave
   volume fractions against a volume, and are now refused with the way out,

@@ -287,6 +287,32 @@ _pp_plate_modulus(t) = first(plane_strain_to_plane_stress(young_poisson(t)...))
         @test_throws ArgumentError cod_tensor(EllipticCrack(1.0, 0.5), κ)
     end
 
+    @testset "intensity factors of a segment" begin
+        b, θ = 0.7, 0.4
+        crack = RibbonCrack(b; angle = θ)
+        c = TensISO{2}(2 * 5.0, 2 * 2.0)
+        # A hydrostatic stress of the plane opens the segment whatever its direction.
+        𝐊, (Kᴵ, Kᴵᴵ) = sif(crack, c, TensND.Tens([3.0 0.0; 0.0 3.0]))
+        @test Kᴵ ≈ 3 * sqrt(π * b)
+        @test abs(Kᴵᴵ) < 1.0e-14
+        @test norm(𝐊) ≈ 3 * sqrt(π * b)
+        # Against the same crack in space, under the stress of the plane.
+        Σ = [1.3 -0.4; -0.4 0.6]
+        Σ₃ = zeros(3, 3)
+        Σ₃[2:3, 2:3] .= Σ
+        _, (Kᴵ, Kᴵᴵ) = sif(crack, c, TensND.Tens(Σ))
+        _, (K₁, K₂, K₃) = sif(crack, iso_stiffness(5.0, 2.0), TensND.Tens(Σ₃))
+        @test Kᴵ ≈ K₁
+        @test Kᴵᴵ ≈ K₂
+        @test abs(K₃) < 1.0e-14
+        # Conduction: the flux normal to the segment.
+        q = [0.8, -1.1]
+        q₃ = [0.0; q]
+        @test sif(crack, TensISO{2}(2.0), TensND.Tens(q)) ≈ sif(crack, TensISO{3}(2.0), TensND.Tens(q₃))
+        # The half-length may carry a derivative.
+        @test ForwardDiff.derivative(x -> sif(RibbonCrack(x; angle = θ), c, TensND.Tens([3.0 0.0; 0.0 3.0]))[2][1], b) ≈ 3 * sqrt(π) / (2 * sqrt(b))
+    end
+
     @testset "the other schemes and tensors" begin
         f = 0.2
         c₀, c₁ = plane_strain_stiffness(_pp_C), plane_strain_stiffness(_pp_stiff)
