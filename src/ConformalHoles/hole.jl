@@ -68,10 +68,9 @@ See also [`ConformalShape`](@ref).
 struct ConformalHole{T <: Number, B <: TensND.AbstractBasis} <: Core.AbstractCustomInclusion{T}
     coefficients::Vector{Complex{T}}
     basis::B
-    function ConformalHole{T, B}(coefficients, basis) where {T <: Number, B <: TensND.AbstractBasis}
-        _check_map(coefficients)
-        return new{T, B}(coefficients, basis)
-    end
+    # the map is checked here, whatever the constructor it comes from
+    ConformalHole{T, B}(coefficients, basis) where {T <: Number, B <: TensND.AbstractBasis} =
+        (_check_map(coefficients); new{T, B}(coefficients, basis))
 end
 
 function ConformalHole(

@@ -1,5 +1,84 @@
 # Changelog
 
+## v0.29.0 — inclusions that are not ellipsoids, solved exactly
+
+A minor release: two inclusion types whose response is exact although they have
+no Hill tensor, a helper for graded interphases, and a page that says which
+route to an inclusion's response fits which situation.
+
+### Added
+
+- **`InsulatingTorus(R, r)`**, a ring-shaped pore of the conduction problem in
+  an isotropic matrix. Until now a torus could only be approximated, on a grid
+  of Gaussians, to a few percent. Its temperature field is a series of toroidal
+  harmonics, in the toroidal chart of TensND 0.14, whose amplitudes satisfy a
+  three-term relation solved to rounding; the gradient concentration tensor is
+  read on the far field, and a second expression, from the integral of the
+  temperature over the torus, checks it. The tensor depends on `r/R` only, from
+  the thin ring (3/2 across the axis, 2 along it) to the torus whose hole
+  closes. Radii are numbers or duals.
+- **`ConformalHole(coefficients)`**, an infinite cylindrical cavity whose
+  cross-section is the image of the unit circle by a conformal map with a
+  finite number of terms: an ellipse, a hypotrochoid, a polygon with rounded
+  corners, a star. It extends `Cylinder`, limited to elliptic sections, to
+  prismatic pores and channels. Its tensors are exact for the map given: the
+  complex potentials of the plane-strain problem are finite sums, obtained from
+  a linear system; the antiplane shear and the conduction around the insulating
+  section are closed forms; the axial extension is undisturbed. Elasticity and
+  conduction, isotropic matrix, any orientation; coefficients are numbers,
+  duals or symbols. **`polygon_map(n, terms)`** gives the terms of the map of a
+  regular polygon.
+- **`graded_layers(profile, r_in, r_out, n)`**, which cuts a zone whose moduli
+  vary with the radius into thin uniform layers for a `LayeredSphere` or a
+  `LayeredCylinder`: an interphase that is not a uniform shell. The response of
+  the layers tends to that of the graded zone as the square of their thickness,
+  which two computations extrapolate.
+
+### Changed
+
+- **TensND 0.14 is required**, for its toroidal coordinates and toroidal
+  functions.
+- **The two neural surrogates of the superspherical pore are retrained**, on
+  finite-element cells of the fourth level of subdivision and of radius `4a`.
+  At the third level a concave pore was not converged: `E₀ H₁₁₁₁` of the
+  exponent `p = 0.4` moves by 7 % from one level to the next, toward the
+  published value. `load_surrogate(model_path("supershape_pore_elastic"))` and
+  its conduction counterpart therefore return different numbers, closer to the
+  converged ones (worst held-out error of the fit 1.6 % in elasticity, 0.07 % in
+  conduction).
+
+### Documentation
+
+- *Choosing an inclusion*, a new manual page: every way the package obtains the
+  response of an inclusion (closed form, layered pattern, series, custom
+  formula or solver, grid of Gaussians, finite-element cell, trained network),
+  with what each one allows: reference medium, derivatives, accuracy, cost.
+- New applications, each a script published as its page:
+  *A concave pore through every route* (a published table, a mesh, a network
+  and a grid on the same superspherical pore, with the deviations measured);
+  *Ring-shaped pores in a conducting matrix* (the torus against the ratio of
+  its radii, published values, spheroids of the same volume, schemes);
+  *Prismatic pores with corners* (published compressibilities and shear
+  compliances of holes given by maps of two to four terms, polygons carried to
+  the limit of the map, the stiffness of a matrix with prismatic pores);
+  *A graded interphase around a spherical particle* (the layers against an
+  exact Frobenius series, in elasticity and in conduction, and the shear
+  modulus, which the series does not give).
+- New theory pages *Toroidal inclusions* and *Holes given by a conformal map*,
+  with complete derivations, and the manual pages of the two inclusions.
+- The tables of *Concave pores* are recomputed on the converged cells.
+
+### Tests
+
+- The torus against the thin-ring limits, the field rebuilt from its
+  amplitudes, the surface integral, the published analytical amplitudes and a
+  grid of Gaussians; the conformal hole against the elliptic `Cylinder` on
+  every component, an independent collocation of the boundary condition, closed
+  forms and published tables; the graded layers against two exact solutions;
+  neutral inhomogeneities (resistive interface, conducting surface, Hashin's
+  coating) as exact zeros of the layered sphere. Published values are stored
+  under `data/literature/`.
+
 ## v0.28.1 — the opening of a planar crack is its field
 
 A patch release.
