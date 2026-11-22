@@ -138,6 +138,8 @@ _layer_fractions(cyl::LayeredCylinder{T, N}) where {T, N} =
 # ── AbstractInclusion interface ──────────────────────────────────────────────
 
 MFH_Core.dimension(::LayeredCylinder) = 3
+# Concentric rings in a cell of the plane (`plane.jl`).
+MFH_Core.admits_dimension(::LayeredCylinder, d::Integer) = d == 2 || d == 3
 
 MFH_Core.inclusion_basis(::LayeredCylinder{T}) where {T} =
     TensND.CanonicalBasis{3, TensND.canonical_eltype(T)}()

@@ -54,10 +54,11 @@ abstract type AbstractEllipsoidalInclusion{dim, T} <: AbstractInclusion{T} end
 """
     AbstractCrack{T} <: AbstractInclusion{T}
 
-Supertype for flat-crack geometries (elliptic / ribbon / penny).  Cracks
-always live in 3D physical space — the spatial dimension of the geometry
-(= 2 in the crack plane) is not exposed in the type, as downstream
-algorithms uniformly operate on the 3D stiffness tensor.
+Supertype for flat-crack geometries (elliptic / ribbon / penny). A crack is
+declared in three-dimensional space, with its frame
+``(\\underline{\\ell}, \\underline{m}, \\underline{n})``. A ribbon crack
+unbounded along the normal to a plane is also the crack of a two-dimensional
+cell, where it is a segment ([`admits_dimension`](@ref)).
 """
 abstract type AbstractCrack{T} <: AbstractInclusion{T} end
 
@@ -107,6 +108,36 @@ Spatial dimension of the inclusion's ambient space (2 or 3 for the
 concrete inclusions shipped with the package).
 """
 function dimension end
+
+"""
+    admits_dimension(incl::AbstractInclusion, d::Integer) -> Bool
+
+Whether `incl` can be a phase of a cell whose properties are tensors of
+dimension `d`. By default the dimension of its own space,
+[`dimension`](@ref)`(incl) == d`. An inclusion invariant along an axis also
+serves a cell of the plane normal to that axis, where it is its section: a
+[`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder)
+(concentric rings), a [`ConformalHole`](@ref MeanFieldHomogenization.ConformalHoles.ConformalHole)
+(a hole of the plane) and a [`RibbonCrack`](@ref MeanFieldHomogenization.Cracks.RibbonCrack)
+(a segment) admit 2 and 3.
+"""
+admits_dimension(incl::AbstractInclusion, d::Integer) = dimension(incl) == d
+
+# The inclusion and the reference property of its auxiliary problem belong to
+# the same space. Both dimensions are read on the types: for concrete arguments
+# the test is decided when the caller is compiled, and costs nothing.
+@inline _same_space(incl::AbstractInclusion, P₀::TensND.AbstractTens) =
+    admits_dimension(incl, TensND.get_dim(P₀)) ? nothing : _different_spaces(incl, P₀)
+@noinline _different_spaces(incl, P₀) = throw(
+    ArgumentError(
+        "an inclusion of type $(nameof(typeof(incl))), of dimension $(dimension(incl)), cannot be a " *
+            "phase of a cell whose properties are tensors of dimension $(TensND.get_dim(P₀)). In a two-dimensional cell the phases are " *
+            "`Ellipsoid(r; dim = 2)`, `Ellipsoid(a, b; angle)`, `LayeredCylinder`, " *
+            "`ConformalHole` or `RibbonCrack(b; angle)`, and every property a tensor of the " *
+            "plane (`plane_strain_stiffness`, `plane_stress_stiffness`); in a " *
+            "three-dimensional cell every property is a tensor of dimension 3"
+    )
+)
 
 """
     element_type(incl::AbstractInclusion{T}) -> Type{T}
@@ -189,9 +220,9 @@ in elasticity (order 4), and
 in conductivity / diffusion (order 2).
 
 The appropriate method is selected by dispatch on the order of `C₀`:
-an `AbstractTens{4, 3}` (elasticity) triggers the double contraction
+an `AbstractTens{4}` (elasticity) triggers the double contraction
 ``\\mathbb{P}:\\mathbb{C}_0``, while an
-`AbstractTens{2, 3}` (conductivity) triggers the simple contraction
+`AbstractTens{2}` (conductivity) triggers the simple contraction
 ``\\boldsymbol{P}\\cdot\\boldsymbol{K}_0``.
 
 All keyword arguments (`method`, `abstol`, `reltol`, `maxiters`) are

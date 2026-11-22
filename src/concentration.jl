@@ -63,6 +63,7 @@ function gradient_gradient_concentration(
         kw...
     )
     T = promote_type(eltype(C₁), eltype(C₀))
+    Core._same_space(incl, C₀)
     P = hill_tensor(incl, C₀; kw...)
     δC = C₁ - C₀
     return inv(TensND.tens_Id4(Val(TensND.get_dim(C₀)), Val(T)) + (P ⊡ δC))
@@ -218,6 +219,7 @@ function gradient_gradient_concentration(
         kw...
     )
     T = promote_type(eltype(K₁), eltype(K₀))
+    Core._same_space(incl, K₀)
     P = hill_tensor(incl, K₀; kw...)
     δK = K₁ - K₀
     return inv(TensND.tens_Id2(Val(TensND.get_dim(K₀)), Val(T)) + (P ⋅ δK))

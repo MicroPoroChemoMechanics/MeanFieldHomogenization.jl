@@ -18,7 +18,7 @@
 #    elasticity   : Δ_crack = (4π/3 or π) · ε · property_contribution(crack, C₀)
 #    conductivity : Δ_crack = (4π/3 or π) · ε · property_contribution(crack, K₀)
 #
-#  Dispatch on the tensor order (`AbstractTens{4,3}` vs `AbstractTens{2,3}`)
+#  Dispatch on the tensor order (`AbstractTens{4}` vs `AbstractTens{2}`, in any dimension)
 #  picks the method of `property_contribution`.
 
 # Whether `P_i` may multiply the orientation-averaged concentration instead of

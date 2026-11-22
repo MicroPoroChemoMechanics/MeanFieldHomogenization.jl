@@ -192,7 +192,7 @@ export AbstractAlgorithm, Analytical, Residue, DECUHR, NestedQuadGK,
     CylinderQuadrature, Multipole, Auto
 export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
     OrthotropicSym, GeneralAnisotropicSym
-export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
+export material_symmetry, dimension, admits_dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor, second_hill_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
 export green_gradient_iso2, dipole_temperature_iso

@@ -114,6 +114,8 @@ Base.show(io::IO, h::ConformalHole{T}) where {T} =
     print(io, "ConformalHole{", T, "} (", length(h.coefficients), " coefficient(s) of the map)")
 
 Core.dimension(::ConformalHole) = 3
+# A hole of the plane in a two-dimensional cell.
+Core.admits_dimension(::ConformalHole, d::Integer) = d == 2 || d == 3
 Core.inclusion_basis(h::ConformalHole) = h.basis
 Core.shape_trait(::ConformalHole) = ConformalShape()
 # No single property describes a cavity: the contributions follow from the two
@@ -289,68 +291,4 @@ function Core.flux_gradient_concentration(
     ) where {T}
     _conductivities(K₀, _axis(h))
     return TensND.TensISO{3}(zero(promote_type(T, eltype(K₀))))
-end
-
-# ── The hole in a two-dimensional problem ────────────────────────────────────
-
-# A property of the plane that is isotropic: a `TensISO`, or a general tensor
-# of the plane that is one (the estimate of a scheme). Numbers only for the
-# second: the distance to isotropy is compared.
-_plane_isotropic(P::TensND.TensISO{order, 2}) where {order} = P
-function _plane_isotropic(P::TensND.AbstractTens{order, 2}) where {order}
-    is_hard_numeric(eltype(P)) || throw(
-        ArgumentError(
-            "a ConformalHole takes a symbolic property of the plane as a TensISO; a " *
-                "$(nameof(typeof(P))) would have to be compared with its isotropic part"
-        )
-    )
-    Piso, _, drel = TensND.project(P, Val(:ISO))
-    drel ≤ _ISO_RTOL || throw(
-        ArgumentError(
-            "a ConformalHole takes a property that is isotropic in the plane of its section; " *
-                "the $(nameof(typeof(P))) it received is at a relative distance $drel from isotropy"
-        )
-    )
-    return Piso
-end
-const _ISO_RTOL = 1.0e-8
-
-"""
-    Core.gradient_gradient_concentration(hole::ConformalHole, P₁, P₀::AbstractTens{order, 2})
-
-The same tensors in a two-dimensional problem, whose reference `P₀` is an
-isotropic tensor of the plane: the stiffness ``2k\\,\\mathbb J + 2\\mu\\,\\mathbb K``
-(`TensISO{4,2}`), for which the mean strain of the hole per unit remote strain
-is ``2\\,(1/\\mu + 1/k)`` times the matrix of `_hole_compliance`, contracted
-with `P₀`; or the conductivity (`TensISO{2,2}`), which does not enter. The
-result is written in the axes of the map, ``z = x_1 + \\mathrm{i}\\,x_2``.
-Plane strain and plane stress differ by the modulus ``k`` of `P₀` only.
-"""
-function Core.gradient_gradient_concentration(
-        h::ConformalHole, ::TensND.AbstractTens{4, 2}, C₀::TensND.AbstractTens{4, 2}; kw...
-    )
-    α, β = TensND.get_data(_plane_isotropic(C₀))          # 2k and 2μ
-    a, b, o = (α + β) / 2, (α - β) / 2, zero(α)
-    C = SMatrix{3, 3}(a, b, o, b, a, o, o, o, β)
-    return TensND.from_mandel(((4 * (inv(α) + inv(β))) * h.compliance) * C)
-end
-
-function Core.gradient_gradient_concentration(
-        h::ConformalHole, ::TensND.AbstractTens{2, 2}, K₀::TensND.AbstractTens{2, 2}; kw...
-    )
-    _plane_isotropic(K₀)
-    S = _plane_gradient_concentration(h.coefficients)
-    return TensND.from_mandel(SVector{3}(S[1, 1], S[2, 2], sqrt(2 * one(eltype(S))) * S[2, 1]))
-end
-
-function Core.flux_gradient_concentration(
-        h::ConformalHole{T}, ::TensND.AbstractTens{4, 2}, C₀::TensND.AbstractTens{4, 2}; kw...
-    ) where {T}
-    z = zero(promote_type(T, eltype(_plane_isotropic(C₀))))
-    return TensND.TensISO{2}(z, z)
-end
-function Core.flux_gradient_concentration(
-        h::ConformalHole{T}, ::TensND.AbstractTens{2, 2}, K₀::TensND.AbstractTens{2, 2}; kw...
-    ) where {T}
-    return TensND.TensISO{2}(zero(promote_type(T, eltype(_plane_isotropic(K₀)))))
 end

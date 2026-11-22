@@ -8,7 +8,7 @@
 # =============================================================================
 
 """
-    biot_tensor(rve::RVE, C_hom; solid = nothing, property = :C) -> Tens{2,3}
+    biot_tensor(rve::RVE, C_hom; solid = nothing, property = :C) -> AbstractTens{2}
 
 [`biot_tensor`](@ref) with the skeleton stiffness read from the phase that
 plays the homogeneous solid of microporomechanics.
@@ -19,7 +19,7 @@ none has to be told, because no container can know which of its phases is the
 skeleton.
 """
 biot_tensor(
-    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4, 3};
+    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4};
     solid::Union{Nothing, Symbol} = nothing, property::Symbol = :C
 ) = biot_tensor(
     C_hom,
@@ -35,7 +35,7 @@ biot_tensor(
 phase that plays the homogeneous solid — see [`biot_tensor`](@ref) for `solid`.
 """
 poroelastic_parameters(
-    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4, 3}, φ::Number;
+    rve::Schemes.RVE, C_hom::TensND.AbstractTens{4}, φ::Number;
     solid::Union{Nothing, Symbol} = nothing, property::Symbol = :C
 ) = poroelastic_parameters(
     C_hom,

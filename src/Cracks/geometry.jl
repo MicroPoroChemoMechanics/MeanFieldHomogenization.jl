@@ -137,16 +137,36 @@ PennyCrack(a; euler_angles::Tuple{Vararg{Real}} = ()) =
 
 """
     RibbonCrack(b; euler_angles=(0,0,0))
+    RibbonCrack(b; angle)
 
-Ribbon-like (tunnel) crack of half-width `b`.
+Ribbon-like (tunnel) crack of half-width `b`, unbounded along the first vector
+of its frame, of normal the third.
+
+With `angle`, the crack is that of a plane problem: unbounded along
+``\\underline{e}_1``, its trace in the plane ``(\\underline{e}_2, \\underline{e}_3)``
+is a segment of half-length `b` that makes the angle `angle` with
+``\\underline{e}_2``. In a two-dimensional cell, whose properties are tensors of
+the plane, it is that segment: a crack of the plane, whose first axis is
+``\\underline{e}_2`` ([Plane problems](@ref man-plane-problems)).
 """
 function RibbonCrack(
         b::Tb;
-        euler_angles::Tuple{Vararg{Real}} = ()
+        euler_angles::Tuple{Vararg{Real}} = (), angle::Union{Nothing, Real} = nothing
     ) where {Tb}
     T = TensND.float_like(Tb)
+    angle === nothing || return _plane_ribbon(T(b), angle, euler_angles)
     basis = TensND.euler_basis(euler_angles; T = T)
     return RibbonCrack{T, typeof(basis)}(T(b), basis)
+end
+
+# The frame (ℓ, m, n) of a crack of the plane (e₂, e₃): ℓ = e₁, m at `angle` from e₂.
+function _plane_ribbon(b, angle, euler_angles)
+    isempty(euler_angles) || throw(
+        ArgumentError("a RibbonCrack is oriented by `angle` (a crack of a plane problem) or by `euler_angles`, not both")
+    )
+    s, c = sincos(angle)
+    o, 𝟙 = zero(c), one(c)
+    return RibbonCrack(b, [𝟙 o o; o c -s; o s c])
 end
 
 """
@@ -199,6 +219,8 @@ end
 # =============================================================================
 
 MFH_Core.dimension(::MFH_Core.AbstractCrack) = 3
+# A segment in a cell of the plane (`plane.jl`).
+MFH_Core.admits_dimension(::RibbonCrack, d::Integer) = d == 2 || d == 3
 MFH_Core.inclusion_basis(c::MFH_Core.AbstractCrack) = c.basis
 MFH_Core.shape_trait(::EllipticCrack{T, S}) where {T, S} = S
 MFH_Core.shape_trait(::RibbonCrack) = Ribbon

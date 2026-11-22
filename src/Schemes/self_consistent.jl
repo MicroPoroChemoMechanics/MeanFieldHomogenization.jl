@@ -273,7 +273,7 @@ _major_symmetrize(P::TensND.AbstractTens{2}) = Tensors.symmetric(P)
 # A generic tensor stored as a minor-symmetric `Tensors.SymmetricTensor`: the part is
 # formed on the stored data, which `get_array` returns, seventy times faster than
 # through the components of the generic method (14 ns against 1 µs).
-_major_symmetrize(P::TensND.TensCanonical{4, 3, T, <:Tensors.SymmetricTensor{4, 3}}) where {T} =
+_major_symmetrize(P::TensND.TensCanonical{4, dim, T, <:Tensors.SymmetricTensor{4, dim}}) where {dim, T} =
     TensND.TensCanonical(Tensors.majorsymmetric(TensND.get_array(P)))
 
 # The matrix of a property in the canonical basis: Kelvin–Mandel at order 4, an

@@ -134,10 +134,11 @@ _check_conductivity(K, where_; positive::Bool = false) =
     _check_conductivity(Val(is_hard_numeric(_entries_eltype(K))), K, where_, positive)
 _check_conductivity(::Val{false}, K, where_, positive) = nothing
 function _check_conductivity(::Val{true}, K, where_, positive)
-    all(isfinite, values(K)) && (positive ? K.t > 0 && K.a > 0 : K.t ≥ 0 && K.a ≥ 0) || throw(
+    # every conductivity given: the transverse and the axial ones, or that of the plane
+    all(isfinite, values(K)) && all(positive ? >(0) : ≥(0), values(K)) || throw(
         ArgumentError(
-            "$where_ of the LayeredCylinder has conductivities (transverse, axial) = " *
-                "$(values(K)): they must be finite and $(positive ? "positive" : "nonnegative")"
+            "$where_ of the LayeredCylinder has the conductivities $(values(K)): " *
+                "they must be finite and $(positive ? "positive" : "nonnegative")"
         )
     )
     return nothing

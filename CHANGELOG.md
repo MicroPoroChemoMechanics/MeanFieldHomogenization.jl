@@ -36,10 +36,20 @@ says which route to an inclusion's response fits which situation.
   gives the terms of the map of a regular polygon.
 - **Two-dimensional cells.** The schemes (dilute, Mori-Tanaka,
   self-consistent, differential and the others) now run on tensors of the
-  plane as they do in space: a cell whose phases are `Ellipsoid(r; dim = 2)`,
-  `Ellipsoid(a, b; angle)` or `ConformalHole` and whose properties are
-  `TensISO{4,2}` or `TensISO{2,2}` is homogenized by `homogenize`, in elasticity
-  and in conduction. They were three-dimensional only, although the Hill tensors
+  plane as they do in space: a cell whose properties are `TensISO{4,2}` or
+  `TensISO{2,2}` is homogenized by `homogenize`, in elasticity and in
+  conduction. Its phases are disks and ellipses (`Ellipsoid(r; dim = 2)`,
+  `Ellipsoid(a, b; angle)`), coated disks (`LayeredCylinder`, with its
+  imperfect interfaces), holes given by a conformal map (`ConformalHole`) and
+  cracks, segments of the plane (`RibbonCrack(b; angle)`, with the density
+  `N b²`). The same objects as in three dimensions: the dimension of the
+  properties chooses the problem solved, and only the problems of the plane
+  are. What follows from an estimate applies as well: concentration tensors,
+  compliances of the families of cracks, poroelastic coefficients
+  (`biot_tensor`, `poroelastic_parameters`, …). **`admits_dimension(incl, d)`**
+  says whether an inclusion can be a phase of a cell of dimension `d`; an
+  inclusion and a property of different dimensions are refused with a message
+  that names both, where a `MethodError` came out of a kernel. They were three-dimensional only, although the Hill tensors
   of the plane existed. Nothing is written twice: the signatures of the
   concentration tensors, of the contributions and of the schemes no longer fix
   the dimension, and the tensors of the plane are dispatched to the same code.
@@ -109,8 +119,9 @@ says which route to an inclusion's response fits which situation.
   the cylinder of the package and the equation of the self-consistent scheme;
   the cells of the plane against the scheme of Mori and Tanaka written by hand
   with the Hill tensor of the disk, against the closed forms of a sheet with
-  circular holes and against the block of the plane of the same medium in three
-  dimensions; the graded layers against two exact solutions;
+  circular holes or with cracks and against the block of the plane of the same
+  medium in three dimensions (disks, ellipses, coated disks with each kind of
+  interface, holes, cracks); the graded layers against two exact solutions;
   neutral inhomogeneities (resistive interface, conducting surface, Hashin's
   coating) as exact zeros of the layered sphere. Published values are stored
   under `data/literature/`.

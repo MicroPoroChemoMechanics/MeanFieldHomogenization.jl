@@ -86,7 +86,7 @@ See also [`crack_family_residual`](@ref), [`homogenize`](@ref).
 """
 function crack_family_compliances(
         rve::RVE, scheme::HomogenizationScheme,
-        C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C, kw...
+        C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
     )
     return throw(
         ArgumentError(
@@ -101,7 +101,7 @@ end
 
 function crack_family_compliances(
         rve::RVE, ::SelfConsistent,
-        C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C, kw...
+        C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
     )
     names = _crack_family_names(rve)
     # At the SC fixed point the body `C_hom = B_E : A_E⁻¹` with
@@ -122,7 +122,7 @@ end
 
 function crack_family_compliances(
         rve::RVE, scheme::MoriTanaka,
-        C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C, kw...
+        C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
     )
     m = matrix_name(scheme, rve)
     names = _crack_family_names(rve)
@@ -168,7 +168,7 @@ residual).
 """
 function crack_family_residual(
         rve::RVE, scheme::HomogenizationScheme,
-        C_hom::TensND.AbstractTens{4, 3}; property::Symbol = :C, kw...
+        C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
     )
     dec = crack_family_compliances(rve, scheme, C_hom; property = property, kw...)
     S_hom = inv(C_hom)
@@ -208,7 +208,7 @@ end
 # honored, since that is a property of the family and not of the scheme.
 function _crack_family_H(
         rve::RVE, name::Symbol, prop::Symbol,
-        P₀::TensND.AbstractTens{4, 3}; kw...
+        P₀::TensND.AbstractTens{4}; kw...
     )
     geom = rve.phases[name].geometry
     K_int = _crack_interface_K4(rve, name)

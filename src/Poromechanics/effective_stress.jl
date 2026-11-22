@@ -8,7 +8,7 @@
 # =============================================================================
 
 """
-    terzaghi_stress(Σ, p) -> Tens{2,3}
+    terzaghi_stress(Σ, p) -> AbstractTens{2}
 
 **Terzaghi effective stress** ``\\boldsymbol{\\Sigma}' = \\boldsymbol{\\Sigma} +
 p\\,\\boldsymbol{1}``.
@@ -39,13 +39,13 @@ that makes the *macroscopic* constitutive law take its drained form.
 
 See also [`biot_tensor`](@ref).
 """
-function terzaghi_stress(Σ::TensND.AbstractTens{2, 3}, p::Number)
+function terzaghi_stress(Σ::TensND.AbstractTens{2}, p::Number)
     T = promote_type(eltype(Σ), typeof(p))
-    return Σ + p * TensND.tens_Id2(Val(3), Val(T))
+    return Σ + p * TensND.tens_Id2(Val(TensND.get_dim(Σ)), Val(T))
 end
 
 """
-    biot_effective_stress(Σ, p, B) -> Tens{2,3}
+    biot_effective_stress(Σ, p, B) -> AbstractTens{2}
 
 **Biot effective stress** ``\\boldsymbol{\\Sigma} + p\\,\\boldsymbol{B}``, the measure
 for which the poroelastic law
@@ -59,7 +59,7 @@ It coincides with [`terzaghi_stress`](@ref) only when ``\\boldsymbol{B} =
 See also [`biot_tensor`](@ref), [`terzaghi_stress`](@ref).
 """
 function biot_effective_stress(
-        Σ::TensND.AbstractTens{2, 3}, p::Number, B::TensND.AbstractTens{2, 3}
+        Σ::TensND.AbstractTens{2}, p::Number, B::TensND.AbstractTens{2}
     )
     return Σ + p * B
 end

@@ -49,6 +49,7 @@ include("annular.jl")
 include("arc.jl")
 include("saturn.jl")
 include("api.jl")
+include("plane.jl")           # the crack of a two-dimensional cell
 
 # ── Geometry ─────────────────────────────────────────────────────────────────
 export CrackShape, Penny, EllipticShape, Ribbon

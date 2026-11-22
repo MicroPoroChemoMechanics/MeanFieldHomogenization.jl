@@ -33,10 +33,12 @@ import ..Core
 # The moduli of a medium that is isotropic, or transversely isotropic about a
 # given axis: read as a layered cylinder reads those of its layers.
 import ..LayeredCylinders: _hill_moduli, _conductivities
+import ..Core: _plane_isotropic
 
 export ConformalHole, ConformalShape, polygon_map
 
-include("map.jl")
-include("hole.jl")
+include("map.jl")        # the conformal map: validity, area, series
+include("hole.jl")       # the cavity and its tensors in three dimensions
+include("plane.jl")      # the same hole in a two-dimensional cell
 
 end # module

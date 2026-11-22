@@ -94,7 +94,9 @@ tensors of the plane:
 | :--- | :--- |
 | disk | [`Ellipsoid`](@ref)`(r; dim = 2)` |
 | ellipse of semi-axes `a` and `b`, turned by `angle` | `Ellipsoid(a, b; angle)` |
+| concentric rings, a coated disk | [`LayeredCylinder`](@ref)`(radii, moduli)` |
 | hole given by a conformal map | [`ConformalHole`](@ref) |
+| crack, a segment of half-length `b` turned by `angle` | [`RibbonCrack`](@ref)`(b; angle)` |
 
 A sheet with circular holes, at the porosity ``f``, in plane stress:
 
@@ -160,6 +162,73 @@ and the reflections of the plane:
 bulk_shear(homogenize(sheet(c, 0.1; hole = Ellipsoid(3.0, 1.0), symmetrize = IsoSymmetrize()), MoriTanaka(), :C))
 ```
 
+## Coated disks
+
+A coated fiber seen across its axis is a disk in a ring. It is declared as in
+three dimensions, by its radii and by the properties of its layers, here
+tensors of the plane ([Layered inclusions](@ref man-layered)); the interfaces
+between the layers are given in the same way. A stiff fiber in a soft coating:
+
+```@example manplane
+fiber = plane_stress_stiffness(iso_stiffness_young_poisson(200.0, 0.3))
+coating = plane_stress_stiffness(iso_stiffness_young_poisson(20.0, 0.35))
+coated = LayeredCylinder((0.8, 1.0), (fiber, coating))        # radii, then the layers from the center
+rve = RVE()
+add_phase!(rve, :matrix, disk, Dict(:C => c); fraction = :rest)
+add_phase!(rve, :fibers, coated, Dict(:C => fiber); fraction = 0.3)
+bulk_shear(homogenize(rve, MoriTanaka(), :C)), bulk_shear(c)
+```
+
+## Cracks
+
+A crack of the plane is a segment of half-length ``b``, the trace of a ribbon
+crack unbounded along the normal to the plane: `RibbonCrack(b; angle)`, with
+`angle` the angle of the segment with the first axis. As in three dimensions
+([Cracks](@ref man-cracks)) its amount is a density, here
+``\rho=N\,b^2`` for ``N`` cracks per unit area. Its opening under a unit
+stress is the tensor ``\boldsymbol{B}``, proportional to the identity in an
+isotropic plane:
+
+```math
+\boldsymbol{B}=\frac{\pi}{4}\,\Bigl(\frac1\mu+\frac1k\Bigr)\,\boldsymbol{1} ,
+```
+
+that is ``\pi(1-\nu^2)/E`` in plane strain and ``\pi/E`` in plane stress.
+
+```@example manplane
+crack = RibbonCrack(1.0; angle = 0.0)
+canonical_components(cod_tensor(crack, c)), π / 70.0
+```
+
+A sheet with parallel cracks, normal to the second axis, at the density
+``\rho``: without interaction between the cracks its compliance across them is
+``(1+2\pi\rho)/E`` and the one along them is unchanged
+[kachanov1992](@cite).
+
+```@example manplane
+ρ = 0.1
+function cracked(c, ρ; kw...)
+    rve = RVE()
+    add_phase!(rve, :matrix, disk, Dict(:C => c); fraction = :rest)
+    add_phase!(rve, :cracks, crack, Dict(:C => 0 * c); density = ρ, kw...)
+    return rve
+end
+S = canonical_components(inv(homogenize(cracked(c, ρ), MoriTanaka(), :C)))
+70.0 * S[2, 2, 2, 2], 1 + 2π * ρ, 70.0 * S[1, 1, 1, 1]
+```
+
+Cracks oriented at random leave the sheet isotropic. Young's modulus is
+``E/(1+\pi\rho)`` without interaction, which the scheme of Mori and Tanaka
+keeps, and ``E\,\mathrm{e}^{-\pi\rho}`` by the differential scheme
+[kachanov1992](@cite):
+
+```@example manplane
+at_random = cracked(c, ρ; symmetrize = IsoSymmetrize())
+for (name, scheme, closed_form) in (("Mori-Tanaka", MoriTanaka(), 1 / (1 + π * ρ)), ("differential", DifferentialScheme(), exp(-π * ρ)))
+    @printf "%-14s  E/E₀ = %.6f   closed form %.6f\n" name plate_modulus(homogenize(at_random, scheme, :C)) / 70.0 closed_form
+end
+```
+
 ## Conduction
 
 In conduction the property of the plane is the conductivity across the axis,
@@ -176,8 +245,8 @@ homogenize(rve, MoriTanaka(), :K)
 ## The same medium in three dimensions
 
 A medium invariant along an axis is also a three-dimensional cell of aligned
-cylinders ([`Cylinder`](@ref), [`LayeredCylinder`](@ref), `ConformalHole`),
-which is in plane strain in the plane of the sections. Its estimate carries,
+cylinders ([`Cylinder`](@ref), `LayeredCylinder`, `ConformalHole`, with
+three-dimensional properties), which is in plane strain in the plane of the sections. Its estimate carries,
 besides the moduli of the plane, the axial modulus and the shear modulus along
 the axis; its block of the plane is the estimate of the plane cell.
 
@@ -197,13 +266,61 @@ The plane cell is the route to take when the moduli of the plane are what is
 wanted: it carries tensors of dimension 2 only, and it is the one that gives
 plane stress.
 
+## Every scheme, and what follows from the estimate
+
+All the schemes of [Homogenization schemes](@ref man-schemes) take a cell of
+the plane. Those that need the shape of the spatial distribution of the
+inclusions are given a shape of the plane:
+
+```@example manplane
+stiff = plane_stress_stiffness(iso_stiffness_young_poisson(200.0, 0.3))
+function reinforced(; kw...)
+    rve = RVE(; kw...)
+    add_phase!(rve, :matrix, disk, Dict(:C => c); fraction = :rest)
+    add_phase!(rve, :fibers, disk, Dict(:C => stiff); fraction = 0.2)
+    return rve
+end
+bulk_modulus(homogenize(reinforced(; distribution_shape = disk), PonteCastanedaWillis(), :C)),
+bulk_modulus(homogenize(reinforced(), MoriTanaka(), :C))
+```
+
+Disks distributed as disks give the estimate of Mori and Tanaka, as spheres
+distributed as spheres do in space. What is computed from an estimate applies
+as well: the concentration tensors of the phases
+([`concentration_tensors`](@ref)), the compliances of the families of cracks
+([`crack_family_compliances`](@ref)), and the poroelastic coefficients
+([Poromechanics](@ref manual-poromechanics)). The Biot coefficient of a porous
+sheet is ``1-k/k_s`` on the bulk moduli of the plane:
+
+```@example manplane
+solid = plane_strain_stiffness(C)
+drained = homogenize(sheet(solid, 0.2), MoriTanaka(), :C)
+only(TensND.get_data(biot_tensor(drained, solid))), 1 - bulk_modulus(drained) / bulk_modulus(solid)
+```
+
+## A cell is of one dimension
+
+The phases and the properties of a cell belong to the same space. A sphere in
+a cell of the plane, or a tensor of the plane given to a spheroid, is refused
+with a message that names the two dimensions:
+
+```@example manplane
+try
+    gradient_gradient_concentration(Ellipsoid(1.0), 0 * c, c)        # a sphere, a tensor of the plane
+catch err
+    print(first(split(sprint(showerror, err), ". ")))
+end
+```
+
 ## What is not covered
 
-- coated sections: a [`LayeredCylinder`](@ref) is a three-dimensional
-  inclusion, to be used in the cell of the previous section, in plane strain;
-- cracks of the plane, and aging viscoelasticity in the plane;
+- aging viscoelasticity in the plane;
+- laminates, the stress intensity factors of a crack, and conducting cracks
+  ([`ConductiveCrack`](@ref)) in the plane;
 - the average over the rotations alone of a section without a mirror line:
-  `IsoSymmetrize` also averages over the reflections.
+  `IsoSymmetrize` also averages over the reflections;
+- the inclusions that are three-dimensional by nature: spheres and spheroids
+  with layers, tori, the shapes solved by a grid, a mesh or a network.
 
 ## Where to go next
 

@@ -173,7 +173,8 @@ function distribution_shape(rve::RVE, scheme::HomogenizationScheme)
                 "A spherical distribution is a legitimate choice, but with " *
                 "spherical inclusions it makes this scheme coincide exactly with " *
                 "Mori-Tanaka, so it has to be stated: " *
-                "`RVE(; distribution_shape = Ellipsoid(1.0))`."
+                "`RVE(; distribution_shape = Ellipsoid(1.0))`, or in a cell of the " *
+                "plane `RVE(; distribution_shape = Ellipsoid(1.0; dim = 2))`."
         )
     )
     return ds
