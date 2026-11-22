@@ -12,7 +12,9 @@
 # what the layered inclusions of the package do, for the shapes where that
 # field is known. This page writes two closures of the first kind, the
 # multi-inclusion model of [Hori and Nemat-Nasser](@cite horiMM1993) and the
-# formulation of [Dinzart, Sabar and Berbenni](@cite dinzartIJES2016), states
+# formulation of [Dinzart, Sabar and Berbenni](@cite dinzartIJES2016), with
+# which that of [Lipinski, Barhdadi and Cherkaoui](@cite lipinskiPM2006)
+# coincides, states
 # the assumption of each, and measures what it costs against the exact
 # solution: on composites of coated spheres, with the parameters of the second
 # article, then in conduction on confocal spheroids [bonfohAMM2020](@cite).
@@ -89,7 +91,11 @@ nothing #hide
 # ```
 #
 # The relation is exact when the polarization of each coating is uniform, as its
-# authors state.
+# authors state. It is in particular when the outer layer is a shell of matrix
+# and the medium is the matrix itself, the polarization of the shell being
+# zero; with the effective medium around the shell, as in a self-consistent
+# scheme, the term left out is the one that carries the interaction between
+# the inclusion and its matrix [aboutajeddineMM2005](@cite).
 #
 # **The revisited formulation.** The same equation is written for
 # ``\Omega_{J+1}`` and for ``\Omega_J`` with the coating ``J+1`` as the medium
@@ -120,7 +126,33 @@ nothing #hide
 # does not have that property: for a sphere of radius ``a`` and volume ``V``
 # it is ``V\,(r+a^2/(5r))`` outside, where the radius remains.
 #
-# In both cases the ``N`` relations are linear in the mean strains. They are
+# **The jump across an interface.** [lipinskiPM2006](@cite) start from the
+# strain on the two sides of the interface between ``\Omega_J`` and its
+# coating, which are related at each point by the interface operator of the
+# coating. Replacing the strain of the inner side by its mean and averaging
+# the operator over the coating gives (their equations (30), (35) and (45))
+#
+# ```math
+# \bar{\boldsymbol{\varepsilon}}^{J+1}
+# = \frac{1}{\omega_J}\sum_{K\le J}\varphi_K\,\bigl[\mathbb{I}-\mathbb{T}'_{J+1}:(\mathbb{C}_{J+1}-\mathbb{C}_K)\bigr]:\bar{\boldsymbol{\varepsilon}}^K ,
+# \qquad
+# \mathbb{T}'_{J+1} = \mathbb{P}_{J+1}(\Omega_J) - \frac{\omega_J}{\varphi_{J+1}}\bigl(\mathbb{P}_{J+1}(\Omega_{J+1})-\mathbb{P}_{J+1}(\Omega_J)\bigr) .
+# ```
+#
+# Since ``\omega_{J+1}\,\bar{\boldsymbol{\varepsilon}}^{\Omega_{J+1}}=\omega_J\,\bar{\boldsymbol{\varepsilon}}^{\Omega_J}+\varphi_{J+1}\,\bar{\boldsymbol{\varepsilon}}^{J+1}``,
+# the relation of the revisited formulation has the same form with
+# ``\mathbb{T}_{J+1}`` in place of ``\mathbb{T}'_{J+1}``, and
+#
+# ```math
+# \mathbb{T}_{J+1}-\mathbb{T}'_{J+1}
+# =\Bigl(1-\frac{\omega_{J+1}-\omega_J}{\varphi_{J+1}}\Bigr)\bigl(\mathbb{P}_{J+1}(\Omega_{J+1})-\mathbb{P}_{J+1}(\Omega_J)\bigr)=0 ,
+# ```
+#
+# the volume fraction of the coating being ``\varphi_{J+1}=\omega_{J+1}-\omega_J``.
+# The two derivations lead to the same relations between the mean strains,
+# for ellipsoids of any shape; the system below checks it.
+#
+# In the three cases the ``N`` relations are linear in the mean strains. They are
 # solved here as they stand, on the matrices of the tensors, rather than
 # through the recurrences of the articles. Nothing in them depends on the
 # order of the tensors: the same lines serve conduction, with the
@@ -134,6 +166,7 @@ hill(shape, C) = km(hill_tensor(shape, C))
 abstract type Closure end
 struct MultiInclusion <: Closure end        ## Hori and Nemat-Nasser (1993)
 struct Revisited <: Closure end             ## Dinzart, Sabar and Berbenni (2016)
+struct Interfacial <: Closure end           ## Lipinski, Barhdadi and Cherkaoui (2006)
 
 ## Row `J` of the system, as the 6×6 blocks that multiply each mean strain, and
 ## the factor of the remote strain on its right-hand side.
@@ -145,9 +178,11 @@ function relation(::MultiInclusion, J, shapes, C, C₀, φ, ω)
     end
     return blocks, 1.0
 end
-function relation(::Revisited, J, shapes, C, C₀, φ, ω)
-    outer, inner = hill(shapes[J + 1], C[J + 1]), hill(shapes[J], C[J + 1])
-    T = outer - (ω[J + 1] / φ[J + 1]) * (outer - inner)
+## The tensor of a coating, from the Hill tensors of its two boundaries in its own medium.
+interaction(::Revisited, outer, inner, ω_outer, ω_inner) = outer - (ω_outer / (ω_outer - ω_inner)) * (outer - inner)
+interaction(::Interfacial, outer, inner, ω_outer, ω_inner) = inner - (ω_inner / (ω_outer - ω_inner)) * (outer - inner)
+function relation(closure::Union{Revisited, Interfacial}, J, shapes, C, C₀, φ, ω)
+    T = interaction(closure, hill(shapes[J + 1], C[J + 1]), hill(shapes[J], C[J + 1]), ω[J + 1], ω[J])
     blocks = map(eachindex(C)) do K
         K ≤ J ? φ[K] * ((1 / ω[J + 1] - 1 / ω[J]) * I - (φ[J + 1] / (ω[J] * ω[J + 1])) * T * (km(C[K]) - km(C[J + 1]))) :
             K == J + 1 ? (φ[K] / ω[J + 1]) * one(T) : zero(T)
@@ -199,6 +234,16 @@ let f = 0.3, C = [iso_stiffness(40.0, 12.0), iso_stiffness(3.0, 2.0)], C₀ = is
         ε, φ = mean_strains(closure, shapes, C, C₀)
         @printf "%-15s  deviation from the closed form: %.1e\n" nameof(typeof(closure)) norm(ε[1] - A * sum(φ .* ε)) / norm(ε[1])
     end
+end
+
+# The closure written from the jump across the interface gives the same mean
+# strains as the revisited formulation, here on a core and two coatings that
+# are spheroids of different aspect ratios:
+
+let C = [iso_stiffness(40.0, 12.0), iso_stiffness(3.0, 2.0), iso_stiffness(15.0, 9.0)], C₀ = iso_stiffness(9.0, 5.0)
+    shapes = [Ellipsoid(0.3, 0.3, 0.9), Ellipsoid(0.6, 0.6, 1.1), Ellipsoid(1.0, 1.0, 1.3)]
+    (ε, _), (ε′, _) = mean_strains(Revisited(), shapes, C, C₀), mean_strains(Interfacial(), shapes, C, C₀)
+    @printf "largest relative difference between the mean strains: %.1e\n" maximum(norm(a - b) / norm(a) for (a, b) in zip(ε, ε′))
 end
 
 # The estimate enters the schemes as a custom inclusion, by its two
@@ -363,6 +408,50 @@ let μs = (6.0, 0.1), ω = (1 / 1.2^3, 1.0), C₀ = stiffness(1.0)
     end
 end
 
+# ## A test with a known answer: the core behind a soft coating
+#
+# A core surrounded by a coating whose stiffness tends to zero cannot be
+# loaded: the stress vector vanishes on its boundary, hence its mean stress,
+# whatever the shape and the moduli. Two consequences can be read without any
+# reference computation: the mean stress of the core tends to zero with the
+# stiffness of the coating, and the effective moduli no longer depend on the
+# core, the material being a porous one whose pores have the size of the
+# coated particle.
+#
+# The first is tested on the coated sphere alone in the matrix, by the ratio
+# of the mean shear stress of the core to the remote one,
+# ``\bar\sigma^1_{12}/\sigma^0_{12}=\mu_I\,\bar\varepsilon^1_{12}/(\mu_M\,\varepsilon^0_{12})``:
+
+println("μ_c/μ_M     exact     multi-inclusion   revisited")
+for μ in (1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4)
+    μs, ω, C₀ = (6.0, μ), (1 / 1.2^3, 1.0), stiffness(1.0)
+    sphere = LayeredSphere(Tuple(cbrt.(ω)), Tuple(stiffness.(μs)))
+    core_stress(closure) = 6.0 * first(mean_strains(closure, [Ellipsoid(cbrt(w)) for w in ω], collect(stiffness.(μs)), C₀))[1][6, 6]
+    @printf "%-8.0e  %9.2e   %9.2e       %9.2e\n" μ 6.0 * shear_ratio(gradient_gradient_concentration(sphere, C₀; layer = 1)) core_stress(MultiInclusion()) core_stress(Revisited())
+end
+
+# The exact stress of the core decreases as the stiffness of the coating, and
+# so does that of the revisited formulation. For spheres the multi-inclusion
+# relation of the core does not contain the coating:
+# ``\mathbb{P}_0(\Omega_2)-\mathbb{P}_0(\Omega_1)=0``, the core takes the
+# strain of a sphere alone in the medium, and its stress does not change down
+# the column.
+#
+# The second is tested on the effective shear modulus of the coated spheres of
+# the last figures, with a coating ten thousand times softer than the matrix
+# and two cores, one a hundred times stiffer than the other:
+
+println("μ_I/μ_M     exact     multi-inclusion   revisited")
+for μ_core in (6.0, 600.0)
+    μs, fs = (μ_core, 1.0e-4, 1.0), coated(0.2)
+    @printf "%-8.0f  %8.5f     %8.5f        %8.5f\n" μ_core exact(μs, fs) estimate(MultiInclusion(), μs, fs) estimate(Revisited(), μs, fs)
+end
+
+# The exact modulus is the same for the two cores, and below that of the
+# matrix: the material is a porous one. The revisited formulation has both
+# properties. The multi-inclusion model returns a material stiffer than its
+# matrix, the more so as the unloaded core is stiffer.
+#
 # ## The bulk modulus
 #
 # Under a hydrostatic loading the field of concentric spheres is radial and
