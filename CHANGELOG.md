@@ -98,7 +98,11 @@ says which route to an inclusion's response fits which situation.
   plate in plane stress);
   *A graded interphase around a spherical particle* (the layers against an
   exact Frobenius series, in elasticity and in conduction, and the shear
-  modulus, which the series does not give).
+  modulus, which the series does not give);
+  *Estimates of a coated inclusion beside the exact solution* (two published
+  closures of the coated ellipsoid, each with its assumption, written as
+  custom inclusions and set beside the layered sphere and the confocal
+  spheroid).
 - New theory pages *Toroidal inclusions* and *Holes given by a conformal map*,
   with complete derivations, and the manual pages of the two inclusions. The
   second quotes the sections and the equations of Muskhelishvili's book at

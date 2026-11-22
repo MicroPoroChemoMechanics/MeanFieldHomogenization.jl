@@ -836,8 +836,32 @@ function itz_regimes()
     end
 end
 
+# The composite inclusion of the closures on the mean strains: nested
+# ellipsoids Ω_J, the layer V_K outside one of them and a point of that layer,
+# whose polarization acts on the mean strain of Ω_J.
+function coated_inclusion_closures(; path = "applications/coated_inclusion_closures")
+    return sheet(path, 620, 430) do
+        c = Point(290, 240)
+        unbounded_box(c, 480, 330; label_tensor = "bb(C)_0")
+        ell(c, 200, 122; fill = tint(GOLD, 0.6), stroke = INK, lw = 1.2)       # Ω_N: the outer layers
+        ell(c, 158, 96; fill = COATING, stroke = INK, lw = 1.2)                 # the layer V_K
+        ell(c, 112, 68; fill = tint(GREEN, 0.7), stroke = INK, lw = 1.8)        # Ω_J
+        ell(c, 60, 36; fill = tint(BLUE, 0.6), stroke = INK, lw = 1.2)          # the core
+        label(m("bb(C)_1"), c; size = 17)
+        label(m("Omega_J"), c + Point(-70, -30); size = 17)
+        label(m("V_K"), c + Point(-118, 44); size = 17)
+        label(m("Omega_N"), c + Point(-150, -76); size = 17)
+        x′ = c + Point(118, -38)
+        disk(x′, 3.2; fill = RED, stroke = nothing)
+        label(m("underline(x)'"), x′ + Point(16, -10); size = 16, color = RED)
+        arrow_ab(x′, c + Point(52, -8); color = RED, lw = 1.6, head = 8)
+        label(m("bb(P)_0^(upright(\"ext\"))(Omega_J; underline(x)') : bold(tau)(underline(x)')"), c + Point(40, -143); size = 15, color = RED)
+        remote_loading(c + Point(240, -165), "bold(epsilon)^0"; len = 26)
+    end
+end
+
 application_figures() = (
     veritz(), ver_multi_mix(), lamellar_scales(), interfoliar_layer(), axi_schematic(),
     cement_paste_scales(), solidifying_sphere(), brinkman_problems(),
-    itz_scales(), itz_failure_modes(), itz_regimes(),
+    itz_scales(), itz_failure_modes(), itz_regimes(), coated_inclusion_closures(),
 )

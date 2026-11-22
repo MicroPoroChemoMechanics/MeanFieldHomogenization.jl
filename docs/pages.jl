@@ -314,6 +314,9 @@ pages = [
             "applications/generated/itz_elastic_limit.md",
             # The uniform shell replaced by a zone that varies with the radius.
             "applications/generated/graded_interphase.md",
+            # Published estimates of a coated ellipsoid, written on the Hill
+            # tensors as custom inclusions, beside the exact solutions.
+            "applications/generated/coated_inclusion_estimates.md",
         ],
         # Particles in contact through interfaces: sliding platelets, then
         # frictional contacts between rigid grains, then deformable grains.
