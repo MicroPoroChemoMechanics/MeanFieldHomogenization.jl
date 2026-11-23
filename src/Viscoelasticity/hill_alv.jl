@@ -95,16 +95,20 @@ end
 # off the isotropic class is refused: reading (α, β) off it would project it there
 # without a word, and the ALV Hill kernel is known against an isotropic one only.
 function _alv_iso_inverses(C::AbstractMatrix)
-    _is_iso_block(C) || throw(
-        ArgumentError(
-            "the ALV Hill kernel is known against an isotropic reference only, and this one " *
-                "is not; for a scheme on the running estimate, every phase must keep it " *
-                "isotropic (a sphere of isotropic behavior, a layered sphere, or symmetrize = :iso)"
-        )
-    )
+    _is_iso_block(C) || _alv_hill_iso_error()
     α, β = iso_params_from_blocks(C)
     return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
 end
+# A dense operator of the plane: those of its isotropic class, when it belongs to it.
+_alv_iso_inverses(R::VolterraOperator{<:DenseClass{4, 2}}) =
+    _is_iso_block(R) ? _alv_iso_inverses(convert_class(R, _ISO4_PLANE)) : _alv_hill_iso_error()
+_alv_hill_iso_error() = throw(
+    ArgumentError(
+        "the ALV Hill kernel is known against an isotropic reference only, and this one " *
+            "is not; for a scheme on the running estimate, every phase must keep it " *
+            "isotropic (a sphere of isotropic behavior, a layered sphere, or symmetrize = :iso)"
+    )
+)
 
 # The ALV Hill kernel of an ellipsoid of geometry tensors `U_M`, `D_M = V_M - U_M`
 # against an isotropic reference: block (i, j) is J_long[i, j] U_M + J_shear[i, j] D_M.
@@ -119,7 +123,7 @@ end
 # built in the class of the geometry tensors of the inclusion (transversely
 # isotropic about the axis of a spheroid, isotropic for a sphere): block k is
 # J_long ⊗ uₖ + J_shear ⊗ dₖ, uₖ and dₖ the blocks of 𝕌ᴬ and 𝕍ᴬ − 𝕌ᴬ.
-function _hill_kernel_op(ell, R::VolterraOperator{<:TensISO{4, 3}})
+function _hill_kernel_op(ell, R::VolterraOperator{<:TensISO{4}})
     J_long, J_shear = _alv_iso_inverses(R)
     return _hill_kernel_op(ell, J_long, J_shear, R.grid)
 end
@@ -130,12 +134,16 @@ function _hill_kernel_op(ell, J_long::AbstractMatrix, J_shear::AbstractMatrix, g
     d = map(-, _value_blocks(c, tens_VA(ell)), u)
     return VolterraOperator(c, map((uₖ, dₖ) -> kron(J_long, Matrix(uₖ)) + kron(J_shear, Matrix(dₖ)), u, d), grid)
 end
-# The two inverses of an isotropic reference, read on its blocks (α, β).
-function _alv_iso_inverses(R::VolterraOperator{<:TensISO{4, 3}})
+# The two inverses of an isotropic reference, read on its blocks (α, β): the
+# longitudinal modulus λ + 2μ = (α + (d − 1) β)/d in dimension d (α = d k, k the
+# bulk modulus of the space, β = 2μ) and the shear modulus β/2.
+function _alv_iso_inverses(R::VolterraOperator{<:TensISO{4, d}}) where {d}
     α, β = R.blocks
-    return volterra_inverse(@.((α + 2 * β) / 3); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
+    return volterra_inverse(@.((α + (d - 1) * β) / d); block_size = 1), volterra_inverse(β ./ 2; block_size = 1)
 end
 
 # A reference of another class: its isotropic part, read on the full matrix, as
 # the dense kernel does.
 _hill_kernel_op(ell, R::VolterraOperator) = VolterraOperator(_hill_kernel_iso(ell, Matrix(R)), R.grid)
+# In the plane, whose full matrices the dense kernel does not read.
+_hill_kernel_op(ell, R::VolterraOperator{<:DenseClass{4, 2}}) = _hill_kernel_op(ell, _alv_iso_inverses(R)..., R.grid)

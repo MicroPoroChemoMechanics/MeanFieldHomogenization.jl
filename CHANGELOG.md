@@ -59,6 +59,21 @@ says which route to an inclusion's response fits which situation.
   circular holes takes 13 µs, against 110 µs for the same medium described in
   three dimensions as aligned cylinders. `IsoSymmetrize` on a phase of the
   plane averages over the orientations of the plane.
+- **Two-dimensional cells in aging viscoelasticity.** `homogenize_alv` and the
+  operators it computes with (`VolterraOperator`, `TimeHistory`,
+  `trapezoidal_matrix`) take tensors of the plane: a cell whose kernels are
+  `TensISO{4,2}` (plane strain), disks and ellipses, segments
+  (`RibbonCrack(b; angle)`, whose opening is `(π/2)(α^{-∘} + β^{-∘})`) and
+  concentric rings (`LayeredCylinder`), by `Voigt`, `Reuss`, `Dilute`,
+  `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis` and
+  `SelfConsistent`. An operator of the plane is stored by its blocks of the
+  plane, which the size of its matrix alone would read as those of a
+  conductivity of space: the order and the dimension come from the class of
+  the operator, never from a size. The differential and asymmetric
+  self-consistent schemes, the Newton solver and conduction, written on the
+  full matrices of space, refuse a cell of the plane. Plane stress is left out:
+  the plane-stress kernel of an aging material is not the pointwise conversion
+  of its plane-strain kernel.
 - `sif` of a crack of the plane: the opening and sliding intensity factors of
   a `RibbonCrack` in a two-dimensional cell, and its flux intensity factor.
 - An assembly of particles checks that the domain of a `MixedBC` has the
@@ -143,7 +158,10 @@ says which route to an inclusion's response fits which situation.
   with the Hill tensor of the disk, against the closed forms of a sheet with
   circular holes or with cracks and against the block of the plane of the same
   medium in three dimensions (disks, ellipses, coated disks with each kind of
-  interface, holes, cracks); the graded layers against two exact solutions;
+  interface, holes, cracks), and in aging viscoelasticity against the elastic
+  limit, against a kernel proportional to one function of time and against the
+  block of the plane of aging cylinders in space; the opening of an aging
+  segment against the flat limit of a void ellipse; the graded layers against two exact solutions;
   neutral inhomogeneities (resistive interface, conducting surface, Hashin's
   coating) as exact zeros of the layered sphere. Published values are stored
   under `data/literature/`.

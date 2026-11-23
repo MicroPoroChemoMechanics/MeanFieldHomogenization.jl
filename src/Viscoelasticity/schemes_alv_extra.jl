@@ -239,6 +239,8 @@ end
 
 _alv_geom_is_spherical(geom) = false
 _alv_geom_is_spherical(::Ellipsoid{3, Elasticity.Spherical}) = true
+# The disk: a shape of the plane invariant by its rotations.
+_alv_geom_is_spherical(::Ellipsoid{2, Elasticity.Circular}) = true
 
 # Error message shared by the ALV schemes whose reference is the running estimate
 # (differential and self-consistent, orders 4 and 2), naming the scheme, the

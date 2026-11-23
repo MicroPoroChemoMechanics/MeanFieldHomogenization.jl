@@ -11,6 +11,9 @@
 
 _alv_order(law::AbstractViscoLaw, times::AbstractVector{<:Real}) = Val(_alv_property_order(law, first(times)))
 _alv_order(::TensND.AbstractTens{N}, ::AbstractVector{<:Real}) where {N} = Val(N)
+# An operator carries its order in its class, whatever its size (a stiffness of the
+# plane has the blocks of a conductivity of space).
+_alv_order(R::VolterraOperator, ::AbstractVector{<:Real}) = Val(_order(R.class))
 function _alv_order(M::AbstractMatrix, times::AbstractVector{<:Real})
     n = length(times)
     size(M, 1) == 6n && return Val(4)

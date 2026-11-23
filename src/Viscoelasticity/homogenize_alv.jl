@@ -121,9 +121,18 @@ axis).
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::NoSymmetrize) = M
 # An operator stored by blocks: the isotropic average read on its blocks; the
 # transversely isotropic one on its full matrix, and kept full.
-_maybe_symmetrize_alv(R::VolterraOperator{<:TensISO{4, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv(R::VolterraOperator{<:TensISO{4}}, ::IsoSymmetrize) = R
 _maybe_symmetrize_alv(R::VolterraOperator, ::IsoSymmetrize) = _iso_part(R)
 _maybe_symmetrize_alv(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv(Matrix(R), s), R.grid)
+# In the plane the rotations are those about its normal, whose average is the
+# isotropic one (as in elasticity, `_apply_symmetrize`).
+_maybe_symmetrize_alv(R::VolterraOperator{<:_PlaneClass}, ::TISymmetrize) = _plane_ti_error()
+_plane_ti_error() = throw(
+    ArgumentError(
+        "`TISymmetrize` averages about an axis of space; in a two-dimensional cell the " *
+            "orientations of the plane are averaged with `IsoSymmetrize()`"
+    )
+)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks(M)
 @inline _maybe_symmetrize_alv(M::AbstractMatrix, sym::TISymmetrize) =
@@ -225,9 +234,10 @@ ALV matrices whose blocks are 2-tensors.
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::NoSymmetrize) = M
 # An operator stored by blocks: the isotropic average read on its blocks (λ = tr/3);
 # the transversely isotropic one on its full matrix, and kept full.
-_maybe_symmetrize_alv2(R::VolterraOperator{<:TensISO{2, 3}}, ::IsoSymmetrize) = R
+_maybe_symmetrize_alv2(R::VolterraOperator{<:TensISO{2}}, ::IsoSymmetrize) = R
 _maybe_symmetrize_alv2(R::VolterraOperator, ::IsoSymmetrize) = _iso_part2(R)
 _maybe_symmetrize_alv2(R::VolterraOperator, s::TISymmetrize) = VolterraOperator(_maybe_symmetrize_alv2(Matrix(R), s), R.grid)
+_maybe_symmetrize_alv2(R::VolterraOperator{<:_PlaneClass}, ::TISymmetrize) = _plane_ti_error()
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, ::IsoSymmetrize) =
     _iso_project_blocks3(M)
 @inline _maybe_symmetrize_alv2(M::AbstractMatrix, sym::TISymmetrize) =
@@ -296,8 +306,8 @@ admittance) calculations.
 """
 _alv_property_order(law::AbstractViscoLaw, t::Real) = _alv_sample_order(visco_eval(law, t, t))
 
-_alv_sample_order(::TensND.AbstractTens{2, 3}) = 2
-_alv_sample_order(::TensND.AbstractTens{4, 3}) = 4
+_alv_sample_order(::TensND.AbstractTens{2}) = 2
+_alv_sample_order(::TensND.AbstractTens{4}) = 4
 # A plain array tells its order by its size only, a run-time value.
 function _alv_sample_order(sample::AbstractMatrix)
     size(sample) == (3, 3) && return 2
@@ -364,6 +374,17 @@ Supports three inclusion-geometry families, in both orders:
     concentration and contribution in the same way, the phase property being a
     placeholder too. Its contribution is transversely isotropic about
     ``\\underline{e}_3``.
+
+**Cells of the plane.** When the properties are tensors of the plane (a
+`TensISO{2}(α, β)` in plane strain, a law returning them, an operator of the
+plane), the cell is two-dimensional, of disks and ellipses (`Ellipsoid(r; dim = 2)`,
+`Ellipsoid(a, b)`), segments (`RibbonCrack(b; angle)`) and concentric rings
+([`LayeredCylinder`](@ref) of tensors of the plane), as in elasticity. `Voigt`,
+`Reuss`, `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis` and
+`SelfConsistent` (its Picard iteration, without rings) are available, in elasticity;
+`IsoSymmetrize` averages over the orientations of the plane. The plane-stress
+moduli of an aging material are not the pointwise conversion of its plane-strain
+kernel (the operators do not commute), so the kernels are those of plane strain.
 
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
@@ -491,7 +512,7 @@ function _candidate_classes(rve, prop, times)
         c for g in _cell_geometries(rve) for c in _axis_classes(g)
     ]
     return Any[
-        TensISO{3}(1.0, 1.0), TensISO{3}(1.0), phase..., axes...,
+        _ISO4, _ISO2, _ISO4_PLANE, _ISO2_PLANE, phase..., axes...,
         TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
         TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
     ]
@@ -526,6 +547,7 @@ function _homogenize_alv_rve(
 
     # Dispatch on the property order (2 vs 4) inferred from the sample.
     order = _alv_order_int(C_M_law, times)
+    _alv_check_plane(scheme, Val(order), _property_class(C_M_law, times))
     if order == 2
         return _homogenize_alv_order2(
             rve, scheme, prop;
@@ -638,6 +660,25 @@ function _homogenize_alv_rve(
     )
 end
 
+# A cell of the plane runs the schemes written on operators stored by blocks; those
+# written on full matrices of space (the differential scheme, the asymmetric
+# self-consistent one, the Newton solver of the self-consistent one) and
+# conduction are refused rather than read the blocks of the plane as those of space.
+_alv_check_plane(scheme, order, class) = nothing
+_alv_check_plane(scheme, ::Val{2}, ::_PlaneClass) = _alv_plane_error("conduction (an order-2 property)")
+_alv_check_plane(scheme::Union{DifferentialScheme, AsymmetricSelfConsistent}, ::Val{4}, ::_PlaneClass) =
+    _alv_plane_error(string(nameof(typeof(scheme))))
+_alv_check_plane(scheme::SelfConsistent, ::Val{4}, ::_PlaneClass) = _alv_check_plane_sc(scheme.algorithm)
+_alv_check_plane_sc(::AndersonDefault) = nothing
+_alv_check_plane_sc(algorithm) = _alv_plane_error("SelfConsistent(algorithm = $(algorithm))")
+_alv_plane_error(what) = throw(
+    ArgumentError(
+        "homogenize_alv: $what is not available for a two-dimensional cell in aging " *
+            "viscoelasticity; Voigt, Reuss, Dilute, DiluteDual, MoriTanaka, Maxwell, " *
+            "PonteCastanedaWillis and SelfConsistent (Picard iteration) are"
+    )
+)
+
 # ── Per-geometry inclusion quantities ───────────────────────────────────────
 
 """
@@ -725,8 +766,10 @@ _layer_reuss_alv(sphere::_LayeredALV, times) = reuss_alv(_layer_kernels_alv(sphe
 # The average a scheme reads as the stiffness of a layered sphere: the Reuss
 # bound inverts the average of the layer compliances, every other scheme takes
 # the Voigt average (only the Voigt bound reads it).
-_layer_bound_alv(::Reuss, sphere::_LayeredALV, times) = _layer_reuss_alv(sphere, times)
-_layer_bound_alv(::HomogenizationScheme, sphere::_LayeredALV, times) = _layer_voigt_alv(sphere, times)
+_layer_bound_alv(scheme, sphere::_LayeredALV, times) =
+    _layer_bound_alv(scheme, _reference_space(layer_modulus(sphere, 1), times), sphere, times)
+_layer_bound_alv(::Reuss, ::Val{3}, sphere::_LayeredALV, times) = _layer_reuss_alv(sphere, times)
+_layer_bound_alv(::HomogenizationScheme, ::Val{3}, sphere::_LayeredALV, times) = _layer_voigt_alv(sphere, times)
 
 # Convenience: extract the scalar amount value (volume fraction or crack
 # density) from the RVE.  Preserves the element type of the wrapper —
@@ -884,9 +927,15 @@ function _homogenize_alv_dispatch(
     # is resolved here as well; otherwise an undeclared shape would surface as
     # a `nothing` field access rather than as the explanatory error.
     C_M_law = phase_property(rve, matrix, prop)
-    H_0 = hill_kernel(Schemes.distribution_shape(rve, scheme).shape, C_M_law, times)
+    H_0 = _reference_hill_kernel(Schemes.distribution_shape(rve, scheme).shape, C_M_law, _reference(C_0, kw), times)
     return _alv_maxwell_form(C_0, contribs, fractions, H_0, kw)
 end
+
+# The Hill kernel of a shape against the matrix of the cell: that of its law, on
+# full matrices, in space; in the classes of the operators in the plane, whose
+# full matrices the dense kernel does not read.
+_reference_hill_kernel(shape, C_M_law, C_0, times) = hill_kernel(shape, C_M_law, times)
+_reference_hill_kernel(shape, C_M_law, C_0::VolterraOperator{<:_PlaneClass}, times) = _hill_kernel_op(shape, C_0)
 
 # The Maxwell form `C̃₀ + Ñ ∘ (𝟙 - H̃ ∘ Ñ)⁻¹`, shared by Maxwell and PCW; cracks
 # enter the sum of the contributions.
@@ -989,7 +1038,7 @@ function _homogenize_alv_dispatch(
     dist = Schemes.distribution_shape(rve, scheme)
     dist isa UniformDistribution ||
         throw(ArgumentError("PCW-ALV: only UniformDistribution is currently supported"))
-    H_d = hill_kernel(dist.shape, C_M_law, times)
+    H_d = _reference_hill_kernel(dist.shape, C_M_law, _reference(C_0, kw), times)
     # PCW is Maxwell with the Hill kernel of the distribution shape.
     return _alv_maxwell_form(C_0, contribs, fractions, H_d, kw)
 end

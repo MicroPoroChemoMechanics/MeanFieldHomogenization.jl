@@ -525,6 +525,7 @@ end
         include("Viscoelasticity/test_alv_echoes_cells.jl")
         include("Viscoelasticity/test_alv_symmetry_paths.jl")
         include("Viscoelasticity/test_glassy_limit_alv.jl")
+        include("Viscoelasticity/test_plane_alv.jl")
     end
 
     rungroup("Regression") && @testset "Regression" begin
