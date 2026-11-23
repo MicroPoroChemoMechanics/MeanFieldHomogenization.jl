@@ -19,7 +19,7 @@
 # =============================================================================
 
 """
-    biot_tensor(C_hom, C_s) -> Tens{2,3}
+    biot_tensor(C_hom, C_s) -> AbstractTens{2}
 
 **Biot tensor** ``\\boldsymbol{B}`` of a porous medium with a *homogeneous* solid
 phase of stiffness `C_s`, from its drained homogenized stiffness `C_hom`:
@@ -53,18 +53,19 @@ See also [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inv
 [`terzaghi_stress`](@ref).
 """
 biot_tensor(
-    C_hom::TensND.AbstractTens{4, 3}, C_s::TensND.AbstractTens{4, 3}
+    C_hom::TensND.AbstractTens{4}, C_s::TensND.AbstractTens{4}
 ) = _biot_tensor(C_hom, inv(C_s))
 
 # Primitive taking the solid *compliance*, so that a caller holding `s_s`
 # already (every function below, and the Gauss-point materials) never inverts
 # `C_s` twice.
 function _biot_tensor(
-        C_hom::TensND.AbstractTens{4, 3}, s_s::TensND.AbstractTens{4, 3}
+        C_hom::TensND.AbstractTens{4}, s_s::TensND.AbstractTens{4}
     )
     T = promote_type(eltype(C_hom), eltype(s_s))
-    Id2 = TensND.tens_Id2(Val(3), Val(T))
-    Id4 = TensND.tens_Id4(Val(3), Val(T))
+    dim = Val(TensND.get_dim(C_hom))
+    Id2 = TensND.tens_Id2(dim, Val(T))
+    Id4 = TensND.tens_Id4(dim, Val(T))
     return Id2 ⊡ (Id4 - s_s ⊡ C_hom)
 end
 
@@ -113,14 +114,14 @@ See also [`biot_tensor`](@ref), [`biot_modulus`](@ref),
 [`poroelastic_parameters`](@ref).
 """
 inverse_biot_modulus(
-    C_s::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, φ::Number
+    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
 ) = _inverse_biot_modulus(inv(C_s), B, φ)
 
 function _inverse_biot_modulus(
-        s_s::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, φ::Number
+        s_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
     )
     T = promote_type(eltype(s_s), eltype(B), typeof(φ))
-    Id2 = TensND.tens_Id2(Val(3), Val(T))
+    Id2 = TensND.tens_Id2(Val(TensND.get_dim(s_s)), Val(T))
     return Id2 ⊡ s_s ⊡ (B - φ * Id2)
 end
 
@@ -135,7 +136,7 @@ Returns `Inf` for an incompressible solid phase (``1/M = 0``). Prefer
 matrix.
 """
 biot_modulus(
-    C_s::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, φ::Number
+    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
 ) = inv(inverse_biot_modulus(C_s, B, φ))
 
 """
@@ -173,7 +174,7 @@ julia> round(par.B[1, 1], digits = 4)   # b = 1 - k_MT/k_s = 1 - 12.8/20
 ```
 """
 function poroelastic_parameters(
-        C_hom::TensND.AbstractTens{4, 3}, C_s::TensND.AbstractTens{4, 3}, φ::Number
+        C_hom::TensND.AbstractTens{4}, C_s::TensND.AbstractTens{4}, φ::Number
     )
     s_s = inv(C_s)
     B = _biot_tensor(C_hom, s_s)
@@ -181,22 +182,24 @@ function poroelastic_parameters(
     return (B = B, inverse_modulus = invM, modulus = inv(invM))
 end
 
-# The same relations on Kelvin–Mandel components (6 × 6 matrices for the
-# stiffnesses, a 6-vector for the Biot tensor), for callers that evaluate them
-# inside nested dual numbers, as the laws of MaterialLaws do, where the tensor
-# path costs minutes of compilation. Both stiffnesses being symmetric,
-# 𝟏 : (𝕀 − 𝕊ₛ : ℂ) is 𝟏 − ℂ 𝕊ₛ 𝟏.
-function poroelastic_parameters(C_hom::StaticMatrix{6, 6}, C_s::StaticMatrix{6, 6}, φ::Number)
+# The same relations on Kelvin–Mandel components (the square matrices of the
+# stiffnesses, of size 6 in space and 3 in the plane, and the vector of the
+# Biot tensor), for callers that evaluate them inside nested dual numbers, as
+# the laws of MaterialLaws do, where the tensor path costs minutes of
+# compilation. Both stiffnesses being symmetric, 𝟏 : (𝕀 − 𝕊ₛ : ℂ) is 𝟏 − ℂ 𝕊ₛ 𝟏.
+function poroelastic_parameters(C_hom::StaticMatrix{N, N}, C_s::StaticMatrix{N, N}, φ::Number) where {N}
     s_s = inv(C_s)
     T = promote_type(eltype(C_hom), eltype(s_s), typeof(φ))
-    𝟏 = SVector{6, T}(1, 1, 1, 0, 0, 0)
+    # the identity: ones on the d normal components, N = d(d + 1)/2
+    d = (isqrt(8N + 1) - 1) ÷ 2
+    𝟏 = SVector{N, T}(ntuple(i -> i ≤ d ? one(T) : zero(T), Val(N)))
     B = 𝟏 - C_hom * (s_s * 𝟏)
     invM = transpose(𝟏) * (s_s * (B - φ * 𝟏))
     return (B = B, inverse_modulus = invM, modulus = inv(invM))
 end
 
 """
-    undrained_stiffness(C_hom, B, M) -> Tens{4,3}
+    undrained_stiffness(C_hom, B, M) -> AbstractTens{4}
 
 **Undrained** stiffness ``\\mathbb{C}^{\\mathrm u} = \\mathbb{C}^{\\mathrm{hom}} +
 M\\,\\boldsymbol{B} \\otimes \\boldsymbol{B}``.
@@ -209,26 +212,26 @@ is the correct statement that no volume change is possible.
 See also [`drained_stiffness`](@ref), [`skempton_tensor`](@ref).
 """
 function undrained_stiffness(
-        C_hom::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, M::Number
+        C_hom::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, M::Number
     )
     return C_hom + M * (B ⊗ B)
 end
 
 """
-    drained_stiffness(C_u, B, M) -> Tens{4,3}
+    drained_stiffness(C_u, B, M) -> AbstractTens{4}
 
 Inverse of [`undrained_stiffness`](@ref): recover the drained stiffness
 ``\\mathbb{C}^{\\mathrm{hom}} = \\mathbb{C}^{\\mathrm u} - M\\,\\boldsymbol{B} \\otimes
 \\boldsymbol{B}`` from an undrained measurement.
 """
 function drained_stiffness(
-        C_u::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, M::Number
+        C_u::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, M::Number
     )
     return C_u - M * (B ⊗ B)
 end
 
 """
-    skempton_tensor(C_hom, B, M) -> Tens{2,3}
+    skempton_tensor(C_hom, B, M) -> AbstractTens{2}
 
 **Skempton tensor** ``\\boldsymbol{B}^{\\mathrm{sk}} = M\\,\\boldsymbol{B} : \\mathbb{S}^{\\mathrm u}`` (``\\mathbb{S}^{\\mathrm u} = (\\mathbb{C}^{\\mathrm u})^{-1}``), which gives
 the pore pressure built up by an undrained stress increment:
@@ -259,7 +262,7 @@ B = \\frac{1/k^{\\mathrm{hom}} - 1/k_{\\mathrm s}}
     instance, likewise removes any scalar bound.
 """
 function skempton_tensor(
-        C_hom::TensND.AbstractTens{4, 3}, B::TensND.AbstractTens{2, 3}, M::Number
+        C_hom::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, M::Number
     )
     return M * (B ⊡ inv(undrained_stiffness(C_hom, B, M)))
 end

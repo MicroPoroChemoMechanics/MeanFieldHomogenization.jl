@@ -30,8 +30,9 @@
 #  does; it relies only on TensND algebra (`+`, `-`, `⊡`, `inv`).
 # =============================================================================
 
-# The identities are TensND's `tens_Id4(Val(3), Val(T))` and `tens_Id2(Val(3), Val(T))`,
-# in the element type of the problem.
+# The identities are TensND's `tens_Id4(Val(dim), Val(T))` and `tens_Id2(Val(dim), Val(T))`,
+# in the dimension and the element type of the problem: the formulas hold in the
+# plane (dimension 2) as in space, with the Hill tensor of that dimension.
 
 # =============================================================================
 #  Elastic concentration (4-tensor fields)
@@ -57,14 +58,15 @@ See also [`flux_gradient_concentration`](@ref), [`gradient_flux_concentration`](
 """
 function gradient_gradient_concentration(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     T = promote_type(eltype(C₁), eltype(C₀))
+    Core._same_space(incl, C₀)
     P = hill_tensor(incl, C₀; kw...)
     δC = C₁ - C₀
-    return inv(TensND.tens_Id4(Val(3), Val(T)) + (P ⊡ δC))
+    return inv(TensND.tens_Id4(Val(TensND.get_dim(C₀)), Val(T)) + (P ⊡ δC))
 end
 
 """
@@ -94,8 +96,8 @@ _contribution_of(P₁, P₀, A) = _flux_of(P₁ - P₀, A)
 
 function flux_gradient_concentration(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     _no_generic_stress_side(incl, "flux_gradient_concentration", "C₁ : A_εε")
@@ -146,8 +148,8 @@ Dilute **strain-stress concentration tensor**
 """
 function gradient_flux_concentration(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     return gradient_gradient_concentration(incl, C₁, C₀; kw...) ⊡ inv(C₀)
@@ -168,8 +170,8 @@ identical.
 """
 function flux_flux_concentration(
         incl::AbstractInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     return flux_gradient_concentration(incl, C₁, C₀; kw...) ⊡ inv(C₀)
@@ -212,14 +214,15 @@ The conduction method: the elastic formula with ``\\mathbb{C}`` replaced by
 """
 function gradient_gradient_concentration(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     T = promote_type(eltype(K₁), eltype(K₀))
+    Core._same_space(incl, K₀)
     P = hill_tensor(incl, K₀; kw...)
     δK = K₁ - K₀
-    return inv(TensND.tens_Id2(Val(3), Val(T)) + (P ⋅ δK))
+    return inv(TensND.tens_Id2(Val(TensND.get_dim(K₀)), Val(T)) + (P ⋅ δK))
 end
 
 """
@@ -239,8 +242,8 @@ makes this conduction method the elastic one symbol for symbol.
 """
 function flux_gradient_concentration(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     _no_generic_stress_side(incl, "flux_gradient_concentration", "K₁ ⋅ A_∇∇")
@@ -258,8 +261,8 @@ analog of the package: the elastic formula symbol for symbol.
 """
 function gradient_flux_concentration(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     return gradient_gradient_concentration(incl, K₁, K₀; kw...) ⋅ inv(K₀)
@@ -279,8 +282,8 @@ inclusion which supplies that method gets this one too.
 """
 function flux_flux_concentration(
         incl::AbstractInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     return flux_gradient_concentration(incl, K₁, K₀; kw...) ⋅ inv(K₀)
@@ -312,8 +315,8 @@ end
 
 concentration_and_contribution(
     incl::AbstractInclusion,
-    C₁::TensND.AbstractTens{4, 3},
-    C₀::TensND.AbstractTens{4, 3};
+    C₁::TensND.AbstractTens{4},
+    C₀::TensND.AbstractTens{4};
     kw...
 ) = (
     gradient_gradient_concentration(incl, C₁, C₀; kw...),
@@ -322,8 +325,8 @@ concentration_and_contribution(
 
 concentration_and_contribution(
     incl::AbstractInclusion,
-    K₁::TensND.AbstractTens{2, 3},
-    K₀::TensND.AbstractTens{2, 3};
+    K₁::TensND.AbstractTens{2},
+    K₀::TensND.AbstractTens{2};
     kw...
 ) = (
     gradient_gradient_concentration(incl, K₁, K₀; kw...),
@@ -332,8 +335,8 @@ concentration_and_contribution(
 
 concentration_and_flux_average(
     incl::AbstractInclusion,
-    C₁::TensND.AbstractTens{4, 3},
-    C₀::TensND.AbstractTens{4, 3};
+    C₁::TensND.AbstractTens{4},
+    C₀::TensND.AbstractTens{4};
     kw...
 ) = (
     gradient_gradient_concentration(incl, C₁, C₀; kw...),
@@ -342,8 +345,8 @@ concentration_and_flux_average(
 
 concentration_and_flux_average(
     incl::AbstractInclusion,
-    K₁::TensND.AbstractTens{2, 3},
-    K₀::TensND.AbstractTens{2, 3};
+    K₁::TensND.AbstractTens{2},
+    K₀::TensND.AbstractTens{2};
     kw...
 ) = (
     gradient_gradient_concentration(incl, K₁, K₀; kw...),
@@ -354,8 +357,8 @@ concentration_and_flux_average(
 
 function concentration_and_contribution(
         incl::AbstractEllipsoidalInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
@@ -364,8 +367,8 @@ end
 
 function concentration_and_contribution(
         incl::AbstractEllipsoidalInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)
@@ -374,8 +377,8 @@ end
 
 function concentration_and_flux_average(
         incl::AbstractEllipsoidalInclusion,
-        C₁::TensND.AbstractTens{4, 3},
-        C₀::TensND.AbstractTens{4, 3};
+        C₁::TensND.AbstractTens{4},
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     A = gradient_gradient_concentration(incl, C₁, C₀; kw...)
@@ -384,8 +387,8 @@ end
 
 function concentration_and_flux_average(
         incl::AbstractEllipsoidalInclusion,
-        K₁::TensND.AbstractTens{2, 3},
-        K₀::TensND.AbstractTens{2, 3};
+        K₁::TensND.AbstractTens{2},
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     A = gradient_gradient_concentration(incl, K₁, K₀; kw...)

@@ -22,7 +22,9 @@ This is the counterpart of the `user_inclusion` mechanism of the C++/Python
   **callbacks** — the quick option for prototyping.
 
 Both go through the same interface, spelled out in full on the developer page
-[Adding a new inclusion](@ref dev-adding-inclusion). This page shows how to use it.
+[Adding a new inclusion](@ref dev-adding-inclusion). This page shows how to use it;
+[Choosing an inclusion](@ref man-choosing-inclusion) says when to prefer it to
+the grid, the mesh or the network, which enter through it too.
 
 ## The idea in one line
 

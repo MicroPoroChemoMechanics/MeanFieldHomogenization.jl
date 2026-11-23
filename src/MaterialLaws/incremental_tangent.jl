@@ -98,8 +98,8 @@ function _residual(c::IncrementalTangent, y, g, prev, Δt)
     rve = foldl(zip(c.p.names, c.phases, εs, c.yslices, states); init = c.p.rve) do rve, (φ, law, ε, ys, st)
         # The rotation average of the tangent, its isotropic projection (TensND).
         k, μ = TensND.bulk_shear(TensND.isotropify(TensND.from_mandel(_phase_tangent(law, ε, y[ys], st, Δt))))
-        rve = Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :bulk), 3k)
-        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :shear), 2μ)
+        rve = Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :k), k)
+        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :μ), μ)
     end
     A = Schemes.concentration_tensors(rve, c.p.scheme, :C).strain
     ΔE = g - prev.g

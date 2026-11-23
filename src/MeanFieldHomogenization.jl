@@ -31,6 +31,8 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   interface types, volume-average and pointwise concentration.
 - `MeanFieldHomogenization.LayeredSpheroids` — `n`-layer confocal spheroids in
   conduction, with imperfect interfaces, and in elasticity, with perfect ones.
+- `MeanFieldHomogenization.LayeredEllipsoids` — `n`-layer confocal ellipsoids of
+  three unequal axes in conduction.
 - `MeanFieldHomogenization.Schemes`      — RVEs, amounts, symmetrization and the
   homogenization schemes themselves (dilute, Mori–Tanaka, self-consistent,
   PCW, Maxwell, differential).
@@ -94,6 +96,7 @@ include("Conductivity/Conductivity.jl")
 include("Interactions/Interactions.jl")
 include("LayeredSpheres/LayeredSpheres.jl")
 include("LayeredSpheroids/LayeredSpheroids.jl")
+include("LayeredEllipsoids/LayeredEllipsoids.jl")
 include("LayeredCylinders/LayeredCylinders.jl")
 include("Schemes/Schemes.jl")
 # `Laminates` sits between `Schemes` and `Viscoelasticity`: it extends
@@ -119,6 +122,7 @@ using .Conductivity
 using .Interactions
 using .LayeredSpheres
 using .LayeredSpheroids
+using .LayeredEllipsoids
 using .LayeredCylinders
 using .Schemes
 using .Laminates
@@ -153,6 +157,11 @@ include("CustomInclusions/CustomInclusions.jl")
 # Brinkman inclusions: the Stokes-to-Darcy auxiliary problems, entered through
 # the custom-inclusion contract above.
 include("Brinkman/Brinkman.jl")
+# Toroidal inclusions: series of toroidal harmonics in the chart of TensND,
+# entered through the same contract.
+include("ToroidalInclusions/ToroidalInclusions.jl")
+# Holes of the plane given by a conformal map, through the same contract.
+include("ConformalHoles/ConformalHoles.jl")
 include("FiniteElements/FiniteElements.jl")
 include("NeuralInclusions/NeuralInclusions.jl")
 # `GaussianApproximation`: cracks and heterogeneities of arbitrary shape, their
@@ -171,6 +180,8 @@ include("MaterialLaws/MaterialLaws.jl")
 using .Superspheres
 using .CustomInclusions
 using .Brinkman
+using .ToroidalInclusions
+using .ConformalHoles
 using .FiniteElements
 using .NeuralInclusions
 using .GaussianApproximation
@@ -185,7 +196,7 @@ export AbstractAlgorithm, Analytical, Residue, DECUHR, NestedQuadGK,
     CylinderQuadrature, Multipole, Auto
 export MaterialSymmetry, IsotropicSym, TransverselyIsotropicSym,
     OrthotropicSym, GeneralAnisotropicSym
-export material_symmetry, dimension, inclusion_basis, shape_trait, shape_tensor
+export material_symmetry, dimension, admits_dimension, inclusion_basis, shape_trait, shape_tensor
 export eshelby_tensor, second_hill_tensor
 export green_gradient_iso, dipole_displacement_iso, green_operator_iso
 export green_gradient_iso2, dipole_temperature_iso
@@ -225,6 +236,8 @@ export CustomInclusion, CustomShape, check_inclusion_interface
 export BrinkmanMedium, BrinkmanPorous, BrinkmanFluid, BrinkmanSolid
 export BrinkmanForm, ResistanceForm, PermeabilityForm
 export AbstractBrinkmanInclusion, BrinkmanSphere, BrinkmanCylinder, BrinkmanLayer, BrinkmanCoatedSphere
+export InsulatingTorus, ToroidalShape
+export ConformalHole, ConformalShape, polygon_map
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb
@@ -293,6 +306,7 @@ export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface
 export layer_count, layer_radius, layer_modulus, layer_interface,
     layer_volume_fraction, outer_radius
+export graded_layers
 export layer_gradient_average, sphere_gradient_average, cumulative_strain_average
 export layer_flux_average, sphere_flux_average
 export layer_strain_average, sphere_strain_average
@@ -317,6 +331,8 @@ export cylinder_gradient_average, cylinder_flux_average,
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
+# ── LayeredEllipsoid (confocal ellipsoid of three unequal axes, conduction)
+export LayeredEllipsoid, layered_ellipsoid_from_fractions
 export layer_q, layer_semiaxes, outer_semiaxes
 export spheroid_state_sequence, spheroid_ba_ratios
 # Elastic case I (axisymmetric): Papkovich–Neuber in the confocal chart.
@@ -401,7 +417,7 @@ export fracture_permeability
 export AbstractParameter, AmountParameter, PropertyParameter,
     GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param
-export get_param, set_param
+export get_param, set_param, get_coefficient, set_coefficient
 export derivative, gradient, jacobian, sensitivity
 
 # ── Poromechanics : Biot tensor / modulus, drained ↔ undrained ──────────────

@@ -68,61 +68,100 @@ _same_grid(a::TimeGrid, b::TimeGrid, what) = a == b || throw(
 
 # ── Symmetry classes of the values ─────────────────────────────────────────
 
-# Values that no symmetry class describes: a full block (6×6 Kelvin-Mandel at
-# order 4, 3×3 at order 2), or a scalar.
-"The class of an operator whose values are full blocks: Kelvin-Mandel ``6\\times6`` at order 4, ``3\\times3`` at order 2."
-struct DenseClass{O} end
+# Values that no symmetry class describes: a full block, or a scalar. The block
+# is the Kelvin-Mandel matrix at order 4 and the matrix of components at order
+# 2; its size follows from the order `O` and the dimension `D` of the space
+# (6×6 and 3×3 in space, 3×3 and 2×2 in the plane), which the size alone would
+# not tell apart.
+"""
+    DenseClass{O, D}()
+
+The class of an operator of order `O` in dimension `D` whose values are full
+blocks: Kelvin-Mandel matrices at order 4 (``6\\times6`` in space, ``3\\times3``
+in the plane), matrices of components at order 2. `DenseClass{O}()` is that of
+the three-dimensional space.
+"""
+struct DenseClass{O, D} end
+DenseClass{O}() where {O} = DenseClass{O, 3}()
 "The class of a scalar operator."
 struct ScalarClass end
 
 # The structured classes are TensND tensors of the class, standing for their
 # class and frame (their coefficients are never read).
 const _StructuredClass = Union{
-    TensISO{4, 3}, TensISO{2, 3}, TensCubic,
+    TensISO{4}, TensISO{2}, TensCubic,
     TensTI{4, <:Any, 5}, TensTI{4, <:Any, 6}, TensTI{2, <:Any, 2},
     TensOrtho{4}, TensOrtho{2},
 }
 const _OperatorClass = Union{_StructuredClass, DenseClass, ScalarClass}
+# The classes of the plane: its operators are stored by blocks of the plane.
+const _PlaneClass = Union{TensND.AbstractTens{<:Any, 2}, DenseClass{<:Any, 2}}
 
 # The class of a kernel value.
 _class_of(x::_StructuredClass) = x
-_class_of(::TensND.AbstractTens{4, 3}) = DenseClass{4}()
-_class_of(::TensND.AbstractTens{2, 3}) = DenseClass{2}()
+_class_of(::TensND.AbstractTens{4, D}) where {D} = DenseClass{4, D}()
+_class_of(::TensND.AbstractTens{2, D}) where {D} = DenseClass{2, D}()
 _class_of(::Number) = ScalarClass()
 function _class_of(x::AbstractMatrix)
     size(x) == (6, 6) && return DenseClass{4}()
     size(x) == (3, 3) && return DenseClass{2}()
-    throw(ArgumentError("a kernel value given as a matrix is 6×6 (Kelvin-Mandel, order 4) or 3×3 (order 2); got $(size(x))"))
+    throw(
+        ArgumentError(
+            "a kernel value given as a matrix is 6×6 (Kelvin-Mandel, order 4) or 3×3 (order 2), in the " *
+                "three-dimensional space; got $(size(x)). Give the values of a plane problem as tensors"
+        )
+    )
 end
 
 _order(::TensND.AbstractTens{O}) where {O} = O
 _order(::DenseClass{O}) where {O} = O
 _order(::ScalarClass) = 0
 
-# The dimension of the values of a history the operator acts on: Kelvin-Mandel
-# vectors of symmetric second-order tensors at order 4, vectors at order 2.
-_value_dim(c) = _order(c) == 4 ? 6 : 3
-_value_dim(::ScalarClass) = 1
+# The dimension of the space of a class.
+_space_dim(::TensND.AbstractTens{O, D}) where {O, D} = D
+_space_dim(::DenseClass{O, D}) where {O, D} = D
 
+# Two classes of one order in one space: an operator of the one converts to the
+# other (a scalar class is its own kind).
+_same_kind(a, b) = _order(a) == _order(b) && _space_dim(a) == _space_dim(b)
+_same_kind(::ScalarClass, ::ScalarClass) = true
+_same_kind(::ScalarClass, b) = false
+_same_kind(a, ::ScalarClass) = false
+
+# The isotropic class of the order and of the space of `c`.
+_iso_class(c) = _iso_class(Val(_order(c)), Val(_space_dim(c)))
+_iso_class(::Val{4}, ::Val{D}) where {D} = TensISO{D}(1.0, 1.0)
+_iso_class(::Val{2}, ::Val{D}) where {D} = TensISO{D}(1.0)
+
+# The number of components of the values of a history the operator acts on:
+# Kelvin-Mandel vectors of symmetric second-order tensors at order 4, vectors
+# at order 2. Written out for the two dimensions the package serves, so that
+# the sizes of the static blocks are constants of each method.
+_value_dim(::ScalarClass) = 1
 _block_sizes(c::_StructuredClass) = map(copies -> Val(length(first(copies))), TensND.symmetry_layout(c))
-_block_sizes(::DenseClass{4}) = (Val(6),)
-_block_sizes(::DenseClass{2}) = (Val(3),)
 _block_sizes(::ScalarClass) = (Val(1),)
 _val(::Val{m}) where {m} = m
 
 # The orthonormal basis of the values in which the blocks sit, and their places.
 _class_basis(c::_StructuredClass) = TensND.symmetry_basis(c)
 _class_layout(c::_StructuredClass) = TensND.symmetry_layout(c)
-_class_basis(::DenseClass{O}) where {O} = SMatrix{_value_dim(DenseClass{O}()), _value_dim(DenseClass{O}()), Float64}(I)
-_class_layout(::DenseClass{4}) = ((SVector(1, 2, 3, 4, 5, 6),),)
-_class_layout(::DenseClass{2}) = ((SVector(1, 2, 3),),)
 _class_basis(::ScalarClass) = SMatrix{1, 1, Float64}(I)
 _class_layout(::ScalarClass) = ((SVector(1),),)
 
 # The full matrix of a value: Kelvin-Mandel at order 4, components at order 2.
 _value_matrix(x::AbstractMatrix) = SMatrix{size(x)...}(x)
+
+for (O, D, m) in ((4, 3, 6), (2, 3, 3), (4, 2, 3), (2, 2, 2))
+    @eval begin
+        _value_dim(::Union{TensND.AbstractTens{$O, $D}, DenseClass{$O, $D}}) = $m
+        _block_sizes(::DenseClass{$O, $D}) = (Val($m),)
+        _class_basis(::DenseClass{$O, $D}) = SMatrix{$m, $m, Float64}(I)
+        _class_layout(::DenseClass{$O, $D}) = ((SVector($(1:m...)),),)
+    end
+end
 _value_matrix(x::TensND.AbstractTens{4, 3}) = SMatrix{6, 6}(_to_mandel(x))
-_value_matrix(x::TensND.AbstractTens{2, 3}) = SMatrix{3, 3}(TensND.canonical_components(x))
+_value_matrix(x::TensND.AbstractTens{4, 2}) = SMatrix{3, 3}(_to_mandel(x))
+_value_matrix(x::TensND.AbstractTens{2, D}) where {D} = SMatrix{D, D}(TensND.canonical_components(x))
 
 # The blocks of a kernel value in a class. A value of the class itself is read
 # directly when it shares the frame; a value of another class or frame means
@@ -168,7 +207,7 @@ _matrix_blocks(::Union{DenseClass, ScalarClass}, M) = (M,)
 # One class and frame: the same blocks in the same adapted basis. Classes of
 # one family (a symmetric and a general TI tensor, say) share their layout.
 _same_class(a, b) = false
-_same_class(::DenseClass{O}, ::DenseClass{O}) where {O} = true
+_same_class(::DenseClass{O, D}, ::DenseClass{O, D}) where {O, D} = true
 _same_class(::ScalarClass, ::ScalarClass) = true
 _same_class(a::_StructuredClass, b::_StructuredClass) =
     typeof(TensND.symmetry_layout(a)) == typeof(TensND.symmetry_layout(b)) &&
@@ -212,6 +251,12 @@ It is built from
   (``6n\\times 6n`` at order 4, ``3n\\times 3n`` at order 2, ``n\\times n`` for a
   scalar), as one scale hands it to the next; `like = C` stores it in the
   symmetry class and frame of the tensor `C`, and checks that it belongs to it.
+
+The values may be tensors of the plane (`TensISO{2}(α, β)`, any tensor of
+order 4 or 2 and dimension 2): the blocks are then ``3\\times 3`` Kelvin-Mandel
+matrices at order 4 and ``2\\times 2`` at order 2. A matrix of the plane has the
+size of one of space at another order (``3n\\times 3n``), so it is read as one of
+the plane only with `like`, a tensor of the plane.
 
 When the values belong to one symmetry class, only its blocks are stored
 (TensND `symmetry_blocks`): two ``n\\times n`` matrices for an isotropic operator
@@ -314,15 +359,30 @@ _block_diagonal(b::SMatrix{m, m, T}, n) where {m, T} = kron(Matrix{T}(I, n, n), 
 function VolterraOperator(M::AbstractMatrix, times; like = nothing)
     grid = TimeGrid(times)
     n = length(grid)
-    size(M, 1) == size(M, 2) && size(M, 1) in (n, 3n, 6n) || throw(
+    size(M, 1) == size(M, 2) && size(M, 1) in (n, 2n, 3n, 6n) || throw(
         DimensionMismatch(
             "VolterraOperator: a $(size(M)) matrix on $n instants; expected $(n)×$(n) (scalar), " *
-                "$(3n)×$(3n) (order 2) or $(6n)×$(6n) (order 4)"
+                "$(3n)×$(3n) (order 2) or $(6n)×$(6n) (order 4), or the sizes of the plane with a tensor `like`"
         )
     )
-    d = size(M, 1) ÷ n
-    c = d == 6 ? DenseClass{4}() : d == 3 ? DenseClass{2}() : ScalarClass()
+    c = _matrix_class(size(M, 1) ÷ n, like)
     return _in_class(VolterraOperator(c, (Matrix(M),), grid), like)
+end
+
+# The dense class of a full matrix whose blocks have `d` rows. The size alone
+# reads the three-dimensional space; a tensor `like` says the order and the
+# dimension (a 3×3 block is a stiffness of the plane as well as a conductivity
+# of space), and must have `d` components.
+_matrix_class(d, ::Nothing) = d == 6 ? DenseClass{4}() : d == 3 ? DenseClass{2}() : ScalarClass()
+function _matrix_class(d, like)
+    c = _dense_class(_class_of(like))
+    _value_dim(c) == d || throw(
+        DimensionMismatch(
+            "VolterraOperator: blocks of $d rows, while the values of a tensor like the one given " *
+                "have $(_value_dim(c)) components"
+        )
+    )
+    return c
 end
 
 _in_class(R, ::Nothing) = R
@@ -425,15 +485,15 @@ end
 # An isotropic operator belongs to every class of its order, linearly: the blocks of
 # α 𝕁 + β 𝕂 in class `c` are kron(α, b(𝕁)) + kron(β, b(𝕂)), b(𝕁) and b(𝕂) the small
 # constant blocks of the two projectors. No check, no conversion entry by entry.
-function _converted(R::VolterraOperator{<:TensISO{4, 3}}, c, rtol)
+function _converted(R::VolterraOperator{<:TensISO{4, D}}, c, rtol) where {D}
     α, β = R.blocks
-    bJ = _matrix_blocks(c, _value_matrix(TensISO{3}(1.0, 0.0)))
-    bK = _matrix_blocks(c, _value_matrix(TensISO{3}(0.0, 1.0)))
+    bJ = _matrix_blocks(c, _value_matrix(TensISO{D}(1.0, 0.0)))
+    bK = _matrix_blocks(c, _value_matrix(TensISO{D}(0.0, 1.0)))
     return VolterraOperator(c, map((j, k) -> kron(α, Matrix(j)) + kron(β, Matrix(k)), bJ, bK), R.grid), nothing
 end
-function _converted(R::VolterraOperator{<:TensISO{2, 3}}, c, rtol)
+function _converted(R::VolterraOperator{<:TensISO{2, D}}, c, rtol) where {D}
     λ = R.blocks[1]
-    b𝟏 = _matrix_blocks(c, _value_matrix(TensISO{3}(1.0)))
+    b𝟏 = _matrix_blocks(c, _value_matrix(TensISO{D}(1.0)))
     return VolterraOperator(c, map(b -> kron(λ, Matrix(b)), b𝟏), R.grid), nothing
 end
 
@@ -442,13 +502,14 @@ end
 
 The isotropic part of an order-4 operator, read on its blocks: the average over the
 rotations of each of its values, ``\\alpha = \\underline{s}\\cdot M\\cdot\\underline{s}`` (``\\underline{s}``
-the spherical Kelvin-Mandel direction) and ``\\beta = (\\operatorname{tr} M - \\alpha)/5``,
-both linear in the blocks.
+the spherical Kelvin-Mandel direction) and ``\\beta = (\\operatorname{tr} M - \\alpha)/(m-1)``,
+``m`` the number of Kelvin-Mandel components (6 in space, 3 in the plane), both
+linear in the blocks.
 """
 function _iso_part(R::VolterraOperator)
     n = length(R.grid)
     Q = _class_basis(R.class)
-    s = transpose(Q) * SVector(1, 1, 1, 0, 0, 0) / sqrt(3 * one(eltype(Q)))
+    s = transpose(Q) * _spherical_direction(R.class) / sqrt(_space_dim(R.class) * one(eltype(Q)))
     T = promote_type(eltype(R), eltype(Q))
     α, trace = zeros(T, n, n), zeros(T, n, n)
     map(R.blocks, _class_layout(R.class)) do B, copies
@@ -461,14 +522,18 @@ function _iso_part(R::VolterraOperator)
             α .+= (s[c[a]] * s[c[b]]) .* view(W, a, :, b, :)
         end
     end
-    return VolterraOperator(_ISO4, (α, (trace .- α) ./ 5), R.grid)
+    return VolterraOperator(_iso_class(R.class), (α, (trace .- α) ./ (_value_dim(R.class) - 1)), R.grid)
 end
+
+# The identity of the space in Kelvin-Mandel components.
+_spherical_direction(::Union{TensND.AbstractTens{4, 3}, DenseClass{4, 3}}) = SVector(1, 1, 1, 0, 0, 0)
+_spherical_direction(::Union{TensND.AbstractTens{4, 2}, DenseClass{4, 2}}) = SVector(1, 1, 0)
 
 """
     _iso_part2(R::VolterraOperator) -> VolterraOperator
 
-The isotropic part of an order-2 operator, read on its blocks: a third of the trace of
-each of its values, the trace being that of the blocks, each counted once per copy (the
+The isotropic part of an order-2 operator, read on its blocks: the trace of each of its
+values divided by the dimension of the space, the trace being that of the blocks, each counted once per copy (the
 adapted basis is orthonormal).
 """
 function _iso_part2(R::VolterraOperator)
@@ -481,7 +546,7 @@ function _iso_part2(R::VolterraOperator)
             trace .+= length(copies) .* view(W, a, :, a, :)
         end
     end
-    return VolterraOperator(_ISO2, (trace ./ 3,), R.grid)
+    return VolterraOperator(_iso_class(R.class), (trace ./ _space_dim(R.class),), R.grid)
 end
 
 # The absolute tolerance of a membership test. Values that do not compare
@@ -502,12 +567,12 @@ end
 `R` in the first of the classes `candidates` (tensors standing for a class and a
 frame) its values all belong to, as it is otherwise.
 """
-_compact(R::VolterraOperator{<:Union{TensISO{4, 3}, TensISO{2, 3}}}, candidates) = R
+_compact(R::VolterraOperator{<:Union{TensISO{4}, TensISO{2}}}, candidates) = R
 function _compact(R::VolterraOperator, candidates)
     # Values that do not compare keep their storage: no residual can say they belong.
     is_hard_numeric(eltype(R)) || return R
     for c in candidates
-        _order(c) == _order(R.class) || continue
+        _same_kind(c, R.class) || continue
         # Already in this class (or in the cheapest one): nothing to convert.
         _same_class(R.class, c) && return R
         Rc, failure = _converted(R, c, _CLASS_RTOL)
@@ -522,8 +587,11 @@ end
 # taken into the class of the other (it belongs to every class), dense otherwise.
 function _common_class(A::VolterraOperator, B::VolterraOperator, what)
     _same_grid(A.grid, B.grid, what)
-    _order(A.class) == _order(B.class) || throw(
-        ArgumentError("$what: operators of orders $(_order(A.class)) and $(_order(B.class)) do not combine")
+    _same_kind(A.class, B.class) || throw(
+        ArgumentError(
+            "$what: operators of orders $(_order(A.class)) and $(_order(B.class)), or of a space and of " *
+                "a plane, do not combine"
+        )
     )
     return _combine(_combine_rule(_family(A.class), _family(B.class)), A, B, what)
 end
@@ -531,9 +599,12 @@ end
 # The family of a class, its layout: what decides, from the types alone, how two
 # operators combine (a symmetric and a general TI tensor are one family).
 _family(c::_StructuredClass) = typeof(TensND.symmetry_layout(c))
-_family(::DenseClass{O}) where {O} = DenseClass{O}
+_family(::DenseClass{O, D}) where {O, D} = DenseClass{O, D}
 _family(::ScalarClass) = ScalarClass
-const _IsoFamily = Union{typeof(TensND.symmetry_layout(TensISO{3}(1.0, 1.0))), typeof(TensND.symmetry_layout(TensISO{3}(1.0)))}
+const _IsoFamily = Union{
+    typeof(TensND.symmetry_layout(TensISO{3}(1.0, 1.0))), typeof(TensND.symmetry_layout(TensISO{3}(1.0))),
+    typeof(TensND.symmetry_layout(TensISO{2}(1.0, 1.0))), typeof(TensND.symmetry_layout(TensISO{2}(1.0))),
+}
 
 # The rule, from two constant types: folded at compile time, so that the result
 # type of a composition is inferred.
@@ -549,7 +620,7 @@ _combine(::Val{:right_iso}, A, B, what) = A, first(_converted(B, A.class, nothin
 # Two families: the full blocks.
 _combine(::Val{:dense}, A, B, what) = _both_dense(A, B)
 _both_dense(A, B) = (D = _dense_class(A.class); (first(_converted(A, D, nothing)), first(_converted(B, D, nothing))))
-_dense_class(c) = DenseClass{_order(c)}()
+_dense_class(c) = DenseClass{_order(c), _space_dim(c)}()
 _dense_class(c::ScalarClass) = c
 
 _blockwise(f::F, A::VolterraOperator, B::VolterraOperator) where {F} = VolterraOperator(A.class, map(f, A.blocks, B.blocks), A.grid)
@@ -686,10 +757,10 @@ struct TimeHistory{T, G <: TimeGrid, F}
     f::F            # the function it was built from, or nothing
     function TimeHistory(values::AbstractMatrix{T}, times, f::F) where {T, F}
         grid = TimeGrid(times)
-        size(values, 2) == length(grid) && size(values, 1) in (1, 3, 6) || throw(
+        size(values, 2) == length(grid) && size(values, 1) in (1, 2, 3, 6) || throw(
             DimensionMismatch(
                 "TimeHistory: $(size(values)) values on $(length(grid)) instants; expected one column per " *
-                    "instant of 6 (Kelvin-Mandel), 3 (vector) or 1 (scalar) components"
+                    "instant of 6 or 3 (Kelvin-Mandel, in space or in the plane), 3 or 2 (vector) or 1 (scalar) components"
             )
         )
         return new{T, typeof(grid), F}(Matrix(values), grid, f)
@@ -713,8 +784,9 @@ end
 
 _history_components(x::Number) = SVector(x)
 _history_components(x::AbstractVector) = SVector{length(x)}(x)
-_history_components(x::TensND.AbstractTens{1, 3}) = SVector{3}(TensND.canonical_components(x))
+_history_components(x::TensND.AbstractTens{1, D}) where {D} = SVector{D}(TensND.canonical_components(x))
 _history_components(x::TensND.AbstractTens{2, 3}) = SVector{6}(TensND.mandel(TensND.canonical_components(x); symmetrize = true))
+_history_components(x::TensND.AbstractTens{2, 2}) = SVector{3}(TensND.mandel(TensND.canonical_components(x); symmetrize = true))
 
 time_grid(h::TimeHistory) = h.grid
 Base.getindex(h::TimeHistory, i::Integer) = h.values[:, i]

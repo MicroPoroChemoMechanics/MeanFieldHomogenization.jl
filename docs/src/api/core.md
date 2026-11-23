@@ -25,6 +25,7 @@ MeanFieldHomogenization.Core.newton_potential_3d
 MeanFieldHomogenization.Core.newton_potential_2d
 MeanFieldHomogenization.Core.newton_potential_3d_cylinder
 MeanFieldHomogenization.Core.dimension
+MeanFieldHomogenization.Core.admits_dimension
 MeanFieldHomogenization.Core.element_type
 MeanFieldHomogenization.Core.inclusion_basis
 MeanFieldHomogenization.Core.shape_trait

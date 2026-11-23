@@ -66,3 +66,16 @@ import Symbolics
     T_loc = local_temperature(g, 3a / 2, 0.4, 0.9, TensND.Vec{3}((0.3, -0.2, 0.9)); layer = 2)
     @test num(T_loc, vals) ≈ local_temperature(LayeredSphereTransportFields(nK, K(2.0)), 0.9, 0.4, 0.9, TensND.Vec{3}((0.3, -0.2, 0.9))) rtol = 1.0e-10
 end
+
+@testset "graded_layers on symbols" begin
+    Symbolics.@variables k Δ
+    radii, moduli = graded_layers(r -> TensISO{3}(k + Δ / r), 1, 2, 2)
+    @test radii == (1.5, 2.0)
+    @test eltype(moduli[1]) == Symbolics.Num
+    value(x) = Symbolics.value(Symbolics.substitute(x, Dict(k => 2.0, Δ => 3.0)))
+    @test value(TensND.get_data(moduli[2])[1]) ≈ 2 + 3 / 1.75
+    # symbolic ends of the zone
+    Symbolics.@variables a
+    edges, _ = graded_layers(r -> TensISO{3}(r), a, 2a, 2)
+    @test isequal(Symbolics.simplify(edges[2] - 2a), 0)
+end

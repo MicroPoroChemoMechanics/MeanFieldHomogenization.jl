@@ -129,12 +129,8 @@ end
     # `MixedBC` measures |Ω| by the SVE, so the fractions come out against the
     # SVE area rather than a box; and the matrix must get a DISK, not a ball.
     #
-    # Only `Voigt`/`Reuss` are checked numerically here, because the rest of
-    # the one-site family is 3D-only on an `RVE` (`_mt_dispatch`,
-    # `_phase_stiffness_contribution` and `_compose`, the contraction of the
-    # self-consistent step, have no `AbstractTens{4,2}` methods). That
-    # limitation is the RVE's, and the
-    # bridge inherits it exactly — which is what the last block asserts.
+    # The one-site schemes run on tensors of the plane as they do in space, so
+    # the bridge is checked on them too.
     C_m = TensISO{2}(3 * 1.0, 2 * 0.4)
     C_i = TensISO{2}(3 * 10.0, 2 * 6.0)
     asm = ParticleAssembly(; boundary = MixedBC(Ellipsoid(10.0, 10.0)))
@@ -150,16 +146,12 @@ end
     ref = RVE()
     add_phase!(ref, :M, Ellipsoid(1.0, 1.0), Dict(:C => C_m); fraction = :rest)
     add_phase!(ref, :I, Ellipsoid(1.0, 1.0), Dict(:C => C_i); fraction = f)
-    for s in (Voigt(), Reuss())
-        a = get_array(homogenize(asm, s, :C))
-        b = get_array(homogenize(ref, s, :C))
-        @test maximum(abs.(a .- b)) < 1.0e-12 * maximum(abs.(b))
+    for s in (Voigt(), Reuss(), MoriTanaka(), SelfConsistent())
+        a = canonical_components(homogenize(asm, s, :C))
+        b = canonical_components(homogenize(ref, s, :C))
+        @test maximum(abs.(a .- b)) < 1.0e-10 * maximum(abs.(b))
     end
-    # The bridge adds no limitation of its own: a scheme that fails on the
-    # hand-built 2D RVE fails identically through the assembly.
-    @test_throws MethodError homogenize(ref, MoriTanaka(), :C)
-    @test_throws MethodError homogenize(asm, MoriTanaka(), :C)
-    # …while the N-body schemes, which have their own 2D kernels, do work.
+    # The N-body schemes have their own 2D kernels.
     @test _BR_μ(homogenize(asm, EquivalentInclusion(), :C)) > 0
 end
 

@@ -284,20 +284,34 @@ the core amplitude under ``(e, \\varepsilon)`` is
 function _solve_axisymmetric(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {N}
     𝟙 = one(L₀.k)
     𝟘 = zero(L₀.k)
-    pa = _axi_sequence(radii, Ls, interfaces, 𝟙, 𝟘)
+    dilatation, pa, α = _solve_dilatation(radii, Ls, interfaces, L₀)
     pz = _axi_sequence(radii, Ls, interfaces, 𝟘, 𝟙)
-    α, _ = _axi_amplitudes(radii[N], L₀, pa[2][N]..., 𝟘)
     β, _ = _axi_amplitudes(radii[N], L₀, pz[2][N]..., 𝟙)
-    Xe = inv(α)
     Xz = -_ldiv(α, β)
-    dilatation = (;
-        inside = _scale(pa[1], Xe), outside = _scale(pa[2], Xe), amps = _scale(pa[3], Xe),
-    )
     axial = (;
         inside = _combine(pa[1], Xz, pz[1]), outside = _combine(pa[2], Xz, pz[2]),
         amps = _combine(pa[3], Xz, pz[3]),
     )
     return dilatation, axial
+end
+
+"""
+    _solve_dilatation(radii, Ls, interfaces, L₀) -> (dilatation, sequence, α)
+
+The in-plane equibiaxial problem alone, at no axial strain: the problem of the
+plane. Also returns the sequence of the unit core amplitude and the matrix
+amplitude `α` it produces, which the axial problem reuses.
+"""
+function _solve_dilatation(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {N}
+    𝟙 = one(L₀.k)
+    𝟘 = zero(L₀.k)
+    pa = _axi_sequence(radii, Ls, interfaces, 𝟙, 𝟘)
+    α, _ = _axi_amplitudes(radii[N], L₀, pa[2][N]..., 𝟘)
+    Xe = inv(α)
+    dilatation = (;
+        inside = _scale(pa[1], Xe), outside = _scale(pa[2], Xe), amps = _scale(pa[3], Xe),
+    )
+    return dilatation, pa, α
 end
 
 """

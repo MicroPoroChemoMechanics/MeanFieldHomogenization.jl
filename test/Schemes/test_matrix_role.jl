@@ -295,3 +295,12 @@ end
     b_named = biot_tensor(rve, C_hom; solid = :S)
     @test b_default ≈ b_named
 end
+
+@testset "matrix role: the way out named by the message" begin
+    rve = RVE()
+    add_phase!(rve, :a, Ellipsoid(1.0), Dict(:C => iso_stiffness(3.0, 1.0)); fraction = 1.0)
+    name = MeanFieldHomogenization.Schemes.matrix_name
+    # A scheme built on a matrix takes its name; the self-consistent scheme has no such argument.
+    @test_throws "Name it on the scheme, e.g. MoriTanaka(:a), or declare one phase" name(MoriTanaka(), rve)
+    @test_throws "designates none. Declare one phase" name(SelfConsistent(), rve)
+end

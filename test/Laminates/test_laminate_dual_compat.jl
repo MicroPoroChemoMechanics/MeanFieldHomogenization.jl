@@ -61,10 +61,10 @@ end
 
 @testset "AD — layer modulus, every scheme" begin
     for scheme in (Laminated(), Voigt(), Reuss())
-        # `TensISO` stores (3κ, 2μ), so the lens variable is 2μ.
-        f = x -> _C33(homogenize(_cell(; μA = x / 2), scheme, :C))
+        # The lens variable is the shear modulus μ of the layer.
+        f = x -> _C33(homogenize(_cell(; μA = x), scheme, :C))
         ad = derivative(_cell(), scheme, property(:A, :C, :shear); indexer = _C33)
-        @test ad ≈ _fd(f, 2 * 0.8) rtol = RTOL_AD
+        @test ad ≈ _fd(f, 0.8) rtol = RTOL_AD
         @test !iszero(ad)
     end
 end
@@ -142,7 +142,7 @@ end
     g = MeanFieldHomogenization.gradient(lam, Laminated(), ps; indexer = _C33)
     @test length(g) == 3
     @test g[1] ≈ _fd(x -> _C33(homogenize(_cell(; hA = x, sn = 1.0e-2), Laminated(), :C)), 0.3) rtol = RTOL_AD
-    @test g[2] ≈ _fd(x -> _C33(homogenize(_cell(; μA = x / 2, sn = 1.0e-2), Laminated(), :C)), 1.6) rtol = RTOL_AD
+    @test g[2] ≈ _fd(x -> _C33(homogenize(_cell(; μA = x, sn = 1.0e-2), Laminated(), :C)), 0.8) rtol = RTOL_AD
     @test g[3] ≈ _fd(x -> _C33(homogenize(_cell(; sn = x), Laminated(), :C)), 1.0e-2) rtol = RTOL_AD
 end
 

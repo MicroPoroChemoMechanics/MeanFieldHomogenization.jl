@@ -154,8 +154,10 @@ C3 = homogenize(lvl3, MoriTanaka(), :C)
 
 p1 = bar(
     ["matrix", "level 1", "level 2", "level 3"],
-    [canonical_components(C_m)[1, 1, 1, 1], canonical_components(C1)[1, 1, 1, 1],
-        canonical_components(C2)[1, 1, 1, 1], canonical_components(C3)[1, 1, 1, 1]];
+    [
+        canonical_components(C_m)[1, 1, 1, 1], canonical_components(C1)[1, 1, 1, 1],
+        canonical_components(C2)[1, 1, 1, 1], canonical_components(C3)[1, 1, 1, 1],
+    ];
     ylabel = "C₁₁₁₁", title = "Three scales", legend = false, color = :steelblue
 )
 p1
@@ -176,7 +178,7 @@ d_fd = (
     idx(homogenize(set_param(outer, lens, x₀ + 1.0e-6), MoriTanaka(), :C)) -
         idx(homogenize(set_param(outer, lens, x₀ - 1.0e-6), MoriTanaka(), :C))
 ) / 2.0e-6
-@printf "\nd(outer μ)/d(inner matrix β) : AD %.10f   FD %.10f\n" d_ad d_fd
+@printf "\nd(outer C₁₂₁₂)/d(inner matrix μ) : AD %.10f   FD %.10f\n" d_ad d_fd
 ````
 
 The lenses an assembly answers are its own: `radius_param` and `center_param`

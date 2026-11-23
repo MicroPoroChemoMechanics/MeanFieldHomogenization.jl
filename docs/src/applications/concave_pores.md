@@ -62,12 +62,13 @@ including the two values known exactly: ``4\pi/3`` at the sphere and ``4/3`` at
 the octahedron.
 
 **The spherical limit.** At ``p = 1`` the measured resistivity contribution is
-``k_0R = 1.499804`` against the exact ``3/2`` — a relative error of
-``1.3\times10^{-4}`` at level 3, and ``9.7\times10^{-6}`` at level 4, which the
-octant makes affordable. This is the control for everything else on this page.
+``k_0R = 1.500033`` against the exact ``3/2`` — a relative error of
+``2.2\times10^{-5}``, at the level 4 of subdivision that the octant makes
+affordable and in a cell of radius ``4a``, the settings of every table of the
+supersphere on this page. This is the control for everything else here.
 
 **Their ``\eta`` near the sphere.** The fit is anchored at the sphere, where the
-answer is exact, so the two agree to ``1.3\times10^{-4}`` at ``p = 1`` and to 2 %
+answer is exact, so the two agree to ``2.2\times10^{-5}`` at ``p = 1`` and to 2 %
 at ``p = 0.7``.
 
 ## The scalar fit in ``p``, read pointwise
@@ -80,13 +81,13 @@ harsher test than it was designed for:
 
 | ``p`` | ``k_0 R`` here | their ``\eta(p)`` | difference |
 |---:|---:|---:|---:|
-| 0.30 | 1.9288 | 3.4589 | −44 % |
-| 0.40 | 1.6581 | 2.2392 | −26 % |
-| 0.50 | 1.5763 | 1.7671 | −11 % |
-| 0.70 | 1.5152 | 1.4853 | +2.0 % |
-| **1.00** | **1.4998** | **1.5000** | **−0.013 %** |
-| 1.50 | 1.5111 | 1.7923 | −16 % |
-| 2.50 | 1.5400 | 2.6065 | −41 % |
+| 0.30 | 2.0019 | 3.4589 | −42 % |
+| 0.40 | 1.6870 | 2.2392 | −25 % |
+| 0.50 | 1.5829 | 1.7671 | −10 % |
+| 0.70 | 1.5163 | 1.4853 | +2.1 % |
+| **1.00** | **1.5000** | **1.5000** | **+0.002 %** |
+| 1.50 | 1.5116 | 1.7923 | −16 % |
+| 2.50 | 1.5417 | 2.6065 | −41 % |
 
 The two convex rows lie outside the stated range of validity — the fit is
 restricted to ``p < 1`` — so they are given for context only. Two further
@@ -116,21 +117,21 @@ instead of as mesh noise at a few percent of the norm.
 
 | ``p`` | ``H_{1111}`` | ``H_{1122}`` | ``H_{1212}`` | anisotropy |
 |---:|---:|---:|---:|---:|
-| 0.30 | 3.3167 | −0.7771 | 1.5680 | **+0.2888** |
-| 0.40 | 2.5262 | −0.6063 | 1.3265 | +0.1899 |
-| 0.50 | 2.2954 | −0.5551 | 1.2566 | +0.1470 |
-| 0.70 | 2.0955 | −0.5097 | 1.2289 | +0.0703 |
-| **1.00** | 2.0094 | −0.4798 | 1.2444 | **+0.000246** |
-| 1.50 | 1.9709 | −0.4513 | 1.2828 | −0.0728 |
-| 2.50 | 1.9668 | −0.4246 | 1.3426 | **−0.1493** |
+| 0.30 | 3.5806 | −0.8370 | 1.6322 | **+0.3221** |
+| 0.40 | 2.6557 | −0.6343 | 1.3550 | +0.2184 |
+| 0.50 | 2.3230 | −0.5630 | 1.2698 | +0.1491 |
+| 0.70 | 2.1004 | −0.5106 | 1.2298 | +0.0721 |
+| **1.00** | 2.0062 | −0.4781 | 1.2421 | **+0.000021** |
+| 1.50 | 1.9715 | −0.4506 | 1.2833 | −0.0733 |
+| 2.50 | 1.9731 | −0.4250 | 1.3463 | **−0.1493** |
 
 "Anisotropy" is Zener's ratio ``(H_{1111} - H_{1122} - 2H_{1212})/H_{1111}``,
 identically zero for an isotropic tensor. **Read the middle row first.** At
 ``p = 1`` the body is a sphere and the true anisotropy is zero, so
-``2.5\times10^{-4}`` is this chain's own spurious anisotropy at this
+``2.1\times10^{-5}`` is this chain's own spurious anisotropy at this
 discretization — on the same mesh generator, element and quadrature as every
-other row. The concave signal is **1170 times** larger than that, and the
-convex one 600 times. It also **changes sign at the control**, which no
+other row. The concave signal is **15 000 times** larger than that, and the
+convex one 7 000 times. It also **changes sign at the control**, which no
 numerical artifact would do: a concave supersphere and a cube-like one are
 anisotropic in opposite senses.
 
@@ -155,8 +156,16 @@ published as figures rather than tables, on linear tetrahedra with a surface
 integral built from centroid values on flat triangles, so the anisotropy cannot be
 read back out of them to be compared component by component. What can be said is
 on the table above, and it concerns this chain alone: the control row bounds its
-own spurious anisotropy, and the measured signal is three orders of magnitude
+own spurious anisotropy, and the measured signal is four orders of magnitude
 above it.
+
+**The concave rows are not converged in the mesh.** The components are those of
+``E_0\,\mathbb H`` for ``\nu_0 = 0.3``. From the level 3 to the level 4,
+``H_{1111}`` moves by less than 0.5 % for ``p \ge 0.7``, by 2 % at ``p = 0.5``
+and by 7 % at ``p = 0.4``: the field is singular at the
+conical points, and each refinement still raises the result.
+[A concave pore through every route](@ref app-pore-routes) sets these values
+beside the tabulated ones of a later study of the same family, on a finer mesh.
 
 ## The axisymmetric companion, where the data is tabulated
 
@@ -418,6 +427,10 @@ julia scripts/89_fe_concave_pores.jl      # the comparison, live
 ```
 
 ## Where to go next
+
+[A concave pore through every route](@ref app-pore-routes) sets the cell of this
+page beside a published table, a network and a grid of Gaussians, component by
+component.
 
 The two cells of this page are the teachers of the supersphere and superspheroid
 surrogates described in [Neural-surrogate inclusions](@ref man-neural-inclusions),

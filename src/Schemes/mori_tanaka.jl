@@ -74,7 +74,7 @@ function _relative_asymmetry(P, P_sym)
     M = _canonical_matrix(P)
     return norm(M - transpose(M)) / norm(M + transpose(M))
 end
-_relative_asymmetry(P::T, P_sym::T) where {T <: TensND.TensCanonical{4, 3, <:Any, <:Tensors.SymmetricTensor{4, 3}}} =
+_relative_asymmetry(P::T, P_sym::T) where {dim, T <: TensND.TensCanonical{4, dim, <:Any, <:Tensors.SymmetricTensor{4, dim}}} =
     norm(TensND.get_array(P) - TensND.get_array(P_sym)) / norm(TensND.get_array(P_sym))
 
 function _warn_mt_gap(gap)

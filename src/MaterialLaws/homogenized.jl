@@ -134,8 +134,8 @@ _reference_strain(law) = hasproperty(law.p, :ε₀) ? float(law.p.ε₀) : 1.0e-
 function _secant_rve(p, y)
     return foldl(keys(p.laws); init = p.rve) do rve, φ
         s = secant_moduli(p.laws[φ], y[φ])
-        rve = Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :bulk), 3 * s.k)
-        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :shear), 2 * s.μ)
+        rve = Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :k), s.k)
+        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :μ), s.μ)
     end
 end
 
@@ -170,9 +170,9 @@ function _phase_strain(::ClassicalSecant, rve, p, φ, ε)
 end
 
 function _phase_strain(::ModifiedSecant, rve, p, φ, ε)
-    shear = Schemes.PropertyParameter(φ, :C, :shear)
-    # W = ½ E:ℂ:E, whose derivative with respect to 2μ of the phase is ¾ fᵢ ⟨ε_eq²⟩ᵢ.
-    energy(x) = _quadratic(ε, _effective_stiffness(Schemes.set_param(rve, shear, x), p.scheme))
-    ∂W = ForwardDiff.derivative(energy, Schemes.get_param(rve, shear))
+    β = Schemes.PropertyParameter(φ, :C, :β)
+    # W = ½ E:ℂ:E, whose derivative with respect to β = 2μ of the phase is ¾ fᵢ ⟨ε_eq²⟩ᵢ.
+    energy(x) = _quadratic(ε, _effective_stiffness(Schemes.set_param(rve, β, x), p.scheme))
+    ∂W = ForwardDiff.derivative(energy, Schemes.get_param(rve, β))
     return sqrt(4 * ∂W / (3 * p.fractions[φ]))
 end

@@ -47,6 +47,7 @@ import ..Core: inverse_property_contribution, delta_inverse_property,
     inverse_and_property_contribution
 import ..LayeredSpheres
 import ..LayeredSpheroids
+import ..LayeredEllipsoids
 import ..LayeredCylinders
 import ..LayeredSpheres: layer_property_average, layer_inverse_property_average
 
@@ -114,7 +115,7 @@ export fracture_permeability
 export AbstractParameter, AmountParameter, PropertyParameter,
     GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param
-export get_param, set_param
+export get_param, set_param, get_coefficient, set_coefficient
 export derivative, gradient, jacobian, sensitivity
 
 end # module

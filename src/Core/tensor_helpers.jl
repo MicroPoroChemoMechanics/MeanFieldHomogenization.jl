@@ -48,3 +48,41 @@ the full minor + major symmetries with the same value `v`.
     A[k, l, i, j] = A[l, k, i, j] = A[k, l, j, i] = A[l, k, j, i] = v
     return A
 end
+
+# ── Properties of a two-dimensional cell ─────────────────────────────────────
+
+# Relative distance to isotropy under which a general tensor of the plane (the
+# running estimate of a scheme) is read as isotropic.
+const _PLANE_ISO_RTOL = 1.0e-8
+
+"""
+    _plane_isotropic(P) -> TensISO
+
+A property of the plane that is isotropic: a `TensISO`, or a general tensor of
+the plane that is one, as the estimate of a scheme is. Numbers only for the
+second: the distance to isotropy is compared.
+"""
+_plane_isotropic(P::TensND.TensISO{order, 2}) where {order} = P
+function _plane_isotropic(P::TensND.AbstractTens{order, 2}) where {order}
+    is_hard_numeric(eltype(P)) || throw(
+        ArgumentError(
+            "an inclusion of the plane takes a symbolic property as a TensISO; a " *
+                "$(nameof(typeof(P))) would have to be compared with its isotropic part"
+        )
+    )
+    Piso, _, drel = TensND.project(P, Val(:ISO))
+    drel ≤ _PLANE_ISO_RTOL || throw(
+        ArgumentError(
+            "an inclusion of the plane takes a property that is isotropic in the plane; " *
+                "the $(nameof(typeof(P))) it received is at a relative distance $drel from isotropy"
+        )
+    )
+    return Piso
+end
+_plane_isotropic(P) = throw(
+    ArgumentError(
+        "in a two-dimensional cell the properties are tensors of the plane, those of the " *
+            "layers of an inclusion included (`plane_strain_stiffness`, `plane_stress_stiffness` " *
+            "of TensND build them from a three-dimensional stiffness); got a $(nameof(typeof(P)))"
+    )
+)

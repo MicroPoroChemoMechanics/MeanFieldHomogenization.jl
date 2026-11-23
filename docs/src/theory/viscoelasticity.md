@@ -811,6 +811,69 @@ in conduction, is the root of [bruggeman1935](@citet),
 [`homogenize_alv`](@ref), at both orders; the elastic solvers are described in
 [Iterative solvers](@ref man-schemes-iterative).
 
+## [10. Plane strain and plane stress](@id th-visco-plane-states)
+
+A cell of the plane takes the relaxation kernel of the plane. For an isotropic
+aging material, the relaxation kernel of space is written with two scalar
+kernels ``\lambda`` and ``\mu``,
+
+```math
+\sigma_{ij}=\lambda\circ\varepsilon_{kk}\,\delta_{ij}+2\mu\circ\varepsilon_{ij},
+\qquad
+\mathbb{C}=(3\lambda+2\mu)\,\mathbb{J}+2\mu\,\mathbb{K} ,
+```
+
+and the indices ``\alpha,\beta,\gamma`` run over the plane ``(1,2)``.
+
+**Plane strain**, ``\varepsilon_{i3}=0`` at every instant. The in-plane
+stresses keep the same kernels,
+``\sigma_{\alpha\beta}=\lambda\circ\varepsilon_{\gamma\gamma}\,\delta_{\alpha\beta}+2\mu\circ\varepsilon_{\alpha\beta}``,
+that is the kernel of the plane
+``2(\lambda+\mu)\,\mathbb{J}_2+2\mu\,\mathbb{K}_2``, with
+``\mathbb{J}_2=\boldsymbol{1}_2\otimes\boldsymbol{1}_2/2``: the in-plane block of
+``\mathbb{C}``, kernel by kernel.
+
+**Plane stress**, ``\sigma_{i3}=0`` at every instant. The shear components give
+``2\mu\circ\varepsilon_{\alpha3}=0``, hence ``\varepsilon_{\alpha3}=0`` since
+``\mu`` has a Volterra inverse. The normal one gives
+
+```math
+\sigma_{33}=\lambda\circ\varepsilon_{\gamma\gamma}+(\lambda+2\mu)\circ\varepsilon_{33}=0
+\quad\Longrightarrow\quad
+\varepsilon_{33}=-(\lambda+2\mu)^{-1^{\circ}}\circ\lambda\circ\varepsilon_{\gamma\gamma} ,
+```
+
+the inverse being applied on the left, where ``\lambda+2\mu`` stands. Carried
+into ``\sigma_{\alpha\beta}=\lambda\circ(\varepsilon_{\gamma\gamma}+\varepsilon_{33})\,\delta_{\alpha\beta}+2\mu\circ\varepsilon_{\alpha\beta}``,
+
+```math
+\sigma_{\alpha\beta}=\lambda^{*}\circ\varepsilon_{\gamma\gamma}\,\delta_{\alpha\beta}+2\mu\circ\varepsilon_{\alpha\beta},
+\qquad
+\lambda^{*}=\lambda-\lambda\circ(\lambda+2\mu)^{-1^{\circ}}\circ\lambda ,
+```
+
+the kernel of the plane ``2(\lambda^{*}+\mu)\,\mathbb{J}_2+2\mu\,\mathbb{K}_2``:
+plane stress keeps ``\mu`` and replaces ``\lambda`` by ``\lambda^{*}``.
+
+**The order of the factors.** No step above has exchanged two kernels. If
+``\lambda`` and ``\mu`` commuted, as non-aging kernels do, ``\lambda^{*}`` could be
+rearranged as
+``\lambda\circ(\lambda+2\mu)^{-1^{\circ}}\circ\bigl((\lambda+2\mu)-\lambda\bigr)=\lambda\circ(\lambda+2\mu)^{-1^{\circ}}\circ2\mu``,
+whose Laplace–Carson transform is the elastic
+``2\lambda\mu/(\lambda+2\mu)`` of the transformed moduli: the correspondence
+principle. For an aging material they do not commute, and ``\lambda^{*}`` is
+neither that expression nor the elastic formula applied to
+``\lambda(t,t')`` and ``\mu(t,t')`` at each pair of instants. For constant moduli,
+``\lambda\circ\mu=\lambda\mu\,H``, and ``\lambda^{*}`` is the elastic
+``2\lambda\mu/(\lambda+2\mu)``.
+
+On the grid of instants every kernel is a lower-triangular matrix and the
+Volterra product and inverse are those of these matrices
+([section 1](@ref th-viscoelasticity)), so that ``\lambda^{*}`` is computed as
+``\Lambda-\Lambda\,(\Lambda+2M)^{-1}\,\Lambda``. [`plane_strain_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_strain_stiffness)
+and [`plane_stress_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_stress_stiffness) return the two operators of the plane; the
+[manual](@ref man-visco-plane) builds a cell with them.
+
 ## Where to go next
 
 The theory closes with two appendices, starting with

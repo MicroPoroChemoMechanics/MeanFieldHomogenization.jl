@@ -65,6 +65,7 @@ pages = [
             "theory/layered_cylinder.md",
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
+            "theory/layered_ellipsoid.md",
         ],
         # One page per family of schemes, each with its figure, its assumption
         # and its equations, in the order of the overview's table. The laminate
@@ -105,6 +106,12 @@ pages = [
             # The permeability from the Stokes flow in the pores: the same
             # schemes, fed with size-dependent Brinkman inclusions.
             "theory/brinkman.md",
+            # A shape that is not an ellipsoid and has an exact series: the torus,
+            # in the toroidal coordinates of TensND.
+            "theory/toroidal_inclusions.md",
+            # Cylindrical cavities whose section is given by a conformal map:
+            # finite complex potentials.
+            "theory/conformal_mapping.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
         # non-aging problem onto an elastic one, and the aging case, where
@@ -124,6 +131,9 @@ pages = [
         "manual/index.md",
         "Inclusions" => [
             "manual/inclusion_gallery.md",
+            # The routes compared (closed form, layered pattern, custom, grid,
+            # mesh, network) before the page of each.
+            "manual/choosing_an_inclusion.md",
             "manual/ellipsoidal_inclusions.md",
             "manual/cylindrical_inclusions.md",
             "manual/cracks.md",
@@ -131,6 +141,8 @@ pages = [
             "manual/layered_inclusions.md",
             "manual/custom_inclusions.md",
             "manual/brinkman_inclusions.md",
+            "manual/toroidal_inclusions.md",
+            "manual/conformal_holes.md",
             # Three treatments of a shape with no closed form, all through the
             # custom-inclusion interface: a grid of Gaussians, a mesh, a
             # trained network.
@@ -142,6 +154,8 @@ pages = [
         ],
         "Cells and schemes" => [
             "manual/schemes.md",
+            # Two-dimensional media through the same schemes.
+            "manual/plane_problems.md",
             "manual/particle_assemblies.md",
             "manual/multiscale.md",
         ],
@@ -240,6 +254,7 @@ pages = [
         ],
         "Differentiation and solvers" => [
             "tutorials/sensitivities.md",
+            "tutorials/generated/derivative_routes.md",
             "tutorials/strength_criteria.md",
             "tutorials/nonlinear_solvers.md",
             "tutorials/generated/secant_elastoplasticity.md",
@@ -255,29 +270,44 @@ pages = [
     # `applications/generated/` are built from `scripts/` by Literate,
     # which is an implementation detail; they sit with the others.
     "Applications" => [
-        # General concepts first, in the order they introduce one another:
-        # interactions between particles, then two morphologies without a
-        # closed form, computed by finite elements. The materials follow, each
-        # in its own section; within a section a page comes after the pages it
-        # builds on. A page may move within its section, not across chapters.
+        # The sections that hold whatever the material first, then the
+        # materials, one section each; within a section a page comes after the
+        # pages it builds on.
         "applications/index.md",
-        "General concepts" => [
-            # Each of the first four reproduces published results, which is why they
-            # are applications and not tutorials: the Hill tensor of a single
-            # inclusion first, then the interactions between particles.
+        # The four sections that hold whatever the material come first, each
+        # from the simplest object to the most involved: one inclusion of any
+        # shape, the interactions between several, the cracks, the coated
+        # inclusions. Then transport, then the materials.
+        "Inclusions of any shape" => [
+            # The Hill tensor of an ellipsoid in closed form, then the shapes
+            # without one: by finite elements, by the four routes, by a series
+            # (the torus), by a conformal map (prismatic pores).
             "applications/generated/hill_transformation.md",
+            "applications/concave_pores.md",
+            "applications/generated/pore_routes.md",
+            "applications/generated/insulating_torus.md",
+            "applications/generated/conformal_holes.md",
+        ],
+        "Interactions between particles" => [
             "applications/generated/cluster_model.md",
             "applications/generated/eim_assembly.md",
             "applications/generated/multipole_spheres.md",
             "applications/generated/multipole_spheroids.md",
-            # The Fourier reduction of the first is reused by the second.
-            "applications/recycled_aggregate.md",
-            "applications/concave_pores.md",
-            # A crack of any contour, here a disk with contact islands, against
-            # a published study and the annular crack.
+        ],
+        "Cracks" => [
             "applications/generated/crack_contacts.md",
             "applications/generated/narrow_cracks.md",
-            # Pore shapes again, now for the Stokes flow through them.
+        ],
+        # A shell of uniform properties around the particle, then a graded
+        # one, then the published closures set beside the exact solution, then
+        # the aging case.
+        "Coated inclusions and interphases" => [
+            "applications/recycled_aggregate.md",
+            "applications/generated/graded_interphase.md",
+            "applications/generated/coated_inclusion_estimates.md",
+            "applications/generated/aging_coated_spheres.md",
+        ],
+        "Transport in pores" => [
             "applications/generated/stokes_darcy_permeability.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
@@ -394,6 +424,7 @@ pages = [
         "api/layered_sphere.md",
         "api/layered_cylinder.md",
         "api/layered_spheroid.md",
+        "api/layered_ellipsoid.md",
         "api/superspheres.md",
         "api/laminate.md",
         "api/interactions.md",

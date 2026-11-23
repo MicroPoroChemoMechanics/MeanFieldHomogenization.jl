@@ -408,11 +408,28 @@ end
 
 # ─── Validation ──────────────────────────────────────────────────────────────
 
+# The domain of a mixed boundary condition is a shape of the space of the
+# particles: its measure is what turns their volumes into fractions, and a ball
+# around disks would give a number, not an error. A periodic box has a period
+# along each axis, of which a plane assembly reads the first two.
+_check_boundary_dimension(::PeriodicBox, d) = nothing
+function _check_boundary_dimension(b::MixedBC, d)
+    MFH_Core.dimension(b.shape) == d || throw(
+        ArgumentError(
+            "ParticleAssembly: the domain of the MixedBC has dimension $(MFH_Core.dimension(b.shape)) " *
+                "and the particles dimension $d; `MixedBC(radius)` is a ball, pass " *
+                "`MixedBC(Ellipsoid(radius; dim = $d))` for particles of dimension $d"
+        )
+    )
+    return nothing
+end
+
 """
     validate_assembly(asm) -> asm
 
 Check that an assembly is solvable: a matrix is present, at least one particle
-is present, all particles share the same dimension, the total volume fraction
+is present, all particles and the domain of a [`MixedBC`](@ref) share the same
+dimension, the total volume fraction
 is below one, and no two particles overlap.
 
 The overlap check is not pedantry — the interaction kernel is only defined
@@ -435,6 +452,7 @@ function validate_assembly(asm::ParticleAssembly)
             )
         )
     end
+    _check_boundary_dimension(asm.boundary, d)
     f = inclusion_volume_fraction(asm)
     f < 1 || throw(
         ArgumentError(

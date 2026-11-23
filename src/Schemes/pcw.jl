@@ -39,7 +39,7 @@ end
 
 # 4th-order (elasticity)
 function _pcw_kernel(
-        rve, shape, C₀::TensND.AbstractTens{4, 3}, m::Symbol, ::Val{p};
+        rve, shape, C₀::TensND.AbstractTens{4}, m::Symbol, ::Val{p};
         kw...
     ) where {p}
     Σ = _accumulate_contributions(rve, C₀, p, m; kw...)
@@ -50,7 +50,7 @@ end
 
 # 2nd-order (conductivity)
 function _pcw_kernel(
-        rve, shape, K₀::TensND.AbstractTens{2, 3}, m::Symbol, ::Val{p};
+        rve, shape, K₀::TensND.AbstractTens{2}, m::Symbol, ::Val{p};
         kw...
     ) where {p}
     Σ = _accumulate_contributions(rve, K₀, p, m; kw...)

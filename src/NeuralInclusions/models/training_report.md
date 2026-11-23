@@ -81,24 +81,24 @@ Per-component diagnostics (a structurally vanishing component such as `ℓ₃(�
 - features: `p`
 - network: MLP(1→24→24→1, tanh, tanh, identity)
 - samples: 120 train, 40 held out
-- worst held-out error, relative to the tensor magnitude: **1.474e-03**
+- worst held-out error, relative to the tensor magnitude: **6.621e-04**
 
 | component | max rel. err | rms rel. err |
 | --- | ---: | ---: |
-| `a` | 1.474e-03 | 4.404e-04 |
+| `a` | 6.621e-04 | 1.437e-04 |
 
 ## `supershape_pore_elastic`
 
 - features: `p`, `nu0`
 - network: MLP(2→48→48→3, tanh, tanh, identity)
 - samples: 480 train, 140 held out
-- worst held-out error, relative to the tensor magnitude: **2.060e-02**
+- worst held-out error, relative to the tensor magnitude: **1.597e-02**
 
 | component | max rel. err | rms rel. err |
 | --- | ---: | ---: |
-| `α` | 1.983e-02 | 2.877e-03 |
-| `β` | 1.993e-02 | 2.356e-03 |
-| `γ` | 8.970e-03 | 1.167e-03 |
+| `α` | 1.099e-02 | 1.695e-03 |
+| `β` | 1.597e-02 | 1.401e-03 |
+| `γ` | 4.998e-03 | 5.006e-04 |
 
 **These two are teacher-limited, and that is the point of quoting them.** Unlike
 every model above, whose teacher is an analytic Hill tensor and whose error is

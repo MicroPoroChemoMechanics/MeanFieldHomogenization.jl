@@ -81,15 +81,21 @@ function matrix_name(scheme::HomogenizationScheme, rve::RVE)
         ArgumentError(
             "$(nameof(typeof(scheme))) needs a matrix phase — the reference medium " *
                 "its concentration tensors are computed in — and this RVE designates " *
-                "none. Name it on the scheme, e.g. " *
-                "$(nameof(typeof(scheme)))(:" *
-                "$(isempty(rve.phase_names) ? :phase : first(rve.phase_names)))" *
-                ", or declare one phase with `fraction = :rest`. " *
+                "none. $(_naming_hint(Val(requires_matrix(scheme)), scheme, rve))" *
+                "eclare one phase with `fraction = :rest`. " *
                 "Candidates: $(rve.phase_names)."
         )
     )
     return r
 end
+
+# The way out of a missing matrix: the schemes built on a matrix take its name
+# as their first argument; the others (the self-consistent scheme, asked for a
+# host by the aging pipeline) have no such argument.
+_naming_hint(::Val{true}, scheme, rve) =
+    "Name it on the scheme, e.g. $(nameof(typeof(scheme)))(:" *
+    "$(isempty(rve.phase_names) ? :phase : first(rve.phase_names))), or d"
+_naming_hint(::Val{false}, scheme, rve) = "D"
 
 """
     host_phase_name(rve, declared, who::AbstractString) -> Symbol
@@ -173,7 +179,8 @@ function distribution_shape(rve::RVE, scheme::HomogenizationScheme)
                 "A spherical distribution is a legitimate choice, but with " *
                 "spherical inclusions it makes this scheme coincide exactly with " *
                 "Mori-Tanaka, so it has to be stated: " *
-                "`RVE(; distribution_shape = Ellipsoid(1.0))`."
+                "`RVE(; distribution_shape = Ellipsoid(1.0))`, or in a cell of the " *
+                "plane `RVE(; distribution_shape = Ellipsoid(1.0; dim = 2))`."
         )
     )
     return ds

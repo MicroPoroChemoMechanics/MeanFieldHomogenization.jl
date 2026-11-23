@@ -1,0 +1,82 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "ekneligodaPRSA2006",
+  "doi": "10.1098/rspa.2006.1666",
+  "citation": "Ekneligoda, T. C., Zimmerman, R. W. (2006). Compressibility of two-dimensional pores having n-fold axes of symmetry. Proceedings of the Royal Society A 462, 1933-1947.",
+  "location": "Tables 3, 4 and 5, p. 1945"
+ },
+ "transcription": {
+  "from": "the published article (PDF), read on the page text and compared with the image of the page",
+  "checked_against_source": true,
+  "note": "Normalized pore compressibility G Cpc / (1 - nu) of a hole in a plane-strain matrix of shear modulus G and Poisson ratio nu: the relative change of area of the hole under a unit hydrostatic stress in the plane; it is 2 for a circular hole. The holes are the images of the unit circle by a map which, written from the outside of the unit disk, is z = zeta + m1 zeta^(-2) (Table 4) or z = zeta + m1 zeta^(-2) + m2 zeta^(-5) (Table 5); the article writes the same maps from the inside of the disk. Table 3 gives regular polygons: the values of the article are extrapolated from maps of three and four terms, and computed by boundary elements. The coefficients are stored as decimal numbers: 1/9, 1/5, 1/3, 1/2, 1/15, 1/6, 2/15, 7/45."
+ },
+ "quantities": {},
+ "tables": {
+  "two_terms": [
+   {
+    "m1": 0.1111111111111111,
+    "analytical": 2.1013,
+    "boundary_elements": 2.1012
+   },
+   {
+    "m1": 0.2,
+    "analytical": 2.3478,
+    "boundary_elements": 2.3479
+   },
+   {
+    "m1": 0.3333333333333333,
+    "analytical": 3.1429,
+    "boundary_elements": 3.143
+   },
+   {
+    "m1": 0.5,
+    "analytical": 6.0,
+    "boundary_elements": 5.978
+   }
+  ],
+  "three_terms": [
+   {
+    "m1": 0.3333333333333333,
+    "m2": 0.06666666666666667,
+    "analytical": 3.475,
+    "boundary_elements": 3.479
+   },
+   {
+    "m1": 0.16666666666666666,
+    "m2": 0.13333333333333333,
+    "analytical": 2.769,
+    "boundary_elements": 2.775
+   },
+   {
+    "m1": 0.1111111111111111,
+    "m2": 0.15555555555555556,
+    "analytical": 2.734,
+    "boundary_elements": 2.74
+   }
+  ],
+  "polygons": [
+   {
+    "sides": 3,
+    "extrapolated": 3.25,
+    "boundary_elements": 3.245
+   },
+   {
+    "sides": 4,
+    "extrapolated": 2.414,
+    "boundary_elements": 2.416
+   },
+   {
+    "sides": 5,
+    "extrapolated": 2.192,
+    "boundary_elements": 2.198
+   },
+   {
+    "sides": 6,
+    "extrapolated": 2.105,
+    "boundary_elements": 2.112
+   }
+  ]
+ },
+ "notes": []
+}

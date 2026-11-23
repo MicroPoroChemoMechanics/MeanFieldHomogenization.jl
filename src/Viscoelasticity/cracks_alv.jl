@@ -106,12 +106,17 @@ end
 
 # The isotropic blocks (α, β) of the matrix the crack opens in: the opening is
 # known in an isotropic matrix only.
-_iso_blocks_alv(C::VolterraOperator{<:TensISO{4, 3}}, who) = C.blocks
+_iso_blocks_alv(C::VolterraOperator{<:TensISO{4}}, who) = C.blocks
 function _iso_blocks_alv(C::AbstractMatrix, who)
-    _is_iso_block(C) ||
-        throw(ArgumentError("$who: the crack opening is known in an isotropic ALV matrix only; this one is not"))
+    _is_iso_block(C) || _crack_iso_error(who)
     return iso_params_from_blocks(C)
 end
+# A dense operator of the plane, whose full matrix the test above does not read.
+function _iso_blocks_alv(C::VolterraOperator{<:DenseClass{4, 2}}, who)
+    _is_iso_block(C) || _crack_iso_error(who)
+    return convert_class(C, _ISO4_PLANE).blocks
+end
+_crack_iso_error(who) = throw(ArgumentError("$who: the crack opening is known in an isotropic ALV matrix only; this one is not"))
 
 """
     _cod_alv(crack, α, β) -> (B_ℓ, B_m, B_n)
@@ -256,8 +261,7 @@ end
 function _crack_inverse_alv(::Val{4}, crack, C_0, interfaces, who)
     interfaces.α_interface === nothing ||
         throw(ArgumentError("$who: α_interface is the interface of a crack in conduction; in elasticity it is Rn and Rt"))
-    α, β = _iso_blocks_alv(C_0, who)
-    return _crack_compliance_alv(crack, α, β, interfaces.Rn, interfaces.Rt, _operator_grid((C_0,)))
+    return _crack_compliance_alv(crack, C_0, interfaces.Rn, interfaces.Rt, who)
 end
 function _crack_inverse_alv(::Val{2}, crack, C_0, interfaces, who)
     interfaces.Rn === interfaces.Rt === nothing ||
@@ -300,6 +304,12 @@ _cod_alv2(crack::MFH_Core.AbstractCrack, λ) = throw(
 # interfaces of discretized stiffnesses `Rn`, `Rt` (`nothing`: traction-free).
 _crack_compliance_alv(crack, α, β, Rn, Rt, grid) =
     _crack_compliance_operator(crack, _interface_corrected_cod(_cod_alv(crack, α, β), Rn, Rt, semi_minor(crack)), grid)
+# The same against an isotropic reference given as its operator or its full matrix
+# (`who` names the caller in the messages): a crack of space, or, against an
+# operator of the plane, the segment of a cell of the plane (cracks_alv_plane.jl).
+_crack_compliance_alv(crack, C, Rn, Rt, who) = _crack_compliance_alv(crack, _iso_blocks_alv(C, who)..., Rn, Rt, _operator_grid((C,)))
+_crack_compliance_alv(crack, C::VolterraOperator{<:_PlaneClass}, Rn, Rt, who) =
+    _segment_compliance_alv(crack, _iso_blocks_alv(C, who)..., Rn, Rt, C.grid)
 
 # H̃ = (3/4) n ⊗ˢ B̃ ⊗ˢ n in the class of the crack, as the sum of each component of
 # B̃ times the blocks of its unit compliance: the unit compliances are tensors
@@ -388,8 +398,7 @@ function property_contribution_alv_at(
         Rn_mat::Union{Nothing, AbstractMatrix} = nothing,
         Rt_mat::Union{Nothing, AbstractMatrix} = nothing
     )
-    α, β = _iso_blocks_alv(C_ref, "property_contribution_alv_at")
-    H̃ = _crack_compliance_alv(crack, α, β, Rn_mat, Rt_mat, _operator_grid((C_ref,)))
+    H̃ = _crack_compliance_alv(crack, C_ref, Rn_mat, Rt_mat, "property_contribution_alv_at")
     return -(C_ref * H̃ * C_ref)
 end
 

@@ -18,6 +18,7 @@ using ..Core
 const MFH_Core = Core
 
 using ..Elliptic: is_hard_numeric
+using ..Core: _plane_isotropic
 
 import ..Core: gradient_gradient_concentration, flux_gradient_concentration,
     property_contribution, is_homogeneous_inclusion
@@ -40,6 +41,7 @@ include("kernel.jl")             # the radial problems, for scalars and operator
 include("assembly.jl")           # averages over the cylinder and its layers
 include("elastic.jl")            # moduli, solutions, packing in TI tensors
 include("scheme_integration.jl") # concentration, flux, contribution, bounds
+include("plane.jl")              # the same, in a two-dimensional cell
 include("localfields.jl")        # pointwise fields
 include("averages.jl")           # averages under a given remote loading
 

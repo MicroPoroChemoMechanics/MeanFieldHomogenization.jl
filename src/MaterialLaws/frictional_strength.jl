@@ -126,7 +126,7 @@ _heterogeneity_moduli(::RigidInclusions, k, μ) = (max(k, μ) / _CONTRAST, max(k
 function _comparison_stiffness(fc::FrictionalComposite, k, μ)
     kₕ, μₕ = _heterogeneity_moduli(fc.heterogeneities, k, μ)
     set(rve, φ, k, μ) = Schemes.set_param(
-        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :bulk), 3k), Schemes.PropertyParameter(φ, :C, :shear), 2μ
+        Schemes.set_param(rve, Schemes.PropertyParameter(φ, :C, :k), k), Schemes.PropertyParameter(φ, :C, :μ), μ
     )
     rve = foldl((r, φ) -> set(r, φ, kₕ, μₕ), fc.others; init = set(fc.rve, fc.matrix_phase, k, μ))
     E = promote_type(typeof(k), typeof(μ), fc.numeric)

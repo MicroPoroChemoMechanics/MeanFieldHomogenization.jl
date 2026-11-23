@@ -704,7 +704,7 @@ function itz_scales()
         label(m("underline(e)_z"), cb + Point(16, -R - 50); size = 17, halign = :left)
         label(txt("pole"), cb + Point(-14, -R - 18); size = 13, color = MUTED, halign = :right)
         label(txt("equator"), cb + Point(-R - 18, -12); size = 13, color = MUTED, halign = :right)
-        θ = 0.30π
+        θ = 0.3π
         x = cb + R * updir(θ)
         @layer begin
             setcolor(INK); setline(1.0)
@@ -797,7 +797,7 @@ function itz_regimes()
         rows = (
             ("uniaxial tension", 0.98, 70.0),
             ("uniaxial compression", 0.05, 120.0),
-            ("equibiaxial compression", 0.10, 170.0),
+            ("equibiaxial compression", 0.1, 170.0),
         )
         for (name, ρb, y) in rows
             label(txt(name), Point(x0 - 16, y); size = 15, halign = :right)
@@ -821,7 +821,7 @@ function itz_regimes()
             @layer (setcolor(INK); setline(1.2); line(Point(X(ρ), ya - 5), Point(X(ρ), ya + 5), :stroke))
             label(m(s), Point(X(ρ), ya + 20); size = 14)
         end
-        for ρ in (0.05, 0.10, 0.98)
+        for ρ in (0.05, 0.1, 0.98)
             @layer (setcolor(GUIDE); setline(1.0); setdash([5, 4]); line(Point(X(ρ), 48), Point(X(ρ), ya), :stroke))
         end
         label(m("rho = T^\"ult\" \\/ sigma^\"ult\"_\"ITZ\""), Point(x0 - 16, ya); size = 16, halign = :right)
@@ -836,8 +836,74 @@ function itz_regimes()
     end
 end
 
+# The composite inclusion of the closures on the mean strains: nested
+# ellipsoids Ω_J, the layer V_K outside one of them and a point of that layer,
+# whose polarization acts on the mean strain of Ω_J.
+function coated_inclusion_closures(; path = "applications/coated_inclusion_closures")
+    return sheet(path, 620, 430) do
+        c = Point(290, 240)
+        unbounded_box(c, 480, 330; label_tensor = "bb(C)_0")
+        ell(c, 200, 122; fill = tint(GOLD, 0.6), stroke = INK, lw = 1.2)       # Ω_N: the outer layers
+        ell(c, 158, 96; fill = COATING, stroke = INK, lw = 1.2)                 # the layer V_K
+        ell(c, 112, 68; fill = tint(GREEN, 0.7), stroke = INK, lw = 1.8)        # Ω_J
+        ell(c, 60, 36; fill = tint(BLUE, 0.6), stroke = INK, lw = 1.2)          # the core
+        label(m("bb(C)_1"), c; size = 17)
+        label(m("Omega_J"), c + Point(-70, -30); size = 17)
+        label(m("V_K"), c + Point(-118, 44); size = 17)
+        label(m("Omega_N"), c + Point(-150, -76); size = 17)
+        x′ = c + Point(118, -38)
+        disk(x′, 3.2; fill = RED, stroke = nothing)
+        label(m("underline(x)'"), x′ + Point(16, -10); size = 16, color = RED)
+        arrow_ab(x′, c + Point(52, -8); color = RED, lw = 1.6, head = 8)
+        label(m("bb(P)_0^(upright(\"ext\"))(Omega_J; underline(x)') : bold(tau)(underline(x)')"), c + Point(40, -143); size = 15, color = RED)
+        remote_loading(c + Point(240, -165), "bold(epsilon)^0"; len = 26)
+    end
+end
+
+# ── The needle families of the strength criterion ─────────────────────────────
+
+"""
+    needle_families(; path = "applications/needle_families")
+
+The hydrate needles of the foam of the strength page, by families of polar
+angle θ from the axis of a uniaxial compression; the criterion of Pichler and
+Hellmich differentiates the stiffness of the mortar with respect to the shear
+modulus of the needles of the family θ = 0 alone, the others unchanged.
+"""
+function needle_families(; path = "applications/needle_families")
+    return sheet(path, 720, 330) do
+        c, R = Point(190, 170), 120.0
+        @layer (setcolor(SOLUTION); circle(c, R, :fill); setcolor(MUTED); setline(1.0); circle(c, R, :stroke))
+        rng = StableRNG(7)
+        θs = (0.0, π / 8, π / 4, 3π / 8, π / 2)
+        for _ in 1:70, (k, θ) in enumerate(θs)
+            ρ, φ = (R - 16) * sqrt(rand(rng)), 2π * rand(rng)
+            s = rand(rng, (-1, 1))
+            col = k == 1 ? HIGHLIGHT : tint(HYDRATE.csh, 0.35)
+            ell(c + Point(ρ * cos(φ), ρ * sin(φ)), 11.0, 1.7, π / 2 - s * θ; fill = col, stroke = nothing)
+        end
+        # the compression along e3
+        for y in (c.y - R - 34, c.y + R + 34)
+            d = y < c.y ? 1 : -1
+            arrow_ab(Point(c.x, y), Point(c.x, y + d * 24); color = VECTOR, lw = 2.0)
+        end
+        label(m("f_c"), Point(c.x + 18, c.y - R - 26); size = 15, color = VECTOR)
+        label(m("underline(e)_3"), Point(c.x - 22, c.y - R - 26); size = 14, color = MUTED)
+        # the legend
+        x = 380
+        @layer (ell(Point(x + 10, 92), 11.0, 1.7, π / 2; fill = HIGHLIGHT, stroke = nothing))
+        label(txt("family ") * m("theta = 0") * txt(": its shear modulus"), Point(x + 30, 84); size = 14, halign = :left)
+        label(m("mu_theta") * txt(" is the parameter"), Point(x + 30, 106); size = 14, halign = :left)
+        @layer (ell(Point(x + 10, 152), 11.0, 1.7, π / 4; fill = tint(HYDRATE.csh, 0.35), stroke = nothing))
+        label(txt("other families: ") * m("mu_\"hyd\"") * txt(", fixed"), Point(x + 30, 152); size = 14, halign = :left)
+        label(m("partial bb(C)_(\"MO\") \\/ partial mu_theta"), Point(x + 30, 210); size = 15, halign = :left)
+        label(txt("is not isotropic: the perturbed needles"), Point(x + 30, 236); size = 13, color = MUTED, halign = :left)
+        label(txt("have one orientation"), Point(x + 30, 256); size = 13, color = MUTED, halign = :left)
+    end
+end
+
 application_figures() = (
     veritz(), ver_multi_mix(), lamellar_scales(), interfoliar_layer(), axi_schematic(),
     cement_paste_scales(), solidifying_sphere(), brinkman_problems(),
-    itz_scales(), itz_failure_modes(), itz_regimes(),
+    itz_scales(), itz_failure_modes(), itz_regimes(), coated_inclusion_closures(), needle_families(),
 )

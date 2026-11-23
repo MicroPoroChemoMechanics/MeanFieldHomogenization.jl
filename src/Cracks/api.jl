@@ -146,9 +146,9 @@ equation of a crack with spring-like faces, and no published source is known to 
 package for it.
 """
 function _apply_interface_stiffness(
-        B::TensND.AbstractTens{2, 3},
-        K::TensND.AbstractTens{2, 3}, b::Real
-    )
+        B::TensND.AbstractTens{2, dim},
+        K::TensND.AbstractTens{2, dim}, b::Real
+    ) where {dim}
     # In the basis `B` is written in (the crack's): only `K`, a 3×3, changes
     # basis, and the result stays in that basis. `get_array(K)` was read there
     # as if it were, and the result was relabeled canonical, so an oriented

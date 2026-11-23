@@ -193,7 +193,7 @@ assembled by [`delta_property`](@ref)`(crack, N, ε)`.
 """
 function MFH_Core.property_contribution(
         crack::MFH_Core.AbstractCrack,
-        C₀::TensND.AbstractTens{4, 3};
+        C₀::TensND.AbstractTens{4};
         kw...
     )
     H = inverse_property_contribution(crack, C₀; kw...)
@@ -209,7 +209,7 @@ with ``\\boldsymbol{R}`` the crack resistivity contribution.
 """
 function MFH_Core.property_contribution(
         crack::MFH_Core.AbstractCrack,
-        K₀::TensND.AbstractTens{2, 3};
+        K₀::TensND.AbstractTens{2};
         kw...
     )
     R = inverse_property_contribution(crack, K₀; kw...)

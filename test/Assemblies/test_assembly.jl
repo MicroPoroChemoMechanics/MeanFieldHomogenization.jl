@@ -77,6 +77,16 @@ end
     add_particle!(a3, :p1, (0.0, 0.0, 0.0), Ellipsoid(0.3), Dict(:C => _Ci()))
     add_particle!(a3, :p2, (0.4, 0.0, 0.0), Ellipsoid(0.3), Dict(:C => _Ci()))
     @test_throws ArgumentError validate_assembly(a3)
+    # Disks in a ball: the measure of the domain would be a volume, the
+    # fractions a wrong number. The same disks in a disk are accepted.
+    disks(boundary) = begin
+        a = ParticleAssembly(; boundary)
+        add_matrix!(a, Dict(:C => TensISO{2}(3.0, 0.8)))
+        add_particle!(a, :p, (0.0, 0.0), Ellipsoid(1.0, 1.0), Dict(:C => TensISO{2}(30.0, 12.0)))
+        a
+    end
+    @test_throws "the domain of the MixedBC has dimension 3 and the particles dimension 2" validate_assembly(disks(MixedBC(10.0)))
+    @test validate_assembly(disks(MixedBC(Ellipsoid(10.0; dim = 2)))) isa ParticleAssembly
     # A cell the particles fill entirely
     a4 = ParticleAssembly(; boundary = PeriodicBox(1.0))
     add_matrix!(a4, Dict(:C => _Cm()))

@@ -14,15 +14,8 @@
 # ── Trapezoidal fillers for order-2 (3×3 block) kernels ─────────────────────
 # Defined in trapezoidal.jl entry points; bodies live here for cohesion.
 
-_fill_trapezoidal_order2_tens!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
-    _fill_trapezoidal_blocks!(M, law, times, Val(3), _to_order2_mat)
 _fill_trapezoidal_order2_mat!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(3), identity)
-
-@inline _to_order2_mat(s::AbstractMatrix) = s
-@inline function _to_order2_mat(s::TensND.AbstractTens{2, 3})
-    return TensND.canonical_components(s)   # the ALV matrices are canonical
-end
 
 # ── Iso order-2 parameter extraction (single scalar α per (i,j)) ───────────
 

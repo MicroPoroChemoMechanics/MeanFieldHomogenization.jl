@@ -118,7 +118,8 @@ jacobian(
 
 _flatten_for_jacobian(x::Number) = [x]
 _flatten_for_jacobian(x::AbstractArray) = vec(x)
-_flatten_for_jacobian(x::TensND.AbstractTens) = vec(collect(TensND.get_array(x)))
+# In the canonical basis, whatever the basis the effective tensor is stored in.
+_flatten_for_jacobian(x::TensND.AbstractTens) = vec(collect(TensND.canonical_components(x)))
 
 """
     sensitivity(f, x₀; kind = :auto, kw...)

@@ -198,10 +198,11 @@ this section checks that they do:
 ```@example tutnls
 idxC = C -> canonical_components(C)[1, 1, 1, 1]
 
-d_picard = derivative(rve, SelfConsistent(), property(:I, :C, :bulk); indexer = idxC)
-d_newton = derivative(rve, SelfConsistent(; algorithm = NewtonDefault()), property(:I, :C, :bulk); indexer = idxC)
-d_nr     = derivative(rve, SelfConsistent(; algorithm = NewtonRaphson()), property(:I, :C, :bulk); indexer = idxC)
-d_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), property(:I, :C, :bulk); indexer = idxC)
+# α = 3k of the inclusion, the coefficient the finite difference below varies
+d_picard = derivative(rve, SelfConsistent(), property(:I, :C, :α); indexer = idxC)
+d_newton = derivative(rve, SelfConsistent(; algorithm = NewtonDefault()), property(:I, :C, :α); indexer = idxC)
+d_nr     = derivative(rve, SelfConsistent(; algorithm = NewtonRaphson()), property(:I, :C, :α); indexer = idxC)
+d_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), property(:I, :C, :α); indexer = idxC)
 
 (d_picard, d_newton, d_nr, d_tr)
 ```
@@ -229,8 +230,8 @@ dispatch can miss:
 ```@example tutnls
 d_f_picard = derivative(rve, SelfConsistent(), amount(:I); indexer = idxC)
 d_f_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), amount(:I); indexer = idxC)
-d_m_picard = derivative(rve, SelfConsistent(), property(:M, :C, :shear); indexer = idxC)
-d_m_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), property(:M, :C, :shear); indexer = idxC)
+d_m_picard = derivative(rve, SelfConsistent(), property(:M, :C, :μ); indexer = idxC)
+d_m_tr     = derivative(rve, SelfConsistent(; algorithm = TrustRegion()), property(:M, :C, :μ); indexer = idxC)
 
 (; d_f_picard, d_f_tr, d_m_picard, d_m_tr)
 ```

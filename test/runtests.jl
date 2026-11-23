@@ -116,7 +116,7 @@ const TEST_PARTS = Dict(
     # runner took past the timeout on the prerelease of Julia.
     "polycrystals" => ("Polycrystals",),
     "patterns" => (
-        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "Superspheres",
+        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "LayeredEllipsoids", "Superspheres",
         "FiniteElementInclusions", "GaussianApproximation",
     ),
     "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
@@ -251,6 +251,7 @@ end
         include("Schemes/test_dual_compat.jl")
         include("Schemes/test_parameters.jl")
         include("Schemes/test_sensitivities.jl")
+        include("Schemes/test_coefficient_lenses.jl")
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
         include("Schemes/test_concentration_bundles.jl")
@@ -269,6 +270,14 @@ end
         # Brinkman inclusions are clients of that contract: the Stokes-to-Darcy
         # permeability against the closed-form estimates of Bignonnet (2022).
         include("CustomInclusions/test_brinkman.jl")
+        # Toroidal inclusions enter through the same contract.
+        include("CustomInclusions/test_toroidal_inclusions.jl")
+        # Cylindrical cavities of conformal cross-section, likewise.
+        include("CustomInclusions/test_conformal_holes.jl")
+        HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_conformal_holes_symbolic.jl")
+        # Two-dimensional problems through the three-dimensional schemes: their
+        # phases are the cylinders and the holes above.
+        include("Schemes/test_plane_problems.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_brinkman_symbolic.jl")
     end
 
@@ -359,6 +368,8 @@ end
         include("LayeredSpheres/test_interface_jumps.jl")
         include("LayeredSpheres/test_incompressible.jl")
         include("LayeredSpheres/test_conductivity.jl")
+        include("LayeredSpheres/test_graded_layers.jl")
+        include("LayeredSpheres/test_neutral.jl")
         include("LayeredSpheres/test_harmonic_response.jl")
         include("LayeredSpheres/test_harmonic_response_elastic.jl")
         include("LayeredSpheres/test_christensen.jl")
@@ -392,6 +403,11 @@ end
         include("Laminates/test_laminate_nesting.jl")
         include("Laminates/test_laminate_dual_compat.jl")
         include("Laminates/test_laminate_symbolic.jl")
+    end
+
+    rungroup("LayeredEllipsoids") && @testset "LayeredEllipsoids" begin
+        include("LayeredEllipsoids/test_layered_ellipsoid.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredEllipsoids/test_layered_ellipsoid_symbolic.jl")
     end
 
     rungroup("LayeredSpheroids") && @testset "LayeredSpheroids" begin
@@ -510,6 +526,8 @@ end
         include("Viscoelasticity/test_alv_echoes_cells.jl")
         include("Viscoelasticity/test_alv_symmetry_paths.jl")
         include("Viscoelasticity/test_glassy_limit_alv.jl")
+        include("Viscoelasticity/test_plane_alv.jl")
+        include("Viscoelasticity/test_plane_stress_alv.jl")
     end
 
     rungroup("Regression") && @testset "Regression" begin

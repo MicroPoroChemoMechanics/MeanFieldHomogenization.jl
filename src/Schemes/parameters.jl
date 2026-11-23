@@ -40,27 +40,34 @@ struct AmountParameter <: AbstractParameter
 end
 
 """
-    PropertyParameter(phase, property, selector)
+    PropertyParameter(phase, property, selector, symmetry = nothing)
 
-Lens on a scalar coefficient of a property tensor :
+Lens on one coefficient of a property tensor (`property` of the phase `phase`,
+`:C`, `:K`, …), in a symmetry class that contains the tensor:
 
-- `phase::Symbol` — phase name (`:M` for the matrix by default, or any
-  inclusion phase).
-- `property::Symbol` — property key in the phase (`:C`, `:K`, …).
-- `selector::Union{Symbol,Int}` — coefficient selector :
-  - `Symbol` for canonical names (`:bulk` / `:shear` for `TensISO{4,3}` ;
-    `:scalar` for `TensISO{2}` ; `:ℓ₁`..`:ℓ₆` for `TensTI{4}` ;
-    `:transverse` / `:axial` for `TensTI{2}`),
-  - `Int` for the positional index into `get_data(tensor)` (universal
-    fallback).
+  - `symmetry = nothing`: the tensor's own class, `selector` one of its named
+    coefficients (`:k`, `:μ`, `:α`, `:β` of an isotropic stiffness, `:ℓ₁` … `:ℓ₆`
+    of a transversely isotropic one, `:C1111` … of an orthotropic one, …), an
+    index of `get_data`, or a Kelvin-Mandel component `:Mij` (`:Mi` at order 2)
+    in the canonical basis;
+  - `symmetry = (:TI, n)`, `(:ORTHO, frame)`, `(:CUBIC, frame)`: a class that
+    contains the tensor, the tensor being written in it first;
+  - `symmetry = :ANISO` or `(:ANISO, basis)`: the Kelvin-Mandel components in
+    `basis` (the canonical one by default), `selector = :Mij`.
 
-Prefer the helper [`property`](@ref).
+The other coefficients of the class stay fixed when this one is set, so that a
+derivative is the partial derivative in that class. Prefer the helper
+[`property`](@ref); the names of every class are in the manual page
+[Sensitivities](@ref man-sensitivities-lenses).
 """
-struct PropertyParameter <: AbstractParameter
+struct PropertyParameter{S} <: AbstractParameter
     phase::Symbol
     property::Symbol
     selector::Union{Symbol, Int}
+    symmetry::S
 end
+
+PropertyParameter(phase::Symbol, prop::Symbol, sel::Union{Symbol, Int}) = PropertyParameter(phase, prop, sel, nothing)
 
 """
     GeometryParameter(phase, field, index = nothing)
@@ -104,12 +111,16 @@ Helper. Equivalent to `AmountParameter(phase)`.
 amount(phase::Symbol) = AmountParameter(phase)
 
 """
-    property(phase::Symbol, property::Symbol, selector) -> PropertyParameter
+    property(phase::Symbol, property::Symbol, selector; symmetry = nothing) -> PropertyParameter
 
-Helper. Equivalent to `PropertyParameter(phase, property, selector)`.
+Helper. Equivalent to `PropertyParameter(phase, property, selector, symmetry)`:
+`property(:I, :C, :k)` is the bulk modulus of an isotropic phase,
+`property(:I, :C, :ℓ₁; symmetry = (:TI, n))` its first Walpole coefficient as a
+transversely isotropic tensor of axis `n`, `property(:I, :C, :M12)` its
+Kelvin-Mandel component (1, 2).
 """
-property(phase::Symbol, prop::Symbol, sel::Union{Symbol, Int}) =
-    PropertyParameter(phase, prop, sel)
+property(phase::Symbol, prop::Symbol, sel::Union{Symbol, Int}; symmetry = nothing) =
+    PropertyParameter(phase, prop, sel, symmetry)
 
 """
     geometry(phase::Symbol, field::Symbol, index=nothing) -> GeometryParameter
@@ -128,79 +139,222 @@ shape_param(field::Symbol, index::Union{Int, Nothing} = nothing) =
     DistributionShapeParameter(field, index)
 
 # =============================================================================
-#  Named selectors → `get_data` indices
-# =============================================================================
-
-# TensISO{2, dim, T, 1} — single scalar `λ`
-_resolve_selector(::TensND.TensISO{2}, sel::Symbol) =
-    sel === :scalar || sel === :λ ? 1 :
-    throw(ArgumentError("TensISO{2} only accepts selector :scalar (or :λ); got :$(sel)"))
-
-# TensISO{4, dim, T, 2} — data `(α, β) = (3K, 2μ)` or `(λ, μ)` per convention
-_resolve_selector(::TensND.TensISO{4}, sel::Symbol) =
-    sel === :bulk      || sel === :α || sel === :K ? 1 :
-    sel === :shear     || sel === :β || sel === :μ ? 2 :
-    throw(ArgumentError("TensISO{4} accepts :bulk/:α/:K (1) or :shear/:β/:μ (2); got :$(sel)"))
-
-# TensTI{2, T, 2} — `(a, b)` = (transverse, axial)
-_resolve_selector(::TensND.TensTI{2}, sel::Symbol) =
-    sel === :transverse || sel === :a ? 1 :
-    sel === :axial      || sel === :b ? 2 :
-    throw(ArgumentError("TensTI{2} accepts :transverse/:a (1) or :axial/:b (2); got :$(sel)"))
-
-# TensTI{4, T, 5} — major-symmetric : (ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆) with ℓ₄ = ℓ₃
-_resolve_selector(::TensND.TensTI{4, T, 5}, sel::Symbol) where {T} = begin
-    sel === :ℓ₁ || sel === :l1 ? 1 :
-        sel === :ℓ₂ || sel === :l2 ? 2 :
-        sel === :ℓ₃ || sel === :l3 || sel === :ℓ₄ || sel === :l4 ? 3 :
-        sel === :ℓ₅ || sel === :l5 ? 4 :
-        sel === :ℓ₆ || sel === :l6 ? 5 :
-        throw(ArgumentError("TensTI{4} (major-sym) accepts :ℓ₁..:ℓ₆ (with ℓ₃=ℓ₄); got :$(sel)"))
-end
-
-# TensTI{4, T, 6} — general : (ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)
-_resolve_selector(::TensND.TensTI{4, T, 6}, sel::Symbol) where {T} = begin
-    sel === :ℓ₁ || sel === :l1 ? 1 :
-        sel === :ℓ₂ || sel === :l2 ? 2 :
-        sel === :ℓ₃ || sel === :l3 ? 3 :
-        sel === :ℓ₄ || sel === :l4 ? 4 :
-        sel === :ℓ₅ || sel === :l5 ? 5 :
-        sel === :ℓ₆ || sel === :l6 ? 6 :
-        throw(ArgumentError("TensTI{4} general accepts :ℓ₁..:ℓ₆ ; got :$(sel)"))
-end
-
-_resolve_selector(_, sel::Int) = sel
-
-_resolve_selector(t::TensND.AbstractTens, sel::Symbol) = throw(
-    ArgumentError(
-        "no named selector :$(sel) defined for tensor of type $(typeof(t)); use an Int positional index"
-    )
-)
-
-# =============================================================================
-#  Tensor reconstruction with one coefficient replaced
+#  The coefficient a `PropertyParameter` designates
 # =============================================================================
 #
-#  For each supported tensor type, `_replace_data_at(t, i, v)` returns a
-#  new tensor of the *same structural type*, with the i-th scalar of
-#  `get_data` replaced by `v`, and the element type promoted via
-#  `promote_type(eltype(t), typeof(v))`.
+#  A coefficient belongs to a symmetry class that contains the tensor: its own
+#  class by default, or an enclosing one named by `symmetry`, transversely
+#  isotropic about an axis, orthotropic or cubic in a frame, or anisotropic,
+#  read in the Kelvin-Mandel components of a basis. The tensor is first written
+#  in that class, exactly, since the class contains it; the coefficient is then
+#  read, or replaced by a number while the other coefficients of the class stay
+#  fixed. A dual number put there gives, by ForwardDiff, the derivative with
+#  respect to that coefficient, whatever the class the tensor was given in.
 
-"""
-    _replace_data_at(t, i, v) -> typeof_promoted(t)
+# ── The named coefficients of each class ─────────────────────────────────────
+# `(i, f)`: the coefficient is `get_data(t)[i] / f`. Isotropic stiffness of
+# dimension d, `α 𝕁 + β 𝕂`: α = d k (k the bulk modulus of the space, λ + μ in
+# the plane), β = 2μ.
 
-Return a new tensor of the same structural type as `t`, with the scalar
-at index `i` (in `get_data`) replaced by `v`: TensND's `rebuild`, which promotes
-the coefficients (and a TI axis with them) to absorb `typeof(v)`.
-"""
-_replace_data_at(t, i, v) = throw(
+_coefficient(::TensND.TensISO{4, dim}, sel::Symbol) where {dim} =
+    sel === :k || sel === :bulk ? (1, dim) :
+    sel === :μ || sel === :shear ? (2, 2) :
+    sel === :α ? (1, 1) :
+    sel === :β ? (2, 1) :
+    _unknown_coefficient(sel, "an isotropic tensor of order 4", ":k (≡ :bulk), :μ (≡ :shear), :α, :β")
+
+_coefficient(::TensND.TensISO{2}, sel::Symbol) =
+    sel === :scalar ? (1, 1) : _unknown_coefficient(sel, "an isotropic tensor of order 2", ":scalar")
+
+_coefficient(::TensND.TensTI{2}, sel::Symbol) =
+    sel === :transverse ? (1, 1) :
+    sel === :axial ? (2, 1) :
+    _unknown_coefficient(sel, "a transversely isotropic tensor of order 2", ":transverse, :axial")
+
+const _WALPOLE = (:ℓ₁, :ℓ₂, :ℓ₃, :ℓ₄, :ℓ₅, :ℓ₆)
+const _WALPOLE_ASCII = (:l1, :l2, :l3, :l4, :l5, :l6)
+_walpole_rank(sel::Symbol) = something(findfirst(==(sel), _WALPOLE), findfirst(==(sel), _WALPOLE_ASCII), 0)
+
+# With major symmetry ℓ₃ = ℓ₄ is one coefficient, stored third.
+function _coefficient(::TensND.TensTI{4, T, 5}, sel::Symbol) where {T}
+    r = _walpole_rank(sel)
+    r == 0 && _unknown_coefficient(sel, "a transversely isotropic tensor of order 4 with major symmetry", ":ℓ₁ … :ℓ₆ (ℓ₃ = ℓ₄)")
+    return (r ≤ 4 ? min(r, 3) : r - 1, 1)
+end
+function _coefficient(::TensND.TensTI{4, T, 6}, sel::Symbol) where {T}
+    r = _walpole_rank(sel)
+    r == 0 && _unknown_coefficient(sel, "a transversely isotropic tensor of order 4", ":ℓ₁ … :ℓ₆")
+    return (r, 1)
+end
+
+const _ORTHO9 = (:C1111, :C2222, :C3333, :C1122, :C1133, :C2233, :C2323, :C1313, :C1212)
+const _ORTHO12 = (_ORTHO9..., :C2211, :C3311, :C3322)
+_coefficient(::TensND.TensOrtho{4, T, 9}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO9, "an orthotropic tensor of order 4")
+_coefficient(::TensND.TensOrtho{4, T, 12}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO12, "an orthotropic tensor of order 4 without major symmetry")
+_coefficient(::TensND.TensOrtho{2}, sel::Symbol) = _named_rank(sel, (:a1, :a2, :a3), "an orthotropic tensor of order 2")
+_coefficient(::TensND.TensCubic, sel::Symbol) = _named_rank(sel, (:α, :β, :γ), "a cubic tensor")
+
+_coefficient(::Any, i::Int) = (i, 1)
+_coefficient(t, sel::Symbol) = _unknown_coefficient(sel, "a tensor of type $(nameof(typeof(t)))", "a Kelvin-Mandel component :Mij, or an index of `get_data`")
+
+function _named_rank(sel::Symbol, names, what)
+    r = findfirst(==(sel), names)
+    r === nothing && _unknown_coefficient(sel, what, join(string.(":", names), ", "))
+    return (r, 1)
+end
+
+_unknown_coefficient(sel, what, names) = throw(
     ArgumentError(
-        "_replace_data_at not implemented for tensor of type $(typeof(t)): a parameter " *
-            "is a coefficient of a TensISO, TensTI, TensOrtho or TensCubic"
+        ":$sel is not a coefficient of $what, whose coefficients are $names. A coefficient " *
+            "of an enclosing class is named with `symmetry`: `property(phase, prop, :ℓ₁; " *
+            "symmetry = (:TI, n))`, `(:ORTHO, frame)`, `(:CUBIC, frame)`, or a Kelvin-Mandel " *
+            "component, `property(phase, prop, :M12)`."
     )
 )
-_replace_data_at(t::Union{TensND.TensISO, TensND.TensTI, TensND.TensOrtho, TensND.TensCubic}, i::Int, v) =
-    TensND.rebuild(t, Base.setindex(TensND.get_data(t), v, i))
+
+# ── Kelvin-Mandel components ─────────────────────────────────────────────────
+# `:Mij` is the component (i, j) of the Kelvin-Mandel matrix of a tensor of
+# order 4, `:Mi` the component i of the Kelvin-Mandel vector of a tensor of
+# order 2, in a basis (the canonical one by default). The matrix stays
+# symmetric: `:Mij` with i ≠ j sets (i, j) and (j, i) together.
+
+struct _MandelView{A <: AbstractArray, B <: TensND.AbstractBasis}
+    components::A
+    basis::B
+end
+
+function _mandel_index(sel::Symbol)
+    m = match(r"^M(\d)(\d)?$", String(sel))
+    m === nothing && return nothing
+    i = parse(Int, m.captures[1])
+    return m.captures[2] === nothing ? (i,) : (i, parse(Int, m.captures[2]))
+end
+
+function _mandel_index(V::_MandelView, sel::Symbol)
+    idx = _mandel_index(sel)
+    (idx !== nothing && length(idx) == ndims(V.components) && all(i -> 1 ≤ i ≤ size(V.components, 1), idx)) ||
+        _not_a_component(V, sel)
+    return idx
+end
+_mandel_index(V::_MandelView, sel::Int) = _not_a_component(V, sel)
+_not_a_component(V, sel) = throw(
+    ArgumentError(
+        "$(repr(sel)) is not a Kelvin-Mandel component of this tensor: name " *
+            (ndims(V.components) == 2 ? "`:Mij`, 1 ≤ i, j ≤ $(size(V.components, 1))" : "`:Mi`, 1 ≤ i ≤ $(size(V.components, 1))")
+    )
+)
+
+_canonical_basis(t::TensND.AbstractTens{order, dim}) where {order, dim} = TensND.CanonicalBasis{dim, eltype(t)}()
+_mandel_view(t, b = _canonical_basis(t)) = _MandelView(TensND.mandel(t, b), b)
+
+# ── The tensor written in the class of the coefficient ──────────────────────
+
+# With no class named, a name `:Mij` is a Kelvin-Mandel component (a run-time
+# value of the symbol), any other name or index a coefficient of the own class.
+_class_view(t, sel::Symbol, ::Nothing) = _mandel_index(sel) === nothing ? t : _mandel_view(t)
+_class_view(t, ::Int, ::Nothing) = t
+_class_view(t, sel, symmetry::Symbol) = _class_view(t, sel, (symmetry,))
+_class_view(t, sel, symmetry::Tuple) = _enclosing(t, Val(first(symmetry)), Base.tail(symmetry)...)
+
+_enclosing(t, ::Val{:ANISO}, b...) = _mandel_view(t, b...)
+_enclosing(t, class::Val, args...) = _in_space_class(t, class, args...)
+_in_space_class(t::TensND.AbstractTens{order, 3}, class::Val, args...) where {order} = _exact_projection(t, class, args...)
+_in_space_class(::TensND.AbstractTens{order, 2}, ::Val{S}, args...) where {order, S} = throw(
+    ArgumentError(
+        "symmetry = :$S: in the plane a coefficient is one of the tensor's own class or a " *
+            "Kelvin-Mandel component (`symmetry = :ANISO`, or a name `:Mij`)"
+    )
+)
+
+# The projection onto a class that contains the tensor returns the tensor. Not
+# containing it is refused: the derivative would be taken at another tensor.
+_exact_projection(t, class::Val, args...) = _project_contained(Val(is_hard_numeric(eltype(t))), t, class, args...)
+function _project_contained(::Val{true}, t, class::Val{S}, args...) where {S}
+    B, _, drel = TensND.project(t, class, args...)
+    drel ≤ 1.0e-10 || _not_contained(S, t, " (relative distance $drel)")
+    return B
+end
+# A symbolic distance cannot be compared: the isotropic tensor, which every class
+# contains, is the one case decided without it.
+_project_contained(::Val{false}, t::TensND.TensISO, class::Val, args...) = first(TensND.project(t, class, args...))
+_project_contained(::Val{false}, t, ::Val{S}, args...) where {S} =
+    _not_contained(S, t, ", which a symbolic tensor cannot show unless it is isotropic")
+_not_contained(S, t, why) = throw(
+    ArgumentError(
+        "symmetry = :$S does not contain this $(nameof(typeof(t)))$why: name a class that " *
+            "contains the tensor, or a Kelvin-Mandel component"
+    )
+)
+
+# ── Reading and replacing the coefficient ────────────────────────────────────
+
+function _read_coefficient(B, sel)
+    i, f = _coefficient(B, sel)
+    return TensND.get_data(B)[i] / f
+end
+_read_coefficient(V::_MandelView, sel) = V.components[_mandel_index(V, sel)...]
+
+function _write_coefficient(B, sel, v)
+    i, f = _coefficient(B, sel)
+    return TensND.rebuild(B, Base.setindex(TensND.get_data(B), f * v, i))
+end
+function _write_coefficient(V::_MandelView, sel, v)
+    idx = _mandel_index(V, sel)
+    A = Array{promote_type(eltype(V.components), typeof(v))}(V.components)
+    A[idx...] = v
+    A[reverse(idx)...] = v
+    return TensND.from_mandel(A, V.basis)
+end
+
+"""
+    get_coefficient(t, selector; symmetry = nothing)
+
+The coefficient `selector` of the tensor `t`, in the symmetry class `symmetry`
+that contains it (its own class by default): `get_coefficient(C, :k)` is the
+bulk modulus of an isotropic stiffness, `get_coefficient(C, :ℓ₁; symmetry =
+(:TI, n))` its first Walpole coefficient about `n`, `get_coefficient(C, :M12)`
+its Kelvin-Mandel component (1, 2). The selectors and the classes are those of
+[`property`](@ref), listed in the manual page
+[Sensitivities](@ref man-sensitivities-lenses).
+
+# Examples
+```jldoctest
+julia> using MeanFieldHomogenization
+
+julia> C = iso_stiffness(10.0, 4.0);
+
+julia> get_coefficient(C, :k), get_coefficient(C, :α), get_coefficient(C, :μ)
+(10.0, 30.0, 4.0)
+
+julia> get_coefficient(C, :M44) ≈ 2 * 4.0      # the Kelvin-Mandel component of the shear
+true
+```
+"""
+get_coefficient(t, sel; symmetry = nothing) = _read_coefficient(_class_view(t, sel, symmetry), sel)
+
+"""
+    set_coefficient(t, selector, v; symmetry = nothing)
+
+The tensor of the class `symmetry` (the class of `t` by default) whose
+coefficient `selector` is `v`, its other coefficients being those of `t`. With a
+dual number `v`, a derivative with respect to that coefficient; the class must
+contain `t`.
+
+# Examples
+```jldoctest
+julia> using MeanFieldHomogenization, TensND
+
+julia> C = set_coefficient(iso_stiffness(10.0, 4.0), :μ, 5.0);
+
+julia> get_coefficient(C, :k), get_coefficient(C, :μ)
+(10.0, 5.0)
+```
+"""
+set_coefficient(t, sel, v; symmetry = nothing) = _write_coefficient(_class_view(t, sel, symmetry), sel, v)
+
+# The coefficient a property parameter designates, in its tensor.
+property_coefficient(t, p) = get_coefficient(t, p.selector; symmetry = p.symmetry)
+with_property_coefficient(t, p, v) = set_coefficient(t, p.selector, v; symmetry = p.symmetry)
 
 # =============================================================================
 #  Inclusion-geometry reconstruction with one field replaced
@@ -473,9 +627,7 @@ end
 # ── PropertyParameter ────────────────────────────────────────────────────────
 
 function get_param(rve::RVE, p::PropertyParameter)
-    t = phase_property(rve, p.phase, p.property)
-    i = _resolve_selector(t, p.selector)
-    return TensND.get_data(t)[i]
+    return property_coefficient(phase_property(rve, p.phase, p.property), p)
 end
 
 function set_param(rve::RVE, p::PropertyParameter, value)
@@ -484,9 +636,7 @@ function set_param(rve::RVE, p::PropertyParameter, value)
     phase = rve.phases[p.phase]
     haskey(phase.properties, p.property) ||
         throw(ArgumentError("phase :$(p.phase) does not carry property :$(p.property)"))
-    old_t = phase.properties[p.property]
-    i = _resolve_selector(old_t, p.selector)
-    new_t = _replace_data_at(old_t, i, value)
+    new_t = with_property_coefficient(phase.properties[p.property], p, value)
 
     # Build new properties dict (keeping all other entries pointing to the same
     # objects). It must be typed `Any`, exactly like `Phase.properties`: a

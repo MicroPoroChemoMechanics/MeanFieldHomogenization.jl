@@ -142,6 +142,9 @@ anything is allocated, when it would exceed `memory_limit`. Three limits:
 | many evaluations, differentiable in the shape | [Neural-surrogate inclusions](@ref man-neural-inclusions) |
 | a flat crack of any contour | [Planar cracks of any contour](@ref man-planar-cracks) |
 
+[Choosing an inclusion](@ref man-choosing-inclusion) sets these beside the
+closed forms and the layered patterns, with what each route allows.
+
 ## Where to go next
 
 - [Heterogeneities of any shape](@ref th-gaussian-volume): the equations.

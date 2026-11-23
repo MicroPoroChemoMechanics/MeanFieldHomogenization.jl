@@ -206,7 +206,10 @@ The radial problems of `cyl` against the aging reference `ref` on the instants
 (order 2), whose entries are the matrices mapping the history of the remote
 loading to the history of each state.
 """
-function _cylinder_alv_solution(o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real})
+_cylinder_alv_solution(o::Val, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real}) =
+    _cylinder_alv_solution(o, _reference_space(ref, times), cyl, ref, times)
+# In space; the rings of a cell of the plane are in layered_cylinder_alv_plane.jl.
+function _cylinder_alv_solution(o::Val, ::Val{3}, cyl::LayeredCylinder, ref::_ALVReference, times::AbstractVector{<:Real})
     R₀, Rs = _cylinder_alv_blocks(o, cyl, ref, times)
     # The type of a discretized law is known only once it is evaluated: the
     # solution is computed behind a function barrier, on the block matrices.

@@ -5,8 +5,8 @@
 #  Maintenance script, run **by hand**. Unlike `train_models.jl`, whose teacher
 #  is an analytic Hill tensor, this one solves a finite-element cell for every
 #  sample. That is affordable only because the cell is an octant: one eighth of
-#  the domain, about a second per sample at level 3 where the full cell took the
-#  better part of a minute.
+#  the domain, a few seconds per convex sample at level 4 and half a minute at
+#  the concave end, where the full cell would not fit in memory.
 #
 #      julia scripts/nn/train_supershape.jl                 # both
 #      julia scripts/nn/train_supershape.jl conduction      # one only
@@ -63,10 +63,15 @@ want(name) = SECTIONS === nothing || name in SECTIONS
 # with it. The octant keeps every one of them small enough that the guard never
 # has to fire — which is the right way round.
 
-const LEVEL = 3
+# Level 4 and a cell of radius `4a`: at level 3 a concave pore is not converged
+# (`E₀H₁₁₁₁` of `p = 0.4` moves by 7 % from level 3 to 4), and at `R = 3a` the
+# elastic answer of the sphere is 0.4 % off, against 0.08 % at `4a`. A radius of
+# `6a` would do better still and does not fit: 88 000 unknowns and 7 GiB at
+# `p = 0.35`, against 70 000 and 5 GiB here.
+const LEVEL = 4
 const CELL = FECellMeshOptions(;
-    level = LEVEL, outer_level = 3, radius_ratio = 3.0, relax = 20,
-    octant = true, max_dofs = 120_000, min_free_gb = 4.0,
+    level = LEVEL, outer_level = 3, radius_ratio = 4.0, relax = 20,
+    octant = true, max_dofs = 120_000, min_free_gb = 2.5,
 )
 
 # The lower bound is where the *teacher* stops being trustworthy, not where the
@@ -116,8 +121,24 @@ const AXI_P_LO, AXI_P_HI = 0.25, 1.5
 const AXI_LP_LO, AXI_LP_HI = log(AXI_P_LO), log(AXI_P_HI)
 const AXI_LC_LO, AXI_LC_HI = log(C_LO), log(C_HI)
 
-elastic_response(g, C₀) = gradient_gradient_concentration(g, C₀, C₀)
-transport_response(g, K₀) = gradient_gradient_concentration(g, K₀, K₀)
+# Each solve is written to the cache directory as soon as it is done, and the
+# memory of its factorization is released before the next one: a run of
+# several hundred cells that is interrupted resumes where it stopped, and the
+# sparse factors, which the collector does not count, do not accumulate.
+const SAMPLE_DIR = joinpath(CACHE_DIR, "samples")
+function kept(solve, g, P₀)
+    key = bytes2hex(SHA.sha1(string(typeof(g), "|", g.shape, "|", g.mesh, "|", TensND.get_data(P₀))))[1:20]
+    file = joinpath(SAMPLE_DIR, key * ".jls")
+    isfile(file) && !FORCE && return Serialization.deserialize(file)
+    A = solve()
+    mkpath(SAMPLE_DIR)
+    Serialization.serialize(file, A)
+    GC.gc()
+    return A
+end
+
+elastic_response(g, C₀) = kept(() -> gradient_gradient_concentration(g, C₀, C₀), g, C₀)
+transport_response(g, K₀) = kept(() -> gradient_gradient_concentration(g, K₀, K₀), g, K₀)
 
 function train_and_save(
         name, spec, box, geometry, response, teacher, n, nval, opts;

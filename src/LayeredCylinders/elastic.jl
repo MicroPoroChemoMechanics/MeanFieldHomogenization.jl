@@ -6,24 +6,24 @@
 
 _not_coaxial(P, axis) = throw(
     ArgumentError(
-        "a LayeredCylinder of axis $axis takes isotropic properties or transversely " *
+        "an inclusion invariant along the axis $axis takes isotropic properties or transversely " *
             "isotropic ones about that axis; got a $(nameof(typeof(P))) of axis $(TensND.axis(P))"
     )
 )
 
 _not_ti(P, drel) = throw(
     ArgumentError(
-        "a LayeredCylinder takes properties that are isotropic or transversely isotropic " *
-            "about its axis; the $(nameof(typeof(P))) it received is at a relative distance " *
-            "$drel from that symmetry"
+        "an inclusion invariant along an axis takes properties that are isotropic or " *
+            "transversely isotropic about that axis; the $(nameof(typeof(P))) it received is " *
+            "at a relative distance $drel from that symmetry"
     )
 )
 
 _symbolic_general(P) = throw(
     ArgumentError(
-        "a LayeredCylinder takes a symbolic property as a TensISO or as a TensTI about its " *
-            "axis; a $(nameof(typeof(P))) would have to be compared with its transversely " *
-            "isotropic part, which symbols do not allow"
+        "an inclusion invariant along an axis takes a symbolic property as a TensISO or as " *
+            "a TensTI about that axis; a $(nameof(typeof(P))) would have to be compared with " *
+            "its transversely isotropic part, which symbols do not allow"
     )
 )
 
@@ -134,10 +134,11 @@ _check_conductivity(K, where_; positive::Bool = false) =
     _check_conductivity(Val(is_hard_numeric(_entries_eltype(K))), K, where_, positive)
 _check_conductivity(::Val{false}, K, where_, positive) = nothing
 function _check_conductivity(::Val{true}, K, where_, positive)
-    all(isfinite, values(K)) && (positive ? K.t > 0 && K.a > 0 : K.t ≥ 0 && K.a ≥ 0) || throw(
+    # every conductivity given: the transverse and the axial ones, or that of the plane
+    all(isfinite, values(K)) && all(positive ? >(0) : ≥(0), values(K)) || throw(
         ArgumentError(
-            "$where_ of the LayeredCylinder has conductivities (transverse, axial) = " *
-                "$(values(K)): they must be finite and $(positive ? "positive" : "nonnegative")"
+            "$where_ of the LayeredCylinder has the conductivities $(values(K)): " *
+                "they must be finite and $(positive ? "positive" : "nonnegative")"
         )
     )
     return nothing

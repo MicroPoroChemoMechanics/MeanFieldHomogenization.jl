@@ -131,15 +131,18 @@ Volterra operators stored by the blocks of their symmetry class
 their own `*`, `inv` and `+`, each operation in the cheapest class that holds its
 operands (an isotropic operator joins the class of the other).
 """
-struct _OpALV{O, G <: TimeGrid} <: _ALVAlgebra
+struct _OpALV{O, D, G <: TimeGrid} <: _ALVAlgebra
     grid::G
 end
-_OpALV{O}(grid::G) where {O, G <: TimeGrid} = _OpALV{O, G}(grid)
+_OpALV{O, D}(grid::G) where {O, D, G <: TimeGrid} = _OpALV{O, D, G}(grid)
+# The algebra of space, as `DenseClass{O}()` is the dense class of space.
+_OpALV{O}(grid::TimeGrid) where {O} = _OpALV{O, 3}(grid)
 _alg_ntimes(a::_OpALV, C) = length(a.grid)
 _alg_eltype(::_OpALV, C) = eltype(C)
-# The identity of the order: 𝕀 = 𝕁 + 𝕂 at order 4, 𝟏 at order 2.
-_alg_one(a::_OpALV{4}, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T), one(T)), a.grid)
-_alg_one(a::_OpALV{2}, n, ::Type{T}) where {T} = VolterraOperator(TensISO{3}(one(T)), a.grid)
+# The identity of the order and of the dimension `D` of the space: 𝕀 = 𝕁 + 𝕂 at
+# order 4, 𝟏 at order 2.
+_alg_one(a::_OpALV{4, D}, n, ::Type{T}) where {D, T} = VolterraOperator(TensISO{D}(one(T), one(T)), a.grid)
+_alg_one(a::_OpALV{2, D}, n, ::Type{T}) where {D, T} = VolterraOperator(TensISO{D}(one(T)), a.grid)
 _alg_prod(::_OpALV, X, Y) = X * Y
 _alg_inv(::_OpALV, X) = inv(X)
 _alg_add(::_OpALV, X, Y) = X + Y
@@ -165,24 +168,28 @@ function _in_class_algebra(f::F, singles::Tuple, lists::Tuple) where {F}
     grid = _operator_grid(ops)
     candidates = _algebra_candidates(ops)
     as_op(M) = _as_class_operator(M, grid, candidates)
-    return f(_OpALV{_operands_order(ops, grid)}(grid), map(as_op, singles)..., map(l -> [as_op(M) for M in l], lists)...)
+    return f(_OpALV{_operands_kind(ops)...}(grid), map(as_op, singles)..., map(l -> [as_op(M) for M in l], lists)...)
 end
 
 """
     _in_cheapest_algebra(f, singles::Tuple, lists::Tuple) -> Matrix
 
 [`_in_class_algebra`](@ref), the result written out as a dense block matrix, for
-the callers that compute on dense matrices.
+the callers that compute on dense matrices; an operator of the plane, whose full
+matrix has the size of one of space at another order, is kept as it is.
 """
-_in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F} = Matrix(_in_class_algebra(f, singles, lists))
+_in_cheapest_algebra(f::F, singles::Tuple, lists::Tuple) where {F} = _as_dense(_in_class_algebra(f, singles, lists))
+_as_dense(R::VolterraOperator) = Matrix(R)
+_as_dense(R::VolterraOperator{<:_PlaneClass}) = R
 
-# The order of the operands: that of an operator among them, or, for plain matrices
-# alone (order 4: the dense callers), 4.
-function _operands_order(ops, grid)
+# The order and the dimension of the space of the operands: those of an operator
+# among them, or, for plain matrices alone (the dense callers, in space), order 4
+# in dimension 3.
+function _operands_kind(ops)
     for M in ops
-        M isa VolterraOperator && return _order(M.class)
+        M isa VolterraOperator && return (_order(M.class), _space_dim(M.class))
     end
-    return 4
+    return (4, 3)
 end
 
 # The grid of the operators, or, for plain matrices alone, a grid of as many
@@ -201,10 +208,15 @@ const _ORTHO4_CANON = TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), TensND.Canonica
 const _ISO2 = TensISO{3}(1.0)
 const _TI2_E3 = TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0))
 const _ORTHO2_CANON = TensOrtho{2, Float64}((1.0, 1.0, 1.0), TensND.CanonicalBasis{3, Float64}())
+# The isotropic classes of the plane; the plane has no other structured class here.
+const _ISO4_PLANE = TensISO{2}(1.0, 1.0)
+const _ISO2_PLANE = TensISO{2}(1.0)
 
+# The classes an operator is tried in, cheapest first; `_compact` keeps those of
+# its order and dimension.
 function _algebra_candidates(ops)
     own = Any[c for c in map(_own_class, ops) if c !== nothing]
-    return Any[_ISO4, _ISO2, own..., _TI4_E3, _TI2_E3, _ORTHO4_CANON, _ORTHO2_CANON]
+    return Any[_ISO4, _ISO2, _ISO4_PLANE, _ISO2_PLANE, own..., _TI4_E3, _TI2_E3, _ORTHO4_CANON, _ORTHO2_CANON]
 end
 # The class an operand brings, if it is stored in one.
 _own_class(R::VolterraOperator{<:_StructuredClass}) = R.class
@@ -212,8 +224,11 @@ _own_class(M) = nothing
 
 _as_class_operator(R::VolterraOperator, grid, candidates) = (_same_grid(R.grid, grid, "ALV scheme"); R)
 # The isotropy test of the dense paths, on an operator stored by blocks.
-_is_iso_block(R::VolterraOperator{<:TensISO{4, 3}}; kw...) = true
+_is_iso_block(R::VolterraOperator{<:TensISO{4}}; kw...) = true
 _is_iso_block(R::VolterraOperator; kw...) = _is_iso_block(Matrix(R); kw...)
+# In the plane, by the membership test of the classes: the test on full matrices
+# reads blocks of the space.
+_is_iso_block(R::VolterraOperator{<:DenseClass{4, 2}}; kw...) = last(_converted(R, _ISO4_PLANE, _CLASS_RTOL)) === nothing
 
 # A full matrix: the isotropic test reads the entries in place, the commonest
 # case (an iterate of a self-consistent scheme); the others go through `_compact`.

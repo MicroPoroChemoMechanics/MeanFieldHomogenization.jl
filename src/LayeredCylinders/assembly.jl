@@ -56,14 +56,36 @@ function _whole_strain(sol, external::Bool)
     N = length(sol.radii)
     R = sol.radii[N]
     𝟙 = one(sol.L₀.k)
+    P = _plane_whole_strain(sol, external)
     return (;
         zz = 𝟙, ze = zero(𝟙),
         mz = _side(sol.axial, N, external)[1] / R,
-        me = _side(sol.dilatation, N, external)[1] / R,
-        T = _strain_moment(TransverseShear(), _side(sol.shear, N, external)) / R,
+        me = P.me, T = P.T,
         L = _side(sol.antiplane, N, external)[1] / R,
     )
 end
+
+# The two entries of the plane, which a two-dimensional problem needs alone:
+# the in-plane dilatation (`me`) and the transverse shear (`T`).
+function _plane_whole_strain(sol, external::Bool)
+    N = length(sol.radii)
+    R = sol.radii[N]
+    return (;
+        me = _side(sol.dilatation, N, external)[1] / R,
+        T = _strain_moment(TransverseShear(), _side(sol.shear, N, external)) / R,
+    )
+end
+
+function _plane_whole_stress(sol, external::Bool)
+    N = length(sol.radii)
+    s = _side(sol.shear, N, external)
+    return (; me = _side(sol.dilatation, N, external)[2], T = (s[3] - s[4]) / 2)
+end
+
+_plane_layer_strain(sol, k::Int, external::Bool, internal::Bool) = (;
+    me = _annulus_gradient(Axisymmetric(), sol.dilatation, sol.radii, k, external, internal),
+    T = _annulus_gradient(TransverseShear(), sol.shear, sol.radii, k, external, internal),
+)
 
 """
     _layer_strain(sol, k, external, internal) -> (; zz, ze, mz, me, T, L)
@@ -72,11 +94,11 @@ Average strain of layer `k` per unit remote strain.
 """
 function _layer_strain(sol, k::Int, external::Bool, internal::Bool)
     𝟙 = one(sol.L₀.k)
+    P = _plane_layer_strain(sol, k, external, internal)
     return (;
         zz = 𝟙, ze = zero(𝟙),
         mz = _annulus_gradient(Axisymmetric(), sol.axial, sol.radii, k, external, internal),
-        me = _annulus_gradient(Axisymmetric(), sol.dilatation, sol.radii, k, external, internal),
-        T = _annulus_gradient(TransverseShear(), sol.shear, sol.radii, k, external, internal),
+        me = P.me, T = P.T,
         L = _annulus_gradient(Antiplane(), sol.antiplane, sol.radii, k, external, internal),
     )
 end
@@ -112,13 +134,12 @@ the layers and the membranes.
 function _whole_stress(sol, external::Bool)
     N = length(sol.radii)
     𝟙 = one(sol.L₀.k)
-    s = _side(sol.shear, N, external)
+    P = _plane_whole_stress(sol, external)
     return (;
         zz = _axial_stress(sol, sol.axial, 𝟙, external),
         ze = _axial_stress(sol, sol.dilatation, zero(𝟙), external),
         mz = _side(sol.axial, N, external)[2],
-        me = _side(sol.dilatation, N, external)[2],
-        T = (s[3] - s[4]) / 2,
+        me = P.me, T = P.T,
         L = 2 * _side(sol.antiplane, N, external)[2],
     )
 end

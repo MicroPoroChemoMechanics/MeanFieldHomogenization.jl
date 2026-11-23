@@ -27,8 +27,10 @@ Build the discrete ``(Bn)\\times(Bn)`` lower-block-triangular matrix
 representing the Stieltjes integral
 ``y(t_i) = \\int_0^{t_i} f(t_i, \\tau)\\,\\mathrm{d}x(\\tau)``
 on the time grid `times` ``= (t_1, \\dots, t_n)`` using the trapezoidal
-rule of [sanahuja2013](@citet).  ``B = 1`` for scalar-valued kernels and ``B = 6``
-for 4-tensor- or ``6\\times 6``-matrix-valued kernels (Mandel form).
+rule of [sanahuja2013](@citet).  ``B = 1`` for scalar-valued kernels, ``B = 6``
+for 4-tensor- or ``6\\times 6``-matrix-valued kernels (Mandel form), ``B = 3``
+for 2-tensor- or ``3\\times 3``-matrix-valued ones; in the plane, ``B = 3`` for a
+4-tensor of the plane (Mandel form) and ``B = 2`` for a 2-tensor.
 
 The instants are in increasing order; one given twice is a jump, as in [`TimeGrid`](@ref). The exact
 block layout is described at the top of `trapezoidal.jl`. The output is type-stable in
@@ -52,30 +54,16 @@ function _trapezoidal_dispatch(
     return M
 end
 
-# Tensor specialization (TensND.AbstractTens{4,3}): M is `6n × 6n`.
+# Tensor specialization: M is `mn × mn`, m the number of components of a value
+# (`_value_dim`): Kelvin-Mandel at order 4 (6 in space, 3 in the plane), the
+# components of the tensor at order 2 (3 and 2).
 function _trapezoidal_dispatch(
         law::AbstractViscoLaw, times::AbstractVector{<:Real},
-        ::TensND.AbstractTens{4, 3}
+        sample::TensND.AbstractTens
     )
-    n = length(times)
-    sample = visco_eval(law, times[1], times[1])
-    T = eltype(sample)
-    M = zeros(T, 6 * n, 6 * n)
-    _fill_trapezoidal_tensor!(M, law, times)
-    return M
-end
-
-# Order-2 tensor specialization (TensND.AbstractTens{2,3}): M is `3n × 3n`.
-function _trapezoidal_dispatch(
-        law::AbstractViscoLaw, times::AbstractVector{<:Real},
-        ::TensND.AbstractTens{2, 3}
-    )
-    n = length(times)
-    sample = visco_eval(law, times[1], times[1])
-    T = eltype(sample)
-    M = zeros(T, 3 * n, 3 * n)
-    _fill_trapezoidal_order2_tens!(M, law, times)
-    return M
+    n, m = length(times), _value_dim(sample)
+    M = zeros(eltype(sample), m * n, m * n)
+    return _fill_trapezoidal_blocks!(M, law, times, Val(m), _value_matrix)
 end
 
 # Matrix specialization: dispatches by size (3×3 → 3n×3n, 6×6 → 6n×6n).
@@ -185,14 +173,12 @@ _fill_trapezoidal_scalar!(M::AbstractMatrix, law::AbstractViscoLaw, times::Abstr
     return M
 end
 
-# Convert a sample (4-tensor or 6×6 matrix) to a 6×6 Mandel array,
-# preserving element type.
+# Convert a sample (4-tensor or Kelvin-Mandel matrix) to its Kelvin-Mandel
+# array, preserving element type.
 @inline _to_mandel(sample::AbstractMatrix) = sample
-@inline function _to_mandel(sample::TensND.AbstractTens{4, 3})
+@inline function _to_mandel(sample::TensND.AbstractTens{4})
     return TensND.mandel(TensND.canonical_components(sample); symmetrize = true)
 end
 
-_fill_trapezoidal_tensor!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
-    _fill_trapezoidal_blocks!(M, law, times, Val(6), _to_mandel)
 _fill_trapezoidal_mandel!(M::AbstractMatrix, law::AbstractViscoLaw, times::AbstractVector) =
     _fill_trapezoidal_blocks!(M, law, times, Val(6), identity)

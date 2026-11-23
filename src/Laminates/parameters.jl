@@ -78,14 +78,11 @@ end
 # ── PropertyParameter (shared with the RVE) ─────────────────────────────────
 
 function MFH_Core.get_param(lam::Laminate, p::PropertyParameter)
-    t = layer_property(lam, p.phase, p.property)
-    return TensND.get_data(t)[Schemes._resolve_selector(t, p.selector)]
+    return Schemes.property_coefficient(layer_property(lam, p.phase, p.property), p)
 end
 
 function MFH_Core.set_param(lam::Laminate, p::PropertyParameter, value)
-    old_t = layer_property(lam, p.phase, p.property)
-    i = Schemes._resolve_selector(old_t, p.selector)
-    new_t = Schemes._replace_data_at(old_t, i, value)
+    new_t = Schemes.with_property_coefficient(layer_property(lam, p.phase, p.property), p, value)
     return MFH_Core.cell_set_property(lam, p.phase, p.property, new_t)
 end
 

@@ -249,8 +249,12 @@ jobs:
             open(ENV["GITHUB_ENV"], "a") do io
                 println(io, "MFH_DOCS_ONLY=", join(sel, ","))
             end
+      # The heap of the VitePress step, as in the full build: a shard renders
+      # fewer pages, but `theory-manual` reaches Node's default limit (about
+      # 2 GB) on its own.
       - name: Build the pages of the shard
         env:
             JULIA_DEBUG: Documenter
             OPENBLAS_NUM_THREADS: '1'
+            NODE_OPTIONS: --max-old-space-size=6144
         run: julia --project=docs/ docs/make.jl

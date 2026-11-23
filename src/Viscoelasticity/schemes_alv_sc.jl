@@ -132,6 +132,7 @@ function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractStri
             # isotropic, needs an isotropic orientation average.
             _alv_diff_keeps_iso(ph.geometry, sym, nothing) ||
                 _alv_iso_error(who, name, "the transversely isotropic contribution")
+            _alv_layered_estimate(who, C_0)
             push!(layered_data, (geom = ph.geometry, f = _amount_value(rve, name), sym = sym))
             continue
         end
@@ -161,6 +162,11 @@ function _sc_alv_phases(rve::RVE, prop::Symbol, times, matrix, who::AbstractStri
     end
     return (; C_0, C_phases, geometries, fractions, symmetrizes, crack_data, layered_data)
 end
+
+# The layered inclusions enter the iteration on full matrices, which are those of
+# space.
+_alv_layered_estimate(who, C_0) = nothing
+_alv_layered_estimate(who, ::VolterraOperator{<:_PlaneClass}) = _alv_plane_error("$who with a LayeredCylinder")
 
 # The phases on full matrices, for the step on full matrices: the kernels written
 # out, and the Mandel forms of the geometry tensors U^A, V^A of each shape (eltype
@@ -283,9 +289,8 @@ end
 # Σ_c sym(ε_c H̃_c(C_m)), the crack compliances against the isotropic estimate, each
 # transversely isotropic about its normal before its orientation average.
 function _crack_compliance_in_classes(C_m, crack_data)
-    α, β = C_m.blocks
     terms = map(crack_data) do (geom, ε, sym, Rn_mat, Rt_mat)
-        H̃ = _crack_compliance_alv(geom, α, β, Rn_mat, Rt_mat, C_m.grid)
+        H̃ = _crack_compliance_alv(geom, C_m, Rn_mat, Rt_mat, "self_consistent_alv")
         _maybe_symmetrize_alv(delta_inverse_property_alv(geom, H̃, ε), sym)
     end
     return reduce(+, terms)
@@ -293,11 +298,8 @@ end
 
 # The running estimate in the isotropic class: kept as is when it is there,
 # converted when its class is wider, refused when its values are off it.
-_as_iso_estimate(R::VolterraOperator{<:TensISO{4, 3}}) = R
-_as_iso_estimate(R::VolterraOperator{<:TensISO{2, 3}}) = R
+_as_iso_estimate(R::VolterraOperator{<:Union{TensISO{4}, TensISO{2}}}) = R
 _as_iso_estimate(R::VolterraOperator) = convert_class(R, _iso_class(R.class); check = true)
-# The isotropic class of the order of `c`.
-_iso_class(c) = _order(c) == 4 ? _ISO4 : _ISO2
 
 # The concentration `A` and the average stress `B = Ñ + C ∘ A` of a layered
 # sphere against the running estimate `C`, from its recurrences: what a phase

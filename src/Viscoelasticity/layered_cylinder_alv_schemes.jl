@@ -149,6 +149,10 @@ _cylinders_fixed_point(
     step, X_0, "$name-ALV (cylinders)"; abstol, reltol, maxiters, damping, verbose, select_best
 )
 
+# The rings of a cell of the plane have no transversely isotropic estimate to run on.
+_alv_cylinders_estimate(scheme, ::Val{3}) = nothing
+_alv_cylinders_estimate(scheme, ::Val{2}) = _alv_plane_error("$(nameof(typeof(scheme))) on a cell of rings alone")
+
 """
     _homogenize_alv_cylinders(rve, scheme, prop; times, kw...) -> Matrix
 
@@ -188,7 +192,9 @@ function _homogenize_alv_cylinders(rve::RVE, scheme::_ALVRunningScheme, prop::Sy
         )
     end
     # The order is that of the property homogenized; every layer must share it.
-    order = _alv_order(phase_property(rve, first(rve.phase_names), prop), times)
+    P₁ = phase_property(rve, first(rve.phase_names), prop)
+    _alv_cylinders_estimate(scheme, _reference_space(P₁, times))
+    order = _alv_order(P₁, times)
     for name in rve.phase_names, (k, P) in enumerate(rve.phases[name].geometry.moduli)
         _alv_order(P, times) === order || throw(
             ArgumentError(

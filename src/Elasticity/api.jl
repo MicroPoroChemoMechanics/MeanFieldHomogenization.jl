@@ -74,8 +74,10 @@ Base.@constprop :aggressive @inline function _hill_tensor_entry(incl, C₀, meth
     return MFH_Core._with_method(_hill_tensor_at, method, incl, C₀, abstol, reltol, maxiters)
 end
 
-_hill_tensor_at(m::Val, incl, C₀, abstol, reltol, maxiters) =
-    _hill_kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀), abstol, reltol, maxiters)
+function _hill_tensor_at(m::Val, incl, C₀, abstol, reltol, maxiters)
+    MFH_Core._same_space(incl, C₀)
+    return _hill_kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀), abstol, reltol, maxiters)
+end
 
 # A closed form is cheaper than a lookup: it never consults a `HillCache`. A
 # numerical one is read from the cache in scope (`with_hill_cache`) when its
@@ -171,34 +173,14 @@ of an ellipsoidal inclusion `incl` embedded in a matrix of stiffness
 `C₀`. Thin wrapper around [`hill_tensor`](@ref) followed by the double
 contraction with `C₀`.
 """
-MFH_Core.eshelby_tensor(
-    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 3};
-    kw...
-) = hill_tensor(incl, C₀; kw...) ⊡ C₀
+# The inclusions that have a Hill tensor: the ellipsoidal ones, in the plane or
+# in space, and the custom ones.
+const _HillInclusion = Union{AbstractEllipsoidalInclusion, MFH_Core.AbstractCustomInclusion}
 
-MFH_Core.eshelby_tensor(
-    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 2};
-    kw...
-) = hill_tensor(incl, C₀; kw...) ⊡ C₀
-
-MFH_Core.eshelby_tensor(
-    incl::MFH_Core.AbstractCustomInclusion, C₀::TensND.AbstractTens{4, 3};
-    kw...
-) = hill_tensor(incl, C₀; kw...) ⊡ C₀
+MFH_Core.eshelby_tensor(incl::_HillInclusion, C₀::TensND.AbstractTens{4}; kw...) =
+    hill_tensor(incl, C₀; kw...) ⊡ C₀
 
 # ── Second Hill tensor (4th order) — Q = C₀ − C₀ : P : C₀ ─────────────────────
 
-MFH_Core.second_hill_tensor(
-    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 3};
-    kw...
-) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)
-
-MFH_Core.second_hill_tensor(
-    incl::AbstractEllipsoidalInclusion, C₀::TensND.AbstractTens{4, 2};
-    kw...
-) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)
-
-MFH_Core.second_hill_tensor(
-    incl::MFH_Core.AbstractCustomInclusion, C₀::TensND.AbstractTens{4, 3};
-    kw...
-) = MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)
+MFH_Core.second_hill_tensor(incl::_HillInclusion, C₀::TensND.AbstractTens{4}; kw...) =
+    MFH_Core._second_hill_tensor(hill_tensor(incl, C₀; kw...), C₀)

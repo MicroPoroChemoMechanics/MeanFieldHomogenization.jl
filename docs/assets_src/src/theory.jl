@@ -161,4 +161,175 @@ function theory_gaussian_crack(; path = "theory/gaussian_crack_grid", panel::Boo
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack())
+"Image of the circle of radius `ρ` by the map of coefficients `ms`, as points around `c` at the scale `s`."
+function mapped_circle(c::Point, s, ms, ρ; n = 361)
+    ω(ζ) = ζ + sum(m * ζ^(-k) for (k, m) in ms)
+    return [(z = ω(ρ * cis(θ)); c + Point(s * real(z), -s * imag(z))) for θ in range(0, 2π; length = n)]
+end
+
+"Image of the ray of angle `θ`, from the circle to the radius `ρ`."
+function mapped_ray(c::Point, s, ms, θ, ρ; n = 40)
+    ω(ζ) = ζ + sum(m * ζ^(-k) for (k, m) in ms)
+    return [(z = ω(r * cis(θ)); c + Point(s * real(z), -s * imag(z))) for r in range(1, ρ; length = n)]
+end
+
+"One plane of the map: the matrix, the hole of contour the image of the unit circle, and the images of circles and rays."
+function map_plane(c::Point, s, ms; ρmax = 1.9)
+    @layer begin
+        setcolor(MATRIX)
+        poly(mapped_circle(c, s, ms, ρmax), :fill; close = true)
+        setcolor(PORE)
+        poly(mapped_circle(c, s, ms, 1.0), :fill; close = true)
+        setcolor(GUIDE)
+        setline(0.8)
+        foreach(ρ -> poly(mapped_circle(c, s, ms, ρ), :stroke; close = true), (1.3, 1.6))
+        foreach(θ -> poly(mapped_ray(c, s, ms, θ, ρmax), :stroke), range(0, 2π; length = 13)[1:12])
+        setcolor(INK)
+        setline(2.0)
+        poly(mapped_circle(c, s, ms, 1.0), :stroke; close = true)
+    end
+    return nothing
+end
+
+"The conformal map of the outside of the unit disk onto the outside of a hole, and four holes it gives."
+function theory_conformal_map(; path = "theory/conformal_map", panel::Bool = true)
+    square = [(3, 1 / 6), (7, 1 / 56), (11, 1 / 176)]
+    return sheet(path, 720, 400; panel = panel) do
+        map_plane(Point(170, 135), 62, [(1, 0.0)])
+        map_plane(Point(540, 135), 62, square)
+        label(m("zeta"), Point(170, 135); size = 17)
+        label(m("abs(zeta) = 1"), Point(170, 62); size = 13, bg = MATRIX)
+        label(txt("hole"), Point(540, 135); size = 12, color = MUTED)
+        label(txt("matrix"), Point(540, 30); size = 12, color = MUTED, bg = MATRIX)
+        label(m("z = x_2 + upright(i) x_3"), Point(650, 250); size = 13, color = MUTED)
+        arrow_ab(Point(300, 135), Point(410, 135); color = VECTOR, lw = 1.8)
+        label(m("z = omega(zeta)"), Point(355, 118); size = 15, color = VECTOR)
+        @layer (setcolor(PANEL_EDGE); setline(1.2); line(Point(20, 268), Point(700, 268), :stroke))
+        holes = (
+            ([(1, 0.4)], m("m_1 = 2 slash 5")),
+            ([(2, 1 / 4)], m("m_2 = 1 slash 4")),
+            (square, txt("square, 3 terms")),
+            ([(4, 1 / 10), (9, 1 / 75)], txt("pentagon, 2 terms")),
+        )
+        for (i, (ms, name)) in enumerate(holes)
+            c = Point(90 + 180 * (i - 1), 325)
+            @layer begin
+                setcolor(tint(ORANGE, 0.75))
+                poly(mapped_circle(c, 30, ms, 1.0), :fill; close = true)
+                setcolor(INK)
+                setline(1.6)
+                poly(mapped_circle(c, 30, ms, 1.0), :stroke; close = true)
+            end
+            label(name, c + Point(0, 58); size = 12, color = MUTED)
+        end
+    end
+end
+
+"A block of matrix whose front face, of side `a` and center `c`, carries the sections `holes`, extruded by the vector `depth`."
+function extruded_block(c::Point, a, depth::Point, holes)
+    h = a / 2
+    front = [c + Point(-h, -h), c + Point(h, -h), c + Point(h, h), c + Point(-h, h)]
+    @layer begin
+        setline(1.4)
+        # the top and the side, then the front face over them
+        for face in ([front[1], front[2], front[2] + depth, front[1] + depth], [front[2], front[3], front[3] + depth, front[2] + depth])
+            setcolor(tint(BLUE, 0.78))
+            poly(face, :fill; close = true)
+            setcolor(INK)
+            poly(face, :stroke; close = true)
+        end
+        setcolor(MATRIX)
+        poly(front, :fill; close = true)
+        setcolor(INK)
+        poly(front, :stroke; close = true)
+        for (offset, s, ms) in holes
+            setcolor(PORE)
+            poly(mapped_circle(c + offset, s, ms, 1.0), :fill; close = true)
+            setcolor(INK)
+            poly(mapped_circle(c + offset, s, ms, 1.0), :stroke; close = true)
+        end
+    end
+    return nothing
+end
+
+"""
+    theory_plane_problem(; path = "theory/plane_problem")
+
+The two states of a plane problem and the section they share: a long prism, in
+plane strain, a thin plate, in plane stress, and the plane of the section with
+its holes.
+"""
+function theory_plane_problem(; path = "theory/plane_problem", panel::Bool = true)
+    holes = ((Point(-24, -20), 15, [(1, 0.0)]), (Point(22, 22), 16, [(2, 0.25)]), (Point(26, -30), 9, [(1, 0.45)]))
+    return sheet(path, 720, 330; panel = panel) do
+        # plane strain: a long prism
+        extruded_block(Point(115, 185), 120, Point(70, -50), holes)
+        arrow_ab(Point(175, 125), Point(231, 85); color = VECTOR, lw = 1.8)
+        label(m("underline(e)_1"), Point(262, 84); size = 15, color = VECTOR)
+        label(txt("plane strain"), Point(130, 278); size = 14)
+        label(m("epsilon_(1 1) = epsilon_(1 2) = epsilon_(1 3) = 0"), Point(130, 302); size = 13, color = MUTED)
+        # the section
+        c = Point(380, 185)
+        extruded_block(c, 120, Point(0, 0), holes)
+        arrow_ab(c + Point(-60, 60), c + Point(-10, 60); color = VECTOR, lw = 1.8)
+        arrow_ab(c + Point(-60, 60), c + Point(-60, 10); color = VECTOR, lw = 1.8)
+        label(m("underline(e)_2"), c + Point(-8, 74); size = 15, color = VECTOR)
+        label(m("underline(e)_3"), c + Point(-42, 18); size = 15, color = VECTOR)
+        label(txt("the section"), Point(380, 278); size = 14)
+        label(m("k, mu quad \"or\" quad k^*, mu"), Point(380, 302); size = 13, color = MUTED)
+        # plane stress: a thin plate
+        extruded_block(Point(600, 185), 120, Point(13, -9), holes)
+        label(txt("plane stress"), Point(605, 278); size = 14)
+        label(m("sigma_(1 1) = sigma_(1 2) = sigma_(1 3) = 0"), Point(605, 302); size = 13, color = MUTED)
+        # both lead to the same problem of the plane
+        arrow_ab(Point(262, 185), Point(306, 185); color = GUIDE, lw = 1.6)
+        arrow_ab(Point(528, 185), Point(454, 185); color = GUIDE, lw = 1.6)
+    end
+end
+
+"""
+    theory_parameter_classes(; path = "theory/parameter_classes")
+
+The symmetry classes a coefficient of a property lens may belong to, nested
+around an isotropic tensor ℂ: isotropic, transversely isotropic about n,
+orthotropic in a frame that has n as an axis, anisotropic. A dual number put on
+one coefficient of a class (here ℓ₅) moves ℂ inside that class, out of the
+smaller ones, the other coefficients staying fixed.
+"""
+function theory_parameter_classes(; path = "theory/parameter_classes", panel::Bool = true)
+    return sheet(path, 720, 330; panel = panel) do
+        c = Point(235, 180)
+        classes = (
+            (430, 270, tint(BLUE, 0.93), m("\"ANISO\" quad M_(i j)"), txt("Kelvin-Mandel components in a basis")),
+            (330, 200, tint(BLUE, 0.84), m("\"ORTHO\" quad C_(1 1 1 1), dots, C_(1 2 1 2)"), txt("in a frame")),
+            (230, 134, tint(BLUE, 0.72), m("\"TI\"(underline(n)) quad ell_1, dots, ell_6"), nothing),
+            (120, 62, tint(PURPLE, 0.7), m("\"ISO\" quad k, mu"), nothing),
+        )
+        for (w, h, col, _, _) in classes
+            @layer (setcolor(col); box(c, w, h, 14, :fill); setcolor(MUTED); setline(1.0); box(c, w, h, 14, :stroke))
+        end
+        for (k, (w, h, _, name, note)) in enumerate(classes)
+            k == 4 && continue
+            label(name, Point(c.x - w / 2 + 12, c.y - h / 2 + 15); size = 14, halign = :left)
+            note === nothing || label(note, Point(c.x + w / 2 - 12, c.y - h / 2 + 15); size = 11, color = MUTED, halign = :right)
+        end
+        label(classes[4][4], c + Point(0, -17); size = 14)
+        # the tensor, and its move along one coefficient of TI
+        p = c + Point(-22, 8)
+        @layer (setcolor(INK); circle(p, 3.5, :fill))
+        label(m("bb(C)"), p + Point(-14, 0); size = 15)
+        q = c + Point(72, 40)
+        arrow_ab(p + Point(4, 2), q; color = HIGHLIGHT, lw = 2.0)
+        label(m("ell_5 + epsilon"), q + Point(-28, 16); size = 14, color = HIGHLIGHT, halign = :left)
+        # the rule, on the right
+        x = 478
+        label(txt("a coefficient of a class"), Point(x, 110); size = 14, halign = :left)
+        label(txt("that contains the tensor:"), Point(x, 132); size = 14, halign = :left)
+        label(m("ell_5 arrow.r.bar ell_5 + epsilon"), Point(x, 168); size = 15, halign = :left, color = HIGHLIGHT)
+        label(txt("the others fixed;"), Point(x, 204); size = 14, halign = :left)
+        label(m("epsilon") * txt(" a dual number gives"), Point(x, 226); size = 14, halign = :left)
+        label(m("partial bb(C)^(\"hom\") \\/ partial ell_5"), Point(x, 254); size = 15, halign = :left)
+    end
+end
+
+theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(), theory_parameter_classes())

@@ -395,7 +395,8 @@ function check_inclusion_interface(
     end
 
     # ── Level 1 ──────────────────────────────────────────────────────────────
-    P₀, P₁ = _probe_tensors(physics)
+    # in the dimension of the inclusion, 3 when it declares none
+    P₀, P₁ = _probe_tensors(physics, applicable(Core.dimension, incl) ? Core.dimension(incl) : 3)
     gate_a = _provides(incl, :hill_tensor, Elasticity.hill_tensor, incl, P₀) ||
         _provides_kernel(incl, P₀)
     locname = :gradient_gradient_concentration
@@ -530,10 +531,11 @@ end
 
 _provides_delta(c::CustomInclusion, ::Symbol, _f, _probe) = c.density_factor !== nothing
 
-function _probe_tensors(physics::Symbol)
+# Two isotropic properties of the physics, in the dimension `dim` of the inclusion.
+function _probe_tensors(physics::Symbol, dim::Integer = 3)
     return if physics === :elasticity
-        (TensND.TensISO{3}(3.0, 2.0), TensND.TensISO{3}(6.0, 4.0))
+        (TensND.TensISO{dim}(3.0, 2.0), TensND.TensISO{dim}(6.0, 4.0))
     else
-        (TensND.TensISO{3}(1.0), TensND.TensISO{3}(2.0))
+        (TensND.TensISO{dim}(1.0), TensND.TensISO{dim}(2.0))
     end
 end

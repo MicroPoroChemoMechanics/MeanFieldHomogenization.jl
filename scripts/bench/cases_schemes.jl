@@ -71,7 +71,7 @@ bcase(
 bcase(
     "schemes/sc.porous.sphere.phi30";
     group = :schemes, tags = [:sc, :dedup],
-    setup = () -> rve_porous_sc(; φ = 0.30, shape = 1.0),
+    setup = () -> rve_porous_sc(; φ = 0.3, shape = 1.0),
     body = rve -> homogenize(rve, SelfConsistent(; SC_OPTS...), :C),
 )
 
@@ -93,7 +93,7 @@ bcase(
 bcase(
     "schemes/sc.newton";
     group = :schemes, tags = [:sc, :newton],
-    setup = () -> rve_porous_sc(; φ = 0.30, shape = 1.0),
+    setup = () -> rve_porous_sc(; φ = 0.3, shape = 1.0),
     body = rve -> homogenize(
         rve, SelfConsistent(; algorithm = NewtonDefault(), SC_OPTS...), :C
     ),
@@ -124,7 +124,7 @@ bcase(
     group = :schemes, tags = [:forwarddiff, :sc],
     setup = () -> rve_porous_sc(; φ = 0.2, shape = 1.0),
     body = rve -> derivative(
-        rve, SelfConsistent(; SC_OPTS...), property(:M, :C, :bulk);
+        rve, SelfConsistent(; SC_OPTS...), property(:M, :C, :α);
         indexer = C -> TensND.get_array(C)[1, 1, 1, 1]
     ),
     checksum = r -> Float64[r],

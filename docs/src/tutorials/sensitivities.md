@@ -33,18 +33,18 @@ add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => iso_stiffness(60.0, 20.0)); fract
 idxC = C -> canonical_components(C)[1, 1, 1, 1]
 
 ∂f = derivative(rve, MoriTanaka(), amount(:I); indexer = idxC)          # ∂C[1111]/∂f_I
-∂K = derivative(rve, MoriTanaka(), property(:I, :C, :bulk); indexer = idxC)  # ∂C[1111]/∂K_I
-(∂f, ∂K)
+∂k = derivative(rve, MoriTanaka(), property(:I, :C, :k); indexer = idxC)  # ∂C[1111]/∂k_I
+(∂f, ∂k)
 ```
 
 `amount(:I)` is the phase's volume fraction (or crack density), and
-`property(:I, :C, :bulk)` its bulk-modulus coefficient — see
+`property(:I, :C, :k)` its bulk modulus — see
 [the manual](@ref man-sensitivities-lenses) for the full
 list, including `geometry` (a semi-axis, say) and `shape_param` (a
 distribution-shape field). Several lenses combine into a `gradient`:
 
 ```@example tutsens
-∇ = gradient(rve, MoriTanaka(), [amount(:I), property(:I, :C, :bulk)]; indexer = idxC)
+∇ = gradient(rve, MoriTanaka(), [amount(:I), property(:I, :C, :k)]; indexer = idxC)
 ```
 
 !!! note "A symmetric shape has no first-order geometric sensitivity"

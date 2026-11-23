@@ -1,5 +1,213 @@
 # Changelog
 
+## v0.29.0 — inclusions that are not ellipsoids, solved exactly
+
+A minor release: two inclusion types whose response is exact although they have
+no Hill tensor, two-dimensional cells in plane strain and in plane stress
+through the existing schemes, a helper for graded interphases, a page that
+says which route to an inclusion's response fits which situation, and
+parameters that name a coefficient in any symmetry class containing the tensor.
+
+### Added
+
+- **`get_coefficient(t, selector; symmetry)` and `set_coefficient(t, selector, v;
+  symmetry)`** read and set one coefficient of a tensor in a symmetry class that
+  contains it, with the selectors of the property parameters, so that any
+  function of a tensor (a Hill tensor, a concentration tensor) is differentiated
+  with respect to it by a dual number, without building a cell.
+
+- **`InsulatingTorus(R, r)`**, a ring-shaped pore of the conduction problem in
+  an isotropic matrix. Until now a torus could only be approximated, on a grid
+  of Gaussians, to a few percent. Its temperature field is a series of toroidal
+  harmonics, in the toroidal chart of TensND 0.14, whose amplitudes satisfy a
+  three-term relation solved to rounding; the gradient concentration tensor is
+  read on the far field, and a second expression, from the integral of the
+  temperature over the torus, checks it. The tensor depends on `r/R` only, from
+  the thin ring (3/2 across the axis, 2 along it) to the torus whose hole
+  closes. Radii are numbers or duals.
+- **`ConformalHole(coefficients)`**, an infinite cylindrical cavity whose
+  cross-section is the image of the unit circle by a conformal map with a
+  finite number of terms: an ellipse, a hypotrochoid, a polygon with rounded
+  corners, a star. It extends `Cylinder`, limited to elliptic sections, to
+  prismatic pores and channels. Its tensors are exact for the map given: the
+  complex potentials of the plane-strain problem are finite sums, obtained from
+  a linear system; the antiplane shear and the conduction around the insulating
+  section are closed forms; the axial extension is undisturbed. Elasticity and
+  conduction, any orientation; coefficients are numbers, duals or symbols. The
+  matrix is isotropic, or transversely isotropic about the axis of the cavity,
+  which leaves it isotropic in the plane of the section: the self-consistent
+  and the differential schemes, whose reference is their own estimate,
+  therefore apply to aligned cavities. In a two-dimensional cell the hole is
+  its section, with tensors of the plane. Its linear system depends on the map
+  alone and is solved once, when the hole is built. **`polygon_map(n, terms)`**
+  gives the terms of the map of a regular polygon.
+- **Two-dimensional cells.** The schemes (dilute, Mori-Tanaka,
+  self-consistent, differential and the others) now run on tensors of the
+  plane as they do in space: a cell whose properties are `TensISO{4,2}` or
+  `TensISO{2,2}` is homogenized by `homogenize`, in elasticity and in
+  conduction. Its phases are disks and ellipses (`Ellipsoid(r; dim = 2)`,
+  `Ellipsoid(a, b; angle)`), coated disks (`LayeredCylinder`, with its
+  imperfect interfaces), holes given by a conformal map (`ConformalHole`) and
+  cracks, segments of the plane (`RibbonCrack(b; angle)`, with the density
+  `N b²`). The same objects as in three dimensions: the dimension of the
+  properties chooses the problem solved, and only the problems of the plane
+  are. What follows from an estimate applies as well: concentration tensors,
+  compliances of the families of cracks, poroelastic coefficients
+  (`biot_tensor`, `poroelastic_parameters`, …). **`admits_dimension(incl, d)`**
+  says whether an inclusion can be a phase of a cell of dimension `d`; an
+  inclusion and a property of different dimensions are refused with a message
+  that names both, where a `MethodError` came out of a kernel. They were three-dimensional only, although the Hill tensors
+  of the plane existed. Nothing is written twice: the signatures of the
+  concentration tensors, of the contributions and of the schemes no longer fix
+  the dimension, and the tensors of the plane are dispatched to the same code.
+  Plane strain and plane stress are the two stiffnesses of the plane of a
+  material, which TensND builds (`plane_strain_stiffness`,
+  `plane_stress_stiffness`). A self-consistent estimate of a sheet with
+  circular holes takes 13 µs, against 110 µs for the same medium described in
+  three dimensions as aligned cylinders. `IsoSymmetrize` on a phase of the
+  plane averages over the orientations of the plane.
+- **Two-dimensional cells in aging viscoelasticity.** `homogenize_alv` and the
+  operators it computes with (`VolterraOperator`, `TimeHistory`,
+  `trapezoidal_matrix`) take tensors of the plane: a cell whose kernels are
+  `TensISO{4,2}` (plane strain), disks and ellipses, segments
+  (`RibbonCrack(b; angle)`, whose opening is `(π/2)(α^{-∘} + β^{-∘})`) and
+  concentric rings (`LayeredCylinder`), by `Voigt`, `Reuss`, `Dilute`,
+  `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis` and
+  `SelfConsistent`. An operator of the plane is stored by its blocks of the
+  plane, which the size of its matrix alone would read as those of a
+  conductivity of space: the order and the dimension come from the class of
+  the operator, never from a size. The differential and asymmetric
+  self-consistent schemes, the Newton solver and conduction, written on the
+  full matrices of space, refuse a cell of the plane.
+  `plane_strain_stiffness(R)` and `plane_stress_stiffness(R)` give the two
+  operators of the plane of an isotropic aging material of operator of space
+  `R`; the second condenses the out-of-plane strain with Volterra products and
+  inverse, `λ* = λ − λ∘(λ + 2μ)^{-∘}∘λ`, which is not the plane-stress
+  conversion of the moduli instant by instant.
+- `sif` of a crack of the plane: the opening and sliding intensity factors of
+  a `RibbonCrack` in a two-dimensional cell, and its flux intensity factor.
+- An assembly of particles checks that the domain of a `MixedBC` has the
+  dimension of the particles: disks in the ball of `MixedBC(radius)` gave
+  volume fractions against a volume, and are now refused with the way out,
+  `MixedBC(Ellipsoid(radius; dim = 2))`.
+- **`LayeredEllipsoid`**, an inclusion of isotropic layers bounded by confocal
+  ellipsoids of three unequal axes, in conduction. The mean gradients of its
+  layers satisfy as many linear relations as there are layers, exact for
+  confocal boundaries (the exterior potentials of confocal ellipsoids are in
+  the ratio of their volumes), so that no series is needed: the response
+  agrees with the confocal spheroid, the layered sphere and the homogeneous
+  ellipsoid. `layered_ellipsoid_from_fractions` builds the confocal family
+  from the core and the volume fractions. Any orientation; numbers, duals and
+  symbolic conductivities. Isotropic layers and medium, perfect interfaces.
+- **`graded_layers(profile, r_in, r_out, n)`**, which cuts a zone whose moduli
+  vary with the radius into thin uniform layers for a `LayeredSphere` or a
+  `LayeredCylinder`: an interphase that is not a uniform shell. The response of
+  the layers tends to that of the graded zone as the square of their thickness,
+  which two computations extrapolate.
+
+### Changed
+
+- **A parameter of a property names one coefficient of a symmetry class that
+  contains the tensor**, its own class or a larger one: `property(:I, :C, :ℓ₅;
+  symmetry = (:TI, n))` is the fifth Walpole coefficient of a phase seen as
+  transversely isotropic about `n`, `(:ORTHO, frame)` and `(:CUBIC, frame)` name
+  the orthotropic and cubic classes, and `:Mij` (`:Mi` at order 2) the
+  Kelvin-Mandel component `(i, j)` in the canonical basis, or in `basis` with
+  `symmetry = (:ANISO, basis)`. The tensor is written in that class exactly and
+  the coefficient set while the other coefficients of the class stay fixed, so
+  that a derivative is the partial derivative in that class, even when the
+  perturbation leaves the class of the tensor given. A class that does not
+  contain the tensor is refused.
+- **The names of the coefficients mean what they name.** `:k` (≡ `:bulk`) and
+  `:μ` (≡ `:shear`) of an isotropic stiffness are the bulk and shear moduli, with
+  `α = d k` in dimension `d` and `β = 2μ`; they were `α = 3k` and `β = 2μ`, which
+  made a derivative with respect to "`:bulk`" one third of the derivative with
+  respect to `k`. `:α` and `:β` name the stored coefficients. `:K`, which also
+  names the conductivity property, and `:λ`, which is not the Lamé coefficient,
+  are removed; `:a` and `:b` of a transversely isotropic tensor of order 2 are
+  `:transverse` and `:axial`. The orthotropic coefficients are the tensor
+  components `:C1111` … `:C1212`.
+- **`jacobian` returns the components of the effective tensor in the canonical
+  basis.** It returned those of the basis the tensor is stored in, which for a
+  cell whose matrix is given in a rotated basis is not the canonical one.
+- **TensND 0.16 is required**, for its toroidal coordinates and toroidal
+  functions, the plane-strain and plane-stress stiffnesses of a transversely
+  isotropic material, and the blocks of the isotropic tensors of the plane on
+  which the aging viscoelasticity of the plane stores its operators.
+- **The two neural surrogates of the superspherical pore are retrained**, on
+  finite-element cells of the fourth level of subdivision and of radius `4a`.
+  At the third level a concave pore was not converged: `E₀ H₁₁₁₁` of the
+  exponent `p = 0.4` moves by 7 % from one level to the next, toward the
+  published value. `load_surrogate(model_path("supershape_pore_elastic"))` and
+  its conduction counterpart therefore return different numbers, closer to the
+  converged ones (worst held-out error of the fit 1.6 % in elasticity, 0.07 % in
+  conduction).
+
+### Documentation
+
+- The manual page "Sensitivities" is rewritten: the parameters, the coefficients
+  of each symmetry class and the enclosing classes, with executed examples. A new
+  tutorial, "One derivative, several routes", computes one derivative through the
+  isotropic, transversely isotropic, orthotropic and Kelvin-Mandel coefficients
+  of the same tensor and checks them against one another by the chain rule. The
+  strength application explains why the derivative with respect to the modulus
+  of one family of needles is not isotropic, and computes it by two routes.
+
+- *Choosing an inclusion*, a new manual page: every way the package obtains the
+  response of an inclusion (closed form, layered pattern, series, custom
+  formula or solver, grid of Gaussians, finite-element cell, trained network),
+  with what each one allows: reference medium, derivatives, accuracy, cost.
+- New applications, each a script published as its page:
+  *A concave pore through every route* (a published table, a mesh, a network
+  and a grid on the same superspherical pore, with the deviations measured);
+  *Ring-shaped pores in a conducting matrix* (the torus against the ratio of
+  its radii, published values, spheroids of the same volume, schemes);
+  *Prismatic pores with corners* (published compressibilities and shear
+  compliances of holes given by maps of two to four terms, polygons carried to
+  the limit of the map, the shear compliance against the direction of the
+  shear and the scaling law on the perimeter of the second article, the
+  stiffness of a matrix with prismatic pores by three schemes, a perforated
+  plate in plane stress);
+  *A graded interphase around a spherical particle* (the layers against an
+  exact Frobenius series, in elasticity and in conduction, and the shear
+  modulus, which the series does not give);
+  *Coated inclusions: closures on the mean strains, and the exact solution*
+  (the published closures of the coated ellipsoid, each with its assumption,
+  written as custom inclusions and set beside the layered sphere and the
+  confocal spheroid, with the test of a core behind a soft coating);
+  *Coated spheres in an aging viscoelastic matrix* (the material of a
+  published study by the Mori-Tanaka and the generalized self-consistent
+  schemes, the latter iterated on the layered sphere of the aging case).
+- New theory pages *Toroidal inclusions* and *Holes given by a conformal map*,
+  with complete derivations, and the manual pages of the two inclusions. The
+  second quotes the sections and the equations of Muskhelishvili's book at
+  each step, and treats the matrix isotropic in the plane only and the plate in
+  plane stress.
+- *Plane problems*, a new manual page: the two states and their stiffnesses
+  of the plane, the cell of a plane medium, sheets with holes against their
+  closed forms, the same medium as aligned cylinders in three dimensions.
+- The tables of *Concave pores* are recomputed on the converged cells.
+
+### Tests
+
+- The torus against the thin-ring limits, the field rebuilt from its
+  amplitudes, the surface integral, the published analytical amplitudes and a
+  grid of Gaussians; the conformal hole against the elliptic `Cylinder` on
+  every component, an independent collocation of the boundary condition, closed
+  forms and published tables, and in a transversely isotropic matrix against
+  the cylinder of the package and the equation of the self-consistent scheme;
+  the cells of the plane against the scheme of Mori and Tanaka written by hand
+  with the Hill tensor of the disk, against the closed forms of a sheet with
+  circular holes or with cracks and against the block of the plane of the same
+  medium in three dimensions (disks, ellipses, coated disks with each kind of
+  interface, holes, cracks), and in aging viscoelasticity against the elastic
+  limit, against a kernel proportional to one function of time and against the
+  block of the plane of aging cylinders in space; the opening of an aging
+  segment against the flat limit of a void ellipse; the graded layers against two exact solutions;
+  neutral inhomogeneities (resistive interface, conducting surface, Hashin's
+  coating) as exact zeros of the layered sphere. Published values are stored
+  under `data/literature/`.
+
 ## v0.28.1 — the opening of a planar crack is its field
 
 A patch release.

@@ -12,24 +12,61 @@ If the package is new to you, [Getting started](@ref getting-started) and
 [Schemes and RVEs](@ref man-schemes) come first; every page below then opens
 with the theory and manual pages it relies on.
 
-The chapter starts with general concepts, which hold whatever the material, then
-turns to the materials, one section each. Within a section a page comes after
-the pages it builds on.
+The chapter starts with the sections that hold whatever the material (inclusions
+of any shape, interactions, cracks, coated inclusions, transport), then turns to
+the materials, one section each. Within a section a page comes after the pages
+it builds on.
 
-## General concepts
+## Inclusions of any shape
+
+One inclusion whose shape is not an ellipsoid, or whose Hill tensor is derived step by step.
 
 | Page | What it models |
 | :--- | :--- |
 | [Hill tensors by transformation: closed forms derived step by step](@ref app-hill-transformation) | the Hill tensor of an ellipsoid as that of a sphere in a transformed medium, and the closed form it gives for a spheroid in a coaxial transversely isotropic matrix, derived symbolically and held to the numerical back-ends |
+| [Concave pores: superspheres and superspheroids](@ref app-concave-pores) | pores with no Eshelby solution, computed by finite elements and set against the only published data for this shape family |
+| [A concave pore through every route](@ref app-pore-routes) | one superspherical pore by a published table, a finite-element cell, a neural surrogate and a grid of Gaussians, with the deviations measured |
+| [Ring-shaped pores in a conducting matrix](@ref app-insulating-torus) | the toroidal pore in conduction, by a series of toroidal harmonics, against a published study and spheroids of the same volume |
+| [Prismatic pores with corners](@ref app-conformal-holes) | pores whose section is given by a conformal map, polygons included, against published compressibilities and shear compliances; perforated plates |
+
+## Interactions between particles
+
+Particles that see where their neighbors are.
+
+| Page | What it models |
+| :--- | :--- |
 | [The cluster model on cubic arrays](@ref app-cluster-model) | inclusions that see where their neighbors are: the pairwise interactions within a cluster, on periodic arrays |
 | [The equivalent inclusion method, against a published table](@ref app-eim-assembly) | the Galerkin form of the Lippmann–Schwinger equation on a planar assembly of disks, against a published table |
 | [Arrays and clusters of spheres by the multipole expansion](@ref app-mem-spheres) | the whole field around each sphere, as a series of harmonics: cubic arrays and a finite cluster in conduction and in elasticity, against published tables |
 | [Spheroids and ellipsoids by the multipole expansion](@ref app-mem-spheroids) | oblate spheroids on three proportional lattices with perfect and imperfect interfaces, spheroids bonded by springs, ellipsoids with a Kapitza interface, against the tables of Kushch |
-| [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate) | an old aggregate wrapped in a shell of adhered mortar, off center, solved by finite elements and checked against the concentric layered sphere |
-| [Concave pores: superspheres and superspheroids](@ref app-concave-pores) | pores with no Eshelby solution, computed by finite elements and set against the only published data for this shape family |
-| [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy) | the permeability of granular, fibrous, tubular and double-porosity media from the Stokes flow in their pores, through size-dependent Brinkman inclusions |
+
+## Cracks
+
+Cracks whose faces touch, and narrow cracks of various contours.
+
+| Page | What it models |
+| :--- | :--- |
 | [Cracks with contacts between their faces](@ref app-crack-contacts) | a circular crack whose faces touch on islands: one contact, regular patterns, clusters and random sets, by the Gaussian approximation of the crack equation, against a published study |
 | [Narrow cracks: rings, rectangles, bands](@ref app-narrow-cracks) | the plane strain model of a narrow crack and its end effects, on rings, rectangles, ellipses and curved bands, against published fits, the annular crack and the closed form of the ellipse |
+
+## Coated inclusions and interphases
+
+A particle in a shell: uniform, graded, approximated by a closure, or aging.
+
+| Page | What it models |
+| :--- | :--- |
+| [A recycled-concrete aggregate, by axisymmetric Fourier elements](@ref app-recycled-aggregate) | an old aggregate wrapped in a shell of adhered mortar, off center, solved by finite elements and checked against the concentric layered sphere |
+| [A graded interphase around a spherical particle](@ref app-graded-interphase) | a zone whose moduli vary with the radius, as thin layers, against an exact series in elasticity and conduction |
+| [Coated inclusions: closures on the mean strains, and the exact solution](@ref app-coated-estimates) | the published closures of the coated ellipsoid, each with its assumption, set beside the layered sphere and the confocal spheroid |
+| [Coated spheres in an aging viscoelastic matrix](@ref app-aging-coated-spheres) | elastic spheres, coated or not, in a matrix that creeps and ages, by the Mori-Tanaka and generalized self-consistent schemes |
+
+## Transport in pores
+
+The Stokes flow in the pores and the permeability it gives.
+
+| Page | What it models |
+| :--- | :--- |
+| [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy) | the permeability of granular, fibrous, tubular and double-porosity media from the Stokes flow in their pores, through size-dependent Brinkman inclusions |
 
 ## Cementitious materials
 
@@ -59,7 +96,7 @@ the pages it builds on.
 | :--- | :--- |
 | [Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous) | the complex modulus ``E^*(\omega)`` through three nested scales, a 2S2P1D bitumen among elastic mineral phases |
 
-The finite elements met in the first section are a solver called *inside*
+The finite elements met in the first sections are a solver called *inside*
 homogenization, for one inclusion; the opposite use, homogenization called
 inside a structural solver as the constitutive law at each Gauss point, is the
 subject of [Finite-element coupling](@ref fe-coupling).

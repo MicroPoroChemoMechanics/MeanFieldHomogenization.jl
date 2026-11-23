@@ -21,6 +21,8 @@ geometry
 shape_param
 get_param
 set_param
+get_coefficient
+set_coefficient
 ```
 
 ## Autodiff entry points

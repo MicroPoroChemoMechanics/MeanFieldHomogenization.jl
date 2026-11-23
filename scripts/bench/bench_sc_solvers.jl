@@ -128,9 +128,9 @@ const DERIV_SOLVERS = [
 
 deriv_results = Dict{String, Float64}()
 for (label, scheme) in DERIV_SOLVERS
-    d = derivative(rve, scheme, property(:I, :C, :bulk); indexer = idxC)
+    d = derivative(rve, scheme, property(:I, :C, :α); indexer = idxC)
     deriv_results[label] = d
-    bench(() -> derivative(rve, scheme, property(:I, :C, :bulk); indexer = idxC), label)
+    bench(() -> derivative(rve, scheme, property(:I, :C, :α); indexer = idxC), label)
 end
 
 println("\n  Cross-check (central finite difference, solver-independent ground truth):")
