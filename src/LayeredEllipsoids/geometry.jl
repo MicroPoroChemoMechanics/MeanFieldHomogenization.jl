@@ -29,6 +29,10 @@ struct LayeredEllipsoid{T <: Number, N, Cs, B <: TensND.AbstractBasis} <: MFH_Co
     semi_axes::NTuple{N, NTuple{3, T}}      # outer boundary of each layer, ascending
     moduli::Cs                              # NTuple{N, TensISO{2,3}}
     basis::B                                # the common axes of the ellipsoids
+    # Only this constructor, with every parameter given: the default one would
+    # leave `T` unbound for a tuple of no layer.
+    LayeredEllipsoid{T, N, Cs, B}(semi_axes, moduli, basis) where {T <: Number, N, Cs, B <: TensND.AbstractBasis} =
+        new{T, N, Cs, B}(semi_axes, moduli, basis)
 end
 
 # The relative tolerance on the confocality of two boundaries, on the squares
