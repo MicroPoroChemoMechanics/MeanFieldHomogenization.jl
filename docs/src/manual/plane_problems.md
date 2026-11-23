@@ -322,7 +322,6 @@ end
 
 ## What is not covered
 
-- aging viscoelasticity in the plane;
 - laminates and conducting cracks ([`ConductiveCrack`](@ref)) in the plane;
 - the average over the rotations alone of a section without a mirror line:
   `IsoSymmetrize` also averages over the reflections;
@@ -330,6 +329,9 @@ end
   with layers, tori, the shapes solved by a grid, a mesh or a network.
 
 ## Where to go next
+
+- [Cells of the plane](@ref man-visco-plane) in aging viscoelasticity: the
+  operators of plane strain and of plane stress of an aging material.
 
 - [Holes given by a conformal map](@ref th-conformal-mapping), sections 7 and
   8: the hole in a matrix isotropic in the plane, and in a plate.

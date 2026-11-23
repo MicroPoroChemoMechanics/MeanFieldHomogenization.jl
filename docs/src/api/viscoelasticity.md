@@ -193,6 +193,8 @@ Usage: [Aging viscoelastic operators and histories](@ref man-volterra-operators)
 TimeGrid
 time_grid
 VolterraOperator
+TensND.plane_strain_stiffness(::VolterraOperator{<:TensND.TensISO{4, 3}})
+TensND.plane_stress_stiffness(::VolterraOperator{<:TensND.TensISO{4, 3}})
 TimeHistory
 operator_value
 convert_class

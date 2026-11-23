@@ -391,6 +391,45 @@ J_eff = inv(C_eff)                       # the creep operator
 [ε[i][1] for i in eachindex(times)]      # ε_xx(tᵢ)
 ```
 
+### [Cells of the plane](@id man-visco-plane)
+
+A cell of the plane takes the operators of the plane, as in elasticity
+([Plane problems](@ref man-plane-problems)): disks and ellipses
+(`Ellipsoid(r; dim = 2)`, `Ellipsoid(a, b)`), segments (`RibbonCrack(b; angle)`)
+and concentric rings ([`LayeredCylinder`](@ref) of tensors of the plane). For an
+isotropic aging material of operator of space ``\mathbb{R}=\alpha\circ\mathbb{J}+\beta\circ\mathbb{K}``,
+the operator of the plane is one of two. In **plane strain** it is the in-plane
+block, ``(2\alpha+\beta)/3`` on ``\mathbb{J}`` and ``\beta`` on ``\mathbb{K}``. In
+**plane stress**, the condition ``\sigma_{33}=0`` gives
+``\varepsilon_{33}=-(\lambda+2\mu)^{-\circ}\circ\lambda\circ(\varepsilon_{11}+\varepsilon_{22})``,
+with ``\lambda=(\alpha-\beta)/3`` and ``2\mu=\beta``, and the in-plane relation
+replaces ``\lambda`` by
+
+```math
+\lambda^{*}=\lambda-\lambda\circ(\lambda+2\mu)^{-\circ}\circ\lambda ,
+```
+
+Volterra products and inverse in this order: the operators of an aging
+material do not commute, so this is not the plane-stress conversion of the
+moduli instant by instant. For constant moduli it is the elastic
+``2\lambda\mu/(\lambda+2\mu)``; the derivation is in
+[Plane strain and plane stress](@ref th-visco-plane-states).
+[`plane_strain_stiffness`](@ref) and [`plane_stress_stiffness`](@ref) take the
+operator of space:
+
+```@example vo
+R_M = VolterraOperator(law_M, times)
+sheet = RVE()
+add_phase!(sheet, :M, Ellipsoid(1.0; dim = 2), Dict(:C => plane_stress_stiffness(R_M)); fraction = :rest)
+add_phase!(sheet, :holes, Ellipsoid(1.0; dim = 2), Dict(:C => TensISO{2}(0.0, 0.0)); fraction = 0.2)
+homogenize_alv(sheet, MoriTanaka(), :C)
+```
+
+`Voigt`, `Reuss`, `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`,
+`PonteCastanedaWillis` and `SelfConsistent` apply to these cells; the
+differential and the asymmetric self-consistent schemes, written on the
+matrices of space, are refused.
+
 ## [5. Cracks in ALV](@id man-visco-cracks)
 
 ### 5.1 Traction-free elliptic and ribbon cracks

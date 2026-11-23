@@ -93,6 +93,7 @@ include("trapezoidal.jl")
 include("sampled_law.jl")
 include("volterra_inverse.jl")
 include("volterra_operator.jl")
+include("plane_states_alv.jl")      # plane strain and plane stress of an aging material
 include("conversions.jl")
 include("hill_alv.jl")
 include("schemes_alv.jl")

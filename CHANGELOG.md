@@ -71,9 +71,12 @@ says which route to an inclusion's response fits which situation.
   conductivity of space: the order and the dimension come from the class of
   the operator, never from a size. The differential and asymmetric
   self-consistent schemes, the Newton solver and conduction, written on the
-  full matrices of space, refuse a cell of the plane. Plane stress is left out:
-  the plane-stress kernel of an aging material is not the pointwise conversion
-  of its plane-strain kernel.
+  full matrices of space, refuse a cell of the plane.
+  `plane_strain_stiffness(R)` and `plane_stress_stiffness(R)` give the two
+  operators of the plane of an isotropic aging material of operator of space
+  `R`; the second condenses the out-of-plane strain with Volterra products and
+  inverse, `λ* = λ − λ∘(λ + 2μ)^{-∘}∘λ`, which is not the plane-stress
+  conversion of the moduli instant by instant.
 - `sif` of a crack of the plane: the opening and sliding intensity factors of
   a `RibbonCrack` in a two-dimensional cell, and its flux intensity factor.
 - An assembly of particles checks that the domain of a `MixedBC` has the

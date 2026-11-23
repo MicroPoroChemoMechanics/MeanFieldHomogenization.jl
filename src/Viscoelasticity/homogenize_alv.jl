@@ -382,9 +382,10 @@ plane), the cell is two-dimensional, of disks and ellipses (`Ellipsoid(r; dim = 
 ([`LayeredCylinder`](@ref) of tensors of the plane), as in elasticity. `Voigt`,
 `Reuss`, `Dilute`, `DiluteDual`, `MoriTanaka`, `Maxwell`, `PonteCastanedaWillis` and
 `SelfConsistent` (its Picard iteration, without rings) are available, in elasticity;
-`IsoSymmetrize` averages over the orientations of the plane. The plane-stress
-moduli of an aging material are not the pointwise conversion of its plane-strain
-kernel (the operators do not commute), so the kernels are those of plane strain.
+`IsoSymmetrize` averages over the orientations of the plane. The operator of the
+plane of an aging material, in plane strain or in plane stress, is that of
+[`plane_strain_stiffness`](@ref) or [`plane_stress_stiffness`](@ref) applied to
+its operator of space.
 
 `symmetrize` is honored in both orders, with the projector of the matching
 tensor order (``6\\times 6`` Mandel blocks for order 4, 2-tensor blocks for order 2 —
