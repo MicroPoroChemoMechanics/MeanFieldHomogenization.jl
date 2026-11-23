@@ -44,7 +44,7 @@ zero out-of-plane stress, the out-of-plane strain condensed out with Volterra
 products and inverse,
 
 ```math
-\\lambda^{*}=\\lambda-\\lambda\\circ(\\lambda+2\\mu)^{-\\circ}\\circ\\lambda ,
+\\lambda^{*}=\\lambda-\\lambda\\circ(\\lambda+2\\mu)^{-1^{\\circ}}\\circ\\lambda ,
 ```
 
 which is not the pointwise conversion of the moduli of an aging material. For

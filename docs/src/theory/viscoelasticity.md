@@ -870,8 +870,8 @@ neither that expression nor the elastic formula applied to
 On the grid of instants every kernel is a lower-triangular matrix and the
 Volterra product and inverse are those of these matrices
 ([section 1](@ref th-viscoelasticity)), so that ``\lambda^{*}`` is computed as
-``\Lambda-\Lambda\,(\Lambda+2M)^{-1}\,\Lambda``. [`plane_strain_stiffness`](@ref)
-and [`plane_stress_stiffness`](@ref) return the two operators of the plane; the
+``\Lambda-\Lambda\,(\Lambda+2M)^{-1}\,\Lambda``. [`plane_strain_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_strain_stiffness)
+and [`plane_stress_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_stress_stiffness) return the two operators of the plane; the
 [manual](@ref man-visco-plane) builds a cell with them.
 
 ## Where to go next

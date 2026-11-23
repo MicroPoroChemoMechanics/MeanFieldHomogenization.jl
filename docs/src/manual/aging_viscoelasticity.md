@@ -401,12 +401,12 @@ isotropic aging material of operator of space ``\mathbb{R}=\alpha\circ\mathbb{J}
 the operator of the plane is one of two. In **plane strain** it is the in-plane
 block, ``(2\alpha+\beta)/3`` on ``\mathbb{J}`` and ``\beta`` on ``\mathbb{K}``. In
 **plane stress**, the condition ``\sigma_{33}=0`` gives
-``\varepsilon_{33}=-(\lambda+2\mu)^{-\circ}\circ\lambda\circ(\varepsilon_{11}+\varepsilon_{22})``,
+``\varepsilon_{33}=-(\lambda+2\mu)^{-1^{\circ}}\circ\lambda\circ(\varepsilon_{11}+\varepsilon_{22})``,
 with ``\lambda=(\alpha-\beta)/3`` and ``2\mu=\beta``, and the in-plane relation
 replaces ``\lambda`` by
 
 ```math
-\lambda^{*}=\lambda-\lambda\circ(\lambda+2\mu)^{-\circ}\circ\lambda ,
+\lambda^{*}=\lambda-\lambda\circ(\lambda+2\mu)^{-1^{\circ}}\circ\lambda ,
 ```
 
 Volterra products and inverse in this order: the operators of an aging
@@ -414,7 +414,7 @@ material do not commute, so this is not the plane-stress conversion of the
 moduli instant by instant. For constant moduli it is the elastic
 ``2\lambda\mu/(\lambda+2\mu)``; the derivation is in
 [Plane strain and plane stress](@ref th-visco-plane-states).
-[`plane_strain_stiffness`](@ref) and [`plane_stress_stiffness`](@ref) take the
+[`plane_strain_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_strain_stiffness) and [`plane_stress_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_stress_stiffness) take the
 operator of space:
 
 ```@example vo
