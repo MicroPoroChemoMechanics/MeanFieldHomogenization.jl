@@ -116,7 +116,7 @@ const TEST_PARTS = Dict(
     # runner took past the timeout on the prerelease of Julia.
     "polycrystals" => ("Polycrystals",),
     "patterns" => (
-        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "Superspheres",
+        "LayeredSpheres", "LayeredCylinders", "Laminates", "LayeredSpheroids", "LayeredEllipsoids", "Superspheres",
         "FiniteElementInclusions", "GaussianApproximation",
     ),
     "visco-neural" => ("Viscoelasticity", "NeuralInclusions"),
@@ -402,6 +402,11 @@ end
         include("Laminates/test_laminate_nesting.jl")
         include("Laminates/test_laminate_dual_compat.jl")
         include("Laminates/test_laminate_symbolic.jl")
+    end
+
+    rungroup("LayeredEllipsoids") && @testset "LayeredEllipsoids" begin
+        include("LayeredEllipsoids/test_layered_ellipsoid.jl")
+        HAS_SYMBOLIC_BACKENDS && include("LayeredEllipsoids/test_layered_ellipsoid_symbolic.jl")
     end
 
     rungroup("LayeredSpheroids") && @testset "LayeredSpheroids" begin

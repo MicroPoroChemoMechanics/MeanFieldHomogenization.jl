@@ -279,6 +279,7 @@ end
 #  the tensor order instead would make the catch-all unreachable.)
 const _Layered = Union{
     LayeredSpheres.LayeredSphere, LayeredSpheroids.LayeredSpheroid, LayeredCylinders.LayeredCylinder,
+    LayeredEllipsoids.LayeredEllipsoid,
 }
 
 _layer_voigt(sphere::_Layered, ref::TensND.AbstractTens) = layer_property_average(sphere, ref)

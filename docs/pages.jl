@@ -65,6 +65,7 @@ pages = [
             "theory/layered_cylinder.md",
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
+            "theory/layered_ellipsoid.md",
         ],
         # One page per family of schemes, each with its figure, its assumption
         # and its equations, in the order of the overview's table. The laminate
@@ -419,6 +420,7 @@ pages = [
         "api/layered_sphere.md",
         "api/layered_cylinder.md",
         "api/layered_spheroid.md",
+        "api/layered_ellipsoid.md",
         "api/superspheres.md",
         "api/laminate.md",
         "api/interactions.md",

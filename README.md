@@ -126,6 +126,7 @@ page runs the same problems with both libraries. The port extends it in six dire
 | `MeanFieldHomogenization.Conductivity` | 2nd-order Hill tensor for transport problems; closed form for any matrix anisotropy. |
 | `MeanFieldHomogenization.LayeredSpheres` | `n`-layer composite spheres, 5 interface types (perfect, spring, membrane, Kapitza, surface-conductive), volume-average and pointwise concentration. |
 | `MeanFieldHomogenization.LayeredSpheroids` | `n`-layer confocal spheroids: conduction with Kapitza / surface-conductive interfaces, series or quadrature evaluation; elasticity, prolate or oblate, with perfect interfaces. |
+| `MeanFieldHomogenization.LayeredEllipsoids` | `n`-layer confocal ellipsoids of three unequal axes in conduction: exact relations between the mean gradients of the layers, no series |
 | `MeanFieldHomogenization.Laminates` | Periodic **multilayer** cell: parallel layers, no matrix, no Eshelby problem — an *exact* solution in elasticity and transport, with the same 4 imperfect-interface models, per-layer concentration and an aging-viscoelastic twin. |
 | `MeanFieldHomogenization.Interactions` | Two-inclusion interaction tensor and Green operator of the reference medium — exact closed forms for balls and disks, cubature for an anisotropic reference, periodic image sums. |
 | `MeanFieldHomogenization.Assemblies` | `ParticleAssembly`: the cell that carries **positions**, its lattice / random generators and boundary treatments — what the N-body schemes act on. |

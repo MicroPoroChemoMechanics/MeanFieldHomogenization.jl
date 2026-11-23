@@ -31,6 +31,8 @@ common abstraction for inclusions, algorithms, and material symmetry classes.
   interface types, volume-average and pointwise concentration.
 - `MeanFieldHomogenization.LayeredSpheroids` — `n`-layer confocal spheroids in
   conduction, with imperfect interfaces, and in elasticity, with perfect ones.
+- `MeanFieldHomogenization.LayeredEllipsoids` — `n`-layer confocal ellipsoids of
+  three unequal axes in conduction.
 - `MeanFieldHomogenization.Schemes`      — RVEs, amounts, symmetrization and the
   homogenization schemes themselves (dilute, Mori–Tanaka, self-consistent,
   PCW, Maxwell, differential).
@@ -94,6 +96,7 @@ include("Conductivity/Conductivity.jl")
 include("Interactions/Interactions.jl")
 include("LayeredSpheres/LayeredSpheres.jl")
 include("LayeredSpheroids/LayeredSpheroids.jl")
+include("LayeredEllipsoids/LayeredEllipsoids.jl")
 include("LayeredCylinders/LayeredCylinders.jl")
 include("Schemes/Schemes.jl")
 # `Laminates` sits between `Schemes` and `Viscoelasticity`: it extends
@@ -119,6 +122,7 @@ using .Conductivity
 using .Interactions
 using .LayeredSpheres
 using .LayeredSpheroids
+using .LayeredEllipsoids
 using .LayeredCylinders
 using .Schemes
 using .Laminates
@@ -327,6 +331,8 @@ export cylinder_gradient_average, cylinder_flux_average,
 
 # ── LayeredSpheroid (Barthélémy-Bignonnet confocal spheroid, conduction and elasticity)
 export LayeredSpheroid, layered_spheroid_from_fractions, confocal_layer_radii
+# ── LayeredEllipsoid (confocal ellipsoid of three unequal axes, conduction)
+export LayeredEllipsoid, layered_ellipsoid_from_fractions
 export layer_q, layer_semiaxes, outer_semiaxes
 export spheroid_state_sequence, spheroid_ba_ratios
 # Elastic case I (axisymmetric): Papkovich–Neuber in the confocal chart.

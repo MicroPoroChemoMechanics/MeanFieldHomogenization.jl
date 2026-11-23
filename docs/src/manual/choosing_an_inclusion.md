@@ -37,7 +37,7 @@ response is computed, and therefore by what they allow.
 | :--- | :--- | :--- | :--- | :--- |
 | ellipsoid and its limits | [`Ellipsoid`](@ref), `Cylinder` | A | closed form, or a quadrature for a general anisotropy | [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions), [Cylindrical inclusions](@ref man-cylindrical-inclusions) |
 | elliptical and ribbon cracks | [`EllipticCrack`](@ref), `RibbonCrack` | density | the crack-opening tensor | [Cracks](@ref man-cracks) |
-| layered patterns | `LayeredSphere`, `LayeredCylinder`, `LayeredSpheroid` | B | exact recurrence over the layers, or a series of harmonics | [Layered inclusions](@ref man-layered) |
+| layered patterns | `LayeredSphere`, `LayeredCylinder`, `LayeredSpheroid`, `LayeredEllipsoid` | B | exact recurrence over the layers, or a series of harmonics | [Layered inclusions](@ref man-layered) |
 | toroidal pore (conduction) | [`InsulatingTorus`](@ref) | B | series of toroidal harmonics, exact to rounding | [Toroidal inclusions](@ref man-toroidal-inclusions) |
 | prismatic cavity of any section given by a map | [`ConformalHole`](@ref) | B | complex potentials on a conformal map, exact | [Conformal holes](@ref man-conformal-holes) |
 | your own formula, table or solver | [`CustomInclusion`](@ref MeanFieldHomogenization.CustomInclusion), or a subtype of [`AbstractCustomInclusion`](@ref) | A, B or C | what you supply | [Custom inclusions](@ref man-custom-inclusions) |

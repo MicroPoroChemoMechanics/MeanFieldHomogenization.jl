@@ -65,6 +65,15 @@ says which route to an inclusion's response fits which situation.
   dimension of the particles: disks in the ball of `MixedBC(radius)` gave
   volume fractions against a volume, and are now refused with the way out,
   `MixedBC(Ellipsoid(radius; dim = 2))`.
+- **`LayeredEllipsoid`**, an inclusion of isotropic layers bounded by confocal
+  ellipsoids of three unequal axes, in conduction. The mean gradients of its
+  layers satisfy as many linear relations as there are layers, exact for
+  confocal boundaries (the exterior potentials of confocal ellipsoids are in
+  the ratio of their volumes), so that no series is needed: the response
+  agrees with the confocal spheroid, the layered sphere and the homogeneous
+  ellipsoid. `layered_ellipsoid_from_fractions` builds the confocal family
+  from the core and the volume fractions. Any orientation; numbers, duals and
+  symbolic conductivities. Isotropic layers and medium, perfect interfaces.
 - **`graded_layers(profile, r_in, r_out, n)`**, which cuts a zone whose moduli
   vary with the radius into thin uniform layers for a `LayeredSphere` or a
   `LayeredCylinder`: an interphase that is not a uniform shell. The response of

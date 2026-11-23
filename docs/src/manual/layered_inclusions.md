@@ -23,15 +23,16 @@ scheme needs — the family enters through
 [level B](@ref man-custom-inclusions), supplying both concentration tensors
 directly.
 
-Three families are shipped, and they share their whole surface:
+Four families are shipped, and they share their whole surface:
 
 | Type | Geometry | Layers | Physics |
 |:--|:--|:--|:--|
 | [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) | concentric spheres | isotropic | elasticity, conduction, aging viscoelasticity |
 | [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) | coaxial infinite cylinders | isotropic or transversely isotropic about the axis | elasticity, conduction, aging viscoelasticity |
 | [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) | **confocal** spheroids | isotropic | elasticity and conduction |
+| [`LayeredEllipsoid`](@ref MeanFieldHomogenization.LayeredEllipsoids.LayeredEllipsoid) | **confocal** ellipsoids of three unequal axes | isotropic | conduction |
 
-The general syntax comes first below; the three geometries, and what is
+The general syntax comes first below; the four geometries, and what is
 specific to each, come after.
 
 ## The general syntax
@@ -179,7 +180,7 @@ Three checks come free and are worth using on a new configuration:
 and the continuity of tractions across every interface — with the displacement
 jump matching the interface law where there is one.
 
-## The three geometries
+## The four geometries
 
 ### Concentric spheres
 
@@ -306,6 +307,32 @@ conduction: the confocal surfaces are not homothetic, so the harmonic degrees
 couple across a *perfect* interface too, and one global system is assembled
 rather than a chain of transfer matrices. `Nseries` sets the truncation.
 
+### Confocal ellipsoids
+
+[`LayeredEllipsoid`](@ref MeanFieldHomogenization.LayeredEllipsoids.LayeredEllipsoid)
+is the same pattern with three unequal axes, in conduction. Its boundaries are
+confocal too: the squares of the semi-axes of two of them differ by one
+number. [`layered_ellipsoid_from_fractions`](@ref MeanFieldHomogenization.LayeredEllipsoids.layered_ellipsoid_from_fractions)
+finds them from the semi-axes of the core and the volume fractions of the
+layers:
+
+```@example layered
+k = (TensISO{3}(100.0), TensISO{3}(10.0))
+ellipsoid = layered_ellipsoid_from_fractions((1.0, 2.0, 5.0), (0.8, 0.2), k)
+layer_semiaxes(ellipsoid, 2)
+```
+
+Its tensors are diagonal in the axes of the ellipsoid, given by `basis`, and
+come from a linear system on the mean gradients of the layers, with no series
+([Layered ellipsoid](@ref th-layered-ellipsoid)):
+
+```@example layered
+canonical_components(property_contribution(ellipsoid, TensISO{3}(1.0), TensISO{3}(1.0)))
+```
+
+The layers and the surrounding medium are isotropic and the interfaces
+perfect; the conductivities may be symbols.
+
 ## What is not available, and why
 
 - **Imperfect interfaces on the elastic spheroid.** They fit the sphere and the
@@ -337,7 +364,7 @@ families themselves use through level B. The tutorials
 [Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder)
 and
 [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective)
-work through the three geometries, and
+work through the first three geometries, and
 [The interfacial transition zone in concrete](@ref app-itz-concrete) uses a
 coated sphere for an aggregate and its transition zone.
 [A graded interphase around a spherical particle](@ref app-graded-interphase)
