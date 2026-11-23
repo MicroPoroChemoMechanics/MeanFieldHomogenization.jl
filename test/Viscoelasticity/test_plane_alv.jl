@@ -3,6 +3,7 @@ using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 import ForwardDiff
+import Symbolics
 
 # =============================================================================
 #  Aging viscoelasticity on two-dimensional cells: the operators of the plane
@@ -76,6 +77,8 @@ const PA_DENSE2 = ViscoLaw((t, tp) -> Tens([3 + pa_decay(t, tp) 0.4; 0.4 2.0 + 0
     @test (A * B).class isa MeanFieldHomogenization.Viscoelasticity.DenseClass{4, 2}
     @test Matrix(A * B) ≈ Matrix(A) * Matrix(B) rtol = 1.0e-13
     @test Matrix(B - A) ≈ Matrix(B) - Matrix(A) rtol = 1.0e-14
+    A₂, B₂ = VolterraOperator(PA_ISO2, PA_TIMES), VolterraOperator(PA_DENSE2, PA_TIMES)
+    @test Matrix(A₂ + B₂) ≈ Matrix(A₂) + Matrix(B₂) rtol = 1.0e-14
     # a constant tensor of the plane: its value on the diagonal
     C = TensISO{2}(6.0, 4.0)
     K = VolterraOperator(C, PA_TIMES)
@@ -97,6 +100,20 @@ end
     @test canonical_components(operator_value(iso, 2, 2)) ≈ canonical_components(ref) rtol = 1.0e-14
     iso2 = MeanFieldHomogenization.Viscoelasticity._iso_part2(VolterraOperator(Tens([3.0 0.4; 0.4 2.0]), PA_TIMES))
     @test only(TensND.get_data(operator_value(iso2, 2, 2))) ≈ 2.5
+end
+
+@testset "VolterraOperator of the plane: symbolic moduli" begin
+    # the moduli whose Volterra inverses make the Hill kernel of the plane: the
+    # longitudinal one λ + 2μ = (α + β)/2 and the shear one β/2, here constant
+    Symbolics.@variables α β
+    R = VolterraOperator(TensISO{2}(α, β), [0.0, 1.0])
+    J_long, J_shear = MeanFieldHomogenization.Viscoelasticity._alv_iso_inverses(R)
+    values = Dict(α => 3.0, β => 1.5)
+    num(x) = Symbolics.value(Symbolics.substitute(x, values; fold = Val(true)))
+    @test num(J_long[2, 2]) ≈ 2 / (3.0 + 1.5)
+    @test num(J_shear[2, 2]) ≈ 2 / 1.5
+    @test iszero(num(J_long[2, 1]))
+    @test num(only(TensND.get_data(operator_value(inv(R), 2, 2))[1:1])) ≈ 1 / 3.0
 end
 
 # ── Homogenization of cells of the plane ─────────────────────────────────────
@@ -138,6 +155,8 @@ const PA_SCHEMES = (Voigt(), Reuss(), Dilute(), DiluteDual(), MoriTanaka(), Maxw
     end
     # the plane has no axis to average about
     @test_throws ArgumentError homogenize_alv(pa_cell(PA_C0, PA_C1, f; inclusion = ellipse, symmetrize = TISymmetrize((0.0, 0.0, 1.0))), MoriTanaka(), :C; times = PA_TIMES)
+    # the Hill kernel is known against an isotropic matrix only
+    @test_throws ArgumentError homogenize_alv(pa_cell(PA_DENSE4, PA_C1, f), MoriTanaka(), :C; times = PA_TIMES)
     # the schemes written on full matrices of space are refused
     for scheme in (DifferentialScheme(), AsymmetricSelfConsistent(), SelfConsistent(algorithm = NewtonDefault()))
         @test_throws ArgumentError homogenize_alv(pa_cell(PA_C0, PA_C1, f), scheme, :C; times = PA_TIMES)
