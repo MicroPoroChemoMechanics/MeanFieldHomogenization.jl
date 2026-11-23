@@ -268,16 +268,16 @@ _in_space_class(::TensND.AbstractTens{order, 2}, ::Val{S}, args...) where {order
 
 # The projection onto a class that contains the tensor returns the tensor. Not
 # containing it is refused: the derivative would be taken at another tensor.
-_exact_projection(t, class::Val, args...) = _exact_projection(Val(is_hard_numeric(eltype(t))), t, class, args...)
-function _exact_projection(::Val{true}, t, class::Val{S}, args...) where {S}
+_exact_projection(t, class::Val, args...) = _project_contained(Val(is_hard_numeric(eltype(t))), t, class, args...)
+function _project_contained(::Val{true}, t, class::Val{S}, args...) where {S}
     B, _, drel = TensND.project(t, class, args...)
     drel ≤ 1.0e-10 || _not_contained(S, t, " (relative distance $drel)")
     return B
 end
 # A symbolic distance cannot be compared: the isotropic tensor, which every class
 # contains, is the one case decided without it.
-_exact_projection(::Val{false}, t::TensND.TensISO, class::Val, args...) = first(TensND.project(t, class, args...))
-_exact_projection(::Val{false}, t, ::Val{S}, args...) where {S} =
+_project_contained(::Val{false}, t::TensND.TensISO, class::Val, args...) = first(TensND.project(t, class, args...))
+_project_contained(::Val{false}, t, ::Val{S}, args...) where {S} =
     _not_contained(S, t, ", which a symbolic tensor cannot show unless it is isotropic")
 _not_contained(S, t, why) = throw(
     ArgumentError(
