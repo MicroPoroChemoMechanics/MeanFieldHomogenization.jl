@@ -159,20 +159,20 @@ end
     rve = _outer(Dict(:C => Homogenized(_inner_laminate(), Laminated())))
     p = nested(:agg, :C, property(:A, :C, :shear))
 
-    @test get_param(rve, p) ≈ 2 * 0.8            # TensISO stores 2μ
+    @test get_param(rve, p) ≈ 0.8                # the shear modulus μ
 
-    rve2 = set_param(rve, p, 2 * 1.5)
-    @test get_param(rve2, p) ≈ 2 * 1.5
-    @test get_param(rve, p) ≈ 2 * 0.8            # the original is untouched
+    rve2 = set_param(rve, p, 1.5)
+    @test get_param(rve2, p) ≈ 1.5
+    @test get_param(rve, p) ≈ 0.8                # the original is untouched
 
     # One ForwardDiff pass across BOTH scales, against central differences.
     function μ_eff(x)
-        r = _outer(Dict(:C => homogenize(_inner_laminate(x / 2), Laminated(), :C)))
+        r = _outer(Dict(:C => homogenize(_inner_laminate(x), Laminated(), :C)))
         return k_mu(homogenize(r, MoriTanaka(), :C))[2]
     end
     ad = derivative(rve, MoriTanaka(), p; indexer = C -> k_mu(C)[2])
     h = 1.0e-6
-    @test ad ≈ (μ_eff(1.6 + h) - μ_eff(1.6 - h)) / (2h) rtol = 1.0e-5
+    @test ad ≈ (μ_eff(0.8 + h) - μ_eff(0.8 - h)) / (2h) rtol = 1.0e-5
 
     # A nested thickness works the same way.
     pt = nested(:agg, :C, thickness(:A))

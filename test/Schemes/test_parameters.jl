@@ -69,21 +69,24 @@ end
         fraction = 0.2
     )
 
-    # bulk / shear named selectors map to indices 1, 2 of TensISO{4,3}
-    @test get_param(rve, property(:I, :C, :bulk)) ≈ 60.0
-    @test get_param(rve, property(:I, :C, :shear)) ≈ 20.0
-    @test get_param(rve, property(:I, :C, :K)) ≈ 60.0
-    @test get_param(rve, property(:I, :C, :μ)) ≈ 20.0
+    # TensISO{3}(α, β) = α 𝕁 + β 𝕂 with α = 3k, β = 2μ: :k and :μ are the moduli,
+    # :α and :β (and the indices 1, 2 of get_data) the stored coefficients.
+    @test get_param(rve, property(:I, :C, :bulk)) ≈ 20.0
+    @test get_param(rve, property(:I, :C, :k)) ≈ 20.0
+    @test get_param(rve, property(:I, :C, :shear)) ≈ 10.0
+    @test get_param(rve, property(:I, :C, :μ)) ≈ 10.0
+    @test get_param(rve, property(:I, :C, :α)) ≈ 60.0
+    @test get_param(rve, property(:I, :C, :β)) ≈ 20.0
     @test get_param(rve, property(:I, :C, 1)) ≈ 60.0
     @test get_param(rve, property(:I, :C, 2)) ≈ 20.0
 
-    # set_param: bulk replaced, shear preserved
-    rve2 = set_param(rve, property(:I, :C, :bulk), 90.0)
-    @test get_param(rve2, property(:I, :C, :bulk)) ≈ 90.0
-    @test get_param(rve2, property(:I, :C, :shear)) ≈ 20.0    # unchanged
+    # set_param: k replaced, μ preserved
+    rve2 = set_param(rve, property(:I, :C, :k), 30.0)
+    @test get_param(rve2, property(:I, :C, :α)) ≈ 90.0
+    @test get_param(rve2, property(:I, :C, :μ)) ≈ 10.0     # unchanged
 
     # Original tensor reference untouched
-    @test get_param(rve, property(:I, :C, :bulk)) ≈ 60.0
+    @test get_param(rve, property(:I, :C, :k)) ≈ 20.0
 end
 
 @testset "PropertyParameter — error on unknown selector" begin
@@ -95,6 +98,7 @@ end
     )
 
     @test_throws ArgumentError get_param(rve, property(:I, :C, :nonexistent))
+    @test_throws ArgumentError get_param(rve, property(:I, :C, :K))       # the bulk modulus is :k
     @test_throws ArgumentError get_param(rve, property(:I, :K, :scalar))   # no :K key
 end
 

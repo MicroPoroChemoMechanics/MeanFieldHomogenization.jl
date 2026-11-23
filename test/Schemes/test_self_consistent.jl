@@ -186,7 +186,7 @@ end
 
     d_incl_modulus = derivative(
         rve, SelfConsistent(; algorithm = NewtonDefault()),
-        property(:I, :C, :bulk); indexer = idxC
+        property(:I, :C, :α); indexer = idxC
     )
     d_fraction = derivative(
         rve, SelfConsistent(; algorithm = NewtonDefault()),

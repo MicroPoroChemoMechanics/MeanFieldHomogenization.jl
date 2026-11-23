@@ -193,8 +193,10 @@ end
     @test get_param(asm, radius_param(:p1)) == particle_geometry(asm, :p1).semi_axes[1]
     @test get_param(asm, center_param(:p1, 1)) == particle_center(asm, :p1)[1]
     # `property` addresses the *stored* TensND datum, so on a `TensISO{4}` the
-    # `:μ` selector reaches `β = 2μ` — the package-wide convention, shared with
-    # the `RVE` lens.
-    @test get_param(asm, property(:p1, :C, :μ)) ≈ 12.0 rtol = 1.0e-12
-    @test get_param(asm, property(:matrix, :C, :K)) ≈ 3.0 rtol = 1.0e-12
+    # `:μ` and `:k` are the moduli, `:β = 2μ` and `:α = 3k` the stored coefficients,
+    # as for the `RVE` lens.
+    @test get_param(asm, property(:p1, :C, :μ)) ≈ 6.0 rtol = 1.0e-12
+    @test get_param(asm, property(:p1, :C, :β)) ≈ 12.0 rtol = 1.0e-12
+    @test get_param(asm, property(:matrix, :C, :k)) ≈ 1.0 rtol = 1.0e-12
+    @test get_param(asm, property(:matrix, :C, :α)) ≈ 3.0 rtol = 1.0e-12
 end

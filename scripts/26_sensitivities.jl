@@ -8,7 +8,7 @@
 #
 #  Four lens types illustrated:
 #    * `amount(:I)`                  — phase volume fraction,
-#    * `property(:I, :C, :bulk)`     — scalar coefficient of a tensor,
+#    * `property(:I, :C, :k)`     — scalar coefficient of a tensor,
 #    * `geometry(:I, :semi_axes, 3)` — scalar geometry field,
 #    * `shape_param(:semi_axes, 1)`  — distribution-shape field (PCW).
 #
@@ -49,8 +49,8 @@ const idxC = C -> get_array(C)[1, 1, 1, 1]
 @printf "\n[1] ∂C[1111]/∂f_I    (Mori-Tanaka)  = %.6f\n" ∂_f
 
 # ── 2) Sensitivity w.r.t. the inclusion bulk modulus ────────────────────────
-∂_K = derivative(rve, MoriTanaka(), property(:I, :C, :bulk); indexer = idxC)
-@printf "[2] ∂C[1111]/∂K_I    (Mori-Tanaka)  = %.6f\n" ∂_K
+∂_k = derivative(rve, MoriTanaka(), property(:I, :C, :k); indexer = idxC)
+@printf "[2] ∂C[1111]/∂k_I    (Mori-Tanaka)  = %.6f\n" ∂_k
 
 # ── 3) Geometry sensitivity (sphere → the effect is zero, but the machinery
 #       runs and demonstrates the lens API).
@@ -60,17 +60,17 @@ const idxC = C -> get_array(C)[1, 1, 1, 1]
 # ── 4) Multi-parameter gradient ─────────────────────────────────────────────
 ps = [
     amount(:I),
-    property(:I, :C, :bulk),
-    property(:I, :C, :shear),
-    property(:M, :C, :bulk),
-    property(:M, :C, :shear),
+    property(:I, :C, :k),
+    property(:I, :C, :μ),
+    property(:M, :C, :k),
+    property(:M, :C, :μ),
 ]
 ∇ = gradient(rve, MoriTanaka(), ps; indexer = idxC)
-println("\n[4] gradient(C[1111]) on 5 parameters [f_I, K_I, μ_I, K_M, μ_M] :")
+println("\n[4] gradient(C[1111]) on 5 parameters [f_I, k_I, μ_I, k_M, μ_M] :")
 @printf "    [%.4f, %.4f, %.4f, %.4f, %.4f]\n" ∇[1] ∇[2] ∇[3] ∇[4] ∇[5]
 
-# ── 5) Full Jacobian of C_eff w.r.t. (f_I, K_I) ─────────────────────────────
-J = jacobian(rve, MoriTanaka(), [amount(:I), property(:I, :C, :bulk)])
+# ── 5) Full Jacobian of C_eff w.r.t. (f_I, k_I) ─────────────────────────────
+J = jacobian(rve, MoriTanaka(), [amount(:I), property(:I, :C, :k)])
 @printf "\n[5] jacobian shape = (%d × %d)   ;   J[1, :] = [%.4f, %.6f]\n" size(J, 1) size(J, 2) J[1, 1] J[1, 2]
 
 # ── 6) Cross-check vs Christensen 1990 closed form ──────────────────────────

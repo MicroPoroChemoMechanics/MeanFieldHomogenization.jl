@@ -66,7 +66,7 @@ radius_param(name::Symbol, axis::Integer = 1) = RadiusParameter(name, Int(axis))
 function get_param(asm::ParticleAssembly, p::Schemes.PropertyParameter)
     t = p.phase === asm.matrix_name ? matrix_property(asm, p.property) :
         particle_property(asm, p.phase, p.property)
-    return TensND.get_data(t)[Schemes._resolve_selector(t, p.selector)]
+    return Schemes.property_coefficient(t, p)
 end
 
 function set_param(asm::ParticleAssembly, p::Schemes.PropertyParameter, value)
@@ -79,9 +79,7 @@ function set_param(asm::ParticleAssembly, p::Schemes.PropertyParameter, value)
     haskey(d, p.property) || throw(
         ArgumentError(":$(p.phase) does not carry property :$(p.property)")
     )
-    old = d[p.property]
-    new = Schemes._replace_data_at(old, Schemes._resolve_selector(old, p.selector), value)
-    return MFH_Core.cell_set_property(asm, p.phase, p.property, new)
+    return MFH_Core.cell_set_property(asm, p.phase, p.property, Schemes.with_property_coefficient(d[p.property], p, value))
 end
 
 # ─── Lenses that do not apply to an assembly ────────────────────────────────

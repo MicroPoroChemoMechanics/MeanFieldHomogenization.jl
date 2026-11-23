@@ -251,6 +251,7 @@ end
         include("Schemes/test_dual_compat.jl")
         include("Schemes/test_parameters.jl")
         include("Schemes/test_sensitivities.jl")
+        include("Schemes/test_coefficient_lenses.jl")
         include("Schemes/test_symmetrize.jl")
         include("Schemes/test_orientation.jl")
         include("Schemes/test_concentration_bundles.jl")
