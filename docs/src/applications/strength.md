@@ -125,7 +125,8 @@ _hf_init(::Val{:iso}, wc, α_p, ω, sc_tol, ::Type{T}) where {T} =
     TensISO{3}(map(x -> convert(T, x), TensND.get_data(build_hf_iso(wc, α_p; ω, sc_tol)))...)
 _hf_init(::Val{:direct}, wc, α_p, ω, sc_tol, ::Type) = nothing
 
-function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect, start = :iso, sc_tol = SC_TOL)
+# The foam as a cell: the needles of the family θ = 0, `:HYD1`, have the shear modulus μ_b0.
+function hf_cell(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect)
     fthyd, ftw, ftair = foam_fractions(wc, α_p)
     T = typeof(μ_b0)
     ez = (0.0, 0.0, 1.0)
@@ -146,8 +147,14 @@ function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect, start = :iso, sc_
     C_tiny = TensISO{3}(convert(T, 3TINY), convert(T, 2TINY))
     add_phase!(rve, :W, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftw)
     add_phase!(rve, :AIR, Ellipsoid(1.0), Dict(:C => C_tiny); fraction = ftair)
-    init = _hf_init(Val(start), wc, α_p, ω, sc_tol, T)
-    return homogenize(rve, SelfConsistent(; init, sc_tol..., maxiters = 1000), :C; select_best = true)
+    return rve
+end
+hf_scheme(wc, α_p, T; ω = ω_aspect, start = :iso, sc_tol = SC_TOL) =
+    SelfConsistent(; init = _hf_init(Val(start), wc, α_p, ω, sc_tol, T), sc_tol..., maxiters = 1000)
+
+function build_hf(wc, α_p, μ_b0; N = NTHETA, ω = ω_aspect, start = :iso, sc_tol = SC_TOL)
+    scheme = hf_scheme(wc, α_p, typeof(μ_b0); ω, start, sc_tol)
+    return homogenize(hf_cell(wc, α_p, μ_b0; N, ω), scheme, :C; select_best = true)
 end
 nothing # hide
 ```
@@ -213,10 +220,6 @@ the strength is
 \frac{f_c}{\sigma^{\mathrm{ult}}_{\mathrm{hyd}}} = \frac{1}{\sqrt{\,M_{3333}\,\mu_{\mathrm{hyd}}^2 / f_\theta\,}}.
 ```
 
-The code below differentiates with respect to the stiffness parameter
-``2\mu_{\mathrm{hyd}}`` instead, which halves ``\boldsymbol{M}`` and doubles the factor
-``\mu_{\mathrm{hyd}}^2``: the same number.
-
 !!! note "The normalization of this page"
     This page keeps the normalization of [pichler2011](@citet), with
     ``\tfrac{1}{2}`` under the root, so that ``\sigma^{\mathrm{ult}}_{\mathrm{hyd}}`` is the
@@ -236,7 +239,7 @@ function quasibrittle_strength(arr_C_mo, arr_dC, μh, f_θ)
     # full inverse and the pull-back is one double contraction, no index loops.
     S = inv(Tens(arr_C_mo))
     M = S ⊡ Tens(arr_dC) ⊡ S
-    return 1 / sqrt(abs(M[3, 3, 3, 3]) * 2μh^2 / f_θ)
+    return 1 / sqrt(abs(M[3, 3, 3, 3]) * μh^2 / f_θ)
 end
 
 function compute_point(wc, α_p; sc = 0.0, N = NTHETA, ω = ω_aspect, kw...)
@@ -249,14 +252,52 @@ function compute_point(wc, α_p; sc = 0.0, N = NTHETA, ω = ω_aspect, kw...)
     K_mo, μ_mo = extract_kμ(arr_C)
     E_mo, _ = E_nu(iso_stiffness(K_mo, μ_mo))
     f_θ = f_hyd(wc, α_p) * (1 - fh_san(wc, sc)) * polar_orientation_bins(N)[1].weight
-    # criterion uses the iso parameter 2μ: d/d(2μ) = (1/2) d/dμ
-    fc = quasibrittle_strength(arr_C, arr_dC ./ 2, μ_hyd_ref, f_θ)
+    fc = quasibrittle_strength(arr_C, arr_dC, μ_hyd_ref, f_θ)
     return (; K_mo, μ_mo, E_mo, fc)
 end
 
 r = compute_point(0.5, αmax(0.5) * (1 - 1e-12))
 (k = round(r.K_mo, digits = 3), μ = round(r.μ_mo, digits = 3),
     E = round(r.E_mo, digits = 2), fc = round(r.fc, digits = 4))
+```
+
+### One family, and a derivative that is not isotropic
+
+![](../assets/applications/needle_families.svg)
+
+The needles are not all perturbed: only those of the family ``\theta = 0``, whose
+axis is that of the compression, take the modulus ``\mu_\theta``, the others
+keeping ``\mu_{\mathrm{hyd}}``. The derivative ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_\theta``
+is then the response of the mortar to a change in needles of one orientation,
+and it has the symmetry of that orientation, transversely isotropic about
+``\underline{e}_3``, not the isotropy of the mortar. Its projections tell it,
+the relative distance to a class being zero for a class that contains the
+tensor:
+
+```@example strength
+arr_dC = ForwardDiff.partials.(multiscale_C_mo(0.5, αmax(0.5) * (1 - 1e-12), 0.0,
+    ForwardDiff.Dual(float(μ_hyd_ref), 1.0)), 1)
+∂C = Tens(arr_dC)
+(ISO = last(TensND.project(∂C, :ISO)), TI_e3 = last(TensND.project(∂C, :TI, [0.0, 0.0, 1.0])))
+```
+
+So the strength reads ``M_{3333}`` on the whole tensor ``\boldsymbol{M}``: the
+isotropic part of ``\partial\mathbb C_{\mathrm{MO}}/\partial\mu_\theta`` would
+spread the perturbation over every orientation and lose what the criterion
+measures.
+
+The dual number above is put by hand on the argument `μ_b0` of the chain. The
+same derivative is the one of the parameter `property(:HYD1, :C, :μ)`, the shear
+modulus of the phase `:HYD1` of the foam ([Sensitivities](@ref man-sensitivities)).
+At the scale of the foam, the two routes give the same number:
+
+```@example strength
+wc, α = 0.5, αmax(0.5) * (1 - 1e-12)
+f₃₃₃₃(C) = canonical_components(C)[3, 3, 3, 3]
+by_hand = ForwardDiff.derivative(μ -> f₃₃₃₃(build_hf(wc, α, μ)), float(μ_hyd_ref))
+by_parameter = derivative(hf_cell(wc, α, float(μ_hyd_ref)), hf_scheme(wc, α, Float64),
+    property(:HYD1, :C, :μ); indexer = f₃₃₃₃, select_best = true)
+(; by_hand, by_parameter)
 ```
 
 ## [Validating the angular discretization](@id app-strength-validation)

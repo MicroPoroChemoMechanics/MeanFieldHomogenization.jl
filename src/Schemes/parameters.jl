@@ -323,8 +323,11 @@ julia> using MeanFieldHomogenization
 
 julia> C = iso_stiffness(10.0, 4.0);
 
-julia> get_coefficient(C, :k), get_coefficient(C, :α), get_coefficient(C, :M44)
-(10.0, 30.0, 8.0)
+julia> get_coefficient(C, :k), get_coefficient(C, :α), get_coefficient(C, :μ)
+(10.0, 30.0, 4.0)
+
+julia> get_coefficient(C, :M44) ≈ 2 * 4.0      # the Kelvin-Mandel component of the shear
+true
 ```
 """
 get_coefficient(t, sel; symmetry = nothing) = _read_coefficient(_class_view(t, sel, symmetry), sel)

@@ -4,10 +4,17 @@
 
 A minor release: two inclusion types whose response is exact although they have
 no Hill tensor, two-dimensional cells in plane strain and in plane stress
-through the existing schemes, a helper for graded interphases, and a page that
-says which route to an inclusion's response fits which situation.
+through the existing schemes, a helper for graded interphases, a page that
+says which route to an inclusion's response fits which situation, and
+parameters that name a coefficient in any symmetry class containing the tensor.
 
 ### Added
+
+- **`get_coefficient(t, selector; symmetry)` and `set_coefficient(t, selector, v;
+  symmetry)`** read and set one coefficient of a tensor in a symmetry class that
+  contains it, with the selectors of the property parameters, so that any
+  function of a tensor (a Hill tensor, a concentration tensor) is differentiated
+  with respect to it by a dual number, without building a cell.
 
 - **`InsulatingTorus(R, r)`**, a ring-shaped pore of the conduction problem in
   an isotropic matrix. Until now a torus could only be approximated, on a grid
@@ -100,6 +107,29 @@ says which route to an inclusion's response fits which situation.
 
 ### Changed
 
+- **A parameter of a property names one coefficient of a symmetry class that
+  contains the tensor**, its own class or a larger one: `property(:I, :C, :ℓ₅;
+  symmetry = (:TI, n))` is the fifth Walpole coefficient of a phase seen as
+  transversely isotropic about `n`, `(:ORTHO, frame)` and `(:CUBIC, frame)` name
+  the orthotropic and cubic classes, and `:Mij` (`:Mi` at order 2) the
+  Kelvin-Mandel component `(i, j)` in the canonical basis, or in `basis` with
+  `symmetry = (:ANISO, basis)`. The tensor is written in that class exactly and
+  the coefficient set while the other coefficients of the class stay fixed, so
+  that a derivative is the partial derivative in that class, even when the
+  perturbation leaves the class of the tensor given. A class that does not
+  contain the tensor is refused.
+- **The names of the coefficients mean what they name.** `:k` (≡ `:bulk`) and
+  `:μ` (≡ `:shear`) of an isotropic stiffness are the bulk and shear moduli, with
+  `α = d k` in dimension `d` and `β = 2μ`; they were `α = 3k` and `β = 2μ`, which
+  made a derivative with respect to "`:bulk`" one third of the derivative with
+  respect to `k`. `:α` and `:β` name the stored coefficients. `:K`, which also
+  names the conductivity property, and `:λ`, which is not the Lamé coefficient,
+  are removed; `:a` and `:b` of a transversely isotropic tensor of order 2 are
+  `:transverse` and `:axial`. The orthotropic coefficients are the tensor
+  components `:C1111` … `:C1212`.
+- **`jacobian` returns the components of the effective tensor in the canonical
+  basis.** It returned those of the basis the tensor is stored in, which for a
+  cell whose matrix is given in a rotated basis is not the canonical one.
 - **TensND 0.16 is required**, for its toroidal coordinates and toroidal
   functions, the plane-strain and plane-stress stiffnesses of a transversely
   isotropic material, and the blocks of the isotropic tensors of the plane on
@@ -114,6 +144,14 @@ says which route to an inclusion's response fits which situation.
   conduction).
 
 ### Documentation
+
+- The manual page "Sensitivities" is rewritten: the parameters, the coefficients
+  of each symmetry class and the enclosing classes, with executed examples. A new
+  tutorial, "One derivative, several routes", computes one derivative through the
+  isotropic, transversely isotropic, orthotropic and Kelvin-Mandel coefficients
+  of the same tensor and checks them against one another by the chain rule. The
+  strength application explains why the derivative with respect to the modulus
+  of one family of needles is not isotropic, and computes it by two routes.
 
 - *Choosing an inclusion*, a new manual page: every way the package obtains the
   response of an inclusion (closed form, layered pattern, series, custom

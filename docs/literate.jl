@@ -99,6 +99,7 @@ const PUBLISHED_SCRIPTS = [
     "96_nano_spheroids.jl" => "nano_spheroids",
     "97_hill_reduction.jl" => "hill_reduction",
     "98_hill_transformation_2020.jl" => "hill_transformation",
+    "100_derivative_routes.jl" => "derivative_routes",
     "material_laws/01_plasticity.jl" => "ml_plasticity",
     "material_laws/02_damage.jl" => "ml_damage",
     "material_laws/03_biot.jl" => "ml_biot",

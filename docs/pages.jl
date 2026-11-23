@@ -254,6 +254,7 @@ pages = [
         ],
         "Differentiation and solvers" => [
             "tutorials/sensitivities.md",
+            "tutorials/generated/derivative_routes.md",
             "tutorials/strength_criteria.md",
             "tutorials/nonlinear_solvers.md",
             "tutorials/generated/secant_elastoplasticity.md",

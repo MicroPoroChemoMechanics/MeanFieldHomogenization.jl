@@ -130,7 +130,7 @@ levels down, the shear modulus of the solid skeleton:
 ````@example laminate_multiscale
 model = declarative_model()
 p_μ = nested(:agg, :C, nested(:POROUS, :C, property(:SOLID, :C, :shear)))
-@printf "\nget_param(nested ×2) = %.4f   (2μ_solid = %.4f)\n" get_param(model, p_μ) (2 * 1.2)
+@printf "\nget_param(nested ×2) = %.4f   (μ_solid = %.4f)\n" get_param(model, p_μ) 1.2
 
 dμ = derivative(model, MoriTanaka(), p_μ; indexer = C -> k_mu(C)[2])
 ````
@@ -140,7 +140,7 @@ Against a central finite difference through the explicit chain:
 ````@example laminate_multiscale
 function μ_macro_explicit(x)
     C_micro = let r = RVE()
-        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => iso(3.0, x / 2)); fraction = :rest)
+        add_phase!(r, :SOLID, Ellipsoid(1.0), Dict(:C => iso(3.0, x)); fraction = :rest)
         add_phase!(r, :pore, Ellipsoid(1.0), Dict(:C => C_pore); fraction = 0.2)
         homogenize(r, MoriTanaka(), :C)
     end
@@ -157,8 +157,8 @@ function μ_macro_explicit(x)
 end
 
 h = 1.0e-6
-fd = (μ_macro_explicit(2 * 1.2 + h) - μ_macro_explicit(2 * 1.2 - h)) / (2h)
-@printf "∂μ_macro/∂(2μ_solid) : AD = %.10f   FD = %.10f   |Δ| = %.2e\n" dμ fd abs(dμ - fd)
+fd = (μ_macro_explicit(1.2 + h) - μ_macro_explicit(1.2 - h)) / (2h)
+@printf "∂μ_macro/∂μ_solid : AD = %.10f   FD = %.10f   |Δ| = %.2e\n" dμ fd abs(dμ - fd)
 ````
 
 A laminate thickness, three scales up, works the same way — and so does a

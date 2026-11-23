@@ -287,4 +287,49 @@ function theory_plane_problem(; path = "theory/plane_problem", panel::Bool = tru
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem())
+"""
+    theory_parameter_classes(; path = "theory/parameter_classes")
+
+The symmetry classes a coefficient of a property lens may belong to, nested
+around an isotropic tensor ℂ: isotropic, transversely isotropic about n,
+orthotropic in a frame that has n as an axis, anisotropic. A dual number put on
+one coefficient of a class (here ℓ₅) moves ℂ inside that class, out of the
+smaller ones, the other coefficients staying fixed.
+"""
+function theory_parameter_classes(; path = "theory/parameter_classes", panel::Bool = true)
+    return sheet(path, 720, 330; panel = panel) do
+        c = Point(235, 180)
+        classes = (
+            (430, 270, tint(BLUE, 0.93), m("\"ANISO\" quad M_(i j)"), txt("Kelvin-Mandel components in a basis")),
+            (330, 200, tint(BLUE, 0.84), m("\"ORTHO\" quad C_(1 1 1 1), dots, C_(1 2 1 2)"), txt("in a frame")),
+            (230, 134, tint(BLUE, 0.72), m("\"TI\"(underline(n)) quad ell_1, dots, ell_6"), nothing),
+            (120, 62, tint(PURPLE, 0.7), m("\"ISO\" quad k, mu"), nothing),
+        )
+        for (w, h, col, _, _) in classes
+            @layer (setcolor(col); box(c, w, h, 14, :fill); setcolor(MUTED); setline(1.0); box(c, w, h, 14, :stroke))
+        end
+        for (k, (w, h, _, name, note)) in enumerate(classes)
+            k == 4 && continue
+            label(name, Point(c.x - w / 2 + 12, c.y - h / 2 + 15); size = 14, halign = :left)
+            note === nothing || label(note, Point(c.x + w / 2 - 12, c.y - h / 2 + 15); size = 11, color = MUTED, halign = :right)
+        end
+        label(classes[4][4], c + Point(0, -17); size = 14)
+        # the tensor, and its move along one coefficient of TI
+        p = c + Point(-22, 8)
+        @layer (setcolor(INK); circle(p, 3.5, :fill))
+        label(m("bb(C)"), p + Point(-14, 0); size = 15)
+        q = c + Point(72, 40)
+        arrow_ab(p + Point(4, 2), q; color = HIGHLIGHT, lw = 2.0)
+        label(m("ell_5 + epsilon"), q + Point(-28, 16); size = 14, color = HIGHLIGHT, halign = :left)
+        # the rule, on the right
+        x = 478
+        label(txt("a coefficient of a class"), Point(x, 110); size = 14, halign = :left)
+        label(txt("that contains the tensor:"), Point(x, 132); size = 14, halign = :left)
+        label(m("ell_5 arrow.r.bar ell_5 + epsilon"), Point(x, 168); size = 15, halign = :left, color = HIGHLIGHT)
+        label(txt("the others fixed;"), Point(x, 204); size = 14, halign = :left)
+        label(m("epsilon") * txt(" a dual number gives"), Point(x, 226); size = 14, halign = :left)
+        label(m("partial bb(C)^(\"hom\") \\/ partial ell_5"), Point(x, 254); size = 15, halign = :left)
+    end
+end
+
+theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(), theory_parameter_classes())
