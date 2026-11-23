@@ -60,9 +60,9 @@ Supertype of parameter lenses. Concrete subtypes designate a single scalar
 input of a homogenization computation:
 
 - `AmountParameter` — volume fraction or crack density of a phase.
-- `PropertyParameter` — a scalar coefficient of a property tensor (`:C`,
-  `:K`, …) of a phase or a layer, designated either by a named selector
-  (`:bulk`, `:shear`, …) or by a positional index.
+- `PropertyParameter` — one coefficient of a property tensor (`:C`, `:K`, …)
+  of a phase or a layer, in a symmetry class that contains the tensor (`:k`,
+  `:μ`, `:ℓ₁` with `symmetry = (:TI, n)`, a Kelvin-Mandel component `:Mij`, …).
 - `GeometryParameter` — a scalar geometry field of a phase (semi-axis of an
   ellipsoid, radius of a layer, …).
 - `DistributionShapeParameter` — a scalar field of the PCW / Maxwell

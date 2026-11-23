@@ -115,7 +115,7 @@ export fracture_permeability
 export AbstractParameter, AmountParameter, PropertyParameter,
     GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param
-export get_param, set_param
+export get_param, set_param, get_coefficient, set_coefficient
 export derivative, gradient, jacobian, sensitivity
 
 end # module

@@ -131,6 +131,35 @@ end
         @test_throws ArgumentError LENS.property_coefficient(Ts, lens_p(:C1111; symmetry = (:ORTHO, TensND.RotatedBasis(0.3, 0.2, 0.1))))
     end
 
+    @testset "a Hill tensor by three routes, on the tensor alone" begin
+        C₀ = iso_stiffness(10.0, 6.0)
+        sph = Ellipsoid(1.0, 1.0, 3.0)
+        P(C) = canonical_components(hill_tensor(sph, C))[3, 3, 3, 3]
+        @test get_coefficient(C₀, :k) == LENS.property_coefficient(C₀, lens_p(:k))
+        by_k = ForwardDiff.derivative(k -> P(set_coefficient(C₀, :k, k)), 10.0)
+        @test by_k ≈ ForwardDiff.derivative(k -> P(iso_stiffness(k, 6.0)), 10.0) rtol = 1.0e-12
+        e₃ = [0.0, 0.0, 1.0]
+        sels = (:ℓ₁, :ℓ₂, :ℓ₃, :ℓ₅, :ℓ₆)
+        ℓ₀ = get_coefficient.(Ref(C₀), sels; symmetry = (:TI, e₃))
+        ∂P = [ForwardDiff.derivative(x -> P(set_coefficient(C₀, s, x; symmetry = (:TI, e₃))), ℓ₀[r]) for (r, s) in enumerate(sels)]
+        ∂ℓ = ForwardDiff.derivative(k -> [get_coefficient(iso_stiffness(k, 6.0), s; symmetry = (:TI, e₃)) for s in sels], 10.0)
+        @test sum(∂P .* ∂ℓ) ≈ by_k rtol = 1.0e-9
+    end
+
+    @testset "jacobian: components in the canonical basis" begin
+        # A matrix given in a rotated basis makes the effective tensor a rotated one.
+        b = TensND.RotatedBasis(0.3, 0.7, -0.2)
+        Cm = express(Tens(canonical_components(iso_stiffness(10.0, 6.0) + TensTI{4}(1.0, 2.0, 0.5, 1.5, 0.7, [0.0, 0.0, 1.0]))), b)
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => Cm); fraction = :rest)
+        add_phase!(rve, :I, Ellipsoid(1.0), Dict(:C => lens_C); fraction = 0.3)
+        @test !(get_basis(homogenize(rve, MoriTanaka(), :C)) isa TensND.CanonicalBasis)
+        p = lens_p(:k)
+        J = jacobian(rve, MoriTanaka(), [p])
+        reference = ForwardDiff.derivative(x -> vec(collect(canonical_components(homogenize(set_param(rve, p, x), MoriTanaka(), :C)))), get_param(rve, p))
+        @test J[:, 1] ≈ reference rtol = 1.0e-12
+    end
+
     @testset "refusals" begin
         # The name of another class without `symmetry`.
         @test_throws ArgumentError LENS.property_coefficient(lens_C, lens_p(:ℓ₁))

@@ -307,20 +307,51 @@ function _write_coefficient(V::_MandelView, sel, v)
 end
 
 """
-    property_coefficient(t, p::PropertyParameter)
+    get_coefficient(t, selector; symmetry = nothing)
 
-The value, in the tensor `t`, of the coefficient `p` designates (its selector in
-its symmetry class).
+The coefficient `selector` of the tensor `t`, in the symmetry class `symmetry`
+that contains it (its own class by default): `get_coefficient(C, :k)` is the
+bulk modulus of an isotropic stiffness, `get_coefficient(C, :ℓ₁; symmetry =
+(:TI, n))` its first Walpole coefficient about `n`, `get_coefficient(C, :M12)`
+its Kelvin-Mandel component (1, 2). The selectors and the classes are those of
+[`property`](@ref), listed in the manual page
+[Sensitivities](@ref man-sensitivities-lenses).
+
+# Examples
+```jldoctest
+julia> using MeanFieldHomogenization
+
+julia> C = iso_stiffness(10.0, 4.0);
+
+julia> get_coefficient(C, :k), get_coefficient(C, :α), get_coefficient(C, :M44)
+(10.0, 30.0, 8.0)
+```
 """
-property_coefficient(t, p) = _read_coefficient(_class_view(t, p.selector, p.symmetry), p.selector)
+get_coefficient(t, sel; symmetry = nothing) = _read_coefficient(_class_view(t, sel, symmetry), sel)
 
 """
-    with_property_coefficient(t, p::PropertyParameter, v)
+    set_coefficient(t, selector, v; symmetry = nothing)
 
-The tensor of the class of `p` whose coefficient `p` designates is `v`, the
-other coefficients of that class being those of `t`.
+The tensor of the class `symmetry` (the class of `t` by default) whose
+coefficient `selector` is `v`, its other coefficients being those of `t`. With a
+dual number `v`, a derivative with respect to that coefficient; the class must
+contain `t`.
+
+# Examples
+```jldoctest
+julia> using MeanFieldHomogenization, TensND
+
+julia> C = set_coefficient(iso_stiffness(10.0, 4.0), :μ, 5.0);
+
+julia> get_coefficient(C, :k), get_coefficient(C, :μ)
+(10.0, 5.0)
+```
 """
-with_property_coefficient(t, p, v) = _write_coefficient(_class_view(t, p.selector, p.symmetry), p.selector, v)
+set_coefficient(t, sel, v; symmetry = nothing) = _write_coefficient(_class_view(t, sel, symmetry), sel, v)
+
+# The coefficient a property parameter designates, in its tensor.
+property_coefficient(t, p) = get_coefficient(t, p.selector; symmetry = p.symmetry)
+with_property_coefficient(t, p, v) = set_coefficient(t, p.selector, v; symmetry = p.symmetry)
 
 # =============================================================================
 #  Inclusion-geometry reconstruction with one field replaced
