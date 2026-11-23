@@ -97,9 +97,10 @@ says which route to an inclusion's response fits which situation.
 
 ### Changed
 
-- **TensND 0.15 is required**, for its toroidal coordinates and toroidal
-  functions and for the plane-strain and plane-stress stiffnesses of a
-  transversely isotropic material.
+- **TensND 0.16 is required**, for its toroidal coordinates and toroidal
+  functions, the plane-strain and plane-stress stiffnesses of a transversely
+  isotropic material, and the blocks of the isotropic tensors of the plane on
+  which the aging viscoelasticity of the plane stores its operators.
 - **The two neural surrogates of the superspherical pore are retrained**, on
   finite-element cells of the fourth level of subdivision and of radius `4a`.
   At the third level a concave pore was not converged: `E₀ H₁₁₁₁` of the
