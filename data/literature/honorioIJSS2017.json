@@ -1,0 +1,83 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "honorioIJSS2017",
+  "doi": "10.1016/j.ijsolstr.2017.04.028",
+  "citation": "Honorio, T., Bary, B., Sanahuja, J., Benboudjema, F. (2017). Effective properties of n-coated composite spheres assemblage in an ageing linear viscoelastic framework. International Journal of Solids and Structures 124, 1-13.",
+  "location": "Table 1, p. 7; equations (46) and (47), p. 6; section 5"
+ },
+ "transcription": {
+  "from": "the published article (PDF), read on the page text and compared with the image of the page",
+  "checked_against_source": true,
+  "note": "Parameters of the generalized Maxwell models of the two aging phases: the bulk and shear relaxation functions are k(t,t') = (k0 + sum_j kj exp(-(t-t')/tau_j)) f_age(t') and the same with mu, with the aging function f_age(t') = 3/4 (1 - exp(-t')), t' in days (equations (46) and (47)). Phase 1, the core, is elastic. Phase 0 is the matrix and phase 2 the coating. Moduli in GPa, times in days."
+ },
+ "quantities": {
+  "E_core": {
+   "value": 150.0,
+   "unit": "GPa",
+   "kind": "reported",
+   "uncertainty": null,
+   "location": "Table 1, phase 1",
+   "description": "Young modulus of the elastic core."
+  },
+  "nu_core": {
+   "value": 0.3,
+   "unit": "1",
+   "kind": "reported",
+   "uncertainty": null,
+   "location": "Table 1, phase 1",
+   "description": "Poisson ratio of the elastic core."
+  },
+  "aging_amplitude": {
+   "value": 0.75,
+   "unit": "1",
+   "kind": "reported",
+   "uncertainty": null,
+   "location": "Equation (46)",
+   "description": "Factor of the aging function f_age(t') = 3/4 (1 - exp(-t'/1 day))."
+  },
+  "inclusion_fraction": {
+   "value": 0.4,
+   "unit": "1",
+   "kind": "reported",
+   "uncertainty": null,
+   "location": "Section 5, Figs. 7 and 10",
+   "description": "Volume fraction of the inclusions; in the three-phase case, 0.25 of core and 0.15 of coating."
+  }
+ },
+ "tables": {
+  "maxwell": [
+   {
+    "phase": "matrix",
+    "index": 0,
+    "k0": 10.0,
+    "k1": 4.0,
+    "k2": 3.0,
+    "k3": 3.0,
+    "mu0": 6.0,
+    "mu1": 2.4,
+    "mu2": 1.8,
+    "mu3": 1.8,
+    "tau1": 0.1,
+    "tau2": 1.0,
+    "tau3": 10.0
+   },
+   {
+    "phase": "coating",
+    "index": 2,
+    "k0": 8.88,
+    "k1": 5.55,
+    "k2": 4.44,
+    "k3": 3.33,
+    "mu0": 6.66,
+    "mu1": 4.16,
+    "mu2": 3.33,
+    "mu3": 2.5,
+    "tau1": 0.1,
+    "tau2": 1.0,
+    "tau3": 10.0
+   }
+  ]
+ },
+ "notes": "Table 1 also lists a Young modulus and a Poisson ratio for the two aging phases (30 GPa and 0.2, 40 GPa and 0.2), which the relaxation functions of equations (46) and (47) do not use."
+}

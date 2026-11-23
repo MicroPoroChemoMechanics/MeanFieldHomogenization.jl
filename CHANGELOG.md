@@ -117,7 +117,10 @@ says which route to an inclusion's response fits which situation.
   *Coated inclusions: closures on the mean strains, and the exact solution*
   (the published closures of the coated ellipsoid, each with its assumption,
   written as custom inclusions and set beside the layered sphere and the
-  confocal spheroid, with the test of a core behind a soft coating).
+  confocal spheroid, with the test of a core behind a soft coating);
+  *Coated spheres in an aging viscoelastic matrix* (the material of a
+  published study by the Mori-Tanaka and the generalized self-consistent
+  schemes, the latter iterated on the layered sphere of the aging case).
 - New theory pages *Toroidal inclusions* and *Holes given by a conformal map*,
   with complete derivations, and the manual pages of the two inclusions. The
   second quotes the sections and the equations of Muskhelishvili's book at

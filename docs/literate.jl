@@ -39,7 +39,7 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # whereas these exist to reproduce a particular paper's numbers and are read for
 # the comparison. Listed by page name, so the routing is visible here rather
 # than implied by the navigation in `make.jl`.
-const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "conformal_holes", "coated_inclusion_estimates", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks"])
+const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "conformal_holes", "coated_inclusion_estimates", "aging_coated_spheres", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks"])
 
 # The chapter on material laws (`MaterialLaws`) is written as one script per
 # model, theory and code together, under `scripts/material_laws/`; its pages,
@@ -86,6 +86,7 @@ const PUBLISHED_SCRIPTS = [
     "78_insulating_torus.jl" => "insulating_torus",
     "79_graded_interphase.jl" => "graded_interphase",
     "80_custom_inclusion_contract.jl" => "custom_inclusion_contract",
+    "81_aging_coated_spheres.jl" => "aging_coated_spheres",
     "84_neural_inclusion_ellipsoid.jl" => "neural_inclusion",
     "85_neural_excentered_sphere.jl" => "neural_excentered_sphere",
     "86_crack_distributions.jl" => "crack_distributions",

@@ -269,36 +269,44 @@ pages = [
     # `applications/generated/` are built from `scripts/` by Literate,
     # which is an implementation detail; they sit with the others.
     "Applications" => [
-        # General concepts first, in the order they introduce one another:
-        # interactions between particles, then two morphologies without a
-        # closed form, computed by finite elements. The materials follow, each
-        # in its own section; within a section a page comes after the pages it
-        # builds on. A page may move within its section, not across chapters.
+        # The sections that hold whatever the material first, then the
+        # materials, one section each; within a section a page comes after the
+        # pages it builds on.
         "applications/index.md",
-        "General concepts" => [
-            # Each of the first four reproduces published results, which is why they
-            # are applications and not tutorials: the Hill tensor of a single
-            # inclusion first, then the interactions between particles.
+        # The four sections that hold whatever the material come first, each
+        # from the simplest object to the most involved: one inclusion of any
+        # shape, the interactions between several, the cracks, the coated
+        # inclusions. Then transport, then the materials.
+        "Inclusions of any shape" => [
+            # The Hill tensor of an ellipsoid in closed form, then the shapes
+            # without one: by finite elements, by the four routes, by a series
+            # (the torus), by a conformal map (prismatic pores).
             "applications/generated/hill_transformation.md",
+            "applications/concave_pores.md",
+            "applications/generated/pore_routes.md",
+            "applications/generated/insulating_torus.md",
+            "applications/generated/conformal_holes.md",
+        ],
+        "Interactions between particles" => [
             "applications/generated/cluster_model.md",
             "applications/generated/eim_assembly.md",
             "applications/generated/multipole_spheres.md",
             "applications/generated/multipole_spheroids.md",
-            # The Fourier reduction of the first is reused by the second.
-            "applications/recycled_aggregate.md",
-            "applications/concave_pores.md",
-            # The same pore by the four routes to a shape with no closed form,
-            # against a published table.
-            "applications/generated/pore_routes.md",
-            # A pore that is not an ellipsoid and has a series: the torus.
-            "applications/generated/insulating_torus.md",
-            # Prismatic pores of polygonal section, by a conformal map.
-            "applications/generated/conformal_holes.md",
-            # A crack of any contour, here a disk with contact islands, against
-            # a published study and the annular crack.
+        ],
+        "Cracks" => [
             "applications/generated/crack_contacts.md",
             "applications/generated/narrow_cracks.md",
-            # Pore shapes again, now for the Stokes flow through them.
+        ],
+        # A shell of uniform properties around the particle, then a graded
+        # one, then the published closures set beside the exact solution, then
+        # the aging case.
+        "Coated inclusions and interphases" => [
+            "applications/recycled_aggregate.md",
+            "applications/generated/graded_interphase.md",
+            "applications/generated/coated_inclusion_estimates.md",
+            "applications/generated/aging_coated_spheres.md",
+        ],
+        "Transport in pores" => [
             "applications/generated/stokes_darcy_permeability.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
@@ -313,11 +321,6 @@ pages = [
             "applications/strength.md",
             "applications/itz_concrete.md",
             "applications/generated/itz_elastic_limit.md",
-            # The uniform shell replaced by a zone that varies with the radius.
-            "applications/generated/graded_interphase.md",
-            # Published estimates of a coated ellipsoid, written on the Hill
-            # tensors as custom inclusions, beside the exact solutions.
-            "applications/generated/coated_inclusion_estimates.md",
         ],
         # Particles in contact through interfaces: sliding platelets, then
         # frictional contacts between rigid grains, then deformable grains.
