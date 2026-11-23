@@ -384,7 +384,7 @@ plane), the cell is two-dimensional, of disks and ellipses (`Ellipsoid(r; dim = 
 `SelfConsistent` (its Picard iteration, without rings) are available, in elasticity;
 `IsoSymmetrize` averages over the orientations of the plane. The operator of the
 plane of an aging material, in plane strain or in plane stress, is that of
-[`plane_strain_stiffness`](@ref) or [`plane_stress_stiffness`](@ref) applied to
+[`plane_strain_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_strain_stiffness) or [`plane_stress_stiffness`](@ref MeanFieldHomogenization.Viscoelasticity.plane_stress_stiffness) applied to
 its operator of space.
 
 `symmetrize` is honored in both orders, with the projector of the matching
