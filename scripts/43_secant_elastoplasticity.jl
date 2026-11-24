@@ -42,7 +42,8 @@
 # ``f_i``. Differentiating ``W`` with respect to ``\mu_i`` — at fixed
 # macroscopic strain, so that only the *explicit* dependence survives — gives
 # the **second moment of the deviatoric strain** in that shell
-# [kreher1990, suquet1997](@cite):
+# [kreher1990, suquet1997](@cite), a result proved in
+# [Second moments of the local fields](@ref th-second-moments):
 #
 # ```math
 # \bigl\langle \boldsymbol{\varepsilon}^d\!:\!\boldsymbol{\varepsilon}^d

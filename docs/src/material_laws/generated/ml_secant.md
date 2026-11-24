@@ -117,46 +117,26 @@ classical measure underestimates the strain that sets the secant modulus.
 A measure that sees the fluctuations is the **second moment** of the
 equivalent strain over the phase,
 ``\bar\varepsilon_i^2 = \langle\varepsilon_{\mathrm{eq}}^2\rangle_i``. A linear
-scheme does not give second moments directly, but they follow from the energy
-of the comparison composite, as the following argument shows.
-
-The energy stored per unit volume in the comparison composite under the
-macroscopic strain ``\boldsymbol{E}`` is, by the lemma of Hill, both the
-macroscopic energy and the average of the local energies:
-
-```math
-W = \frac12\,\boldsymbol{E}:\mathbb{C}^{\mathrm{hom}}:\boldsymbol{E}
-= \sum_j f_j\,\Big\langle \frac12\,\boldsymbol{\varepsilon}:\mathbb{C}_j:\boldsymbol{\varepsilon} \Big\rangle_j .
-```
-
-The local strain field minimizes the energy among the kinematically admissible
-fields. Change the shear modulus ``\mu_i`` of phase ``i`` alone. The energy
-changes for two reasons: the explicit change of ``\mathbb{C}_i``, and the change
-of the strain field. The second contributes nothing to first order, because
-the field is a minimum. Only the explicit dependence remains, and
-``\partial\mathbb{C}_i/\partial(2\mu_i) = \mathbb{K}`` acts only on phase ``i``:
-
-```math
-\frac{\partial W}{\partial(2\mu_i)}
-= f_i\,\Big\langle \frac12\,\boldsymbol{\varepsilon}:\mathbb{K}:\boldsymbol{\varepsilon} \Big\rangle_i
-= \frac{f_i}{2}\,\langle\boldsymbol{e}:\boldsymbol{e}\rangle_i
-= \frac{3 f_i}{4}\,\langle\varepsilon_{\mathrm{eq}}^2\rangle_i .
-```
-
-With ``W`` written as the macroscopic quadratic form, this gives the second
-moment from the derivative of the effective stiffness alone:
+scheme does not give second moments directly, but they follow from the
+effective stiffness of the comparison composite: the mean over a phase of a
+quadratic form of the strain is the derivative of twice the effective energy
+when the stiffness of that phase moves along the tensor of the form
+([Second moments of the local fields](@ref th-second-moments), where the
+theorem of [kreher1990](@citet) is proved). The equivalent strain is
+``\varepsilon_{\mathrm{eq}}^2 = \tfrac23\,\boldsymbol{\varepsilon}:\mathbb{K}:\boldsymbol{\varepsilon}``,
+and ``\mathbb{K}`` is the tensor that the coefficient ``2\mu_i`` multiplies in
+``\mathbb{C}_i``, so that
 
 ```math
 \bar\varepsilon_i^2 = \langle\varepsilon_{\mathrm{eq}}^2\rangle_i
 = \frac{2}{3 f_i}\;\boldsymbol{E}:\frac{\partial\mathbb{C}^{\mathrm{hom}}}{\partial(2\mu_i)}:\boldsymbol{E}.
 ```
 
-This identity between the energy stored in a phase and the derivative of the
-effective moduli is due to [kreher1990](@citet). It is exact for a scheme that
-is the exact solution of some microstructure, and it serves as the definition
-of the second moment for a scheme used as an estimate. This is
-[`ModifiedSecant`](@ref), the default. The package computes the derivative of
-``\mathbb{C}^{\mathrm{hom}}`` by automatic differentiation through the scheme:
+The identity is exact for a scheme that is the exact solution of some
+microstructure, and it serves as the definition of the second moment for a
+scheme used as an estimate. This is
+[`ModifiedSecant`](@ref), the default. The moment is computed by
+[`second_moment`](@ref), by automatic differentiation through the scheme:
 nothing specific to a scheme is written.
 
 !!! note "The second moment is never below the first"

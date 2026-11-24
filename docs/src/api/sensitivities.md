@@ -12,7 +12,9 @@ and the built-in [`SelfConsistent`](@ref) Newton-Raphson solver
 ```@docs
 AbstractParameter
 AmountParameter
+AbstractPropertyParameter
 PropertyParameter
+PropertyDirection
 GeometryParameter
 DistributionShapeParameter
 amount
@@ -32,4 +34,14 @@ derivative
 gradient
 jacobian
 sensitivity
+```
+
+## Second moments
+
+Theory in [Second moments of the local fields](@ref th-second-moments), syntax
+in [Sensitivities](@ref man-sensitivities-moments).
+
+```@docs
+second_moment
+MeanFieldHomogenization.Schemes.moment_along
 ```

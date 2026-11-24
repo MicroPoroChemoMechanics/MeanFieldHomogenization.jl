@@ -886,10 +886,10 @@ throughout.
 
 ## Where to go next
 
-The single-heterogeneity problems are now all solved: the ellipsoid, the
-crack and the layered patterns. The next chapter,
-[Homogenization schemes](@ref th-homogenization), turns their solutions into
-estimates of effective properties. The finite-element counterpart of the layered spheroid, calibrated against the
+The last pattern of the chapter,
+[Layered ellipsoid](@ref th-layered-ellipsoid), gives the three axes of the
+confocal layers distinct lengths, in conduction, where no series is needed.
+The finite-element counterpart of the layered spheroid, calibrated against the
 confocal solutions and carried to nested spheroids with freely chosen
 semi-axes, is the tutorial
 [A layered spheroid, meshed](@ref tut-axi-layered-spheroid).

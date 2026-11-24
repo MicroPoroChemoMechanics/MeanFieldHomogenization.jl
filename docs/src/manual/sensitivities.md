@@ -8,8 +8,11 @@ The derivative of an effective property with respect to one input of a cell
 (a volume fraction, a modulus, a semi-axis) is computed by forward automatic
 differentiation: the input is replaced by a dual number of
 [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl), and every
-function of the package carries it to the result. This page says how to
-designate the input, the *parameter*, and how to ask for the derivative.
+function of the package carries it to the result
+([Derivatives by automatic differentiation](@ref th-autodiff) gives the
+principle, estimate by estimate). This page says how to designate the input,
+the *parameter*, how to ask for the derivative, and how to obtain the second
+moments of the local fields, which are derivatives.
 
 ## A first derivative
 
@@ -36,6 +39,7 @@ A parameter designates one number of a cell, which `get_param` reads and
 | :--- | :--- |
 | `amount(:I)` | the volume fraction, or the crack density, of a phase |
 | `property(:I, :C, sel)` | a coefficient of the property `:C` of a phase |
+| `property(:I, :C, 𝔹)` | the abscissa of the property along the tensor `𝔹`, zero in the cell |
 | `geometry(:I, :semi_axes, 3)` | a field of the inclusion of a phase |
 | `shape_param(:semi_axes, 1)` | a field of the distribution shape |
 
@@ -73,8 +77,22 @@ before its coefficient is read:
 | `symmetry` | class |
 | :--- | :--- |
 | `(:TI, n)` | transversely isotropic about the unit vector `n` |
-| `(:ORTHO, frame)`, `(:CUBIC, frame)` | orthotropic, cubic, in an orthonormal basis `frame` |
+| `(:ORTHO, frame)`, `(:CUBIC, frame)` | orthotropic, cubic, in the frame `frame` |
 | `:ANISO`, `(:ANISO, basis)` | the Kelvin-Mandel components in `basis` (canonical by default) |
+
+A **frame** is an orthonormal basis of TensND, whose three vectors are the
+axes of the class: the canonical one, `CanonicalBasis{3, Float64}()`, or a
+rotated one, `RotatedBasis(θ, ϕ, ψ)`. A **basis** is any basis of TensND,
+orthonormal or not, in which the components are read.
+
+The orientation is left out when the tensor already carries it. With no
+`symmetry` at all, the class and its orientation are those of the tensor: the
+axis of a `TensTI`, the frame of a `TensOrtho` or of a `TensCubic`. A class
+named alone takes the orientation of the tensor in the same way, `symmetry =
+:TI` for a `TensTI`, `:ORTHO` for a `TensOrtho` or a `TensCubic`, `:CUBIC` for a
+`TensCubic`. In every other case the orientation is not determined by the
+tensor (an isotropic tensor has no axis, a transversely isotropic one fixes one
+axis of a frame and not the two others), and it is to be given.
 
 ![](../assets/theory/parameter_classes.svg)
 
@@ -112,6 +130,24 @@ The tutorial [One derivative, several routes](@ref tut-derivative-routes)
 computes the same derivative through each class and checks them against one
 another by the chain rule.
 
+### A property along a tensor
+
+`property(:I, :C, 𝔹)`, with a tensor in place of a selector, designates the
+abscissa ``t`` of the property along `𝔹`: setting it replaces the stiffness
+``\mathbb{C}`` of the phase by ``\mathbb{C} + t\,\mathbb{B}``, and its value in
+the cell is zero. The derivative with respect to it is the derivative along
+``\mathbb{B}``, whatever the classes of the two tensors
+([Derivatives by automatic differentiation](@ref th-autodiff), section 6). The
+derivative with respect to ``\mu`` is the derivative along ``2\mathbb{K}``:
+
+```@example sens
+𝕂 = TensISO{3}(0.0, 1.0)
+(
+    derivative(rve, MoriTanaka(), property(:I, :C, :μ); indexer = C₃₃₃₃),
+    derivative(rve, MoriTanaka(), property(:I, :C, 2𝕂); indexer = C₃₃₃₃),
+)
+```
+
 ## Several parameters
 
 `gradient` takes a vector of parameters and returns one derivative each;
@@ -126,6 +162,42 @@ gradient(rve, MoriTanaka(), ps; indexer = C₃₃₃₃)
 ```@example sens
 size(jacobian(rve, MoriTanaka(), ps))
 ```
+
+## [Second moments](@id man-sensitivities-moments)
+
+The mean over a phase of a quadratic form of the local strain is a derivative
+of the effective energy with respect to the stiffness of that phase
+([Second moments of the local fields](@ref th-second-moments)).
+[`second_moment`](@ref) computes it, under a macroscopic strain `E`:
+
+```@example sens
+using LinearAlgebra
+E = Tens(Symmetric([1.0 0.2 0.1; 0.2 -0.5 0.3; 0.1 0.3 0.7]))
+second_moment(rve, MoriTanaka(), :M, E, 𝕂)       # ⟨εᵈ:εᵈ⟩ over the matrix
+```
+
+The fifth argument is the tensor ``\mathbb{B}`` of the form
+``\boldsymbol{\varepsilon}:\mathbb{B}:\boldsymbol{\varepsilon}``, of any symmetry
+class. Without it, the whole tensor
+``\langle\boldsymbol{\varepsilon}\otimes\boldsymbol{\varepsilon}\rangle`` is
+returned, from which every form follows by a contraction:
+
+```@example sens
+M = second_moment(rve, MoriTanaka(), :M, E)
+M ⊙ 𝕂
+```
+
+| call | result |
+| :--- | :--- |
+| `second_moment(cell, scheme, phase, E, 𝔹)` | ``\langle\boldsymbol{\varepsilon}:\mathbb{B}:\boldsymbol{\varepsilon}\rangle`` over the phase, one derivative |
+| `second_moment(cell, scheme, phase, E)` | ``\langle\boldsymbol{\varepsilon}\otimes\boldsymbol{\varepsilon}\rangle``, a tensor of order 4 |
+| `second_moment(cell, scheme, phase, G, 𝑩; property = :K)` | ``\langle\underline{g}\cdot\boldsymbol{B}\cdot\underline{g}\rangle``, `G` being the macroscopic gradient |
+| `second_moment(cell, scheme, phase, G; property = :K)` | ``\langle\underline{g}\otimes\underline{g}\rangle``, a tensor of order 2 |
+
+The cell is an `RVE`, a laminate or a particle assembly, in space or in the
+plane; the moduli may be dual numbers or symbols. The moments of the stress
+follow, ``\boldsymbol{\sigma} = \mathbb{C}_r:\boldsymbol{\varepsilon}`` in the
+phase. A family of cracks has no volume and is refused.
 
 ## Any other input
 

@@ -97,6 +97,8 @@ runs it: the blocks of a page, in order, form a script of
 | [Polycrystals](@ref ml-theory-polycrystals) | grains of single crystals under the Taylor model; the Taylor factor of a random FCC aggregate |
 | [The incremental tangent approach](@ref ml-theory-incremental-tangent) | phases with a history linearized by their tangents at each step, isotropic projection; a particle-reinforced alloy |
 | [The affine formulation](@ref ml-theory-affine) | phases replaced by their tangents and prestresses at their average strains, Levin's theorem, exact for laminates; against the secant estimates |
+| [The affine formulation for elasto-viscoplastic composites](@ref ml-theory-affine-evp) | phases with a history, linearized in time at each step and turned by the Laplace–Carson transform into a thermoelastic composite |
+| [The quasi-elastic affine formulation](@ref ml-theory-quasi-elastic) | the numerical inversion of the transform replaced by a direct one: an elastic composite with an eigenstrain, solved once per step |
 | [Damage by the growth of microcracks](@ref ml-theory-crack-damage) | crack densities as internal variables, Griffith's resistance, stability and viscous regularization |
 | [Nonlinear poroelasticity of a cracked rock](@ref ml-theory-closing-cracks) | cracks closing under the Terzaghi effective stress, stress-dependent stiffness and Biot tensor |
 | [The strength of a porous plastic solid](@ref ml-theory-strength) | the rigid–plastic limit of the secant method, a strength domain from a phase law, normality |

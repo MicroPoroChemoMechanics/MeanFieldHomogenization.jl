@@ -1,5 +1,74 @@
 # Changelog
 
+## v0.29.1 — second moments of the local fields, and a theory of the derivatives
+
+A patch release, which adds without changing any existing result: the second moments of the strain (or of the gradient, in
+conduction) over a phase, for every cell and every scheme, in any symmetry
+class; the theory of the derivatives of an estimate, which the documentation
+did not have; and a Theory chapter in which every page stands with the notion
+it treats.
+
+### Added
+
+- **`second_moment(cell, scheme, phase, E, 𝔹)`** returns the mean over a phase
+  of the quadratic form `ε : 𝔹 : ε` of the local strain, and
+  **`second_moment(cell, scheme, phase, E)`** the whole tensor `⟨ε ⊗ ε⟩`. They
+  are the derivatives of the effective energy with respect to the stiffness of
+  the phase (Kreher's theorem), taken by automatic differentiation. Until now
+  this derivative was written by hand where it was needed, for isotropic phases
+  and the deviatoric moment only. The tensor `𝔹` may belong to any symmetry
+  class, whatever that of the phase, so that the moment of any form is reached:
+  the square of the strain along an axis in an isotropic matrix, for instance.
+  The cell is an `RVE`, a laminate or a particle assembly, in space or in the
+  plane; `property = :K` gives the moments of the gradient in conduction; the
+  moduli may be dual numbers, nested, or symbols (Symbolics, SymPy). A family
+  of cracks, which has no volume, is refused.
+
+- **`PropertyDirection(phase, property, 𝔹)`**, written `property(:I, :C, 𝔹)`:
+  a parameter that is the abscissa of a property along a tensor, zero in the
+  cell. `derivative`, `gradient` and `jacobian` take it as any other parameter,
+  and give the derivative of an effective property when the property of a phase
+  moves along `𝔹`. The parameters that name a coefficient of a class are its
+  particular cases. `AbstractPropertyParameter` is their common supertype.
+
+- **A symmetry class named alone takes the orientation of the tensor**:
+  `symmetry = :TI` on a `TensTI`, `:ORTHO` on a `TensOrtho` or a `TensCubic`,
+  `:CUBIC` on a `TensCubic`. Named alone, a class had its orientation searched
+  numerically, which a dual number does not go through; the axis or the frame
+  the tensor carries is now used as it is, so that the derivative with respect
+  to a coefficient named this way exists.
+
+### Changed
+
+- **The modified secant method calls `second_moment`.** Its results are
+  unchanged (to rounding, on the Mori-Tanaka and self-consistent schemes).
+
+### Documentation
+
+- **Theory, two new pages, in a chapter "Derivatives and second moments"**
+  placed after the schemes. *Derivatives by automatic differentiation* recalls
+  what a dual number is and derives how it goes through an explicit estimate,
+  through the fixed point of an implicit one (the three solvers, and why one
+  Newton step after convergence gives the derivative exactly) and through the
+  differential equation of the differential scheme, then says with respect to
+  what a derivative is taken. *Second moments of the local fields* states and
+  proves Kreher's theorem, writes it for isotropic, transversely isotropic and
+  orthotropic phases and for the whole tensor, extends it to prestresses and to
+  conduction, and checks it on a laminate and on the composite sphere, in
+  numbers and in symbols.
+
+- **The Theory chapter is ordered by notion.** The torus and the holes given by
+  a conformal map, which stood under "Extension to conductivity", are
+  inclusions: they form a group "Inclusions beyond the ellipsoid", followed by
+  the Gaussian approximation of any shape, before the schemes. The index of
+  Theory presents every page, and the transitions from one page to the next
+  follow the order of the chapter.
+
+- **Every page of a chapter is presented in the index of that chapter**, which
+  the documentation build now checks (`docs/page_tree.jl`). Twelve pages of
+  the manual, the tutorials, the material laws and the finite-element coupling
+  were missing from their index.
+
 ## v0.29.0 — inclusions that are not ellipsoids, solved exactly
 
 A minor release: two inclusion types whose response is exact although they have

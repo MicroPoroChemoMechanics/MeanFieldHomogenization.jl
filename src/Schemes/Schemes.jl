@@ -20,7 +20,7 @@ using TensND
 using Tensors
 using ForwardDiff
 using OrdinaryDiffEqTsit5
-using StaticArrays: SMatrix
+using StaticArrays: SMatrix, SVector
 
 import ..Core
 using ..Core
@@ -76,6 +76,7 @@ include("differential.jl")
 include("concentrations.jl")
 include("parameters.jl")
 include("sensitivities.jl")
+include("second_moments.jl")
 
 # ── Exports ────────────────────────────────────────────────────────────────
 # Data model
@@ -111,11 +112,11 @@ export levin_free_gradient, levin_preflux, levin_free_strain, levin_prestress
 export crack_family_compliances, crack_family_residual
 export fracture_permeability
 
-# Sensitivities — parameter lenses + ForwardDiff wrappers (extension)
-export AbstractParameter, AmountParameter, PropertyParameter,
-    GeometryParameter, DistributionShapeParameter
+# Sensitivities: parameter lenses, ForwardDiff wrappers, second moments
+export AbstractParameter, AmountParameter, AbstractPropertyParameter, PropertyParameter,
+    PropertyDirection, GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param
 export get_param, set_param, get_coefficient, set_coefficient
-export derivative, gradient, jacobian, sensitivity
+export derivative, gradient, jacobian, sensitivity, second_moment
 
 end # module

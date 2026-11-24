@@ -131,6 +131,21 @@ end
         @test_throws ArgumentError LENS.property_coefficient(Ts, lens_p(:C1111; symmetry = (:ORTHO, TensND.RotatedBasis(0.3, 0.2, 0.1))))
     end
 
+    @testset "a class named alone takes the orientation of the tensor" begin
+        n = TensND.normalize([1.0, 2.0, 2.0])
+        frame = TensND.RotatedBasis(0.3, 0.2, 0.1)
+        T = iso_stiffness(10.0, 6.0) + TensTI{4}(1.0, 2.0, 0.5, 1.5, 0.7, n)
+        O = first(TensND.project(T, Val(:ORTHO), TensND.RotatedBasis(n...)))
+        Q = TensND.TensCubic(30.0, 12.0, 8.0, frame)
+        @test get_coefficient(T, :ℓ₁; symmetry = :TI) == get_coefficient(T, :ℓ₁)
+        @test get_coefficient(O, :C1212; symmetry = :ORTHO) == get_coefficient(O, :C1212)
+        @test get_coefficient(Q, :γ; symmetry = :CUBIC) == get_coefficient(Q, :γ)
+        @test get_coefficient(Q, :C1212; symmetry = :ORTHO) ≈ get_coefficient(Q, :C1212; symmetry = (:ORTHO, frame))
+        # No orientation is searched: a dual number goes through.
+        @test ForwardDiff.derivative(x -> get_coefficient(set_coefficient(T, :ℓ₁, x; symmetry = :TI), :ℓ₁; symmetry = :TI), 3.0) == 1
+        @test ForwardDiff.derivative(x -> get_coefficient(set_coefficient(Q, :C1111, x; symmetry = :ORTHO), :C1111; symmetry = :ORTHO), 3.0) ≈ 1
+    end
+
     @testset "a conductivity: the scalar of an isotropic tensor of order 2" begin
         K = TensISO{3}(2.5)
         @test get_coefficient(K, :scalar) == 2.5

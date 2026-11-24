@@ -25,6 +25,7 @@ recurrence, a grid of Gaussians, a mesh, a network — and every one of them end
 | a flat crack of any contour, contacts between its faces | [Planar cracks of any contour](@ref man-planar-cracks) | its integral equation, solved on a grid of Gaussians |
 | a coated particle, an interphase | [Layered inclusions](@ref man-layered) | a recurrence over the layers |
 | a ring-shaped pore | [Toroidal inclusions](@ref man-toroidal-inclusions) | a series of toroidal harmonics |
+| a grain, a pore, a fiber or a slit in a flow, whose size matters | [Brinkman inclusions](@ref man-brinkman) | Brinkman's equation around the inclusion, which gives it a size and no Hill tensor |
 | a prismatic pore whose section is not an ellipse | [Conformal holes](@ref man-conformal-holes) | complex potentials on a conformal map |
 | a two-dimensional medium, in plane strain or in plane stress | [Plane problems](@ref man-plane-problems) | the schemes on cylinders, after a change of moduli |
 | anything else, from your own code | [Custom inclusions](@ref man-custom-inclusions) | you supply it, through one of three entry levels |
@@ -47,13 +48,18 @@ cost.
 - **[Laminates](@ref man-laminates)** — periodic homogenization, exact rather
   than estimated, and a different construction from everything above.
 - **Beyond elasticity** — [conduction](@ref man-conductivity),
-  [viscoelasticity](@ref man-viscoelasticity) with its
+  [non-aging viscoelasticity](@ref man-viscoelasticity-nonaging) with its
   [rheological models](@ref man-rheological-models) and
-  [Laplace–Carson inversion](@ref man-laplace-inversion), and
+  [Laplace–Carson inversion](@ref man-laplace-inversion),
+  [aging viscoelasticity](@ref man-viscoelasticity), and
   [poromechanics](@ref manual-poromechanics).
 - **[Sensitivities](@ref man-sensitivities)** — differentiating an effective
   property with respect to a modulus, a fraction or a shape parameter, and which
   inclusion types can and cannot serve that.
+- **[Parallelism](@ref man-parallelism)** — where the package computes in
+  parallel: the quadrature points of a finite-element mesh.
+- **[Elliptic integrals: examples](@ref man-elliptic-examples)** — the special
+  functions of the closed forms, called directly.
 
 Finite elements appear twice in this package and the two are opposite:
 [finite-element inclusions](@ref man-fe-inclusions) are a solver called *inside*

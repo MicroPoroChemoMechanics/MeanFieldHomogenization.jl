@@ -212,4 +212,27 @@ function _warn_if_not_inverted(out, expr)
     return nothing
 end
 
+# ────────────────────────────────────────────────────────────────────────────
+#  Second moments with symbolic moduli
+#
+#  `second_moment` differentiates the effective energy with respect to the
+#  abscissa of the property of a phase along a tensor, at zero. A `Sym` is not a
+#  real number ForwardDiff can carry, so the abscissa is a symbol here, the
+#  energy an expression of it, and the derivative that of the expression.
+# ────────────────────────────────────────────────────────────────────────────
+
+const _Schemes = MeanFieldHomogenization.Schemes
+_at_zero(expr, x) = foldl((e, xᵢ) -> e.subs(xᵢ, 0), x; init = expr)
+
+function _Schemes._energy_derivative(energy, ::Type{<:Sym})
+    t = symbols("abscissa_of_the_property"; real = true)
+    return _at_zero(diff(energy(t), t), (t,))
+end
+
+function _Schemes._energy_gradient(energy, ::_Schemes.SVector{N, <:Sym}) where {N}
+    x = _Schemes.SVector{N}(ntuple(i -> symbols("abscissa_of_the_property_$i"; real = true), N))
+    W = energy(x)
+    return map(xᵢ -> _at_zero(diff(W, xᵢ), x), x)
+end
+
 end

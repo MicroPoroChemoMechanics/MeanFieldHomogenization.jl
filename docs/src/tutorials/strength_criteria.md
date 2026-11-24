@@ -46,7 +46,8 @@ macroscopic stress is split in the same way into its mean part
 ``\Sigma_m = \tfrac{1}{3}\,\mathrm{tr}\,\boldsymbol{\Sigma}`` and the norm of its deviator
 ``\Sigma_d = \sqrt{\boldsymbol{\Sigma}^d:\boldsymbol{\Sigma}^d}``. The quadratic average of
 ``\sigma_d`` over the solid follows from the sensitivity of the homogenized
-moduli to the shear modulus of the solid [kreher1990, suquet1997](@cite),
+moduli to the shear modulus of the solid [kreher1990, suquet1997](@cite), a
+result proved in [Second moments of the local fields](@ref th-second-moments),
 ``(1-\varphi)\,\langle\boldsymbol{\sigma}^d:\boldsymbol{\sigma}^d\rangle_s = 2A\,\Sigma_m^2 + B\,\Sigma_d^2``,
 and bounding it by ``\sigma_o^2`` gives an **elliptical macroscopic strength
 domain**:

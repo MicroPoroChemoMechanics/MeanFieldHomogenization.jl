@@ -73,6 +73,7 @@ polynomial of the three partial derivatives for instance.
 | :------- | :------ |
 | ``\underline{u}\cdot\underline{v}``, ``\boldsymbol{A}\cdot\underline{u}`` | simple contraction (one index) |
 | ``\boldsymbol{A}:\boldsymbol{B}``, ``\mathbb{C}:\boldsymbol{\varepsilon}`` | double contraction (two indices) |
+| ``\mathbb{A}::\mathbb{B}`` | full contraction of two fourth-order tensors (four indices), ``A_{ijkl}\,B_{ijkl}`` |
 | ``\underline{u}\otimes\underline{v}`` | tensor product |
 | ``\underline{u}\stackrel{s}{\otimes}\boldsymbol{A}\stackrel{s}{\otimes}\underline{u}`` | symmetrized tensor product (order 4, both symmetries) |
 | ``\boldsymbol{A}\stackrel{s}{\boxtimes}\boldsymbol{B}`` | symmetrized box product |

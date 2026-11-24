@@ -414,11 +414,11 @@ export crack_family_compliances, crack_family_residual
 export fracture_permeability
 
 # ── Schemes : sensitivities (autodiff via ForwardDiff strong dependency) ────
-export AbstractParameter, AmountParameter, PropertyParameter,
-    GeometryParameter, DistributionShapeParameter
+export AbstractParameter, AmountParameter, AbstractPropertyParameter, PropertyParameter,
+    PropertyDirection, GeometryParameter, DistributionShapeParameter
 export amount, property, geometry, shape_param
 export get_param, set_param, get_coefficient, set_coefficient
-export derivative, gradient, jacobian, sensitivity
+export derivative, gradient, jacobian, sensitivity, second_moment
 
 # ── Poromechanics : Biot tensor / modulus, drained ↔ undrained ──────────────
 export terzaghi_stress, biot_effective_stress

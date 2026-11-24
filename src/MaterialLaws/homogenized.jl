@@ -154,7 +154,7 @@ function _nh_residual(y, g, prev, Δt, p)
     rve = _secant_rve(p, y)
     φs = keys(p.laws)
     T = _nh_type(p, g.ε, y)
-    return NamedTuple{φs}(map(φ -> convert(T, y[φ] - _phase_strain(p.method, rve, p, φ, g.ε))::T, φs))
+    return NamedTuple{φs}(map(φ -> convert(T, y[φ] - _phase_strain(p.method, rve, p, φ, g.ε, T))::T, φs))
 end
 
 # The element type of a cell's stiffnesses and amounts.
@@ -164,15 +164,12 @@ _cell_numeric(rve) = mapreduce(φ -> eltype(Schemes.phase_property(rve, φ, :C))
 # their starting values (the secant moduli of a law may not exist at zero).
 _nh_at_rest(g, prev, Δt, p) = iszero(g.ε)
 
-function _phase_strain(::ClassicalSecant, rve, p, φ, ε)
+function _phase_strain(::ClassicalSecant, rve, p, φ, ε, ::Type)
     A = Schemes.concentration_tensors(rve, p.scheme, :C).strain[φ]
     return equivalent_strain(_mandel(A) * ε)
 end
 
-function _phase_strain(::ModifiedSecant, rve, p, φ, ε)
-    β = Schemes.PropertyParameter(φ, :C, :β)
-    # W = ½ E:ℂ:E, whose derivative with respect to β = 2μ of the phase is ¾ fᵢ ⟨ε_eq²⟩ᵢ.
-    energy(x) = _quadratic(ε, _effective_stiffness(Schemes.set_param(rve, β, x), p.scheme))
-    ∂W = ForwardDiff.derivative(energy, Schemes.get_param(rve, β))
-    return sqrt(4 * ∂W / (3 * p.fractions[φ]))
-end
+# ε_eq² = ⅔ εᵈ:εᵈ, whose mean over the phase is the second moment along 𝕂
+# (Kreher's theorem, `Schemes/second_moments.jl`). `T` is the number type of the step.
+_phase_strain(::ModifiedSecant, rve, p, φ, ε, ::Type{T}) where {T} =
+    sqrt(2 * Schemes.moment_along(rve, p.scheme, φ, TensND.from_mandel(ε), TensND.TensISO{3}(0, 1), T) / 3)

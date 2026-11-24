@@ -160,3 +160,9 @@ round((k[3] / 0.5) / k[1]; digits = 3)
 
 The whole table is recomputed in the application
 [Spheroids and ellipsoids by the multipole expansion](@ref app-mem-spheroids).
+
+## Where to go next
+
+The last page on the method,
+[The multipole expansion method for penny-shaped cracks](@ref th-mem-cracks),
+takes the spheroid to its flat limit.

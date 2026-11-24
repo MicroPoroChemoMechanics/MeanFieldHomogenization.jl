@@ -87,7 +87,7 @@ import ..LayeredSpheres: AbstractInterface, PerfectInterface, SpringInterface,
 
 import ..Schemes
 using ..Schemes: HomogenizationScheme, Laminated, Voigt, Reuss,
-    AmountParameter, PropertyParameter
+    AmountParameter, PropertyParameter, AbstractPropertyParameter
 
 include("laminate.jl")
 include("interfaces_laminate.jl")

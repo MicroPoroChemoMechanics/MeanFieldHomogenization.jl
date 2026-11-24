@@ -49,6 +49,10 @@ nothing #hide
 
 ## The chain rule
 
+The derivative with respect to a coefficient of a class is a derivative along
+the tensor that this coefficient multiplies
+([Derivatives by automatic differentiation](@ref th-autodiff), section 6).
+
 Let ``p`` be a coefficient of any class that contains ``\mathbb{C}_I``, and
 ``M_{ij}(p)`` the Kelvin-Mandel matrix of the tensor in which ``p`` varies, the
 other coefficients of its class held fixed. Since ``f`` depends on

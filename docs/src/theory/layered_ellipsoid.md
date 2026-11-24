@@ -188,3 +188,13 @@ pair = (
 - **Confocal boundaries.** Similar ellipsoids are not confocal; for them, as
   for any other shape of the layers, the response is computed on a
   finite-element cell ([Finite-element inclusions](@ref man-fe-inclusions)).
+
+## Where to go next
+
+The ellipsoid, the crack and the layered patterns are now solved. The next
+chapter keeps the single heterogeneity and leaves the ellipsoid:
+[Toroidal inclusions](@ref th-toroidal-inclusions) and
+[Holes given by a conformal map](@ref th-conformal-mapping) are two shapes with
+an exact solution, and
+[Approximation by Gaussians](@ref th-gaussian-approximation) opens the
+treatment of any shape.

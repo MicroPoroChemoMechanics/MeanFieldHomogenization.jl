@@ -77,14 +77,17 @@ end
 
 # ── PropertyParameter (shared with the RVE) ─────────────────────────────────
 
-function MFH_Core.get_param(lam::Laminate, p::PropertyParameter)
+function MFH_Core.get_param(lam::Laminate, p::AbstractPropertyParameter)
     return Schemes.property_coefficient(layer_property(lam, p.phase, p.property), p)
 end
 
-function MFH_Core.set_param(lam::Laminate, p::PropertyParameter, value)
+function MFH_Core.set_param(lam::Laminate, p::AbstractPropertyParameter, value)
     new_t = Schemes.with_property_coefficient(layer_property(lam, p.phase, p.property), p, value)
     return MFH_Core.cell_set_property(lam, p.phase, p.property, new_t)
 end
+
+# The volume fraction over which a second moment of a layer is a mean.
+Schemes._moment_fraction(lam::Laminate, name::Symbol) = layer_volume_fraction(lam, name)
 
 # ── InterfaceParameter ──────────────────────────────────────────────────────
 

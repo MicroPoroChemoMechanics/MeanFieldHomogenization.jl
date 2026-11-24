@@ -213,6 +213,10 @@ beyond a contrast of ``10^{4}`` the solve is slow, and a contrast of
 
 ## Where to go next
 
+The problems of a single heterogeneity end here. The next chapter,
+[Homogenization schemes](@ref th-homogenization), turns their solutions into
+estimates of effective properties.
+
 - [Heterogeneities of any shape](@ref man-gaussian-inclusions), in the manual.
 - [Finite-element inclusions](@ref man-fe-inclusions) and
   [Neural-surrogate inclusions](@ref man-neural-inclusions): the two other
