@@ -49,8 +49,8 @@ chapter in which every page stands with the notion it treats.
   they do not depend on the law of a layer; every scheme takes the sphere.
   Checked against the isotropic sphere (to rounding), against the neutral
   sphere of Schulgasser in conduction, and, for each of the five moduli,
-  against the integral of the pointwise field of the isotropic sphere. Numbers
-  and nested dual numbers; symbols in conduction. The pointwise fields, the
+  against the integral of the pointwise field of the isotropic sphere. Real
+  and complex moduli, nested dual numbers; symbols in conduction. The pointwise fields, the
   response to a harmonic of any degree and aging viscoelasticity are not
   available with such layers.
 

@@ -223,6 +223,43 @@ end
         @test abs(∂(t -> ∂(u -> dev(u, 1.0), t), 1.0)) < 1.0e-8 * abs(dev(1.0, 1.0))
     end
 
+    @testset "complex moduli" begin
+        # Isotropic layers of complex moduli written as radial ones: the isotropic sphere.
+        z₀ = iso_stiffness(10.0 + 1.0im, 6.0 + 0.5im)
+        z = (iso_stiffness(40.0 + 3.0im, 20.0 + 2.0im), iso_stiffness(4.0 + 0.8im, 3.0 + 0.6im))
+        for itf in ((PerfectInterface(), PerfectInterface()), (SpringInterface(; sn = 0.02, st = 0.05), MembraneInterface(3.0, 2.0)))
+            iso = LayeredSphere(rl_radii, z; interfaces = itf)
+            rad = LayeredSphere(rl_radii, (z[1], radial_ti(SphericalChart(), z[2])); interfaces = itf)
+            for f in (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+                @test rl_data(f(rad, z₀, z₀)) ≈ rl_data(f(iso, z₀, z₀)) rtol = 1.0e-11
+            end
+        end
+        κ₀ = TensISO{3}(1.0 + 0.1im)
+        κ = (TensISO{3}(5.0 + 1.0im), TensISO{3}(0.3 + 0.05im))
+        for itf in ((PerfectInterface(), PerfectInterface()), (KapitzaInterface(0.1), SurfaceConductiveInterface(0.4)))
+            @test rl_data(property_contribution(LayeredSphere(rl_radii, (κ[1], radial_ti(SphericalChart(), κ[2])); interfaces = itf), κ₀)) ≈
+                rl_data(property_contribution(LayeredSphere(rl_radii, κ; interfaces = itf), κ₀)) rtol = 1.0e-11
+        end
+        # In a scheme.
+        rve = rl_cell(LayeredSphere(rl_radii, (z[1], radial_ti(SphericalChart(), z[2]))); P₀ = z₀)
+        ref = rl_cell(LayeredSphere(rl_radii, z); P₀ = z₀)
+        for scheme in (MoriTanaka(), SelfConsistent())
+            @test collect(k_mu(homogenize(rve, scheme, :C))) ≈ collect(k_mu(homogenize(ref, scheme, :C))) rtol = 1.0e-9
+        end
+        # The contribution is an analytic function of the moduli: an imaginary
+        # increment of a modulus gives its derivative, the one of the dual numbers.
+        contribution(n) = TensND.get_data(
+            property_contribution(LayeredSphere(rl_radii, (rl_C[1], radial_ti(SphericalChart(); n, l = 5.0, k = 19.0, m = 11.0, p = 4.0))), rl_C₀, rl_C₀)
+        )
+        for i in 1:2
+            @test imag(contribution(12.0 + 1.0e-20im)[i]) / 1.0e-20 ≈ ForwardDiff.derivative(n -> contribution(n)[i], 12.0) rtol = 1.0e-10
+        end
+        # A single radial ball of complex conductivities: its apparent conductivity.
+        kₜ, kᵣ = 5.0 + 0.7im, 2.0 + 0.2im
+        k✶ = kᵣ / 2 * (-1 + sqrt(1 + 8kₜ / kᵣ))
+        @test abs(only(rl_data(property_contribution(LayeredSphere((1.0,), (radial_ti(SphericalChart(), kₜ, kᵣ),)), TensISO{3}(k✶))))) < 1.0e-12
+    end
+
     @testset "oscillating modes" begin
         # The exponents of the deviatoric modes, eigenvalues of the system of the layer.
         exponents(c) = eigvals(Matrix(RL._shear_system(RL._hill_moduli(c))))

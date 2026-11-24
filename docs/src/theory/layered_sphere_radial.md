@@ -313,8 +313,9 @@ isotropic sphere, computed by other formulas.
 - **Symmetry.** The axis of the layers is the radius. A layer of fixed axes
   breaks the symmetry of the sphere and is refused.
 - **Matrix.** The reference medium is isotropic, as for the isotropic sphere.
-- **Numbers.** Real numbers and dual numbers, nested, in elasticity; symbols
-  as well in conduction. Oscillating modes and equal exponents need no
+- **Numbers.** Real and complex numbers (the complex moduli of a viscoelastic
+  material at a frequency) and dual numbers, nested, in elasticity; symbols as
+  well in conduction. Oscillating modes and equal exponents need no
   particular treatment.
 - **Not available with radial layers:** the pointwise fields, the response to
   a harmonic of any degree (multipole expansion), and aging viscoelasticity.

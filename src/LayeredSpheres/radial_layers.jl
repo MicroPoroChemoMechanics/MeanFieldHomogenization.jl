@@ -126,7 +126,7 @@ _radial_power(M::SMatrix, ρ) = exp(M * log(ρ))
 function _regular_states(M::SMatrix{2, 2}, ::Val{1})
     X = _half_trace_free(M)
     P = X + _exponent(X) * one(M)
-    return _columns(P, _largest_columns(Val(is_hard_numeric(eltype(P))), P))
+    return _columns(P, _largest_columns(Val(is_hard_numeric(real(eltype(P)))), P))
 end
 function _regular_states(M::SMatrix{4, 4}, ::Val{2})
     P = (one(M) + _matrix_sign(_half_trace_free(M))) / 2
@@ -138,7 +138,7 @@ end
 # two more steps then bring the derivatives carried by dual numbers, up to the
 # third order, to the same accuracy.
 function _matrix_sign(X::SMatrix)
-    tol = 16 * eps(float(TensND.primal(one(eltype(X)))))
+    tol = 16 * eps(typeof(_value_norm(X)))
     for _ in 1:100
         Y = (X + inv(X)) / 2
         settled = _value_norm(Y - X) ≤ tol * _value_norm(Y)
@@ -148,7 +148,11 @@ function _matrix_sign(X::SMatrix)
     X = (X + inv(X)) / 2
     return (X + inv(X)) / 2
 end
-_value_norm(X) = sqrt(sum(x -> abs2(TensND.primal(x)), X))
+# Norms and comparisons are taken on the values: those of the real and of the
+# imaginary part of a complex number, which may each be a dual number.
+_value(x) = TensND.primal(x)
+_value(z::Complex) = complex(TensND.primal(real(z)), TensND.primal(imag(z)))
+_value_norm(X) = sqrt(sum(abs2 ∘ _value, X))
 
 # The column of P of largest norm, or the two whose Gram determinant is the
 # largest, so that the basis kept is well conditioned. Compared on values; a
@@ -158,8 +162,8 @@ _columns(P::SMatrix{N, N}, idx::NTuple{2, Int}) where {N} = hcat(P[:, idx[1]], P
 _largest_columns(::Val{false}, P) = (1,)
 _largest_columns(::Val{true}, P::SMatrix{N, N}) where {N} = (argmax(j -> _value_norm(P[:, j]), 1:N),)
 function _independent_columns(P::SMatrix{4, 4})
-    V = map(TensND.primal, P)
-    gram(i, j) = (V[:, i] ⋅ V[:, i]) * (V[:, j] ⋅ V[:, j]) - (V[:, i] ⋅ V[:, j])^2
+    V = map(_value, P)
+    gram(i, j) = real(V[:, i] ⋅ V[:, i]) * real(V[:, j] ⋅ V[:, j]) - abs2(V[:, i] ⋅ V[:, j])
     pairs = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
     return pairs[argmax(map(ij -> gram(ij...), pairs))]
 end
