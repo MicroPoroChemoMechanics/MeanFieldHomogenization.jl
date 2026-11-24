@@ -66,7 +66,7 @@ function LayeredCylinder(
     ) where {T <: Number, M}
     N = M + 1
     # stored as tuples, of a concrete type each (a vector is converted)
-    moduli, interfaces = Tuple(moduli), Tuple(interfaces)
+    moduli, interfaces = map(_stored_layer, Tuple(moduli)), Tuple(interfaces)
     all(i -> i isa AbstractInterface, interfaces) || throw(
         ArgumentError("LayeredCylinder: the interfaces must be AbstractInterface objects; got $(interfaces)")
     )

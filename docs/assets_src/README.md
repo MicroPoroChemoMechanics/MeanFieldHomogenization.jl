@@ -23,7 +23,7 @@ out of `docs/Project.toml`.
 | `src/applications.jl` | `veritz.svg`, `ver_multi_mix.svg`, `lamellar/`, `fe/axi_schematic.svg`, `applications/cement_paste_scales.svg`, `applications/solidifying_sphere.svg`, `applications/coated_inclusion_closures.svg`, `applications/brinkman_problems.svg`, `applications/needle_families.svg` |
 | `src/rheology.jl` | `rheology/`: the spring-and-dashpot networks of the model catalog |
 | `src/vignettes.jl` | `schemes/particle_assembly.svg`, `nn/network_sketch.svg`, `fe/crack_mesh_sketch.svg` |
-| `src/theory.jl` | `theory/residue_derivative_poles.svg`, `theory/gaussian_crack_grid.svg`, `theory/conformal_map.svg`, `theory/plane_problem.svg`, `theory/parameter_classes.svg` |
+| `src/theory.jl` | `theory/residue_derivative_poles.svg`, `theory/gaussian_crack_grid.svg`, `theory/conformal_map.svg`, `theory/plane_problem.svg`, `theory/parameter_classes.svg`, `theory/radial_problem.svg` |
 
 ## Regenerating
 

@@ -1,10 +1,10 @@
 # =============================================================================
 #  sensitivities.jl — autodiff wrappers around `homogenize`.
 #
-#  ForwardDiff is now a strong dependency (it is also used by the
-#  built-in Newton-Raphson SC solver in `_solve_sc(::NewtonDefault, …)`)
-#  so the concrete methods live directly in this file rather than in a
-#  weak extension.
+#  ForwardDiff is a dependency of the package (the Newton solver of the
+#  self-consistent scheme, `_solve_sc(::NewtonDefault, …)`, uses it as well):
+#  the methods are defined here. The second moments of the local fields, which
+#  are derivatives along a tensor, are in `second_moments.jl`.
 # =============================================================================
 
 """
@@ -21,10 +21,7 @@ long as ForwardDiff can propagate through the result (typically when the
 output is itself a structured object whose components ForwardDiff handles
 natively, via the `_data` Dual fields).
 
-Extra `kw...` (e.g. `Chunk`, `Tag`) are forwarded to `ForwardDiff`.
-
-The method is only available with `using ForwardDiff`; calling it without
-the extension loaded raises an explicit error pointing at the extension.
+Extra `kw...` are passed to [`homogenize`](@ref).
 
 See also [`gradient`](@ref), [`jacobian`](@ref), [`sensitivity`](@ref).
 """
@@ -50,11 +47,8 @@ Gradient of a scalar functional (extracted via `indexer`) of the effective
 tensor returned by `homogenize(rve, scheme; property=output)`, with respect
 to the vector of lenses `params`.
 
-Implementation: `ForwardDiff.gradient` with automatic chunking
-(`ForwardDiff.Chunk(length(params))` via the standard `pickchunksize`
-rule).
-
-Without `using ForwardDiff`: error.
+Implementation: `ForwardDiff.gradient`, with its own chunk size or with the
+`ForwardDiff.Chunk` given as `chunk`.
 """
 function gradient(
         rve::AbstractHomogenizationCell, scheme::HomogenizationScheme,
@@ -89,9 +83,7 @@ lenses `params`.
 
 `indexer` can be used to reduce the output to a sub-tensor before
 flattening. Without an `indexer`, the full effective tensor is flattened
-via `get_array` then `vec`.
-
-Without `using ForwardDiff`: error.
+from its components in the canonical basis.
 """
 function jacobian(
         rve::AbstractHomogenizationCell, scheme::HomogenizationScheme,
@@ -136,8 +128,6 @@ or perturbs an RVE, runs `homogenize`, and returns a scalar (or a tensor).
 This entry point covers cases the `AbstractParameter` lenses cannot
 express (compound parametrizations, user-defined inclusion types without
 an exposed scalar field, etc.).
-
-Without `using ForwardDiff`: error.
 """
 function sensitivity(f, x₀; kind::Symbol = :auto, kw...)
     actual = kind === :auto ? _autoselect(f, x₀) : kind

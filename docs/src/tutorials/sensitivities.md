@@ -4,7 +4,9 @@
     The tutorial [A first homogenization](@ref tut-first-estimate), whose RVE is
     differentiated below, and the manual page
     [Sensitivities — autodiff via ForwardDiff](@ref man-sensitivities), where the
-    lenses used here are described in full.
+    lenses used here are described in full. The principle, and the way dual
+    numbers go through each kind of estimate, are in
+    [Derivatives by automatic differentiation](@ref th-autodiff).
 
 Every scheme in `MeanFieldHomogenization` is ordinary, generic Julia code — no
 finite differences, no symbolic engine, no hand-written Jacobians. That

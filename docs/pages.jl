@@ -31,13 +31,17 @@ pages = [
     "Home" => "index.md",
     "Getting Started" => "quickstart.md",
     # Ordered as a reading path. The problems of a single heterogeneity come
-    # first — the Eshelby problem and the tensors it produces, with the
+    # first: the Eshelby problem and the tensors it produces, with the
     # interaction of two inclusions; the crack, its flat limit, with the
     # degenerate shapes; the layered patterns, which generalize the Eshelby
-    # problem — and the homogenization schemes that turn their solutions into
-    # effective properties come after, one family per page, from the bounds to
-    # the N-body schemes. Conductivity and viscoelasticity then extend the whole
-    # chain, and the appendices support it in its own language.
+    # problem; the inclusions that are not ellipsoids, solved exactly, then
+    # approximately for any shape. The homogenization schemes that turn their
+    # solutions into effective properties come after, one family per page, from
+    # the bounds to the N-body schemes, then the derivatives of an estimate and
+    # the second moments they give. Conductivity and viscoelasticity extend the
+    # whole chain, and the appendices support it in its own language. A page
+    # goes in the chapter of the notion it treats, and is listed in
+    # `theory/index.md`: the pre-flight of `make.jl` checks it.
     "Theory" => [
         "theory/index.md",
         "theory/notation.md",
@@ -63,9 +67,31 @@ pages = [
         "The generalized Eshelby problem — morphological patterns" => [
             "theory/layered_sphere.md",
             "theory/layered_cylinder.md",
+            "theory/radial_problems.md",
+            "theory/layered_sphere_radial.md",
+            "theory/layered_cylinder_radial.md",
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
             "theory/layered_ellipsoid.md",
+        ],
+        # Inclusions that are not ellipsoids and still have an exact solution.
+        # They have no Hill tensor either, and are solved for their concentration
+        # tensor: the torus by a series in the toroidal coordinates of TensND, the
+        # cylindrical cavity whose section is given by a conformal map by finite
+        # complex potentials. They are inclusions, whatever physics they are
+        # solved in, and sit with the inclusions.
+        "Inclusions beyond the ellipsoid" => [
+            "theory/toroidal_inclusions.md",
+            "theory/conformal_mapping.md",
+        ],
+        # Shapes with no closed form: the integral equation of one crack or one
+        # heterogeneity, solved on a regular grid of Gaussians. The approximation
+        # first, on its own, then the problems it is applied to. It closes the
+        # problems of a single heterogeneity.
+        "Arbitrary shapes by Gaussian approximation" => [
+            "theory/gaussian_approximation.md",
+            "theory/gaussian_cracks.md",
+            "theory/gaussian_volume.md",
         ],
         # One page per family of schemes, each with its figure, its assumption
         # and its equations, in the order of the overview's table. The laminate
@@ -92,26 +118,19 @@ pages = [
             # beyond the effective stiffness.
             "theory/levin.md",
         ],
-        # Shapes with no closed form, after the methods that resolve interactions:
-        # the integral equation of one crack or heterogeneity, solved on a regular
-        # grid of Gaussians. The approximation first, on its own, then the
-        # problems it is applied to.
-        "Arbitrary shapes by Gaussian approximation" => [
-            "theory/gaussian_approximation.md",
-            "theory/gaussian_cracks.md",
-            "theory/gaussian_volume.md",
+        # What the derivatives of an estimate are and what they give: how the
+        # package differentiates every estimate exactly, then the second moments
+        # of the local fields, which are derivatives of the effective energy with
+        # respect to the moduli of a phase (Kreher's theorem).
+        "Derivatives and second moments" => [
+            "theory/automatic_differentiation.md",
+            "theory/second_moments.md",
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
             # The permeability from the Stokes flow in the pores: the same
             # schemes, fed with size-dependent Brinkman inclusions.
             "theory/brinkman.md",
-            # A shape that is not an ellipsoid and has an exact series: the torus,
-            # in the toroidal coordinates of TensND.
-            "theory/toroidal_inclusions.md",
-            # Cylindrical cavities whose section is given by a conformal map:
-            # finite complex potentials.
-            "theory/conformal_mapping.md",
         ],
         # Two distinct extensions: the correspondence principle, which maps a
         # non-aging problem onto an elastic one, and the aging case, where
@@ -186,8 +205,9 @@ pages = [
     # found where its theory is: first steps, then the problems of a single
     # heterogeneity (the Eshelby problem, cracks, morphological patterns), then
     # the schemes that turn them into effective properties, then the extensions
-    # to conductivity and viscoelasticity. Two groups have no theory chapter of
-    # their own: differentiation and solvers, and symbolic computation. Pages
+    # to conductivity and viscoelasticity. Differentiation and solvers
+    # follow the theory chapter on derivatives and second moments; symbolic
+    # computation has no theory chapter of its own. Pages
     # under `tutorials/generated/` are built from `scripts/` by Literate (see
     # `docs/literate.jl`), an implementation detail; they sit with the others.
     "Tutorials" => [
@@ -215,8 +235,10 @@ pages = [
             "tutorials/generated/layered_sphere.md",
             "tutorials/generated/layered_sphere_local_fields.md",
             "tutorials/generated/layered_sphere_symbolic.md",
+            "tutorials/generated/layered_sphere_radial_symbolic.md",
             "tutorials/generated/layered_cylinder.md",
             "tutorials/generated/layered_cylinder_symbolic.md",
+            "tutorials/generated/layered_cylinder_radial_symbolic.md",
             "tutorials/generated/layered_spheroid_effective.md",
             "tutorials/generated/layered_spheroid_interfaces.md",
             "tutorials/generated/layered_spheroid_hc.md",

@@ -419,3 +419,12 @@ rounds it, and the tensors converge with the number of terms
 are numbers, dual numbers or symbols. [`ConformalHole`](@ref) is the
 inclusion; a matrix that is anisotropic in the plane of the section and holes
 that interact are outside the method as it is written here.
+
+## Where to go next
+
+A shape with neither a closed form nor an exact series is the subject of the
+next chapter: [Approximation by Gaussians](@ref th-gaussian-approximation)
+presents the approximation, then
+[Planar cracks of any contour](@ref th-gaussian-cracks) and
+[Heterogeneities of any shape](@ref th-gaussian-volume) solve with it the
+integral equations of a crack and of a heterogeneity.

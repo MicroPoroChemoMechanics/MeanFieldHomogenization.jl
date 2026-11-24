@@ -40,6 +40,16 @@ struct AmountParameter <: AbstractParameter
 end
 
 """
+    AbstractPropertyParameter <: AbstractParameter
+
+A lens on the tensor of a property (`property` of the member `phase` of a
+cell): one of its coefficients ([`PropertyParameter`](@ref)) or its abscissa
+along a direction ([`PropertyDirection`](@ref)). A cell reads and replaces the
+tensor; what the scalar is in that tensor is decided by the lens.
+"""
+abstract type AbstractPropertyParameter <: AbstractParameter end
+
+"""
     PropertyParameter(phase, property, selector, symmetry = nothing)
 
 Lens on one coefficient of a property tensor (`property` of the phase `phase`,
@@ -51,7 +61,11 @@ Lens on one coefficient of a property tensor (`property` of the phase `phase`,
     index of `get_data`, or a Kelvin-Mandel component `:Mij` (`:Mi` at order 2)
     in the canonical basis;
   - `symmetry = (:TI, n)`, `(:ORTHO, frame)`, `(:CUBIC, frame)`: a class that
-    contains the tensor, the tensor being written in it first;
+    contains the tensor, the tensor being written in it first; `n` is the unit
+    vector of the axis and `frame` an orthonormal basis. The orientation may be
+    left out (`symmetry = :TI`) when the tensor carries it: a `TensTI` for
+    `:TI`, a `TensOrtho` or a `TensCubic` for `:ORTHO`, a `TensCubic` for
+    `:CUBIC`;
   - `symmetry = :ANISO` or `(:ANISO, basis)`: the Kelvin-Mandel components in
     `basis` (the canonical one by default), `selector = :Mij`.
 
@@ -60,7 +74,7 @@ derivative is the partial derivative in that class. Prefer the helper
 [`property`](@ref); the names of every class are in the manual page
 [Sensitivities](@ref man-sensitivities-lenses).
 """
-struct PropertyParameter{S} <: AbstractParameter
+struct PropertyParameter{S} <: AbstractPropertyParameter
     phase::Symbol
     property::Symbol
     selector::Union{Symbol, Int}
@@ -68,6 +82,23 @@ struct PropertyParameter{S} <: AbstractParameter
 end
 
 PropertyParameter(phase::Symbol, prop::Symbol, sel::Union{Symbol, Int}) = PropertyParameter(phase, prop, sel, nothing)
+
+"""
+    PropertyDirection(phase, property, direction)
+
+Lens on the abscissa `t` of a property tensor along a fixed tensor: setting it
+replaces the tensor ``\\mathbb{C}`` of the phase by
+``\\mathbb{C} + t\\,\\mathbb{B}``, `direction` being ``\\mathbb{B}``, a tensor
+of the order and the dimension of the property. Its value in a cell is zero, and
+a derivative with respect to it is the derivative of the result along
+``\\mathbb{B}``, whatever the symmetry classes of the two tensors. Prefer the
+helper [`property`](@ref); [`second_moment`](@ref) is built on it.
+"""
+struct PropertyDirection{B <: TensND.AbstractTens} <: AbstractPropertyParameter
+    phase::Symbol
+    property::Symbol
+    direction::B
+end
 
 """
     GeometryParameter(phase, field, index = nothing)
@@ -121,6 +152,16 @@ Kelvin-Mandel component (1, 2).
 """
 property(phase::Symbol, prop::Symbol, sel::Union{Symbol, Int}; symmetry = nothing) =
     PropertyParameter(phase, prop, sel, symmetry)
+
+"""
+    property(phase::Symbol, property::Symbol, direction::AbstractTens) -> PropertyDirection
+
+Helper. Equivalent to `PropertyDirection(phase, property, direction)`: the
+abscissa of the property along the tensor `direction`, zero in the cell.
+`derivative(rve, scheme, property(:I, :C, 𝔹))` is the derivative of the
+effective stiffness when the stiffness of `:I` moves along `𝔹`.
+"""
+property(phase::Symbol, prop::Symbol, direction::TensND.AbstractTens) = PropertyDirection(phase, prop, direction)
 
 """
     geometry(phase::Symbol, field::Symbol, index=nothing) -> GeometryParameter
@@ -257,6 +298,14 @@ _class_view(t, sel, symmetry::Symbol) = _class_view(t, sel, (symmetry,))
 _class_view(t, sel, symmetry::Tuple) = _enclosing(t, Val(first(symmetry)), Base.tail(symmetry)...)
 
 _enclosing(t, ::Val{:ANISO}, b...) = _mandel_view(t, b...)
+# A class named without its orientation takes that of the tensor when its type
+# carries one for that class: the tensor is already written in it, or its frame
+# is that of the class. No orientation is searched, so that dual numbers and
+# symbols go through.
+_enclosing(t::TensND.TensTI, ::Val{:TI}) = t
+_enclosing(t::TensND.TensOrtho, ::Val{:ORTHO}) = t
+_enclosing(t::TensND.TensCubic, ::Val{:CUBIC}) = t
+_enclosing(t::TensND.TensCubic, class::Val{:ORTHO}) = _in_space_class(t, class, t.frame)
 _enclosing(t, class::Val, args...) = _in_space_class(t, class, args...)
 _in_space_class(t::TensND.AbstractTens{order, 3}, class::Val, args...) where {order} = _exact_projection(t, class, args...)
 _in_space_class(::TensND.AbstractTens{order, 2}, ::Val{S}, args...) where {order, S} = throw(
@@ -352,9 +401,24 @@ julia> get_coefficient(C, :k), get_coefficient(C, :μ)
 """
 set_coefficient(t, sel, v; symmetry = nothing) = _write_coefficient(_class_view(t, sel, symmetry), sel, v)
 
-# The coefficient a property parameter designates, in its tensor.
-property_coefficient(t, p) = get_coefficient(t, p.selector; symmetry = p.symmetry)
-with_property_coefficient(t, p, v) = set_coefficient(t, p.selector, v; symmetry = p.symmetry)
+# The scalar a property lens designates in its tensor, and the tensor in which
+# that scalar is replaced: a coefficient of a class, or the abscissa along a
+# direction, zero at the tensor itself.
+property_coefficient(t, p::PropertyParameter) = get_coefficient(t, p.selector; symmetry = p.symmetry)
+with_property_coefficient(t, p::PropertyParameter, v) = set_coefficient(t, p.selector, v; symmetry = p.symmetry)
+property_coefficient(t::TensND.AbstractTens{order, dim}, p::PropertyDirection{<:TensND.AbstractTens{order, dim}}) where {order, dim} =
+    zero(promote_type(eltype(t), eltype(p.direction)))
+with_property_coefficient(t::TensND.AbstractTens{order, dim}, p::PropertyDirection{<:TensND.AbstractTens{order, dim}}, v) where {order, dim} =
+    t + v * p.direction
+property_coefficient(t, p::PropertyDirection) = _not_a_direction(t, p)
+with_property_coefficient(t, p::PropertyDirection, v) = _not_a_direction(t, p)
+_not_a_direction(t, p) = throw(
+    ArgumentError(
+        "property :$(p.property) of :$(p.phase) is a $(nameof(typeof(t))) and the direction a " *
+            "$(nameof(typeof(p.direction))) of order $(ndims(p.direction)): a direction is a tensor " *
+            "of the order and the dimension of the property"
+    )
+)
 
 # =============================================================================
 #  Inclusion-geometry reconstruction with one field replaced
@@ -626,11 +690,11 @@ end
 
 # ── PropertyParameter ────────────────────────────────────────────────────────
 
-function get_param(rve::RVE, p::PropertyParameter)
+function get_param(rve::RVE, p::AbstractPropertyParameter)
     return property_coefficient(phase_property(rve, p.phase, p.property), p)
 end
 
-function set_param(rve::RVE, p::PropertyParameter, value)
+function set_param(rve::RVE, p::AbstractPropertyParameter, value)
     haskey(rve.phases, p.phase) ||
         throw(ArgumentError("no phase named :$(p.phase) in RVE"))
     phase = rve.phases[p.phase]

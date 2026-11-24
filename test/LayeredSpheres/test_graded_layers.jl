@@ -168,4 +168,136 @@ end
         # a zone identical to the matrix: the sphere alone
         @test _gl_lutz_zimmerman(K_i, K_m - 2μ_m / 3, μ_m, K_m - 2μ_m / 3, μ_m, b) ≈ 3 * (K_i - K_m) / (3K_i + 4μ_m)
     end
+
+    # ── A layer whose modulus is a function of the radius, integrated ────────
+    #
+    # The same exact solutions are reached without layers, to the tolerance of
+    # the integration, and a constant profile is the uniform layer.
+    @testset "a graded layer: the exact solutions, without layers" begin
+        K_c, μ_c, K_m, μ_m, R = 6.0, 3.0, 1.5, 0.8, 1.6
+        λ_s, μ_s, β = 0.9, 0.5, 2.5
+        C₀, core = iso_stiffness(K_m, μ_m), iso_stiffness(K_c, μ_c)
+        shell(r) = iso_stiffness((λ_s + 2μ_s / 3) * r^β, μ_s * r^β)
+        graded = LayeredSphere((1.0, R), (core, shell))
+        @test layer_modulus(graded, 2) isa GradedLayer
+        @test _gl_bulk(property_contribution(graded, C₀, C₀)) ≈ _gl_power_shell_bulk(K_c, λ_s, μ_s, β, R, K_m, μ_m) rtol = 1.0e-9
+        # The deviatoric part has no closed form here: the layers, extrapolated.
+        dev(sphere) = TensND.get_data(property_contribution(sphere, C₀, C₀))[2]
+        layered(n) = ((radii, moduli) = graded_layers(shell, 1.0, R, n); dev(LayeredSphere((1.0, radii...), (core, moduli...))))
+        @test dev(graded) ≈ (4 * layered(80) - layered(40)) / 3 rtol = 1.0e-7
+
+        k_c, k_s, k_m = 8.0, 0.4, 1.3
+        k₀ = TensISO{3}(k_m)
+        conducting(β, R) = _gl_cond(property_contribution(LayeredSphere((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}(k_s * r^β))), k₀))
+        @test conducting(β, R) ≈ _gl_power_shell_cond(k_c, k_s, β, R, k_m) rtol = 1.0e-9
+        # Derivatives go through the integration: the exponent of the profile, the outer radius.
+        @test ForwardDiff.derivative(x -> conducting(x, R), β) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, x, R, k_m), β) rtol = 1.0e-7
+        @test ForwardDiff.derivative(x -> conducting(β, x), R) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, β, x, k_m), R) rtol = 1.0e-7
+        second(g, x) = ForwardDiff.derivative(y -> ForwardDiff.derivative(g, y), x)
+        @test second(x -> conducting(x, R), β) ≈ second(x -> _gl_power_shell_cond(k_c, k_s, x, R, k_m), β) rtol = 1.0e-5
+
+        # The zone of Lutz & Zimmerman, cut where it differs from the matrix by 20⁻¹⁰:
+        # no layer has to be thin, so that the cut may be far.
+        K_m, ν, b, r_out = 1.0, 0.25, 10, 20.0
+        μ_m = 3K_m * (1 - 2ν) / (2 * (1 + ν))
+        C₀ = iso_stiffness(K_m, μ_m)
+        for D in (0.5, -0.5)
+            K_if, μ_if = (1 - D) * K_m, (1 - D) * μ_m
+            zone(r) = iso_stiffness(K_m + (K_if - K_m) / r^b, μ_m + (μ_if - μ_m) / r^b)
+            n_K = _gl_bulk(property_contribution(LayeredSphere((1.0, r_out), (iso_stiffness(5K_m, 5μ_m), zone)), C₀, C₀))
+            @test 3 * n_K * r_out^3 / (3K_m + 4μ_m) ≈ _gl_lutz_zimmerman(5K_m, K_if - 2μ_if / 3, μ_if, K_m - 2μ_m / 3, μ_m, b) rtol = 1.0e-7
+        end
+    end
+
+    @testset "a layer in a power of the radius, crossed exactly" begin
+        K_c, μ_c, K_m, μ_m, R = 6.0, 3.0, 1.5, 0.8, 1.6
+        λ_s, μ_s, β = 0.9, 0.5, 2.5
+        C₀, core = iso_stiffness(K_m, μ_m), iso_stiffness(K_c, μ_c)
+        C_s = iso_stiffness(λ_s + 2μ_s / 3, μ_s)
+        exact = LayeredSphere((1.0, R), (core, PowerLawLayer(C_s, β)))
+        @test _gl_bulk(property_contribution(exact, C₀, C₀)) ≈ _gl_power_shell_bulk(K_c, λ_s, μ_s, β, R, K_m, μ_m) rtol = 1.0e-12
+        # The deviatoric part, against the integration of the same profile.
+        integrated = LayeredSphere((1.0, R), (core, GradedLayer(r -> r^β * C_s; reltol = 1.0e-12, abstol = 1.0e-14)))
+        @test collect(TensND.get_data(property_contribution(exact, C₀, C₀))) ≈ collect(TensND.get_data(property_contribution(integrated, C₀, C₀))) rtol = 1.0e-9
+        # The reference radius, a layer transversely isotropic about the radius, interfaces.
+        radial = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+        itf = (SpringInterface(; sn = 0.02, st = 0.05), MembraneInterface(3.0, 2.0))
+        a = LayeredSphere((1.0, R), (core, PowerLawLayer(radial, -1.5; at = 1.3)); interfaces = itf)
+        b = LayeredSphere((1.0, R), (core, GradedLayer(r -> (r / 1.3)^-1.5 * radial; reltol = 1.0e-12, abstol = 1.0e-14)); interfaces = itf)
+        for f in (gradient_gradient_concentration, flux_gradient_concentration)
+            @test collect(TensND.get_data(f(a, C₀, C₀))) ≈ collect(TensND.get_data(f(b, C₀, C₀))) rtol = 1.0e-9
+        end
+        # Conduction, with the derivatives of the closed form and complex moduli.
+        k_c, k_s, k_m = 8.0, 0.4, 1.3
+        conducting(β, R, k_s = k_s) = _gl_cond(property_contribution(LayeredSphere((1.0, R), (TensISO{3}(k_c), PowerLawLayer(TensISO{3}(k_s), β))), TensISO{3}(k_m)))
+        @test conducting(β, R) ≈ _gl_power_shell_cond(k_c, k_s, β, R, k_m) rtol = 1.0e-12
+        @test ForwardDiff.derivative(x -> conducting(x, R), β) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, x, R, k_m), β) rtol = 1.0e-10
+        @test ForwardDiff.derivative(x -> conducting(β, x), R) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, β, x, k_m), R) rtol = 1.0e-10
+        @test conducting(β, R, 0.4 + 0.1im) ≈ _gl_cond(property_contribution(LayeredSphere((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}((0.4 + 0.1im) * r^β))), TensISO{3}(k_m))) rtol = 1.0e-8
+        # The mean of the moduli, and the core refused.
+        mean = (k_c + 3 * k_s * (R^(β + 3) - 1) / (β + 3)) / R^3
+        sphere = LayeredSphere((1.0, R), (TensISO{3}(k_c), PowerLawLayer(TensISO{3}(k_s), β)))
+        @test _gl_cond(MeanFieldHomogenization.LayeredSpheres.layer_property_average(sphere, TensISO{3}(1.0))) ≈ mean rtol = 1.0e-9
+        @test_throws ArgumentError property_contribution(LayeredSphere((1.0,), (PowerLawLayer(C_s, β),)), C₀, C₀)
+    end
+
+    @testset "a graded layer: constant profiles, a graded core, interfaces" begin
+        C₀ = iso_stiffness(10.0, 6.0)
+        C = (iso_stiffness(40.0, 20.0), iso_stiffness(4.0, 3.0))
+        radial = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+        data(t) = collect(TensND.get_data(t))
+        itf = (SpringInterface(; sn = 0.02, st = 0.05), MembraneInterface(3.0, 2.0))
+        for (uniform, graded) in (
+                ((C[1], radial), (C[1], r -> radial)),                    # a shell
+                ((C[1], radial), (r -> C[1], radial)),                    # the core
+                ((C[1], C[2]), (r -> C[1], GradedLayer(r -> C[2]; reltol = 1.0e-11))),
+            )
+            a = LayeredSphere((0.6, 1.0), uniform; interfaces = itf)
+            b = LayeredSphere((0.6, 1.0), graded; interfaces = itf)
+            for f in (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+                @test data(f(b, C₀, C₀)) ≈ data(f(a, C₀, C₀)) rtol = 1.0e-8
+            end
+            for layer in 1:2
+                @test data(gradient_gradient_concentration(b, C₀; layer)) ≈ data(gradient_gradient_concentration(a, C₀; layer)) rtol = 1.0e-8
+            end
+        end
+        # A core whose moduli vary from the center: the layers, extrapolated.
+        soft(r) = iso_stiffness(40.0 - 20.0 * r^2, 20.0 - 8.0 * r^2)
+        graded = LayeredSphere((1.0,), (soft,))
+        layered(n) = ((radii, moduli) = graded_layers(soft, 0.0, 1.0, n); LayeredSphere(radii, moduli))
+        for i in 1:2
+            f(sphere) = data(property_contribution(sphere, C₀, C₀))[i]
+            @test f(graded) ≈ (4 * f(layered(80)) - f(layered(40))) / 3 rtol = 1.0e-6
+        end
+        # Complex moduli, and a conductivity transversely isotropic about the radius.
+        z(r) = iso_stiffness((4.0 + 0.5im) * (1 + r), (3.0 + 0.2im) * (1 + r))
+        zl(n) = ((radii, moduli) = graded_layers(z, 0.6, 1.0, n); LayeredSphere((0.6, radii...), (C[1], moduli...)))
+        zf(sphere) = data(property_contribution(sphere, C₀, C₀))
+        @test zf(LayeredSphere((0.6, 1.0), (C[1], z))) ≈ (4 .* zf(zl(80)) .- zf(zl(40))) ./ 3 rtol = 1.0e-6
+        κ(r) = radial_ti(SphericalChart(), 0.3 + r, 0.6 + r^2)
+        κl(n) = (
+            edges = range(0.6, 1.0; length = n + 1);
+            LayeredSphere(Tuple(edges[2:end]) |> t -> (0.6, t...), (TensISO{3}(5.0), ntuple(i -> κ((edges[i] + edges[i + 1]) / 2), n)...))
+        )
+        κf(sphere) = only(data(property_contribution(sphere, TensISO{3}(1.0))))
+        @test κf(LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), κ))) ≈ (4 * κf(κl(80)) - κf(κl(40))) / 3 rtol = 1.0e-6
+        # The mean of the moduli over the volume (bounds): k(r) = r^β has the mean 3 (R^(β+3) − 1)/((β + 3)(R³ − 1)).
+        R, β = 1.6, 2.5
+        sphere = LayeredSphere((1.0, R), (TensISO{3}(8.0), r -> TensISO{3}(r^β)))
+        mean = (8.0 + 3 * (R^(β + 3) - 1) / (β + 3)) / R^3
+        @test only(data(MeanFieldHomogenization.LayeredSpheres.layer_property_average(sphere, TensISO{3}(1.0)))) ≈ mean rtol = 1.0e-9
+        averaged(R) = only(data(MeanFieldHomogenization.LayeredSpheres.layer_property_average(LayeredSphere((1.0, R), (TensISO{3}(8.0), r -> TensISO{3}(r^β))), TensISO{3}(1.0))))
+        @test ForwardDiff.derivative(averaged, R) ≈ ForwardDiff.derivative(R -> (8.0 + 3 * (R^(β + 3) - 1) / (β + 3)) / R^3, R) rtol = 1.0e-8
+        # In a scheme, and what a graded layer does not have.
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
+        add_phase!(rve, :I, LayeredSphere((0.6, 1.0), (C[1], soft)), Dict(:C => C₀); fraction = 0.3)
+        kR, kMT, kV = (k_mu(homogenize(rve, s, :C))[1] for s in (Reuss(), MoriTanaka(), Voigt()))
+        @test kR < kMT < kV
+        @test_throws ArgumentError get_param(rve, layer_param(:I, 2, :k))
+        @test_throws ArgumentError set_param(rve, layer_param(:I, 2, :k), 1.0)
+        @test_throws ArgumentError get_param(rve, layer_param(:I, 2, radial))
+        @test_throws ArgumentError set_param(rve, layer_param(:I, 2, radial), 1.0)
+        @test_throws ArgumentError LayeredSphereFields(LayeredSphere((0.6, 1.0), (C[1], soft)), C₀)
+    end
 end

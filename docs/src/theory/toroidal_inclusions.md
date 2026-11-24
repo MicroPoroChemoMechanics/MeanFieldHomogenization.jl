@@ -1,14 +1,17 @@
 # [Toroidal inclusions](@id th-toroidal-inclusions)
 
 !!! info "Before this page"
-    [Extension to conductivity](@ref th-conductivity) and
     [Concentration and contribution tensors](@ref th-concentration), for the
-    tensors computed here, and, in the documentation of TensND,
+    tensors computed here,
+    [Elasticity and transport: one set of formulas](@ref th-notation-sigma-q),
+    for the convention under which the conduction problem is written, and, in the documentation of TensND,
     [Toroidal coordinates](@extref TensND th-toroidal) and
     [Toroidal functions](@extref TensND th-toroidal-harmonics), for the
     coordinates and the functions in which the problem is written.
 
-A torus is not an ellipsoid: the field inside a toroidal heterogeneity is not
+The inclusions of the previous chapters are ellipsoids, or patterns bounded by
+ellipsoids. This chapter treats two shapes that are not, and whose response to
+a remote loading is still known exactly. A torus is not an ellipsoid: the field inside a toroidal heterogeneity is not
 uniform and there is no Hill tensor. Its response to a remote loading is
 nonetheless known as a series, the torus being a coordinate surface of the
 toroidal system. This page solves the conduction problem of an insulating torus
@@ -365,3 +368,11 @@ respect to them go through the solve. [`InsulatingTorus`](@ref) is the
 inclusion; [Toroidal inclusions](@ref man-toroidal-inclusions) shows its use, and
 [Ring-shaped pores in a conducting matrix](@ref app-insulating-torus) compares
 it with published values and with spheroids of the same volume.
+
+## Where to go next
+
+The next page, [Holes given by a conformal map](@ref th-conformal-mapping),
+treats the other shape of this chapter: a cylindrical cavity of non-elliptic
+section, in elasticity and in conduction. The schemes take the torus through
+its concentration tensor, as they take any inclusion
+([Homogenization schemes](@ref th-homogenization)).

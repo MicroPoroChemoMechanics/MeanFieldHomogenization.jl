@@ -9,10 +9,13 @@ every formula is either cited or derived on the page.
 The order below is the dependency chain, and it is worth reading in that order.
 It starts with the problems of a single heterogeneity in an infinite medium: the
 Eshelby problem and the tensors it produces, the interaction of two inclusions,
-the crack as the flat limit of an ellipsoid, and the layered patterns that
-generalize the Eshelby problem. The homogenization schemes come next, one family
-per page, and turn those solutions into effective properties. The chain is then
-extended to another physics, conduction, and to another time dependence,
+the crack as the flat limit of an ellipsoid, the layered patterns that
+generalize the Eshelby problem, then the inclusions that are not ellipsoids,
+solved exactly for two shapes and by an approximation for any shape. The
+homogenization schemes come next, one family per page, and turn those solutions
+into effective properties. The derivatives of an estimate follow, with the
+second moments of the local fields that they give. The chain is then extended
+to another physics, conduction, and to another time dependence,
 viscoelasticity.
 
 !!! tip "The symbols"
@@ -112,6 +115,7 @@ descriptor.
 | :--- | :----------- |
 | [Crack opening displacement](@ref th-cod-tensors) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
 | [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
+| [Contributions from intensity factors](@ref th-rice-contributions) | the compliance of a crack whose opening is not known in closed form, by integration of its intensity factors along a growth of the crack |
 | [Degenerate shapes](@ref th-degenerate-shapes) | the closed forms of the Hill, Eshelby and crack opening tensors at the shapes where they reach ``0/0`` limits: sphere, disc, needle |
 
 ## The generalized Eshelby problem: morphological patterns
@@ -120,13 +124,44 @@ A composite pattern has **no Hill tensor** — the strain inside it is not
 uniform, so Eshelby's result does not apply as such. What does exist, and is all
 any scheme needs, is its average concentration tensor, obtained by solving the
 *generalized* Eshelby problem for that pattern. Any morphology admitting that
-treatment belongs in this group; two are implemented.
+treatment belongs in this group.
 
 | Page | Pattern |
 | :--- | :------ |
 | [Layered sphere](@ref th-layered-sphere) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
+| [Layered cylinder](@ref th-layered-cylinder) | a fiber of coaxial layers, each one transversely isotropic about the axis: four radial problems chained from layer to layer |
+| [The radial problem: uniform, power-law and graded layers](@ref th-radial-problems) | each loading mode of a sphere or a cylinder as a system of the first order on the state an interface transmits: a layer crossed by the power of a matrix, or integrated when its moduli vary with the radius |
+| [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial) | the matrices of the three loading modes of the sphere for such layers, their exponents, derivatives and second moments in the frame that turns with the point |
+| [Layered cylinder: layers transversely isotropic about the radius](@ref th-layered-cylinder-radial) | the matrices of the loading modes of the cylinder for wound or deposited layers |
 | [Layered spheroid](@ref th-layered-spheroid) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
 | [The elastic confocal spheroid](@ref th-spheroid-elasticity) | the axisymmetric elastic problem on the same chart |
+| [Layered ellipsoid](@ref th-layered-ellipsoid) | confocal layers of three unequal axes, in conduction, where the mean gradient of each layer follows without a series |
+
+## Inclusions beyond the ellipsoid
+
+Two shapes that are not ellipsoids have an exact solution. Like a pattern, they
+have no Hill tensor and enter the schemes through their concentration tensor.
+They are inclusions whatever the physics they are solved in: conduction for the
+torus, elasticity and conduction for the cylindrical cavities.
+
+| Page | Inclusion |
+| :--- | :-------- |
+| [Toroidal inclusions](@ref th-toroidal-inclusions) | the insulating torus in conduction: a series of toroidal harmonics, and the same tensor from an integral over the torus |
+| [Holes given by a conformal map](@ref th-conformal-mapping) | a cylindrical cavity whose section is the image of a disk by a map with a finite number of terms: complex potentials in plane strain, antiplane shear, conduction and plane stress |
+
+## Arbitrary shapes by Gaussian approximation
+
+Beyond these shapes, the opening of a crack and the strain in a
+heterogeneity are solutions of integral equations. These pages solve them on a
+regular grid of Gaussians, without a mesh, and return the tensors the closed
+forms give: ``\boldsymbol{B}`` and ``\mathbb{H}`` for a crack, the concentration
+tensors for a heterogeneity.
+
+| Page | What it adds |
+| :--- | :----------- |
+| [Approximation by Gaussians](@ref th-gaussian-approximation) | Maz'ya's quasi-interpolation: a function rebuilt from its samples, its error and its saturation level |
+| [Planar cracks of any contour](@ref th-gaussian-cracks) | the integral equation of a flat crack solved with it: kernel, edge, contacts, intensity factors |
+| [Heterogeneities of any shape](@ref th-gaussian-volume) | the integral equation of a heterogeneity, written for its polarization: one symmetric system for every contrast |
 
 ## Homogenization schemes
 
@@ -150,6 +185,7 @@ then has its page, with its figure, its assumption and its equations.
 | [The equivalent inclusion method](@ref th-eim) | the same physics as a variational Galerkin problem, with rigorous bounds [brisard2014](@cite) |
 | [The multipole expansion method](@ref th-mem) | the whole field around each sphere, as a series of harmonics carried from one center to the next [kushch2013](@cite) |
 | [The multipole expansion method in elasticity](@ref th-mem-elasticity) | the three solutions of the Lamé equation per harmonic, the response of a sphere as a matrix, and their translation |
+| [The multipole expansion method for spheroids and ellipsoids](@ref th-mem-shapes) | the four following cases, on one page |
 | [The multipole expansion method for spheroids](@ref th-mem-spheroids) | spheroidal harmonics, the response of a layered spheroid at any degree and order, and the translation between close spheroids |
 | [The multipole expansion method for spheroids in elasticity](@ref th-mem-spheroids-elasticity) | the solutions of the Lamé equation built on the spheroidal harmonics, the response of a spheroid by least squares on a meridian, and the reading of a close neighbor |
 | [The multipole expansion method for ellipsoids](@ref th-mem-ellipsoids) | Lamé functions and ellipsoidal harmonics, the response of an ellipsoid with a Kapitza interface, and the translation between ellipsoids |
@@ -165,25 +201,28 @@ inclusions are.
 Every scheme also estimates the concentration tensors of the phases, and the
 last page draws from them what the effective stiffness alone does not give.
 
-## Arbitrary shapes by Gaussian approximation
+## Derivatives and second moments
 
-Beyond the ellipse and the ellipsoid, the opening of a crack and the strain in a
-heterogeneity are solutions of integral equations. These pages solve them on a
-regular grid of Gaussians, without a mesh, and return the tensors the closed
-forms give: ``\boldsymbol{B}`` and ``\mathbb{H}`` for a crack, the concentration
-tensors for a heterogeneity.
+An estimate is a function of the moduli, the amounts and the shapes of the
+phases, and its derivatives are computed exactly along with it. The first page
+says how; the second one shows what the derivatives with respect to the moduli
+of a phase give: the second moments of the strain in that phase, which the
+concentration tensors of the previous chapter do not hold.
 
 | Page | What it adds |
 | :--- | :----------- |
-| [Approximation by Gaussians](@ref th-gaussian-approximation) | Maz'ya's quasi-interpolation: a function rebuilt from its samples, its error and its saturation level |
-| [Planar cracks of any contour](@ref th-gaussian-cracks) | the integral equation of a flat crack solved with it: kernel, edge, contacts, intensity factors |
-| [Heterogeneities of any shape](@ref th-gaussian-volume) | the integral equation of a heterogeneity, written for its polarization: one symmetric system for every contrast |
+| [Derivatives by automatic differentiation](@ref th-autodiff) | dual numbers, and how they go through an explicit estimate, the fixed point of an implicit one and the differential equation of an incremental one; with respect to what a derivative is taken |
+| [Second moments of the local fields](@ref th-second-moments) | Kreher's theorem: the mean of ``\boldsymbol{\varepsilon}\otimes\boldsymbol{\varepsilon}`` over a phase as the derivative of the effective energy with respect to the stiffness of that phase, in every symmetry class |
 
 ## Extension to conductivity
+
+The whole chain is written again for a scalar potential and a constitutive
+tensor of order two, then applied to a flow whose inclusions carry a size.
 
 | Page | What it adds |
 | :--- | :----------- |
 | [Extension to conductivity](@ref th-conductivity) | the order-4 ↔ order-2 dictionary stated once — Hooke against Fourier, Fick, Darcy and Ohm — what transposes untouched, and the two things that genuinely differ |
+| [Permeability from Stokes flow](@ref th-brinkman) | Darcy's law at the scale of the pores does not hold: the permeability from the Brinkman inhomogeneity problem, whose solution depends on the size of the inclusion |
 
 ## Extension to viscoelasticity
 

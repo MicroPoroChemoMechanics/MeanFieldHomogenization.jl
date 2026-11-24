@@ -359,7 +359,12 @@ of the fiber against its coating.
   the modes, the jumps and the operator order, derived.
 - [Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder): one
   coated fiber, its fields, the aligned composite and its creep.
-- [Layered spheroid](@ref th-layered-spheroid): the next pattern, confocal
+- The next page, [The radial problem](@ref th-radial-problems), writes the
+  radial problems of the sphere and of the cylinder as systems of the first
+  order, for layers transversely isotropic about the radius
+  ([cylinder](@ref th-layered-cylinder-radial)) and for moduli that vary with
+  it.
+- [Layered spheroid](@ref th-layered-spheroid): the pattern of confocal
   spheroidal layers.
 - [Layered inclusions](@ref man-layered): the syntax shared by the layered
   patterns.

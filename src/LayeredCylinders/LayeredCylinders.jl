@@ -10,6 +10,7 @@ entry point: [`LayeredCylinder`](@ref).
 module LayeredCylinders
 
 using LinearAlgebra
+using StaticArrays: SMatrix, SVector
 using TensND
 import Tensors
 
@@ -34,12 +35,14 @@ import ..LayeredSpheres: layer_count, layer_radius, layer_modulus, layer_interfa
     local_gradient_flux_concentration, local_flux_flux_concentration,
     local_gradient, local_flux, local_displacement, local_temperature,
     layer_gradient_average, layer_flux_average
-using ..LayeredSpheres: _locate_region, _resolve_region, _is_impermeable, _adjacent_impermeable
+using ..LayeredSpheres: _locate_region, _resolve_region, _adjacent_impermeable
+import ..LayeredSpheres: _is_impermeable      # extended for the radial layers
 
 include("geometry.jl")
 include("kernel.jl")             # the radial problems, for scalars and operators
 include("assembly.jl")           # averages over the cylinder and its layers
 include("elastic.jl")            # moduli, solutions, packing in TI tensors
+include("radial_layers.jl")      # layers transversely isotropic about the radial direction
 include("scheme_integration.jl") # concentration, flux, contribution, bounds
 include("plane.jl")              # the same, in a two-dimensional cell
 include("localfields.jl")        # pointwise fields

@@ -71,19 +71,14 @@ function LayeredSphere(
     if is_hard_numeric(T)
         any(radii[k] ≤ 0 for k in 1:N) &&
             throw(ArgumentError("LayeredSphere radii must be strictly positive"))
-        for k in 1:(N - 1)
-            radii[k] ≥ radii[k + 1] &&
-                throw(
-                ArgumentError(
-                    "LayeredSphere radii must be strictly ascending; got $(radii)"
-                )
-            )
-        end
+        issorted(radii; lt = ≤) ||
+            throw(ArgumentError("LayeredSphere radii must be strictly ascending; got $(radii)"))
     end
     Tf = TensND.float_like(T)
     radii_f = NTuple{N, Tf}(Tf.(radii))
-    return LayeredSphere{Tf, N, typeof(moduli), typeof(interfaces)}(
-        radii_f, moduli, interfaces
+    layers = _as_layers(moduli)
+    return LayeredSphere{Tf, N, typeof(layers), typeof(interfaces)}(
+        radii_f, layers, interfaces
     )
 end
 

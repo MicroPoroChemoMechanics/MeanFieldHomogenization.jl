@@ -105,6 +105,10 @@ end
 
 # Axial stress carried by the membranes, per unit area of the section: the
 # line force σˢ_zz = (κˢ − μˢ) u_r / r + (κˢ + μˢ) ε on each circle of radius r.
+# The mean axial stress of a layer transversely isotropic about the axis, from
+# the amplitude of its uniform in-plane strain.
+_layer_axial_stress(L, sol, seq, k::Int, ε) = 2 * (L.lt * seq.amps[k][1]) + L.n * ε
+
 _axial_membrane(::AbstractInterface, r, u, ε) = zero(u)
 _axial_membrane(itf::MembraneInterface, r, u, ε) =
     2 * ((itf.κs - itf.μs) * u + (itf.κs + itf.μs) * r * ε)
@@ -113,7 +117,7 @@ function _axial_stress(sol, seq, ε, external::Bool)
     N = length(sol.radii)
     R² = sol.radii[N]^2
     layers = sum(
-        sol.fractions[k] * (2 * (sol.Ls[k].lt * seq.amps[k][1]) + sol.Ls[k].n * ε) for k in 1:N
+        sol.fractions[k] * _layer_axial_stress(sol.Ls[k], sol, seq, k, ε) for k in 1:N
     )
     surfaces = sum(
         _axial_membrane(sol.interfaces[k], sol.radii[k], seq.inside[k][1], ε) / R²
@@ -157,8 +161,8 @@ _minus(B, C) = map(-, B, C)
 
 # The average stress of the material of layer k, its stiffness on the left of
 # its average strain; in conduction, its average of k·∇T.
-_layer_stress(sol, k::Int) =
-    _compose(_stiffness_entries(sol.Ls[k]), _layer_strain(sol, k, false, false))
+_layer_stress(sol, k::Int) = _layer_stress(sol.Ls[k], sol, k)
+_layer_stress(L, sol, k::Int) = _compose(_stiffness_entries(L), _layer_strain(sol, k, false, false))
 
 """
     _contribution(sol, external) -> (; zz, ze, mz, me, T, L)
@@ -196,7 +200,7 @@ _layer_gradient(sol, k::Int, external::Bool, internal::Bool) =
 function _whole_flux(sol, external::Bool)
     N = length(sol.radii)
     𝟙 = one(sol.K₀.t)
-    layers = sum(sol.fractions[k] * sol.Ks[k].a for k in 1:N)
+    layers = sum(sol.fractions[k] * _axial_conductivity(sol.Ks[k], sol.radii, k) for k in 1:N)
     surfaces = sum(
         _axial_surface_flux(sol.interfaces[k], sol.radii[k]) for k in 1:(external ? N : N - 1);
         init = zero(eltype(sol.radii))
@@ -204,9 +208,10 @@ function _whole_flux(sol, external::Bool)
     return (; t = _side(sol.transverse, N, external)[2], a = layers + (surfaces / sol.radii[N]^2) * 𝟙)
 end
 
-function _layer_flux(sol, k::Int)
+_layer_flux(sol, k::Int) = _layer_flux(sol.Ks[k], sol, k)
+function _layer_flux(K, sol, k::Int)
     G = _layer_gradient(sol, k, false, false)
-    return (; t = sol.Ks[k].t * G.t, a = sol.Ks[k].a * G.a)
+    return (; t = K.t * G.t, a = K.a * G.a)
 end
 
 function _conduction_contribution(sol, external::Bool)

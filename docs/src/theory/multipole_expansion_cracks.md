@@ -147,3 +147,10 @@ round(canonical_components(homogenize(cell, MultipoleExpansion(; nmax = 8), :K))
 
 The tables are recomputed in the application
 [Spheroids and ellipsoids by the multipole expansion](@ref app-mem-spheroids).
+
+## Where to go next
+
+Every scheme of this chapter estimates the concentration tensors of the phases
+along with the effective property. The last page,
+[Levin's theorem](@ref th-levin), draws from them the response to free strains
+and prestresses.

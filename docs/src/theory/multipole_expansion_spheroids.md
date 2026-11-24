@@ -648,3 +648,9 @@ The whole table is recomputed in the application
 [Spheroids and ellipsoids by the multipole expansion](@ref app-mem-spheroids).
 [kushch2019b](@citet) extend the estimate to clusters of interacting
 ellipsoids, which the expansion treats as any assembly.
+
+## Where to go next
+
+The matrix and the particles of these pages are isotropic. The next page,
+[The multipole expansion method with anisotropic constituents](@ref th-mem-anisotropic),
+lifts that restriction in conduction.

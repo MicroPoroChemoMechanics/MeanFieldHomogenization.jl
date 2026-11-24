@@ -92,4 +92,27 @@ const _V = MeanFieldHomogenization.Viscoelasticity
 
 Base.:/(A::_V.VolterraOperator, c::Symbolics.Num) = invoke(/, Tuple{_V.VolterraOperator, Number}, A, c)
 
+# ────────────────────────────────────────────────────────────────────────────
+#  Second moments with symbolic moduli
+#
+#  `second_moment` differentiates the effective energy with respect to the
+#  abscissa of the property of a phase along a tensor, at zero. A `Num` does not
+#  go through ForwardDiff, so the abscissa is a symbol here, the energy an
+#  expression of it, and the derivative that of the expression.
+# ────────────────────────────────────────────────────────────────────────────
+
+const _Schemes = MeanFieldHomogenization.Schemes
+_at_zero(expr, x) = Symbolics.substitute(expr, Dict(xᵢ => 0 for xᵢ in x))
+
+function _Schemes._energy_derivative(energy, ::Type{Num})
+    t = Symbolics.variable(:abscissa_of_the_property)
+    return _at_zero(Symbolics.derivative(energy(t), t), (t,))
+end
+
+function _Schemes._energy_gradient(energy, ::_Schemes.SVector{N, Num}) where {N}
+    x = _Schemes.SVector{N}(Symbolics.variables(:abscissa_of_the_property, 1:N))
+    W = energy(x)
+    return map(xᵢ -> _at_zero(Symbolics.derivative(W, xᵢ), x), x)
+end
+
 end

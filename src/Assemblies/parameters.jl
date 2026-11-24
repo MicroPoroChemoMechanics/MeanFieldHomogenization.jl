@@ -63,13 +63,13 @@ radius_param(name::Symbol, axis::Integer = 1) = RadiusParameter(name, Int(axis))
 # one lens that matters for multiscale work: it is how a modulus at an inner
 # scale is reached from an outer one through `nested`.
 
-function get_param(asm::ParticleAssembly, p::Schemes.PropertyParameter)
+function get_param(asm::ParticleAssembly, p::Schemes.AbstractPropertyParameter)
     t = p.phase === asm.matrix_name ? matrix_property(asm, p.property) :
         particle_property(asm, p.phase, p.property)
     return Schemes.property_coefficient(t, p)
 end
 
-function set_param(asm::ParticleAssembly, p::Schemes.PropertyParameter, value)
+function set_param(asm::ParticleAssembly, p::Schemes.AbstractPropertyParameter, value)
     d = p.phase === asm.matrix_name ? asm.matrix_properties :
         (
             haskey(asm.particles, p.phase) ||
@@ -81,6 +81,10 @@ function set_param(asm::ParticleAssembly, p::Schemes.PropertyParameter, value)
     )
     return MFH_Core.cell_set_property(asm, p.phase, p.property, Schemes.with_property_coefficient(d[p.property], p, value))
 end
+
+# The volume fraction over which a second moment of a member is a mean.
+Schemes._moment_fraction(asm::ParticleAssembly, name::Symbol) =
+    name === asm.matrix_name ? matrix_volume_fraction(asm) : particle_volume_fraction(asm, name)
 
 # ─── Lenses that do not apply to an assembly ────────────────────────────────
 #

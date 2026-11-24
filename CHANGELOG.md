@@ -1,5 +1,164 @@
 # Changelog
 
+## v0.29.1 — second moments of the local fields, radially anisotropic layers, and a theory of the derivatives
+
+A patch release, which adds without changing any existing result: the second
+moments of the strain (or of the gradient, in conduction) over a phase, for
+every cell and every scheme, in any symmetry class; layers of a layered sphere
+or of a layered cylinder that are transversely isotropic about the radius, or
+whose moduli vary with the radius, with the derivatives and the second moments
+in the frame that turns with the point; the theory of the
+derivatives of an estimate, which the documentation did not have; and a Theory
+chapter in which every page stands with the notion it treats.
+
+### Added
+
+- **`second_moment(cell, scheme, phase, E, 𝔹)`** returns the mean over a phase
+  of the quadratic form `ε : 𝔹 : ε` of the local strain, and
+  **`second_moment(cell, scheme, phase, E)`** the whole tensor `⟨ε ⊗ ε⟩`. They
+  are the derivatives of the effective energy with respect to the stiffness of
+  the phase (Kreher's theorem), taken by automatic differentiation. Until now
+  this derivative was written by hand where it was needed, for isotropic phases
+  and the deviatoric moment only. The tensor `𝔹` may belong to any symmetry
+  class, whatever that of the phase, so that the moment of any form is reached:
+  the square of the strain along an axis in an isotropic matrix, for instance.
+  The cell is an `RVE`, a laminate or a particle assembly, in space or in the
+  plane; `property = :K` gives the moments of the gradient in conduction; the
+  moduli may be dual numbers, nested, or symbols (Symbolics, SymPy). A family
+  of cracks, which has no volume, is refused.
+
+- **`PropertyDirection(phase, property, 𝔹)`**, written `property(:I, :C, 𝔹)`:
+  a parameter that is the abscissa of a property along a tensor, zero in the
+  cell. `derivative`, `gradient` and `jacobian` take it as any other parameter,
+  and give the derivative of an effective property when the property of a phase
+  moves along `𝔹`. The parameters that name a coefficient of a class are its
+  particular cases. `AbstractPropertyParameter` is their common supertype.
+
+- **Layers of a `LayeredSphere` that are transversely isotropic about the
+  radial direction**, given as fields of TensND 0.16.1
+  (`radial_ti(SphericalChart(); n, l, k, m, p)`, a `ChartTens`), in elasticity (five moduli, given by their
+  components in the frame that turns with the point) and in conduction (radial
+  and tangential conductivities). Until now a layer had to be isotropic. Such a
+  layer keeps the symmetry of the sphere: its radial modes are powers of `r`
+  whose exponents depend on the moduli, real in the spherical part and in
+  conduction, real or complex (oscillating modes) in the deviatoric part. Each
+  radial problem is written as a system of the first order on the state that
+  an interface transmits, `r dY/dr = M·Y`, and a layer is crossed by the power
+  `(r_out/r_in)^M`, without the exponents; the layers are chained by the
+  interface matrices of the isotropic sphere, with every kind of interface. The mean strain and stress of the sphere and of
+  its layers are read on the states at the boundaries of the layers, so that
+  they do not depend on the law of a layer; every scheme takes the sphere.
+  Checked against the isotropic sphere (to rounding), against the neutral
+  sphere of Schulgasser in conduction, and, for each of the five moduli,
+  against the integral of the pointwise field of the isotropic sphere. Real
+  and complex moduli, nested dual numbers; symbols in conduction. The pointwise fields, the
+  response to a harmonic of any degree and aging viscoelasticity are not
+  available with such layers.
+
+- **Layers of a `LayeredCylinder` that are transversely isotropic about its
+  radial direction** (`radial_ti(CylindricalChart(); n, l, k, m, p)`): a wound
+  or a deposited material, whose plane of isotropy turns around the axis, in
+  elasticity and in conduction. They mix with layers that are isotropic or
+  transversely isotropic about the axis, with the four imperfect interfaces of
+  the cylinder, with real or complex moduli and with dual numbers. Each of the
+  four radial problems (antiplane shear, dilatation with the axial strain,
+  transverse shear, transverse conduction) is a system of the first order in
+  such a layer, crossed by a matrix power; the mean axial stress of a layer,
+  which no traction on its boundaries gives, is obtained from the integral of
+  the radial displacement carried along. Checked against the cylinder of
+  isotropic layers (to rounding), against the closed forms of a homogeneous
+  radial cylinder, and, for each of the five moduli and each layer, against the
+  integral of the pointwise field of the isotropic cylinder. The pointwise
+  fields, the two-dimensional cell and aging viscoelasticity are not available
+  with such layers.
+
+- **Layers whose moduli vary with the radius**, in a `LayeredSphere` and in a
+  `LayeredCylinder`, in elasticity and in conduction. A function `r -> modulus`
+  given as the modulus of a layer (a `GradedLayer`, which sets the tolerances)
+  returns an isotropic tensor or a field transversely isotropic about the
+  radius; the system of the first order of each loading mode is then integrated
+  across the layer, instead of the zone being cut in thin uniform layers
+  (`graded_layers`, which remains). A graded core is integrated from the
+  center, where the subspace of the regular solutions is carried by its
+  impedance, a Riccati equation. Graded and uniform layers mix, with every
+  interface and in every scheme; real and complex moduli and dual numbers go
+  through the integration, so that an estimate is differentiated with respect
+  to a parameter of the profile or to a radius. Checked against the closed
+  forms of a shell graded as a power of the radius (to 1e-9, its derivatives
+  included), against the series of Lutz and Zimmerman (2005) for a zone that
+  tends to the matrix, and against thin uniform layers, extrapolated. The mean
+  of the moduli over such a layer, which the bounds use, is a quadrature along
+  the radius.
+
+- **`PowerLawLayer(reference, β; at)`**, a layer whose moduli are those of a
+  reference times `(r/at)^β`. In a sphere it is crossed exactly, by the power of
+  a matrix as a uniform layer is: with the tractions divided by `(r/at)^β` the
+  system has a constant matrix. In a cylinder it is integrated.
+
+- **`layer_param(phase, layer, name)`**, a parameter that designates a
+  coefficient of one layer of a layered sphere or cylinder (`LayerParameter`), or its
+  abscissa along a tensor (`LayerDirection`): the derivative with respect to
+  `:Crrrr` of a layer is taken in the frame that turns with the point, the
+  names being `:Crrrr`, `:Cθθθθ`, `:Cθθφφ`, `:Crrθθ`, `:Crθrθ` on a sphere and
+  `:Crrrr`, `:Cθθθθ`, `:Cθθzz`, `:Crrθθ`, `:Crθrθ` on a cylinder.
+  `second_moment(cell, scheme, (phase, layer), E, 𝔹)` gives the second moments
+  of the strain in a layer, those of its components in the local frame
+  included: `radial_ti(SphericalChart(), 1, 0, 0, 0, 0)` gives the mean of
+  `ε_rr²`.
+
+- **A symmetry class named alone takes the orientation of the tensor**:
+  `symmetry = :TI` on a `TensTI`, `:ORTHO` on a `TensOrtho` or a `TensCubic`,
+  `:CUBIC` on a `TensCubic`. Named alone, a class had its orientation searched
+  numerically, which a dual number does not go through; the axis or the frame
+  the tensor carries is now used as it is, so that the derivative with respect
+  to a coefficient named this way exists.
+
+### Changed
+
+- **The modified secant method calls `second_moment`.** Its results are
+  unchanged (to rounding, on the Mori-Tanaka and self-consistent schemes).
+
+### Documentation
+
+- **Theory, two new pages, in a chapter "Derivatives and second moments"**
+  placed after the schemes. *Derivatives by automatic differentiation* recalls
+  what a dual number is and derives how it goes through an explicit estimate,
+  through the fixed point of an implicit one (the three solvers, and why one
+  Newton step after convergence gives the derivative exactly) and through the
+  differential equation of the differential scheme, then says with respect to
+  what a derivative is taken. *Second moments of the local fields* states and
+  proves Kreher's theorem, writes it for isotropic, transversely isotropic and
+  orthotropic phases and for the whole tensor, extends it to prestresses and to
+  conduction, and checks it on a laminate and on the composite sphere, in
+  numbers and in symbols.
+
+- **Theory, *The radial problem: uniform, power-law and graded layers*:** the
+  loading modes of a sphere and of a cylinder, the state an interface
+  transmits and the system of the first order it obeys, derived on the simplest
+  case; a uniform layer crossed by the power of a matrix, a power-law layer by
+  that of a shifted matrix, a graded one by integration; the regular solutions
+  at the center, by a projector or by a Riccati equation; the interfaces, the
+  matrix and the averages.
+
+- **Theory, *Layered sphere: layers transversely isotropic about the radius*
+  and *Layered cylinder: layers transversely isotropic about the radius*,**
+  each with a tutorial that derives its systems symbolically: the matrices of
+  every loading mode, their exponents and the oscillating modes, the axial
+  strain of the cylinder as a second member, the means read on the boundaries,
+  the parameters of a layer and the second moments in its frame.
+
+- **The Theory chapter is ordered by notion.** The torus and the holes given by
+  a conformal map, which stood under "Extension to conductivity", are
+  inclusions: they form a group "Inclusions beyond the ellipsoid", followed by
+  the Gaussian approximation of any shape, before the schemes. The index of
+  Theory presents every page, and the transitions from one page to the next
+  follow the order of the chapter.
+
+- **Every page of a chapter is presented in the index of that chapter**, which
+  the documentation build now checks (`docs/page_tree.jl`). Twelve pages of
+  the manual, the tutorials, the material laws and the finite-element coupling
+  were missing from their index.
+
 ## v0.29.0 — inclusions that are not ellipsoids, solved exactly
 
 A minor release: two inclusion types whose response is exact although they have

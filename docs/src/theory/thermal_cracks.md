@@ -394,7 +394,10 @@ on ``\boldsymbol{K}_0::\texttt{AbstractTens\{2,3\}}``).
 
 ## Where to go next
 
-The next page, [Degenerate shapes and extreme aspect ratios](@ref th-degenerate-shapes),
+The next page, [Contributions from intensity factors](@ref th-rice-contributions),
+returns to elasticity for the cracks whose opening is not known in closed form
+while their intensity factors are. The page after it,
+[Degenerate shapes and extreme aspect ratios](@ref th-degenerate-shapes),
 closes the chapter: it evaluates the closed forms of this chapter and of the
 previous one at the shapes where they degenerate, the disc of a crack among
 them. The dictionary invoked in §1 is stated in full in

@@ -827,3 +827,11 @@ end
 
 The fields of each sphere in elasticity are listed in the
 [roadmap](@ref dev-roadmap).
+
+## Where to go next
+
+The next page,
+[The multipole expansion method for spheroids and ellipsoids](@ref th-mem-shapes),
+replaces the spherical harmonics by those of the spheroid and of the
+ellipsoid; the expansion itself, its translations and its linear system are
+kept.

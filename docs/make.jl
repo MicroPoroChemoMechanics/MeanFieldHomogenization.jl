@@ -45,6 +45,12 @@ include("data_panels.jl")
 # The page tree, read by both the draft pre-flight and the real build.
 include("pages.jl")
 
+# Every page of a chapter is presented in the index of that chapter. Checked
+# here, on the whole tree and once the generated pages exist, before anything
+# is built.
+include("page_tree.jl")
+check_page_tree(pages, joinpath(@__DIR__, "src"))
+
 # The nomenclature, as the JSON that the plugin typesetting the formulas and the
 # hints of the theme read: the entries of `nomenclature.toml`. Written before any
 # page is built, and not versioned (see `.gitignore`).

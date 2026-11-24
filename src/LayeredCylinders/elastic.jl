@@ -111,6 +111,8 @@ _wrong_order(P, expected) = throw(
 )
 
 _entries_eltype(nt::NamedTuple) = promote_type(map(typeof, values(nt))...)
+# The modulus of the antiplane problem of a layer transversely isotropic about the axis.
+_antiplane_modulus(L::NamedTuple) = L.p
 
 # The moduli an elastic layer needs are finite, and its shear moduli and
 # plane-strain bulk modulus positive: the recurrences divide by them. Checked
@@ -156,7 +158,7 @@ function _elastic_solution(cyl::LayeredCylinder{T, N}, C₀::TensND.AbstractTens
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     L₀ = _hill_moduli(C₀, cyl.axis)
     # `map` over the tuple of layers: an index would lose the type of each.
-    Ls = map(C -> _hill_moduli(C, cyl.axis), cyl.moduli)
+    Ls = map((C, r) -> _layer_hill(C, cyl.axis, r), cyl.moduli, cyl.radii)
     _check_stiffness(L₀, "the reference medium")
     foreach(k -> _check_stiffness(Ls[k], "layer $k"), 1:N)
     S = promote_type(
@@ -181,7 +183,7 @@ function _elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls) wher
     itfs = cyl.interfaces
     dilatation, axial = _solve_axisymmetric(radii, Ls, itfs, L₀)
     shear = _solve_shear(radii, Ls, itfs, L₀)
-    antiplane = _solve_potential(Antiplane(), radii, map(L -> L.p, Ls), itfs, L₀.p)
+    antiplane = _solve_potential(Antiplane(), radii, map(_antiplane_modulus, Ls), itfs, L₀.p)
     fractions = ntuple(k -> S(layer_volume_fraction(cyl, k)), Val(N))
     return (; radii, Ls, L₀, fractions, interfaces = itfs, dilatation, axial, shear, antiplane)
 end
@@ -196,7 +198,7 @@ reference ones `K₀`.
 function _conduction_solution(cyl::LayeredCylinder{T, N}, K₀::TensND.AbstractTens{2, 3}) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     K₀e = _conductivities(K₀, cyl.axis)
-    Ks = map(K -> _conductivities(K, cyl.axis), cyl.moduli)
+    Ks = map((K, r) -> _layer_conductivities(K, cyl.axis, r), cyl.moduli, cyl.radii)
     _check_conductivity(K₀e, "the reference medium"; positive = true)
     foreach(k -> _check_conductivity(Ks[k], "layer $k"), 1:N)
     S = promote_type(

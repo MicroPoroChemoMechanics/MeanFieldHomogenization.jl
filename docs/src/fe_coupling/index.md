@@ -58,6 +58,7 @@ them, then worked models.
 | [Materials](@ref fe-materials) | the Gauss-point interface, in code |
 | [Building a fractured-rock material](@ref fe-fractured-rock) | the ARMA 2011 material: two gradients, two fluxes, evolving permeability |
 | [Ferrite backend](@ref fe-backends) | what the package and the Ferrite adapter each provide, and how to couple another code |
+| [FEniCSx backend](@ref fe-fenicsx) | the same materials as the stress of a FEniCSx problem, through the Python package `mfh_fenicsx` |
 | **Examples** | |
 | [Thick-walled cylinder](@ref fe-thick-cylinder) | worked model, checked against Lamé, then with closing cracks |
 | [A fractured-reservoir well test](@ref fe-arma2011) | the ARMA 2011 well test, in full |

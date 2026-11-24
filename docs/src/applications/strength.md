@@ -207,7 +207,8 @@ The criterion of [pichler2011](@citet) bounds, in every family of hydrate needle
 the quadratic average of the deviatoric stress,
 ``\bar\sigma^{\mathrm{dev}}_{\mathrm{hyd}} = \sqrt{\langle\tfrac{1}{2}\,\boldsymbol{s}:\boldsymbol{s}\rangle} \le \sigma^{\mathrm{ult}}_{\mathrm{hyd}}``,
 ``\boldsymbol{s}`` being the stress deviator (their eqs. 15 and 19). The derivative of
-the energy of the mortar gives that average,
+the energy of the mortar gives that average
+([Second moments of the local fields](@ref th-second-moments)),
 ``(\bar\sigma^{\mathrm{dev}}_{\mathrm{hyd}})^2 = (\mu_{\mathrm{hyd}}^2/f_\theta)\,\boldsymbol{E}:\partial\mathbb C_{\mathrm{MO}}/\partial\mu_{\mathrm{hyd}}:\boldsymbol{E}``
 (their eq. 22), where ``f_\theta`` is the mortar volume fraction of the perturbed
 (``\theta=0``) hydrate family. Under a uniaxial compression

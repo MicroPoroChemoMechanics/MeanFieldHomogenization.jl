@@ -318,6 +318,8 @@ G = levin_free_gradient(ct_K, Dict(:M => g_M, :I => g_I))   # g_M = Tens([0.0, 0
 
 The tutorial [Thermal expansion and Biot tensor](@ref tut-levin) applies the
 theorem to a two-phase composite and to a porous solid, numerically and in
-closed form. The next chapter keeps every scheme and changes the physics:
-[Extension to conductivity](@ref th-conductivity) states the dictionary through
-which the order-2 transport problem reuses the whole chain.
+closed form. The theorem gives the mean of a field over a phase. The next
+chapter gives what the mean does not hold, the second moment, and starts with
+the tool it rests on, the derivative of an estimate:
+[Derivatives by automatic differentiation](@ref th-autodiff), then
+[Second moments of the local fields](@ref th-second-moments).

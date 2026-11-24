@@ -94,6 +94,10 @@ contrast and the proximity to a bifurcation — hence the keyword.
 
 ## Differentiating through a SciML solve
 
+The three ways in which a derivative goes through an implicit estimate are
+derived in [Derivatives by automatic differentiation](@ref th-autodiff),
+section 4; this section applies the third one.
+
 `ForwardDiff` computes `derivative(rve, scheme, p)` by seeding a `Dual` into
 the RVE, so the nonlinear solver sees `Dual`-valued inputs and would seed *its
 own* `Dual` on top — **nested** duals, fragile in tag ordering and wasteful.

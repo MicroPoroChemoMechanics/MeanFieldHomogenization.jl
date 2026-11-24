@@ -195,6 +195,41 @@ matrix ([Layered sphere, section 9](@ref th-layered-sphere)). The tutorials
 and [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields)
 work through one in detail.
 
+#### Layers transversely isotropic about the radius
+
+A layer may have the radial direction as its symmetry axis, at every point. It
+is then a field of TensND, `radial_ti(SphericalChart(), …)`, in place of an
+isotropic tensor, given by its Hill moduli about ``\underline{e}_r`` or, in
+conduction, by its tangential and radial conductivities
+([theory](@ref th-layered-sphere-radial)).
+
+```@example manlayered_radial
+using MeanFieldHomogenization, TensND
+core = iso_stiffness(40.0, 20.0)
+shell = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+particle = LayeredSphere((0.6, 1.0), (core, shell))
+
+rve = RVE()
+add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(10.0, 6.0)); fraction = :rest)
+add_phase!(rve, :I, particle, Dict(:C => core); fraction = 0.3)
+k_mu(homogenize(rve, MoriTanaka(), :C))
+```
+
+The interfaces, the schemes and the mean tensors of the sphere and of its
+layers are those of the isotropic sphere. A coefficient of a layer is a
+parameter, named in the frame that turns with the point, and the second
+moments of the strain in a layer are obtained along a radial field
+([Sensitivities](@ref man-sensitivities-layers)):
+
+```@example manlayered_radial
+derivative(rve, MoriTanaka(), layer_param(:I, 2, :Crrrr); indexer = C -> k_mu(C)[2])
+```
+
+```@example manlayered_radial
+conducting = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), radial_ti(SphericalChart(), 0.2, 0.6)))   # tangential, radial
+property_contribution(conducting, TensISO{3}(1.0))
+```
+
 #### A zone whose moduli vary with the radius
 
 An interphase is often not a uniform shell: its moduli vary from those at the
@@ -217,6 +252,34 @@ graded zone as the square of their thickness;
 [A graded interphase around a spherical particle](@ref app-graded-interphase)
 measures it against an exact solution. The radii and moduli returned serve a
 `LayeredCylinder` as well.
+
+The profile itself may be the modulus of one layer: a function of the radius is
+integrated across the layer, to a tolerance that [`GradedLayer`](@ref) sets
+([theory](@ref th-radial-problems)). Its values are isotropic tensors or fields
+transversely isotropic about the radius.
+
+```@example manlayered_graded
+graded = LayeredSphere((a, 3a), (TensISO{3}(10.0), profile))
+property_contribution(graded, TensISO{3}(K_m)), property_contribution(particle, TensISO{3}(K_m))
+```
+
+```@example manlayered_graded
+tight = LayeredSphere((a, 3a), (TensISO{3}(10.0), GradedLayer(profile; reltol = 1.0e-12)))
+property_contribution(tight, TensISO{3}(K_m))
+```
+
+A layer whose moduli follow a power of the radius,
+``\mathbb{C}(r) = \mathbb{C}_{\mathrm{ref}}\,(r/r_{\mathrm{ref}})^\beta``, is
+crossed exactly by a [`PowerLawLayer`](@ref):
+
+```@example manlayered_graded
+shell = PowerLawLayer(TensISO{3}(K_m), -2.0; at = 3a)       # K_m at r = 3a, as r⁻² inside
+property_contribution(LayeredSphere((a, 3a), (TensISO{3}(10.0), shell)), TensISO{3}(K_m))
+```
+
+These layers take the interfaces of the others and enter the schemes as they
+do. Real, complex and dual numbers go through the integration; the pointwise
+fields are not available with them.
 
 ### [Coaxial cylinders](@id man-layered-cylinders)
 
@@ -242,6 +305,18 @@ ti_constants(best_fit_ti(N, (0.0, 0.0, 1.0)))
 Its tensors are transversely isotropic about the axis; the concentration
 tensor has no major symmetry, the axial and in-plane loadings being coupled.
 The derivation is on [Layered cylinder](@ref th-layered-cylinder).
+
+A layer may also be transversely isotropic about the radial direction of the
+section (a wound or a deposited material), as a field of the cylindrical chart,
+and its moduli may vary with the radius, as for the sphere
+([theory](@ref th-layered-cylinder-radial)):
+
+```@example layered
+wound = radial_ti(CylindricalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)   # Hill's moduli about e_r
+softening(r) = iso_stiffness(4.0 / r, 1.5 / r)                                          # a profile, for 0.8 < r < 1
+wrapped = LayeredCylinder((0.6, 0.8, 1.0), (ti(30.0, 12.0, 9.0, 150.0, 14.0), wound, softening))
+ti_constants(best_fit_ti(property_contribution(wrapped, iso_stiffness(3.0, 1.2)), (0.0, 0.0, 1.0)))
+```
 
 The axis may point in any direction ``\underline n``, given by `axis`. A layer
 that is transversely isotropic must then be so about ``\underline n``:
@@ -349,6 +424,11 @@ perfect; the conductivities may be symbols.
   yet. Conduction already has them.
 - **The exact spherical limit of a confocal spheroid**: the coordinates
   degenerate. Use `LayeredSphere`, or a nearly spherical aspect ratio.
+- **With layers transversely isotropic about the radius, or graded**, the
+  pointwise fields of the sphere and of the cylinder, the response of the
+  sphere to a harmonic of any degree (multipole expansion) and aging
+  viscoelasticity: the mean tensors and the schemes are available, these are
+  not written.
 - **A cylinder with incompressible or void layers**, or a reference that is
   not transversely isotropic about its axis: the radial problems divide by the
   plane-strain bulk and the shear moduli, and their decoupling rests on that
