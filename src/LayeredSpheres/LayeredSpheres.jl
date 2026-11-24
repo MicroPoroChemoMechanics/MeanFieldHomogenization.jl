@@ -10,6 +10,7 @@ concentration and layer-average utilities.
 module LayeredSpheres
 
 using LinearAlgebra
+using StaticArrays: SMatrix, SVector
 using TensND
 
 import ..Core
@@ -38,6 +39,7 @@ include("averages.jl")
 include("localfields.jl")     # pointwise u, ε, σ, T, ∇T, flux reconstruction
 include("scheme_integration.jl") # concentration tensors → mean-field schemes
 include("order_aliases.jl")       # names of elasticity, restricted to order 4
+include("radial_layers.jl")        # layers transversely isotropic about e_r: modes and states
 
 # ── Concentration / contribution overrides for LayeredSphere ─────────────────
 
@@ -171,6 +173,7 @@ end
 
 # ── Exports ─────────────────────────────────────────────────────────────────
 export LayeredSphere, AbstractInterface, PerfectInterface
+export RadialTI, tensor_at
 export SpringInterface, MembraneInterface
 export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface

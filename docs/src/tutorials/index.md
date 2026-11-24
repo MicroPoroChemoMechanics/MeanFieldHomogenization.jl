@@ -64,6 +64,7 @@ their volume-averaged concentration tensors instead. Theory:
 | [Layered spheres](@ref tut-layered-sphere) | Hervé–Zaoui `n`-layer concentration and layer averages |
 | [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields) | the strain, stress and displacement at any point inside and outside an n-layer sphere, perfect or imperfect interfaces, consistent with the layer averages |
 | [Layered sphere: the transfer matrices, symbolically](@ref tut-layered-sphere-symbolic) | the modes of a layer, what an interface transmits and the chaining of the layers, derived with symbols; two closed forms |
+| [Layered sphere: layers transversely isotropic about the radius, symbolically](@ref tut-layered-sphere-radial-symbolic) | the radial modes of a layer whose axis turns with the point, derived with symbols: non-integer exponents, oscillating modes, the means read on the boundaries |
 | [Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder) | a unidirectional composite of coated fibers, from one fiber to the effective medium and its creep |
 | [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic) | the modes of the four problems of a coaxial fiber, the conditions at an interface, and the order of the factors when the moduli do not commute |
 | [Layered spheroids: geometry and effective conductivity](@ref tut-layered-spheroid-effective) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |

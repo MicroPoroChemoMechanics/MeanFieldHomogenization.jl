@@ -1,12 +1,14 @@
 # Changelog
 
-## v0.29.1 — second moments of the local fields, and a theory of the derivatives
+## v0.29.1 — second moments of the local fields, radially anisotropic layers, and a theory of the derivatives
 
-A patch release, which adds without changing any existing result: the second moments of the strain (or of the gradient, in
-conduction) over a phase, for every cell and every scheme, in any symmetry
-class; the theory of the derivatives of an estimate, which the documentation
-did not have; and a Theory chapter in which every page stands with the notion
-it treats.
+A patch release, which adds without changing any existing result: the second
+moments of the strain (or of the gradient, in conduction) over a phase, for
+every cell and every scheme, in any symmetry class; layers of a layered sphere
+that are transversely isotropic about the radius, with the derivatives and the
+second moments in the frame that turns with the point; the theory of the
+derivatives of an estimate, which the documentation did not have; and a Theory
+chapter in which every page stands with the notion it treats.
 
 ### Added
 
@@ -30,6 +32,32 @@ it treats.
   and give the derivative of an effective property when the property of a phase
   moves along `𝔹`. The parameters that name a coefficient of a class are its
   particular cases. `AbstractPropertyParameter` is their common supertype.
+
+- **`RadialTI`: layers of a `LayeredSphere` that are transversely isotropic
+  about the radial direction**, in elasticity (five moduli, given by their
+  components in the frame that turns with the point) and in conduction (radial
+  and tangential conductivities). Until now a layer had to be isotropic. Such a
+  layer keeps the symmetry of the sphere: its radial modes are powers of `r`
+  whose exponents depend on the moduli, real in the spherical part and in
+  conduction, real or complex (oscillating modes) in the deviatoric part, and
+  the layers are chained by the interface matrices of the isotropic sphere,
+  with every kind of interface. The mean strain and stress of the sphere and of
+  its layers are read on the states at the boundaries of the layers, so that
+  they do not depend on the law of a layer; every scheme takes the sphere.
+  Checked against the isotropic sphere (to rounding), against the neutral
+  sphere of Schulgasser in conduction, and, for each of the five moduli,
+  against the integral of the pointwise field of the isotropic sphere. Numbers
+  and nested dual numbers; symbols in conduction. The pointwise fields, the
+  response to a harmonic of any degree and aging viscoelasticity are not
+  available with such layers.
+
+- **`layer_param(phase, layer, name)`**, a parameter that designates a
+  coefficient of one layer of a layered sphere (`LayerParameter`), or its
+  abscissa along a tensor (`LayerDirection`): the derivative with respect to
+  `:Crrrr` of a layer is taken in the frame that turns with the point.
+  `second_moment(cell, scheme, (phase, layer), E, 𝔹)` gives the second moments
+  of the strain in a layer, those of its components in the local frame
+  included: `RadialTI{4}(1, 0, 0, 0, 0)` gives the mean of `ε_rr²`.
 
 - **A symmetry class named alone takes the orientation of the tensor**:
   `symmetry = :TI` on a `TensTI`, `:ORTHO` on a `TensOrtho` or a `TensCubic`,
@@ -56,6 +84,11 @@ it treats.
   orthotropic phases and for the whole tensor, extends it to prestresses and to
   conduction, and checks it on a laminate and on the composite sphere, in
   numbers and in symbols.
+
+- **Theory, *Layered sphere: layers transversely isotropic about the radius*,**
+  with the tutorial that derives its modes symbolically: the exponents of the
+  three problems, the oscillating modes, the means read on the boundaries, the
+  parameters of a layer and the second moments in its frame.
 
 - **The Theory chapter is ordered by notion.** The torus and the holes given by
   a conformal map, which stood under "Extension to conductivity", are

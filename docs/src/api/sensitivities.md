@@ -17,8 +17,11 @@ PropertyParameter
 PropertyDirection
 GeometryParameter
 DistributionShapeParameter
+LayerParameter
+LayerDirection
 amount
 property
+layer_param
 geometry
 shape_param
 get_param

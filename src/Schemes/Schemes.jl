@@ -77,6 +77,7 @@ include("concentrations.jl")
 include("parameters.jl")
 include("sensitivities.jl")
 include("second_moments.jl")
+include("layer_parameters.jl")
 
 # ── Exports ────────────────────────────────────────────────────────────────
 # Data model
@@ -115,7 +116,8 @@ export fracture_permeability
 # Sensitivities: parameter lenses, ForwardDiff wrappers, second moments
 export AbstractParameter, AmountParameter, AbstractPropertyParameter, PropertyParameter,
     PropertyDirection, GeometryParameter, DistributionShapeParameter
-export amount, property, geometry, shape_param
+export amount, property, geometry, shape_param, layer_param
+export LayerParameter, LayerDirection
 export get_param, set_param, get_coefficient, set_coefficient
 export derivative, gradient, jacobian, sensitivity, second_moment
 

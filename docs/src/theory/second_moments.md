@@ -164,6 +164,11 @@ The nine components of the stiffness multiply ``\varepsilon_{ii}^2``
 (``C_{iiii}``), ``2\,\varepsilon_{ii}\,\varepsilon_{jj}`` (``C_{iijj}``,
 ``i \neq j``) and ``4\,\varepsilon_{ij}^2`` (``C_{ijij}``, ``i \neq j``).
 
+In a layer of a layered sphere, the direction may turn with the point, and
+the moments of the components of the strain in the local frame follow
+([Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial),
+section 7).
+
 A class gives as many moments as it has coefficients, and no more: the
 derivatives with respect to ``k_r`` and ``\mu_r`` do not separate
 ``\langle\varepsilon_n^2\rangle_r`` from the other terms of

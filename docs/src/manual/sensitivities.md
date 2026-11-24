@@ -163,6 +163,26 @@ gradient(rve, MoriTanaka(), ps; indexer = C₃₃₃₃)
 size(jacobian(rve, MoriTanaka(), ps))
 ```
 
+### [A layer of a layered sphere](@id man-sensitivities-layers)
+
+The moduli of a [`LayeredSphere`](@ref) are held by the sphere, one per layer.
+`layer_param(:I, 2, name)` designates a coefficient of the second layer of the
+sphere of the phase `:I`: `:k`, `:μ` (or `:scalar`) for an isotropic layer; for
+a layer transversely isotropic about the radius, a component in the frame that
+turns with the point, `:Crrrr`, `:Cθθθθ`, `:Cθθφφ`, `:Crrθθ`, `:Crθrθ`, a
+Walpole coefficient `:ℓ₁`, `:ℓ₂`, `:ℓ₃`, `:ℓ₅`, `:ℓ₆`, or a conductivity
+`:radial`, `:tangential`. With a tensor in place of the name,
+`layer_param(:I, 2, 𝔹)` is the abscissa of the modulus of the layer along `𝔹`,
+an isotropic tensor or a [`RadialTI`](@ref).
+
+```@example sens
+coated = RVE()
+add_phase!(coated, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(10.0, 6.0)); fraction = :rest)
+shell = RadialTI{4}(; Crrrr = 12.0, Cθθθθ = 30.0, Cθθφφ = 8.0, Crrθθ = 5.0, Crθrθ = 4.0)
+add_phase!(coated, :I, LayeredSphere((0.6, 1.0), (iso_stiffness(40.0, 20.0), shell)), Dict(:C => iso_stiffness(40.0, 20.0)); fraction = 0.3)
+derivative(coated, MoriTanaka(), layer_param(:I, 2, :Crrrr); indexer = C₃₃₃₃)
+```
+
 ## [Second moments](@id man-sensitivities-moments)
 
 The mean over a phase of a quadratic form of the local strain is a derivative
@@ -198,6 +218,15 @@ The cell is an `RVE`, a laminate or a particle assembly, in space or in the
 plane; the moduli may be dual numbers or symbols. The moments of the stress
 follow, ``\boldsymbol{\sigma} = \mathbb{C}_r:\boldsymbol{\varepsilon}`` in the
 phase. A family of cracks has no volume and is refused.
+
+A layer of a layered sphere is designated by the pair `(phase, layer)`, and the
+tensor of the form may then turn with the point: the first element of the
+Walpole basis about the radius gives the second moment of the radial strain in
+the layer ([theory](@ref th-layered-sphere-radial)).
+
+```@example sens
+second_moment(coated, MoriTanaka(), (:I, 2), E, RadialTI{4}(1.0, 0.0, 0.0, 0.0, 0.0))   # ⟨ε_rr²⟩
+```
 
 ## Any other input
 

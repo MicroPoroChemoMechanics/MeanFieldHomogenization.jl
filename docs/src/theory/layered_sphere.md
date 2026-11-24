@@ -466,7 +466,10 @@ homogenize_alv(rve_alv, MoriTanaka(), :C; times)
 
 ## Where to go next
 
-The next page, [Layered cylinder](@ref th-layered-cylinder), solves the same
+The next page,
+[Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial),
+keeps the sphere and gives its layers a symmetry axis that turns with the
+point. [Layered cylinder](@ref th-layered-cylinder) then solves the same
 problem for a coated fiber, whose layers may be transversely isotropic. The
 page after it, [Layered spheroid](@ref th-layered-spheroid), solves it for
 confocal spheroidal layers, in conduction and in elasticity; there an imperfect

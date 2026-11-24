@@ -375,6 +375,7 @@ end
         include("LayeredSpheres/test_harmonic_response_elastic.jl")
         include("LayeredSpheres/test_christensen.jl")
         include("LayeredSpheres/test_local_fields.jl")
+        include("LayeredSpheres/test_radial_layers.jl")
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")

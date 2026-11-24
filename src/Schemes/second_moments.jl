@@ -20,6 +20,14 @@
 _quadratic_form(C::TensND.AbstractTens{4}, E) = E ⊡ (C ⊡ E)
 _quadratic_form(K::TensND.AbstractTens{2}, G) = G ⋅ (K ⋅ G)
 
+# The tensor of a quadratic form: a tensor, or the field of a tensor that turns
+# with the point in a layer of a sphere.
+const _Direction = Union{TensND.AbstractTens, LayeredSpheres.RadialTI}
+
+# The parameter that moves the property of a phase, or the modulus of a layer
+# `(phase, layer)` of its layered sphere (`layer_parameters.jl`), along `𝔹`.
+_direction_lens(phase::Symbol, property, 𝔹) = PropertyDirection(phase, property, 𝔹)
+
 # The volume fraction of the member over which the moment is a mean. A family of
 # cracks has no volume: its fields are described by the opening of the cracks.
 _moment_fraction(rve::RVE, name::Symbol) = _moment_fraction(rve.amounts[name], rve, name)
@@ -66,6 +74,12 @@ at ``t=0``, taken by automatic differentiation through the lens
 phase need not. `kw...` are passed to [`homogenize`](@ref). A family of cracks
 is refused: it has no volume.
 
+`phase` may be a pair `(phase, layer)`, one layer of the layered sphere of the
+phase: `𝔹` is then an isotropic tensor or a
+[`RadialTI`](@ref MeanFieldHomogenization.LayeredSpheres.RadialTI), whose axis
+turns with the point, so that `RadialTI{4}(1, 0, 0, 0, 0)` gives the mean of
+``\\varepsilon_{rr}^2`` over the layer.
+
 Theory: [Second moments of the local fields](@ref th-second-moments).
 
 # Examples
@@ -87,8 +101,8 @@ true
 ```
 """
 function second_moment(
-        cell::AbstractHomogenizationCell, scheme::HomogenizationScheme, phase::Symbol,
-        E, 𝔹::TensND.AbstractTens; property::Symbol = :C, kw...
+        cell::AbstractHomogenizationCell, scheme::HomogenizationScheme, phase::Union{Symbol, Tuple{Symbol, Int}},
+        E, 𝔹::_Direction; property::Symbol = :C, kw...
     )
     T = promote_type(_energy_type(cell, scheme, E, property; kw...), eltype(𝔹))
     return moment_along(cell, scheme, phase, E, 𝔹, T; property = property, kw...)
@@ -131,11 +145,11 @@ times and knows that type (the promotion of the number types of every input of
 `cell`, of `E` and of `𝔹`), which saves one evaluation of the scheme per call.
 """
 function moment_along(
-        cell::AbstractHomogenizationCell, scheme::HomogenizationScheme, phase::Symbol,
-        E, 𝔹::TensND.AbstractTens, ::Type{T}; property::Symbol = :C, kw...
+        cell::AbstractHomogenizationCell, scheme::HomogenizationScheme, phase::Union{Symbol, Tuple{Symbol, Int}},
+        E, 𝔹::_Direction, ::Type{T}; property::Symbol = :C, kw...
     ) where {T}
     f = _moment_fraction(cell, phase)
-    lens = PropertyDirection(phase, property, 𝔹)
+    lens = _direction_lens(phase, property, 𝔹)
     energy(t) = _quadratic_form(homogenize(set_param(cell, lens, t), scheme; property = property, kw...), E)
     return _energy_derivative(energy, T) / f
 end

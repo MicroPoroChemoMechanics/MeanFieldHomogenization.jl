@@ -100,6 +100,7 @@ const PUBLISHED_SCRIPTS = [
     "97_hill_reduction.jl" => "hill_reduction",
     "98_hill_transformation_2020.jl" => "hill_transformation",
     "100_derivative_routes.jl" => "derivative_routes",
+    "101_layered_sphere_radial_symbolic.jl" => "layered_sphere_radial_symbolic",
     "material_laws/01_plasticity.jl" => "ml_plasticity",
     "material_laws/02_damage.jl" => "ml_damage",
     "material_laws/03_biot.jl" => "ml_biot",

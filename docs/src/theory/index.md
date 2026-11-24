@@ -129,6 +129,7 @@ treatment belongs in this group.
 | Page | Pattern |
 | :--- | :------ |
 | [Layered sphere](@ref th-layered-sphere) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
+| [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial) | layers whose symmetry axis is the radial direction: radial modes with exponents that depend on the moduli, means read on the boundaries of the layers, derivatives and second moments in the frame that turns with the point |
 | [Layered cylinder](@ref th-layered-cylinder) | a fiber of coaxial layers, each one transversely isotropic about the axis: four radial problems chained from layer to layer |
 | [Layered spheroid](@ref th-layered-spheroid) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
 | [The elastic confocal spheroid](@ref th-spheroid-elasticity) | the axisymmetric elastic problem on the same chart |
