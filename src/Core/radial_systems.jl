@@ -139,7 +139,7 @@ end
 """
     GradedLayer(profile; reltol = 1.0e-10, abstol = 1.0e-12, start = 1.0e-8)
 
-A layer of a [`LayeredSphere`](@ref) or of a [`LayeredCylinder`](@ref) whose
+A layer of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) or of a [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) whose
 modulus varies with the radius: `profile(r)` is the modulus at the radius `r`,
 an isotropic tensor or a field transversely isotropic about the radial
 direction (`TensND.radial_ti`). A function given as the modulus of a layer is
@@ -192,8 +192,9 @@ largest exponent taking over. What is carried instead is their subspace, by its
 impedance ``\\boldsymbol{Z}``, which maps the first half of a regular state (the
 displacement) to the second one (``r`` times the traction):
 
-``r\\,\\mathrm{d}\\boldsymbol{Z}/\\mathrm{d}r = \\boldsymbol{M}_{21} + \\boldsymbol{M}_{22}\\boldsymbol{Z}
- - \\boldsymbol{Z}\\boldsymbol{M}_{11} - \\boldsymbol{Z}\\boldsymbol{M}_{12}\\boldsymbol{Z}``,
+```math
+r\\,\\frac{\\mathrm{d}\\boldsymbol{Z}}{\\mathrm{d}r} = \\boldsymbol{M}_{21} + \\boldsymbol{M}_{22}\\boldsymbol{Z} - \\boldsymbol{Z}\\boldsymbol{M}_{11} - \\boldsymbol{Z}\\boldsymbol{M}_{12}\\boldsymbol{Z} ,
+```
 
 a Riccati equation of which the impedance of the regular solutions is the
 stable solution in the direction of increasing radii. It starts at the radius
@@ -227,7 +228,7 @@ radial_integral(q::F, a, b; rtol) where {F} =
 """
     PowerLawLayer(reference, β; at = 1)
 
-A layer of a [`LayeredSphere`](@ref) whose modulus is `reference` at the radius
+A layer of a [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) whose modulus is `reference` at the radius
 `at` and varies as the power `β` of the radius,
 ``\\mathbb{C}(r) = \\mathbb{C}_{\\mathrm{ref}}\\,(r/r_{\\mathrm{ref}})^{\\beta}``,
 `reference` being an isotropic tensor or a field transversely isotropic about
@@ -238,7 +239,7 @@ state divided by ``(r/r_{\\mathrm{ref}})^{\\beta}``, the system
 ``r\\,\\mathrm{d}Y/\\mathrm{d}r = \\boldsymbol{M}(r)\\,Y`` has the constant matrix of
 the reference modulus, ``\\beta`` being subtracted from the diagonal of its
 traction rows: a power of a matrix, as for a uniform layer. It cannot be the core, where its modulus
-vanishes or is infinite; in a [`LayeredCylinder`](@ref) it is integrated as a
+vanishes or is infinite; in a [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) it is integrated as a
 [`GradedLayer`](@ref).
 """
 struct PowerLawLayer{C, B, R}
