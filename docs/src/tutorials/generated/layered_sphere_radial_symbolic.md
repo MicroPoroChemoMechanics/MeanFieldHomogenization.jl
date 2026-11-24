@@ -151,7 +151,7 @@ equal to the identity at ``\rho = 1``. For a system of size two,
 Mₕ = Matrix(LS._bulk_system(h))
 X = Mₕ + [1 0; 0 1] / Sym(2)
 @assert all(iszero, simplify.(X * X - (Sym(1) / 4 + 2 * (2k - l) / n) * [1 0; 0 1]))
-P = Matrix(LS._radial_power(LS._bulk_system(h), ρ))
+P = Matrix(MeanFieldHomogenization.Core.radial_power(LS._bulk_system(h), ρ))
 @assert all(iszero, simplify.(ρ .* diff.(P, ρ) .- Mₕ * P)) && all(iszero, simplify.(subs.(P, ρ => 1) .- [1 0; 0 1]))
 simplify.(subs.(P, isotropic...))
 ````

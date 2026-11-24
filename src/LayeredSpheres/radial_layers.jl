@@ -75,8 +75,9 @@ const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 # enters, the state being what an interface transmits. The matrices below are
 # derived symbolically in the tutorial `scripts/101`. In a layer of uniform
 # moduli M is constant, and the state is carried from a radius to another by
-# the power (r_out/r_in)^M; the exponents of the radial modes are the
-# eigenvalues of M, which are not computed.
+# the power (r_out/r_in)^M, the solutions regular at the center being a
+# subspace of the states: both are in `Core/radial_systems.jl`, shared with the
+# layered cylinder.
 
 # Spherical part, Y = (u_r, r σ_rr).
 _bulk_system(h) = SMatrix{2, 2}(-2 * h.l / h.n, 4 * h.k - 4 * h.l^2 / h.n, 1 / h.n, 2 * h.l / h.n - 1)
@@ -104,70 +105,6 @@ _system(c::RadialField{4}, ::Val{1}) = _bulk_system(_hill_moduli(c))
 _system(c::RadialField{4}, ::Val{2}) = _shear_system(_hill_moduli(c))
 _system(c::RadialField{2}, ::Val{1}) = _cond_system(c)
 
-# X = M + 1/2 has eigenvalues in opposite pairs ±t: s = −1/2 ± t are the
-# exponents, those of positive real part being the solutions regular at the
-# center. For a system of size 2, X² = t² 𝟙 exactly, so that the power and the
-# regular solution are closed forms, which symbols go through:
-#     ρ^M = ρ^(−1/2) [cosh(t ln ρ) 𝟙 + sinh(t ln ρ) X/t],    X v = t v for v = (X + t 𝟙) e.
-_half_trace_free(M) = M + one(M) / 2
-_exponent(X::SMatrix{2, 2}) = sqrt(X[1, 1]^2 + X[1, 2] * X[2, 1])
-
-function _radial_power(M::SMatrix{2, 2}, ρ)
-    X = _half_trace_free(M)
-    t = _exponent(X)
-    x = t * log(ρ)
-    return (cosh(x) * one(M) + (sinh(x) / t) * X) / sqrt(ρ)
-end
-# Of any size, by the exponential: exponents real or complex, distinct or not.
-_radial_power(M::SMatrix, ρ) = exp(M * log(ρ))
-
-# A basis of the states of the solutions regular at the center: columns of the
-# projector on the eigenvalues of M of real part above −1/2.
-function _regular_states(M::SMatrix{2, 2}, ::Val{1})
-    X = _half_trace_free(M)
-    P = X + _exponent(X) * one(M)
-    return _columns(P, _largest_columns(Val(is_hard_numeric(real(eltype(P)))), P))
-end
-function _regular_states(M::SMatrix{4, 4}, ::Val{2})
-    P = (one(M) + _matrix_sign(_half_trace_free(M))) / 2
-    return _columns(P, _independent_columns(P))
-end
-
-# The sign of a matrix without imaginary eigenvalue, by Newton's iteration
-# X ← (X + X⁻¹)/2, which converges quadratically. It is stopped on the values;
-# two more steps then bring the derivatives carried by dual numbers, up to the
-# third order, to the same accuracy.
-function _matrix_sign(X::SMatrix)
-    tol = 16 * eps(typeof(_value_norm(X)))
-    for _ in 1:100
-        Y = (X + inv(X)) / 2
-        settled = _value_norm(Y - X) ≤ tol * _value_norm(Y)
-        X = Y
-        settled && break
-    end
-    X = (X + inv(X)) / 2
-    return (X + inv(X)) / 2
-end
-# Norms and comparisons are taken on the values: those of the real and of the
-# imaginary part of a complex number, which may each be a dual number.
-_value(x) = TensND.primal(x)
-_value(z::Complex) = complex(TensND.primal(real(z)), TensND.primal(imag(z)))
-_value_norm(X) = sqrt(sum(abs2 ∘ _value, X))
-
-# The column of P of largest norm, or the two whose Gram determinant is the
-# largest, so that the basis kept is well conditioned. Compared on values; a
-# symbolic projector of size 2 has proportional columns, the first one is kept.
-_columns(P::SMatrix{N, N}, idx::NTuple{1, Int}) where {N} = SMatrix{N, 1}(P[:, idx[1]])
-_columns(P::SMatrix{N, N}, idx::NTuple{2, Int}) where {N} = hcat(P[:, idx[1]], P[:, idx[2]])
-_largest_columns(::Val{false}, P) = (1,)
-_largest_columns(::Val{true}, P::SMatrix{N, N}) where {N} = (argmax(j -> _value_norm(P[:, j]), 1:N),)
-function _independent_columns(P::SMatrix{4, 4})
-    V = map(_value, P)
-    gram(i, j) = real(V[:, i] ⋅ V[:, i]) * real(V[:, j] ⋅ V[:, j]) - abs2(V[:, i] ⋅ V[:, j])
-    pairs = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
-    return pairs[argmax(map(ij -> gram(ij...), pairs))]
-end
-
 # The state the interface matrices act on is (displacement, traction) at the
 # radius r; Y carries r times the traction in its second half.
 _scaling(::SMatrix{2, 2}, r) = SMatrix{2, 2}(one(r), zero(r), zero(r), r)
@@ -182,7 +119,7 @@ function _radial_states(sphere::RadialLayeredSphere{T, N}, interface, probes::Va
     radii = map(TP, sphere.radii)
     system(k) = map(TP, _system(layer_modulus(sphere, k), probes))
     M = system(1)
-    S = inv(_scaling(M, radii[1])) * _regular_states(M, probes)
+    S = inv(_scaling(M, radii[1])) * MFH_Core.regular_states(M, probes)
     inside = Vector{typeof(S)}(undef, N)
     outside = Vector{typeof(S)}(undef, N)
     for k in 1:N
@@ -191,7 +128,7 @@ function _radial_states(sphere::RadialLayeredSphere{T, N}, interface, probes::Va
         outside[k] = S
         if k < N
             M = system(k + 1)
-            S = inv(_scaling(M, radii[k + 1])) * (_radial_power(M, radii[k + 1] / radii[k]) * (_scaling(M, radii[k]) * S))
+            S = inv(_scaling(M, radii[k + 1])) * (MFH_Core.radial_power(M, radii[k + 1] / radii[k]) * (_scaling(M, radii[k]) * S))
         end
     end
     return inside, outside

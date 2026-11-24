@@ -59,6 +59,7 @@ include("green_dipole.jl")
 include("green_operator.jl")
 include("green_aniso.jl")
 include("quadrature.jl")
+include("radial_systems.jl")
 include("dispatch.jl")
 include("dispatch_pair.jl")
 
