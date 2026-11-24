@@ -158,7 +158,7 @@ function _elastic_solution(cyl::LayeredCylinder{T, N}, C₀::TensND.AbstractTens
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     L₀ = _hill_moduli(C₀, cyl.axis)
     # `map` over the tuple of layers: an index would lose the type of each.
-    Ls = map(C -> _hill_moduli(C, cyl.axis), cyl.moduli)
+    Ls = map((C, r) -> _layer_hill(C, cyl.axis, r), cyl.moduli, cyl.radii)
     _check_stiffness(L₀, "the reference medium")
     foreach(k -> _check_stiffness(Ls[k], "layer $k"), 1:N)
     S = promote_type(
@@ -198,7 +198,7 @@ reference ones `K₀`.
 function _conduction_solution(cyl::LayeredCylinder{T, N}, K₀::TensND.AbstractTens{2, 3}) where {T, N}
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     K₀e = _conductivities(K₀, cyl.axis)
-    Ks = map(K -> _conductivities(K, cyl.axis), cyl.moduli)
+    Ks = map((K, r) -> _layer_conductivities(K, cyl.axis, r), cyl.moduli, cyl.radii)
     _check_conductivity(K₀e, "the reference medium"; positive = true)
     foreach(k -> _check_conductivity(Ks[k], "layer $k"), 1:N)
     S = promote_type(

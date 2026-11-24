@@ -209,6 +209,38 @@ end
         end
     end
 
+    @testset "a layer in a power of the radius, crossed exactly" begin
+        K_c, μ_c, K_m, μ_m, R = 6.0, 3.0, 1.5, 0.8, 1.6
+        λ_s, μ_s, β = 0.9, 0.5, 2.5
+        C₀, core = iso_stiffness(K_m, μ_m), iso_stiffness(K_c, μ_c)
+        C_s = iso_stiffness(λ_s + 2μ_s / 3, μ_s)
+        exact = LayeredSphere((1.0, R), (core, PowerLawLayer(C_s, β)))
+        @test _gl_bulk(property_contribution(exact, C₀, C₀)) ≈ _gl_power_shell_bulk(K_c, λ_s, μ_s, β, R, K_m, μ_m) rtol = 1.0e-12
+        # The deviatoric part, against the integration of the same profile.
+        integrated = LayeredSphere((1.0, R), (core, GradedLayer(r -> r^β * C_s; reltol = 1.0e-12, abstol = 1.0e-14)))
+        @test collect(TensND.get_data(property_contribution(exact, C₀, C₀))) ≈ collect(TensND.get_data(property_contribution(integrated, C₀, C₀))) rtol = 1.0e-9
+        # The reference radius, a layer transversely isotropic about the radius, interfaces.
+        radial = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+        itf = (SpringInterface(; sn = 0.02, st = 0.05), MembraneInterface(3.0, 2.0))
+        a = LayeredSphere((1.0, R), (core, PowerLawLayer(radial, -1.5; at = 1.3)); interfaces = itf)
+        b = LayeredSphere((1.0, R), (core, GradedLayer(r -> (r / 1.3)^-1.5 * radial; reltol = 1.0e-12, abstol = 1.0e-14)); interfaces = itf)
+        for f in (gradient_gradient_concentration, flux_gradient_concentration)
+            @test collect(TensND.get_data(f(a, C₀, C₀))) ≈ collect(TensND.get_data(f(b, C₀, C₀))) rtol = 1.0e-9
+        end
+        # Conduction, with the derivatives of the closed form and complex moduli.
+        k_c, k_s, k_m = 8.0, 0.4, 1.3
+        conducting(β, R, k_s = k_s) = _gl_cond(property_contribution(LayeredSphere((1.0, R), (TensISO{3}(k_c), PowerLawLayer(TensISO{3}(k_s), β))), TensISO{3}(k_m)))
+        @test conducting(β, R) ≈ _gl_power_shell_cond(k_c, k_s, β, R, k_m) rtol = 1.0e-12
+        @test ForwardDiff.derivative(x -> conducting(x, R), β) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, x, R, k_m), β) rtol = 1.0e-10
+        @test ForwardDiff.derivative(x -> conducting(β, x), R) ≈ ForwardDiff.derivative(x -> _gl_power_shell_cond(k_c, k_s, β, x, k_m), R) rtol = 1.0e-10
+        @test conducting(β, R, 0.4 + 0.1im) ≈ _gl_cond(property_contribution(LayeredSphere((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}((0.4 + 0.1im) * r^β))), TensISO{3}(k_m))) rtol = 1.0e-8
+        # The mean of the moduli, and the core refused.
+        mean = (k_c + 3 * k_s * (R^(β + 3) - 1) / (β + 3)) / R^3
+        sphere = LayeredSphere((1.0, R), (TensISO{3}(k_c), PowerLawLayer(TensISO{3}(k_s), β)))
+        @test _gl_cond(MeanFieldHomogenization.LayeredSpheres.layer_property_average(sphere, TensISO{3}(1.0))) ≈ mean rtol = 1.0e-9
+        @test_throws ArgumentError property_contribution(LayeredSphere((1.0,), (PowerLawLayer(C_s, β),)), C₀, C₀)
+    end
+
     @testset "a graded layer: constant profiles, a graded core, interfaces" begin
         C₀ = iso_stiffness(10.0, 6.0)
         C = (iso_stiffness(40.0, 20.0), iso_stiffness(4.0, 3.0))
@@ -254,6 +286,8 @@ end
         sphere = LayeredSphere((1.0, R), (TensISO{3}(8.0), r -> TensISO{3}(r^β)))
         mean = (8.0 + 3 * (R^(β + 3) - 1) / (β + 3)) / R^3
         @test only(data(MeanFieldHomogenization.LayeredSpheres.layer_property_average(sphere, TensISO{3}(1.0)))) ≈ mean rtol = 1.0e-9
+        averaged(R) = only(data(MeanFieldHomogenization.LayeredSpheres.layer_property_average(LayeredSphere((1.0, R), (TensISO{3}(8.0), r -> TensISO{3}(r^β))), TensISO{3}(1.0))))
+        @test ForwardDiff.derivative(averaged, R) ≈ ForwardDiff.derivative(R -> (8.0 + 3 * (R^(β + 3) - 1) / (β + 3)) / R^3, R) rtol = 1.0e-8
         # In a scheme, and what a graded layer does not have.
         rve = RVE()
         add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)

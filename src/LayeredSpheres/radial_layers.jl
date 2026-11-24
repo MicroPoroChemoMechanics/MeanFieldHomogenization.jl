@@ -59,11 +59,12 @@ _shell_average(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); TensISO{
 
 # A layer of a sphere solved through its states: a uniform radial field, or
 # moduli that vary with the radius.
-const _RadialLayer = Union{RadialField, MFH_Core.GradedLayer}
+const _RadialLayer = Union{RadialField, MFH_Core.GradedLayer, MFH_Core.PowerLawLayer}
 const RadialLayers = Tuple{_RadialLayer, Vararg{_RadialLayer}}
 
-# The modulus of a graded layer at a radius, as a radial field.
+# The modulus of a layer that varies with the radius, at a radius, as a radial field.
 _modulus_at(g::MFH_Core.GradedLayer, r) = _radial_field(g.profile(r))
+_modulus_at(c::MFH_Core.PowerLawLayer, r) = _radial_field(c(r))
 const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 
 # ── The radial problems as first-order systems ───────────────────────────────
@@ -135,6 +136,21 @@ function _cross(c::RadialField, probes::Val, r_in, r_out, S, ::Type{TP}) where {
     M = map(TP, _system(c, probes))
     return inv(_scaling(M, r_out)) * (MFH_Core.radial_power(M, r_out / r_in) * (_scaling(M, r_in) * S))
 end
+function _core_states(c::MFH_Core.PowerLawLayer, probes::Val, r, ::Type)
+    throw(
+        ArgumentError(
+            "a PowerLawLayer cannot be the core of a LayeredSphere: its modulus, in the power " *
+                "$(c.exponent) of the radius, vanishes or is infinite at the center"
+        )
+    )
+end
+# A layer in a power of the radius: the power of the system of its reference
+# modulus, shifted (`Core.power_law_transfer`).
+function _cross(c::MFH_Core.PowerLawLayer, probes::Val, r_in, r_out, S, ::Type{TP}) where {TP}
+    M = map(TP, _system(_radial_field(c.reference), probes))
+    P = MFH_Core.power_law_transfer(M, c.exponent, r_in / c.at, r_out / c.at)
+    return inv(_scaling(M, r_out)) * (P * (_scaling(M, r_in) * S))
+end
 function _cross(g::MFH_Core.GradedLayer, probes::Val, r_in, r_out, S, ::Type{TP}) where {TP}
     system(ρ) = map(TP, _system(_modulus_at(g, ρ), probes))
     return inv(_scaling(S, r_out)) * MFH_Core.radial_transfer(system, g, r_in, r_out, _scaling(S, r_in) * S)
@@ -161,6 +177,7 @@ end
 # its outer radius.
 _layer_eltype(c::RadialField, r) = eltype(c)
 _layer_eltype(g::MFH_Core.GradedLayer, r) = eltype(_modulus_at(g, r))
+_layer_eltype(c::MFH_Core.PowerLawLayer, r) = promote_type(eltype(_modulus_at(c, r)), typeof(c.exponent), typeof(c.at))
 
 _radial_eltype(sphere::RadialLayeredSphere{T}, x₀...) where {T} = TensND.float_like(
     promote_type(
@@ -223,10 +240,10 @@ _boundary_state(inside, outside, external::Bool) = external ? last(outside) : la
 
 # One radial layer makes every layer a radial field: an isotropic layer is the
 # particular case whose five moduli are those of an isotropic tensor.
-_as_layers(moduli::Tuple) = any(c -> c isa Union{TensND.ChartTens, Function, MFH_Core.GradedLayer}, moduli) ? map(_radial_layer, moduli) : moduli
+_as_layers(moduli::Tuple) = any(c -> c isa Union{TensND.ChartTens, Function, _RadialLayer}, moduli) ? map(_radial_layer, moduli) : moduli
 _as_layers(moduli) = moduli
 _radial_layer(c) = _radial_field(c)
-_radial_layer(g::MFH_Core.GradedLayer) = g
+_radial_layer(g::Union{MFH_Core.GradedLayer, MFH_Core.PowerLawLayer}) = g
 _radial_layer(profile::Function) = MFH_Core.GradedLayer(profile)
 
 # ── What the schemes ask of the sphere ───────────────────────────────────────
@@ -368,9 +385,10 @@ end
 # that over the directions for a uniform layer, weighted by r² along the radius
 # for a graded one.
 _volume_average(c::RadialField, modulus, a, b) = _shell_average(modulus(c))
+_volume_average(c::MFH_Core.PowerLawLayer, modulus, a, b) = _volume_average(MFH_Core.GradedLayer(c), modulus, a, b)
 function _volume_average(g::MFH_Core.GradedLayer, modulus, a, b)
     data(r) = collect(TensND.get_data(_shell_average(modulus(_modulus_at(g, r))))) .* r^2
-    integral, _ = quadgk(data, a, b; rtol = g.reltol)
+    integral = MFH_Core.radial_integral(data, a, b; rtol = g.reltol)
     return TensISO{3}((3 .* integral ./ (b^3 - a^3))...)
 end
 

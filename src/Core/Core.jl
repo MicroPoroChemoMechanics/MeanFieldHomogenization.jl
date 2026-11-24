@@ -66,7 +66,7 @@ include("dispatch_pair.jl")
 
 # Abstractions
 export HillCache, with_hill_cache
-export GradedLayer
+export GradedLayer, PowerLawLayer
 export AbstractInclusion, AbstractEllipsoidalInclusion,
     AbstractCrack, AbstractLayeredInclusion, AbstractCustomInclusion
 

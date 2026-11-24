@@ -200,7 +200,7 @@ _layer_gradient(sol, k::Int, external::Bool, internal::Bool) =
 function _whole_flux(sol, external::Bool)
     N = length(sol.radii)
     𝟙 = one(sol.K₀.t)
-    layers = sum(sol.fractions[k] * sol.Ks[k].a for k in 1:N)
+    layers = sum(sol.fractions[k] * _axial_conductivity(sol.Ks[k], sol.radii, k) for k in 1:N)
     surfaces = sum(
         _axial_surface_flux(sol.interfaces[k], sol.radii[k]) for k in 1:(external ? N : N - 1);
         init = zero(eltype(sol.radii))

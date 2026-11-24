@@ -216,7 +216,7 @@ _rebuild_ti(::TensND.TensTI{4}, ℓ, axis) = TensND.TensTI{4}(ℓ..., axis)
 _rebuild_ti(::TensND.TensTI{2}, c, axis) = TensND.TensTI{2}(c..., axis)
 
 layer_property_average(cyl::LayeredCylinder{T, N}, ::Val) where {T, N} =
-    _coaxial_average(cyl, ntuple(k -> _mean_tensor(layer_modulus(cyl, k), cyl.axis), Val(N)))
+    _coaxial_average(cyl, ntuple(k -> _mean_tensor(layer_modulus(cyl, k), cyl.axis, _inner_radius(cyl.radii, k), cyl.radii[k]), Val(N)))
 
 layer_inverse_property_average(cyl::LayeredCylinder{T, N}, ::Val) where {T, N} =
-    _coaxial_average(cyl, ntuple(k -> _mean_inverse_tensor(layer_modulus(cyl, k), cyl.axis), Val(N)))
+    _coaxial_average(cyl, ntuple(k -> _mean_inverse_tensor(layer_modulus(cyl, k), cyl.axis, _inner_radius(cyl.radii, k), cyl.radii[k]), Val(N)))

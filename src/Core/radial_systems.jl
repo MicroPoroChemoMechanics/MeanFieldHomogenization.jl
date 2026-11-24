@@ -212,3 +212,56 @@ function regular_transfer(system::F, layer::GradedLayer, r, ::Val{n}) where {F, 
     Z = solve(ODEProblem(rhs, map(T, Z₀), (0.0, 1.0)), Tsit5(); reltol = layer.reltol, abstol = layer.abstol, save_everystep = false).u[end]
     return vcat(one(Z), Z)
 end
+
+"""
+    radial_integral(q, a, b; rtol) -> typeof(q(a))
+
+``\\int_a^b q(r)\\,\\mathrm{d}r`` by an adaptive quadrature on the unit interval,
+``r = a + s\\,(b - a)``, so that the radii `a` and `b` may be dual numbers. The error is measured on the
+values, as for every quadrature of the package (`_quadgk_norm`), complex ones
+included.
+"""
+radial_integral(q::F, a, b; rtol) where {F} =
+    (b - a) * first(quadgk(s -> q(a + s * (b - a)), 0.0, 1.0; rtol, norm = _value_norm))
+
+"""
+    PowerLawLayer(reference, β; at = 1)
+
+A layer of a [`LayeredSphere`](@ref) whose modulus is `reference` at the radius
+`at` and varies as the power `β` of the radius,
+``\\mathbb{C}(r) = \\mathbb{C}_{\\mathrm{ref}}\\,(r/r_{\\mathrm{ref}})^{\\beta}``,
+`reference` being an isotropic tensor or a field transversely isotropic about
+the radial direction.
+
+Such a layer is crossed exactly, without integration. With the tractions of the
+state divided by ``(r/r_{\\mathrm{ref}})^{\\beta}``, the system
+``r\\,\\mathrm{d}Y/\\mathrm{d}r = \\boldsymbol{M}(r)\\,Y`` has the constant matrix of
+the reference modulus, ``\\beta`` being subtracted from the diagonal of its
+traction rows: a power of a matrix, as for a uniform layer. It cannot be the core, where its modulus
+vanishes or is infinite; in a [`LayeredCylinder`](@ref) it is integrated as a
+[`GradedLayer`](@ref).
+"""
+struct PowerLawLayer{C, B, R}
+    reference::C
+    exponent::B
+    at::R
+end
+PowerLawLayer(reference, β; at = 1) = PowerLawLayer(reference, β, at)
+
+"The modulus of a power-law layer at the radius `r`."
+(layer::PowerLawLayer)(r) = (r / layer.at)^layer.exponent * layer.reference
+
+"""
+    power_law_transfer(M, β, ρ_in, ρ_out) -> SMatrix
+
+The matrix that carries the state of a layer whose moduli vary as the power `β`
+of the radius from the radius ``\\rho_{\\mathrm{in}}`` to ``\\rho_{\\mathrm{out}}``, both
+divided by the reference radius, `M` being the system of the reference moduli.
+The second half of the state holds the tractions.
+"""
+function power_law_transfer(M::SMatrix{N, N}, β, ρ_in, ρ_out) where {N}
+    traction = SVector{N}(ntuple(i -> i > N ÷ 2, Val(N)))
+    scale(ρ) = SMatrix{N, N}(Diagonal(map(t -> t ? ρ^β : one(ρ^β), traction)))
+    shifted = M - β * SMatrix{N, N}(Diagonal(map(t -> t ? one(β) : zero(β), traction)))
+    return scale(ρ_out) * radial_power(shifted, ρ_out / ρ_in) * inv(scale(ρ_in))
+end

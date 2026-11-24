@@ -234,6 +234,86 @@ end
         @test_throws ArgumentError set_param(ti, layer_param(:I, 1, 𝔹), 0.5)
     end
 
+    @testset "graded layers: moduli functions of the radius" begin
+        data(t) = collect(TensND.get_data(t))
+        tensors = (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+        # A constant profile is the uniform layer, in the shell and in the core (which is
+        # integrated from the axis over eighteen e-folds of the radius).
+        for itf in rc_interfaces, (uniform, graded) in (
+                    ((rc_C[1], rc_shell), (rc_C[1], r -> rc_shell)),
+                    ((rc_C[1], rc_shell), (r -> rc_C[1], rc_shell)),
+                    (rc_C, (GradedLayer(r -> rc_C[1]; reltol = 1.0e-11), r -> rc_C[2])),
+                )
+            a = LayeredCylinder(rc_radii, uniform; interfaces = itf)
+            b = LayeredCylinder(rc_radii, graded; interfaces = itf)
+            for f in tensors
+                @test rc_km(f(b, rc_C₀, rc_C₀)) ≈ rc_km(f(a, rc_C₀, rc_C₀)) rtol = 1.0e-7
+            end
+            for layer in 1:2
+                @test rc_km(flux_gradient_concentration(b, rc_C₀; layer)) ≈ rc_km(flux_gradient_concentration(a, rc_C₀; layer)) rtol = 1.0e-7
+            end
+        end
+        @test layer_modulus(LayeredCylinder(rc_radii, (rc_C[1], r -> rc_shell)), 2) isa GradedLayer
+        # A profile that varies, in the shell then from the axis: thin layers, extrapolated.
+        soft(r) = iso_stiffness(40.0 - 20.0 * r^2, 20.0 - 8.0 * r^2)
+        wound(r) = radial_ti(rc_chart; n = 12.0 + 3r, l = 5.0, k = 19.0 - 2r, m = 11.0, p = 4.0 + r)
+        thin(profile, a, n) = (e = range(a, 1.0; length = n + 1); (Tuple(e[2:end]), ntuple(i -> profile((e[i] + e[i + 1]) / 2), n)))
+        for (graded, layered) in (
+                (LayeredCylinder(rc_radii, (rc_C[1], wound)), n -> ((r, m) = thin(wound, 0.6, n); LayeredCylinder((0.6, r...), (rc_C[1], m...)))),
+                (LayeredCylinder((1.0,), (soft,)), n -> LayeredCylinder(thin(soft, 0.0, n)...)),
+            )
+            for f in tensors
+                @test rc_km(f(graded, rc_C₀, rc_C₀)) ≈ (4 .* rc_km(f(layered(80), rc_C₀, rc_C₀)) .- rc_km(f(layered(40), rc_C₀, rc_C₀))) ./ 3 rtol = 1.0e-6
+            end
+        end
+        # A power of the radius is integrated in a cylinder.
+        @test rc_km(property_contribution(LayeredCylinder(rc_radii, (rc_C[1], PowerLawLayer(rc_shell, 1.5))), rc_C₀, rc_C₀)) ≈
+            rc_km(property_contribution(LayeredCylinder(rc_radii, (rc_C[1], r -> r^1.5 * rc_shell)), rc_C₀, rc_C₀)) rtol = 1.0e-10
+        # Conduction: a disk of conductivity k_s r^β around a core, T = F(r) cos θ with
+        # F = B₁ r^p₁ + B₂ r^p₂, p = (−β ± √(β² + 4))/2, between a core A r and r + g/r outside.
+        k_c, k_s, β, R, k₀ = 8.0, 0.4, 2.5, 1.6, 1.3
+        function power_disk(β, R)
+            p = ((-β + sqrt(β^2 + 4)) / 2, (-β - sqrt(β^2 + 4)) / 2)
+            q(e, r) = k_s * r^β * e * r^(e - 1)
+            S = [1 -1 -1 0; k_c -q(p[1], 1) -q(p[2], 1) 0; 0 R^p[1] R^p[2] -1 / R; 0 q(p[1], R) q(p[2], R) k₀ / R^2]
+            return -2k₀ * (S \ [0, 0, R, k₀])[4] / R^2
+        end
+        conducting(β, R) = first(data(property_contribution(LayeredCylinder((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}(k_s * r^β))), TensISO{3}(k₀), TensISO{3}(k₀))))
+        @test conducting(β, R) ≈ power_disk(β, R) rtol = 1.0e-9
+        @test ForwardDiff.derivative(x -> conducting(x, R), β) ≈ ForwardDiff.derivative(x -> power_disk(x, R), β) rtol = 1.0e-7
+        @test ForwardDiff.derivative(x -> conducting(β, x), R) ≈ ForwardDiff.derivative(x -> power_disk(β, x), R) rtol = 1.0e-7
+        # Along the axis, and for the bounds: the mean of k_s r^β over the annulus.
+        cyl = LayeredCylinder((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}(k_s * r^β)))
+        mean = (k_c + 2k_s * (R^(β + 2) - 1) / (β + 2)) / R^2
+        @test last(data(flux_gradient_concentration(cyl, TensISO{3}(k₀), TensISO{3}(k₀)))) ≈ mean rtol = 1.0e-9
+        @test last(data(LCyl.layer_property_average(cyl, TensISO{3}(k₀)))) ≈ mean rtol = 1.0e-9
+        averaged(R) = last(data(LCyl.layer_property_average(LayeredCylinder((1.0, R), (TensISO{3}(k_c), r -> TensISO{3}(k_s * r^β))), TensISO{3}(k₀))))
+        @test ForwardDiff.derivative(averaged, R) ≈ ForwardDiff.derivative(R -> (k_c + 2k_s * (R^(β + 2) - 1) / (β + 2)) / R^2, R) rtol = 1.0e-8
+        @test last(data(flux_gradient_concentration(cyl, TensISO{3}(k₀); layer = 2))) ≈ 2k_s * (R^(β + 2) - 1) / ((β + 2) * (R^2 - 1)) rtol = 1.0e-9
+        elastic = LayeredCylinder(rc_radii, (rc_C[1], wound))
+        mean_over_angle(F) = sum(rc_km(tensor_at(F, [cos(θ), sin(θ), 0.0])) for θ in 2π .* ((1:48) .- 0.5) ./ 48) / 48
+        xs, ws = QuadGK.gauss(12)
+        shell_mean = sum(w * 0.2 * (0.8 + 0.2x) * mean_over_angle(wound(0.8 + 0.2x)) for (x, w) in zip(xs, ws)) * 2 / (1 - 0.6^2)
+        @test rc_km(LCyl.layer_property_average(elastic, rc_C₀)) ≈ 0.36 .* rc_km(rc_C[1]) .+ 0.64 .* shell_mean rtol = 1.0e-9
+        # Complex moduli.
+        z(r) = iso_stiffness((4.0 + 0.5im) * (1 + r), (3.0 + 0.2im) * (1 + r))
+        zkm(t) = collect(mandel(t, TensND.CanonicalBasis{3, ComplexF64}()))
+        zl(n) = ((r, m) = thin(z, 0.6, n); LayeredCylinder((0.6, r...), (rc_C[1], m...)))
+        zf(c) = zkm(property_contribution(c, rc_C₀, rc_C₀))
+        @test zf(LayeredCylinder(rc_radii, (rc_C[1], z))) ≈ (4 .* zf(zl(80)) .- zf(zl(40))) ./ 3 rtol = 1.0e-6
+        # What a graded layer does not have.
+        @test_throws ArgumentError LayeredCylinderFields(elastic, rc_C₀)
+        @test_throws ArgumentError property_contribution(LayeredCylinder(rc_radii, (rc_C[1], r -> lc_tensor(LC_F))), rc_C₀, rc_C₀)
+        @test_throws ArgumentError property_contribution(LayeredCylinder(rc_radii, (rc_K[1], r -> TensND.TensTI{2}(1.0, 2.0, (0.0, 0.0, 1.0)))), TensISO{3}(1.0), TensISO{3}(1.0))
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => rc_C₀); fraction = :rest)
+        add_phase!(rve, :I, LayeredCylinder(rc_radii, (PowerLawLayer(rc_shell, 1.5), wound)), Dict(:C => rc_C₀); fraction = 0.3)
+        @test_throws ArgumentError get_param(rve, layer_param(:I, 2, :Crrrr))
+        @test_throws ArgumentError set_param(rve, layer_param(:I, 1, :Crrrr), 1.0)
+        @test_throws ArgumentError get_param(rve, layer_param(:I, 1, rc_shell))
+        @test_throws ArgumentError set_param(rve, layer_param(:I, 2, rc_shell), 1.0)
+    end
+
     @testset "refused inputs" begin
         cyl = LayeredCylinder(rc_radii, (rc_C[1], rc_shell))
         @test_throws ArgumentError LayeredCylinderFields(cyl, rc_C₀)
