@@ -17,7 +17,7 @@ EditURL = "../../../../scripts/101_layered_sphere_radial_symbolic.jl"
 
 A layer of a [`LayeredSphere`](@ref) may be transversely isotropic about the
 radial direction ``\underline{e}_r``, its symmetry axis turning with the
-point ([`RadialTI`](@ref)). The sphere keeps its symmetry, so that the method
+point (a field of TensND, `radial_ti(SphericalChart(), …)`). The sphere keeps its symmetry, so that the method
 of the isotropic layers applies: find the radial modes of a layer, write the
 state they carry to its boundaries, and chain the layers. What changes is the
 modes: they are still powers of ``r``, with exponents that depend on the
@@ -40,15 +40,16 @@ stiffness is written with Hill's moduli about ``\underline{e}_r``,
 ``m = \tfrac12(C_{\theta\theta\theta\theta} - C_{\theta\theta\varphi\varphi})``
 and ``p = C_{r\theta r\theta}``; an isotropic layer is the case
 ``n = K + \tfrac43 G``, ``l = K - \tfrac23 G``, ``k = K + \tfrac13 G``,
-``m = p = G``. As a tensor field, it is a transversely isotropic tensor whose
-axis is the unit vector ``\underline{e}_r`` of the chart:
+``m = p = G``. As a tensor field, it has constant components in the frame of
+the unit vectors of the spherical chart, which TensND writes from these
+moduli (`radial_ti`) and gives in the coordinate system (`tensor_at`):
 
 ````@example layered_sphere_radial_symbolic
 Sph = coorsys_spherical()
 θ, φ, r = get_coords(Sph)
 𝐞ᶿ, 𝐞ᵠ, 𝐞ʳ = unitvec(Sph)
 n, l, k, m, p = symbols("n l k m p", positive = true)
-ℂ = TensTI{4}(n, 2k, sqrt(Sym(2)) * l, 2m, 2p, 𝐞ʳ)
+ℂ = tensor_at(radial_ti(SphericalChart(); n, l, k, m, p), Sph)
 stress(u) = ℂ ⊡ symgrad(u, Sph)
 equilibrium(u) = divergence(stress(u), Sph)
 K, G = symbols("K G", positive = true)
@@ -163,7 +164,7 @@ complex, ``-\tfrac12 \pm (\alpha \pm i\beta)``, and the modes oscillate as
 computation being made on complex numbers. An example of such a layer:
 
 ````@example layered_sphere_radial_symbolic
-oscillating = RadialTI{4}(; Crrrr = 0.768, Cθθθθ = 2.519, Cθθφφ = 0.052, Crrθθ = 0.622, Crθrθ = 3.6)
+oscillating = radial_ti(SphericalChart(); n = 0.768, l = 0.622, k = 1.2855, m = 1.2335, p = 3.6)
 Bₒ, Cₒ = LS._shear_quadratic(LS._hill_moduli(oscillating))
 Bₒ^2 - 4 * 0.768 * 3.6 * Cₒ
 ````
@@ -207,7 +208,7 @@ package finds a vanishing contribution there:
 
 ````@example layered_sphere_radial_symbolic
 s₊ = -Sym(1) / 2 + sqrt(Sym(1) / 4 + 2kt / kr)
-ball = LayeredSphere((1,), (RadialTI{2}(kt, kr),))
+ball = LayeredSphere((1,), (radial_ti(SphericalChart(), kt, kr),))
 simplify(only(TensND.get_data(property_contribution(ball, TensISO{3}(kr * s₊)))))
 ````
 
@@ -240,7 +241,7 @@ expressions depends on its law.
 
 A core in a shell whose stiffness along the radius differs from that in the
 tangent plane, in the Mori-Tanaka scheme. With isotropic moduli written as a
-`RadialTI`, the isotropic sphere is recovered:
+radial field, the isotropic sphere is recovered:
 
 ````@example layered_sphere_radial_symbolic
 C₀, C₁, C₂ = iso_stiffness(10.0, 6.0), iso_stiffness(40.0, 20.0), iso_stiffness(4.0, 3.0)
@@ -250,14 +251,14 @@ function estimate(shell)
     add_phase!(rve, :I, LayeredSphere((0.6, 1.0), (C₁, shell)), Dict(:C => C₁); fraction = 0.3)
     return k_mu(homogenize(rve, MoriTanaka(), :C))
 end
-estimate(C₂), estimate(RadialTI(C₂))
+estimate(C₂), estimate(radial_ti(SphericalChart(), C₂))
 ````
 
 and a shell four times as stiff along the radius as its isotropic
 counterpart gives
 
 ````@example layered_sphere_radial_symbolic
-estimate(set_coefficient(RadialTI(C₂), :Crrrr, 4 * get_coefficient(RadialTI(C₂), :Crrrr)))
+estimate(set_coefficient(radial_ti(SphericalChart(), C₂), :Crrrr, 4 * get_coefficient(radial_ti(SphericalChart(), C₂), :Crrrr)))
 ````
 
 ## Where to go next

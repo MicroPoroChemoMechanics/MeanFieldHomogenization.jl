@@ -11,7 +11,7 @@ keep its symmetry: it is enough that the material be, at each point,
 transversely isotropic about the radial direction ``\underline{e}_r``. Its
 symmetry axis then turns with the point, as in a coating deposited layer by
 layer or in an oolite. Such a layer has five moduli in elasticity and two
-conductivities, held by a [`RadialTI`](@ref). The remote strain still splits
+conductivities, held by a field of TensND, `radial_ti(SphericalChart(), …)`. The remote strain still splits
 into a spherical and a deviatoric part, each carried by a few radial modes, and
 the layers are chained as isotropic ones are. Two things change: the modes are
 powers of ``r`` whose exponents depend on the moduli, and the means over a
@@ -118,10 +118,10 @@ numbers; the displacement is real.
 using MeanFieldHomogenization, TensND, LinearAlgebra
 const LS = MeanFieldHomogenization.LayeredSpheres
 
-shell = RadialTI{4}(; Crrrr = 12.0, Cθθθθ = 30.0, Cθθφφ = 8.0, Crrθθ = 5.0, Crθrθ = 4.0)
-oscillating = RadialTI{4}(; Crrrr = 0.768, Cθθθθ = 2.519, Cθθφφ = 0.052, Crrθθ = 0.622, Crθrθ = 3.6)
+shell = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+oscillating = radial_ti(SphericalChart(); n = 0.768, l = 0.622, k = 1.2855, m = 1.2335, p = 3.6)
 exponents(c) = -1 / 2 .+ collect(LS._shear_exponents(LS._hill_moduli(c), ComplexF64))
-(isotropic = exponents(RadialTI(iso_stiffness(4.0, 3.0))), shell = exponents(shell), oscillating = exponents(oscillating))
+(isotropic = exponents(radial_ti(SphericalChart(), iso_stiffness(4.0, 3.0))), shell = exponents(shell), oscillating = exponents(oscillating))
 ```
 
 ## 4. Conduction
@@ -141,7 +141,7 @@ outward flux. A homogeneous sphere, whose regular mode has the exponent
 ```@example radial
 kᵣ, kₜ = 2.0, 5.0
 s₊ = -1 / 2 + sqrt(1 / 4 + 2kₜ / kᵣ)
-ball = LayeredSphere((1.0,), (RadialTI{2}(kₜ, kᵣ),))
+ball = LayeredSphere((1.0,), (radial_ti(SphericalChart(), kₜ, kᵣ),))
 property_contribution(ball, TensISO{3}(kᵣ * s₊))
 ```
 
@@ -178,7 +178,7 @@ sphere, which is the first check of the implementation:
 ```@example radial
 C₀, C₁, C₂ = iso_stiffness(10.0, 6.0), iso_stiffness(40.0, 20.0), iso_stiffness(4.0, 3.0)
 isotropic = LayeredSphere((0.6, 1.0), (C₁, C₂))
-as_radial = LayeredSphere((0.6, 1.0), (C₁, RadialTI(C₂)))
+as_radial = LayeredSphere((0.6, 1.0), (C₁, radial_ti(SphericalChart(), C₂)))
 TensND.get_data(property_contribution(isotropic, C₀, C₀)), TensND.get_data(property_contribution(as_radial, C₀, C₀))
 ```
 
@@ -214,14 +214,14 @@ strain in the local frame follow, which no uniform tensor gives: the direction
 ``\underline{e}_r\otimes\underline{e}_r\otimes\underline{e}_r\otimes\underline{e}_r``,
 the first element of the Walpole basis about the radius, gives
 ``\langle\varepsilon_{rr}^2\rangle``. The layer need not be anisotropic for
-that: an isotropic layer is moved along a `RadialTI`.
+that: an isotropic layer is moved along a radial field.
 
 ```@example radial
 iso_rve = RVE()
 add_phase!(iso_rve, :M, Ellipsoid(1.0), Dict(:C => C₀); fraction = :rest)
 add_phase!(iso_rve, :I, isotropic, Dict(:C => C₁); fraction = 0.3)
 E = Tens(Symmetric([1.0 0.2 0.1; 0.2 -0.5 0.3; 0.1 0.3 0.7]))
-𝕎₁ = RadialTI{4}(1.0, 0.0, 0.0, 0.0, 0.0)
+𝕎₁ = radial_ti(SphericalChart(), 1.0, 0.0, 0.0, 0.0, 0.0)
 second_moment(iso_rve, Dilute(), (:I, 2), E, 𝕎₁)          # ⟨ε_rr²⟩ in the shell
 ```
 

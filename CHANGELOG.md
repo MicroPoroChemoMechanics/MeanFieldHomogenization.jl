@@ -33,8 +33,9 @@ chapter in which every page stands with the notion it treats.
   moves along `𝔹`. The parameters that name a coefficient of a class are its
   particular cases. `AbstractPropertyParameter` is their common supertype.
 
-- **`RadialTI`: layers of a `LayeredSphere` that are transversely isotropic
-  about the radial direction**, in elasticity (five moduli, given by their
+- **Layers of a `LayeredSphere` that are transversely isotropic about the
+  radial direction**, given as fields of TensND 0.16.1
+  (`radial_ti(SphericalChart(); n, l, k, m, p)`, a `ChartTens`), in elasticity (five moduli, given by their
   components in the frame that turns with the point) and in conduction (radial
   and tangential conductivities). Until now a layer had to be isotropic. Such a
   layer keeps the symmetry of the sphere: its radial modes are powers of `r`
@@ -57,7 +58,8 @@ chapter in which every page stands with the notion it treats.
   `:Crrrr` of a layer is taken in the frame that turns with the point.
   `second_moment(cell, scheme, (phase, layer), E, 𝔹)` gives the second moments
   of the strain in a layer, those of its components in the local frame
-  included: `RadialTI{4}(1, 0, 0, 0, 0)` gives the mean of `ε_rr²`.
+  included: `radial_ti(SphericalChart(), 1, 0, 0, 0, 0)` gives the mean of
+  `ε_rr²`.
 
 - **A symmetry class named alone takes the orientation of the tensor**:
   `symmetry = :TI` on a `TensTI`, `:ORTHO` on a `TensOrtho` or a `TensCubic`,

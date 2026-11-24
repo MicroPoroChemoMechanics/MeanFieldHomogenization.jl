@@ -173,7 +173,6 @@ end
 
 # ── Exports ─────────────────────────────────────────────────────────────────
 export LayeredSphere, AbstractInterface, PerfectInterface
-export RadialTI, tensor_at
 export SpringInterface, MembraneInterface
 export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface

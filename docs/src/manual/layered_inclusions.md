@@ -198,7 +198,7 @@ work through one in detail.
 #### Layers transversely isotropic about the radius
 
 A layer may have the radial direction as its symmetry axis, at every point: a
-[`RadialTI`](@ref) in place of an isotropic tensor, given by its components in
+a field of TensND, `radial_ti(SphericalChart(), …)` in place of an isotropic tensor, given by its components in
 the frame ``(\underline{e}_r, \underline{e}_\theta, \underline{e}_\varphi)``
 or, in conduction, by its tangential and radial conductivities
 ([theory](@ref th-layered-sphere-radial)).
@@ -206,7 +206,7 @@ or, in conduction, by its tangential and radial conductivities
 ```@example manlayered_radial
 using MeanFieldHomogenization, TensND
 core = iso_stiffness(40.0, 20.0)
-shell = RadialTI{4}(; Crrrr = 12.0, Cθθθθ = 30.0, Cθθφφ = 8.0, Crrθθ = 5.0, Crθrθ = 4.0)
+shell = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
 particle = LayeredSphere((0.6, 1.0), (core, shell))
 
 rve = RVE()
@@ -218,7 +218,7 @@ k_mu(homogenize(rve, MoriTanaka(), :C))
 The interfaces, the schemes and the mean tensors of the sphere and of its
 layers are those of the isotropic sphere. A coefficient of a layer is a
 parameter, named in the frame that turns with the point, and the second
-moments of the strain in a layer are obtained along a `RadialTI`
+moments of the strain in a layer are obtained along a radial field
 ([Sensitivities](@ref man-sensitivities-layers)):
 
 ```@example manlayered_radial
@@ -226,7 +226,7 @@ derivative(rve, MoriTanaka(), layer_param(:I, 2, :Crrrr); indexer = C -> k_mu(C)
 ```
 
 ```@example manlayered_radial
-conducting = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), RadialTI{2}(0.2, 0.6)))   # tangential, radial
+conducting = LayeredSphere((0.6, 1.0), (TensISO{3}(5.0), radial_ti(SphericalChart(), 0.2, 0.6)))   # tangential, radial
 property_contribution(conducting, TensISO{3}(1.0))
 ```
 

@@ -1,8 +1,9 @@
 # =============================================================================
 #  radial_layers.jl — layers transversely isotropic about the radial direction.
 #
-#  `RadialTI` is the tensor field of a layer whose symmetry axis is, at every
-#  point, the unit radial vector e_r: a stiffness of five moduli or a
+#  A layer may be a field of TensND, `ChartTens`, transversely isotropic about
+#  the unit radial vector e_r of the spherical chart at every point
+#  (`radial_ti(SphericalChart(), …)`): a stiffness of five moduli or a
 #  conductivity of two. Such a layer keeps the spherical symmetry of the
 #  composite sphere, so that the remote strain still splits into a spherical
 #  and a deviatoric part and each part is still carried by a few radial modes,
@@ -25,89 +26,42 @@
 #  boundary, its mean stress that of the traction. No amplitude is extracted, so
 #  that nothing here depends on the law of a layer.
 #
-#  A `LayeredSphere` one of whose moduli is a `RadialTI` holds `RadialTI` moduli
-#  only (its constructor converts the isotropic ones, which are particular
-#  cases): the methods of this file are selected by that type.
+#  A `LayeredSphere` one of whose moduli is such a field holds such fields only
+#  (its constructor converts the isotropic ones, which are particular cases):
+#  the methods of this file are selected by that type.
 # =============================================================================
 
-"""
-    RadialTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆)
-    RadialTI{4}(; Crrrr, Cθθθθ, Cθθφφ, Crrθθ, Crθrθ)
-    RadialTI{2}(kₜ, kᵣ)
-    RadialTI(C)
+# A layer transversely isotropic about the radius: a field of the spherical
+# chart whose pattern is transversely isotropic about the radial vector of the
+# local frame (`TensND.radial_ti(SphericalChart(), …)`).
+const RadialField{order} = TensND.ChartTens{order, 3, <:Any, <:TensND.TensTI{order}, TensND.SphericalChart}
 
-The moduli of a layer that is transversely isotropic about the radial direction
-``\\underline{e}_r`` at every point: the symmetry axis turns with the point.
-
-At order 4, the five coefficients are those of a `TensND.TensTI{4}` on the
-Walpole basis about ``\\underline{e}_r``; the keyword form takes the components
-in the local frame ``(\\underline{e}_r, \\underline{e}_\\theta, \\underline{e}_\\varphi)``:
-``\\ell_1 = C_{rrrr}``, ``\\ell_2 = C_{\\theta\\theta\\theta\\theta} + C_{\\theta\\theta\\varphi\\varphi}``,
-``\\ell_3 = \\sqrt2\\,C_{rr\\theta\\theta}``,
-``\\ell_5 = C_{\\theta\\theta\\theta\\theta} - C_{\\theta\\theta\\varphi\\varphi}``,
-``\\ell_6 = 2\\,C_{r\\theta r\\theta}``. At order 2, a conductivity
-``k_r\\,\\underline{e}_r\\otimes\\underline{e}_r + k_t\\,(\\boldsymbol{1} - \\underline{e}_r\\otimes\\underline{e}_r)``.
-`RadialTI(C)` takes the coefficients of an isotropic tensor, or those of a
-`TensTI`, whose axis is then read as the radial direction.
-
-It is a modulus of a layer of a [`LayeredSphere`](@ref); [`tensor_at`](@ref)
-gives the tensor at a point.
-"""
-struct RadialTI{order, T, N}
-    data::NTuple{N, T}
-    RadialTI{4, T, 5}(data::NTuple{5, T}) where {T} = new{4, T, 5}(data)
-    RadialTI{2, T, 2}(data::NTuple{2, T}) where {T} = new{2, T, 2}(data)
-end
-
-RadialTI{4}(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆) = _radial(Val(4), promote(ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆))
-RadialTI{2}(kₜ, kᵣ) = _radial(Val(2), promote(kₜ, kᵣ))
-_radial(::Val{4}, data::NTuple{5, T}) where {T} = RadialTI{4, T, 5}(data)
-_radial(::Val{2}, data::NTuple{2, T}) where {T} = RadialTI{2, T, 2}(data)
-
-function RadialTI{4}(; Crrrr, Cθθθθ, Cθθφφ, Crrθθ, Crθrθ)
-    ℓ₃ = sqrt(oftype(float(one(Crrθθ)), 2)) * Crrθθ
-    return RadialTI{4}(Crrrr, Cθθθθ + Cθθφφ, ℓ₃, Cθθθθ - Cθθφφ, 2 * Crθrθ)
-end
-
-RadialTI(C::RadialTI) = C
-RadialTI(C::TensND.TensTI{4, T, 5}) where {T} = RadialTI{4}(TensND.get_data(C)...)
-RadialTI(K::TensND.TensTI{2, T, 2}) where {T} = RadialTI{2}(TensND.get_data(K)...)
-RadialTI(C::TensND.TensISO{4, 3}) = RadialTI{4}(_iso_as_walpole(C)...)
-RadialTI(K::TensND.TensISO{2, 3}) = (k = _iso_scalar(K); RadialTI{2}(k, k))
-
-# The Walpole coefficients of 3κ 𝕁 + 2μ 𝕂 about any axis.
-function _iso_as_walpole(C::TensND.TensISO{4, 3})
-    α, β = TensND.get_data(C)
-    return ((α + 2β) / 3, (2α + β) / 3, sqrt(oftype(float(one(α)), 2)) * (α - β) / 3, β, β)
-end
-
-Base.eltype(::Type{<:RadialTI{order, T}}) where {order, T} = T
-Base.eltype(c::RadialTI) = eltype(typeof(c))
-Base.:+(a::RadialTI{order}, b::RadialTI{order}) where {order} = _radial(Val(order), promote(map(+, a.data, b.data)...))
-Base.:*(x::Number, c::RadialTI{order}) where {order} = _radial(Val(order), promote(map(v -> x * v, c.data)...))
-Base.:*(c::RadialTI, x::Number) = x * c
-
-"""
-    tensor_at(c::RadialTI, x) -> TensND.TensTI
-
-The tensor of the layer at the point `x`, the origin being the center of the
-sphere: transversely isotropic about ``\\underline{x}/\\lVert\\underline{x}\\rVert``.
-"""
-tensor_at(c::RadialTI{order}, x) where {order} = TensND.TensTI{order}(c.data..., Tuple(x ./ norm(x)))
+_radial_field(c::RadialField) = TensND.isparallel(TensND.axis(c.pattern), TensND.radial_axis(c.chart)) ? c : _not_radial_field(c)
+_radial_field(c::TensND.TensISO) = TensND.radial_ti(TensND.SphericalChart(), c)
+_radial_field(c) = _not_radial_field(c)
+_not_radial_field(c) = throw(
+    ArgumentError(
+        "a layer of a sphere with radial layers is isotropic or transversely isotropic about the " *
+            "radius (`radial_ti(SphericalChart(), …)`); got $(c). A tensor of fixed axes, or a field " *
+            "of another axis or of another chart, does not have the symmetry of the sphere"
+    )
+)
 
 # Hill's moduli about e_r: n = C_rrrr, l = C_rrθθ, k = (C_θθθθ + C_θθφφ)/2,
-# m = (C_θθθθ − C_θθφφ)/2, p = C_rθrθ.
-function _hill_moduli(c::RadialTI{4, T}) where {T}
-    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = c.data
-    return (n = ℓ₁, l = ℓ₃ / sqrt(oftype(float(one(T)), 2)), k = ℓ₂ / 2, m = ℓ₅ / 2, p = ℓ₆ / 2)
+# m = (C_θθθθ − C_θθφφ)/2, p = C_rθrθ, from the Walpole coefficients of the pattern.
+function _hill_moduli(c::RadialField{4})
+    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.get_data(c.pattern)
+    return (n = ℓ₁, l = ℓ₃ / sqrt(convert(TensND.sqrt2_eltype(typeof(ℓ₃)), 2)), k = ℓ₂ / 2, m = ℓ₅ / 2, p = ℓ₆ / 2)
 end
+# The conductivities across the radius and along it.
+_conductivities(c::RadialField{2}) = TensND.get_data(c.pattern)
 
 # The mean over all directions of the tensor of the layer: an isotropic tensor,
 # which is its volume average over a spherical shell.
-_shell_average(c::RadialTI{4}) = TensND.best_fit_iso(tensor_at(c, (0, 0, 1)))
-_shell_average(c::RadialTI{2}) = TensISO{3}((2 * c.data[1] + c.data[2]) / 3)
+_shell_average(c::RadialField{4}) = TensND.best_fit_iso(c.pattern)
+_shell_average(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); TensISO{3}((2 * kₜ + kᵣ) / 3))
 
-const RadialLayers = Tuple{RadialTI, Vararg{RadialTI}}
+const RadialLayers = Tuple{RadialField, Vararg{RadialField}}
 const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 
 # ── Exponents ────────────────────────────────────────────────────────────────
@@ -120,7 +74,7 @@ const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 # numbers, `CT`, the solution being real.
 
 _bulk_exponent(h) = sqrt(1 // 4 + 2 * (2 * h.k - h.l) / h.n)
-_cond_exponent(c::RadialTI{2}) = sqrt(1 // 4 + 2 * c.data[1] / c.data[2])
+_cond_exponent(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); sqrt(1 // 4 + 2 * kₜ / kᵣ))
 
 # n p τ² − B τ + C = 0, of roots τ = t²: its coefficients B and C.
 function _shear_quadratic(h)
@@ -138,7 +92,7 @@ end
 
 # Whether the exponents of a layer are complex. A symbol is not compared: its
 # exponents are kept as the expressions they are.
-_oscillates(c::RadialTI{4, T}) where {T} = _oscillates(Val(is_hard_numeric(T)), _hill_moduli(c))
+_oscillates(c::RadialField{4}) = _oscillates(Val(is_hard_numeric(eltype(c))), _hill_moduli(c))
 _oscillates(::Val{false}, h) = false
 function _oscillates(::Val{true}, h)
     B, C = _shear_quadratic(h)
@@ -187,9 +141,10 @@ function _shear_modes(h, r::CT) where {CT}
 end
 
 # Conduction, state (T̂, q̂) with q̂ = −k_r ∂T̂/∂r the outward flux.
-function _cond_modes(c::RadialTI{2}, r)
+function _cond_modes(c::RadialField{2}, r)
     t = oftype(r, _cond_exponent(c))
-    column(s) = (rs = _power(r, s); (rs, -c.data[2] * s * rs / r))
+    kᵣ = last(_conductivities(c))
+    column(s) = (rs = _power(r, s); (rs, -kᵣ * s * rs / r))
     return SMatrix{2, 2}(column(-1 // 2 + t)..., column(-1 // 2 - t)...)
 end
 
@@ -273,18 +228,10 @@ _boundary_state(inside, outside, external::Bool) = external ? last(outside) : la
 
 # ── The moduli of a sphere with radial layers ────────────────────────────────
 
-# One radial layer makes every layer a `RadialTI`: an isotropic layer is the
+# One radial layer makes every layer a radial field: an isotropic layer is the
 # particular case whose five moduli are those of an isotropic tensor.
-_as_layers(moduli::Tuple) = any(c -> c isa RadialTI, moduli) ? map(_as_layer, moduli) : moduli
+_as_layers(moduli::Tuple) = any(c -> c isa TensND.ChartTens, moduli) ? map(_radial_field, moduli) : moduli
 _as_layers(moduli) = moduli
-_as_layer(c::Union{RadialTI, TensND.TensISO}) = RadialTI(c)
-_as_layer(c) = throw(
-    ArgumentError(
-        "a layer of a sphere with radial layers is isotropic or a RadialTI; got a $(nameof(typeof(c))). " *
-            "A tensor of fixed axes does not have the symmetry of the sphere; `RadialTI(C)` reads the " *
-            "axis of a `TensTI` as the radial direction"
-    )
-)
 
 # ── What the schemes ask of the sphere ───────────────────────────────────────
 #
@@ -427,7 +374,7 @@ layer_property_average(sphere::RadialLayeredSphere, ::Val{4}) = _radial_average(
 layer_property_average(sphere::RadialLayeredSphere, ::Val{2}) = _radial_average(sphere, identity)
 layer_inverse_property_average(sphere::RadialLayeredSphere, ::Val{4}) = _radial_average(sphere, _inverse)
 layer_inverse_property_average(sphere::RadialLayeredSphere, ::Val{2}) = _radial_average(sphere, _inverse)
-_inverse(c::RadialTI) = RadialTI(inv(tensor_at(c, (0, 0, 1))))
+_inverse(c::RadialField) = inv(c)
 
 # ── What is not available for radial layers ──────────────────────────────────
 

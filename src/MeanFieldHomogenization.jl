@@ -301,7 +301,6 @@ export is_homogeneous_inclusion
 
 # ── LayeredSphere (Hervé-Zaoui / Hervé-Luanco / Gurtin-Murdoch / Kapitza) ────
 export LayeredSphere, AbstractInterface, PerfectInterface
-export RadialTI, tensor_at
 export SpringInterface, MembraneInterface
 export spring_compliances, spring_stiffnesses
 export KapitzaInterface, SurfaceConductiveInterface

@@ -22,7 +22,7 @@ _quadratic_form(K::TensND.AbstractTens{2}, G) = G ⋅ (K ⋅ G)
 
 # The tensor of a quadratic form: a tensor, or the field of a tensor that turns
 # with the point in a layer of a sphere.
-const _Direction = Union{TensND.AbstractTens, LayeredSpheres.RadialTI}
+const _Direction = Union{TensND.AbstractTens, TensND.ChartTens}
 
 # The parameter that moves the property of a phase, or the modulus of a layer
 # `(phase, layer)` of its layered sphere (`layer_parameters.jl`), along `𝔹`.
@@ -75,9 +75,9 @@ phase need not. `kw...` are passed to [`homogenize`](@ref). A family of cracks
 is refused: it has no volume.
 
 `phase` may be a pair `(phase, layer)`, one layer of the layered sphere of the
-phase: `𝔹` is then an isotropic tensor or a
-[`RadialTI`](@ref MeanFieldHomogenization.LayeredSpheres.RadialTI), whose axis
-turns with the point, so that `RadialTI{4}(1, 0, 0, 0, 0)` gives the mean of
+phase: `𝔹` is then an isotropic tensor or a field transversely isotropic about
+the radius, whose axis turns with the point, so that
+`radial_ti(SphericalChart(), 1, 0, 0, 0, 0)` gives the mean of
 ``\\varepsilon_{rr}^2`` over the layer.
 
 Theory: [Second moments of the local fields](@ref th-second-moments).

@@ -173,12 +173,12 @@ turns with the point, `:Crrrr`, `:Cθθθθ`, `:Cθθφφ`, `:Crrθθ`, `:Crθr�
 Walpole coefficient `:ℓ₁`, `:ℓ₂`, `:ℓ₃`, `:ℓ₅`, `:ℓ₆`, or a conductivity
 `:radial`, `:tangential`. With a tensor in place of the name,
 `layer_param(:I, 2, 𝔹)` is the abscissa of the modulus of the layer along `𝔹`,
-an isotropic tensor or a [`RadialTI`](@ref).
+an isotropic tensor or a field of TensND, `radial_ti(SphericalChart(), …)`.
 
 ```@example sens
 coated = RVE()
 add_phase!(coated, :M, Ellipsoid(1.0), Dict(:C => iso_stiffness(10.0, 6.0)); fraction = :rest)
-shell = RadialTI{4}(; Crrrr = 12.0, Cθθθθ = 30.0, Cθθφφ = 8.0, Crrθθ = 5.0, Crθrθ = 4.0)
+shell = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
 add_phase!(coated, :I, LayeredSphere((0.6, 1.0), (iso_stiffness(40.0, 20.0), shell)), Dict(:C => iso_stiffness(40.0, 20.0)); fraction = 0.3)
 derivative(coated, MoriTanaka(), layer_param(:I, 2, :Crrrr); indexer = C₃₃₃₃)
 ```
@@ -225,7 +225,7 @@ Walpole basis about the radius gives the second moment of the radial strain in
 the layer ([theory](@ref th-layered-sphere-radial)).
 
 ```@example sens
-second_moment(coated, MoriTanaka(), (:I, 2), E, RadialTI{4}(1.0, 0.0, 0.0, 0.0, 0.0))   # ⟨ε_rr²⟩
+second_moment(coated, MoriTanaka(), (:I, 2), E, radial_ti(SphericalChart(), 1.0, 0.0, 0.0, 0.0, 0.0))   # ⟨ε_rr²⟩
 ```
 
 ## Any other input
