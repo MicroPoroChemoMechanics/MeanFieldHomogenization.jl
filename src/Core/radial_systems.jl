@@ -133,3 +133,82 @@ function _independent_columns(P::SMatrix{4, 4})
     pairs = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
     return pairs[argmax(map(ij -> gram(ij...), pairs))]
 end
+
+# ── Moduli that vary with the radius ─────────────────────────────────────────
+
+"""
+    GradedLayer(profile; reltol = 1.0e-10, abstol = 1.0e-12, start = 1.0e-8)
+
+A layer of a [`LayeredSphere`](@ref) or of a [`LayeredCylinder`](@ref) whose
+modulus varies with the radius: `profile(r)` is the modulus at the radius `r`,
+an isotropic tensor or a field transversely isotropic about the radial
+direction (`TensND.radial_ti`). A function given as the modulus of a layer is
+wrapped in a `GradedLayer` with the default keywords.
+
+The radial problems of such a layer are the systems
+``r\\,\\mathrm{d}Y/\\mathrm{d}r = \\boldsymbol{M}(r)\\,Y`` of a uniform one, with
+``\\boldsymbol{M}`` taken at the moduli of each radius, integrated numerically
+across the layer to the tolerances `reltol` and `abstol`. When it is the core,
+`profile(0)` must exist: the integration starts at the radius `start` times
+that of the core, from the solutions regular at the center of a medium of
+modulus `profile(0)`.
+"""
+struct GradedLayer{F}
+    profile::F
+    reltol::Float64
+    abstol::Float64
+    start::Float64
+end
+GradedLayer(profile; reltol::Real = 1.0e-10, abstol::Real = 1.0e-12, start::Real = 1.0e-8) =
+    GradedLayer(profile, Float64(reltol), Float64(abstol), Float64(start))
+
+"""
+    radial_transfer(system, layer::GradedLayer, r_in, r_out, Y) -> SMatrix
+
+The states `Y` (one column per solution) of
+``r\\,\\mathrm{d}Y/\\mathrm{d}r = \\boldsymbol{M}(r)\\,Y`` at `r_in`, carried to
+`r_out`, with `system(r)` the matrix ``\\boldsymbol{M}(r)``. The equation is
+integrated in ``s = \\ln(r/r_{\\mathrm{in}})/\\ln(r_{\\mathrm{out}}/r_{\\mathrm{in}})``
+from 0 to 1, so that the radii may be dual numbers. The step is controlled on
+values: the numbers compare (real, complex or dual), they are not symbols.
+"""
+function radial_transfer(system::F, layer::GradedLayer, r_in, r_out, Y::SMatrix) where {F}
+    L = log(r_out / r_in)
+    T = promote_type(eltype(Y), typeof(L), eltype(system(r_in)))
+    rhs(Z, _, s) = L * (system(r_in * exp(s * L)) * Z)
+    problem = ODEProblem(rhs, map(T, Y), (0.0, 1.0))
+    return solve(problem, Tsit5(); reltol = layer.reltol, abstol = layer.abstol, save_everystep = false).u[end]
+end
+
+"""
+    regular_transfer(system, layer::GradedLayer, r, Val(n)) -> SMatrix{2n,n}
+
+A basis of the states at the radius `r` of the solutions of
+``r\\,\\mathrm{d}Y/\\mathrm{d}r = \\boldsymbol{M}(r)\\,Y`` that are regular at the
+center, for moduli that vary from the center to `r`.
+
+Carrying `n` solutions from a small radius makes them parallel, the one of
+largest exponent taking over. What is carried instead is their subspace, by its
+impedance ``\\boldsymbol{Z}``, which maps the first half of a regular state (the
+displacement) to the second one (``r`` times the traction):
+
+``r\\,\\mathrm{d}\\boldsymbol{Z}/\\mathrm{d}r = \\boldsymbol{M}_{21} + \\boldsymbol{M}_{22}\\boldsymbol{Z}
+ - \\boldsymbol{Z}\\boldsymbol{M}_{11} - \\boldsymbol{Z}\\boldsymbol{M}_{12}\\boldsymbol{Z}``,
+
+a Riccati equation of which the impedance of the regular solutions is the
+stable solution in the direction of increasing radii. It starts at the radius
+`layer.start * r`, from the regular solutions of the medium found at the center.
+"""
+function regular_transfer(system::F, layer::GradedLayer, r, ::Val{n}) where {F, n}
+    top, bottom = SVector{n}(1:n), SVector{n}((n + 1):(2n))
+    Y₀ = regular_states(system(zero(r)), Val(n))
+    Z₀ = Y₀[bottom, :] * inv(Y₀[top, :])
+    L = -log(oftype(float(real(one(r))), layer.start))                 # ln(r / r_start)
+    function rhs(Z, _, s)
+        M = system(r * layer.start * exp(s * L))
+        return L * (M[bottom, top] + M[bottom, bottom] * Z - Z * M[top, top] - Z * (M[top, bottom] * Z))
+    end
+    T = promote_type(eltype(Z₀), eltype(system(r)))
+    Z = solve(ODEProblem(rhs, map(T, Z₀), (0.0, 1.0)), Tsit5(); reltol = layer.reltol, abstol = layer.abstol, save_everystep = false).u[end]
+    return vcat(one(Z), Z)
+end

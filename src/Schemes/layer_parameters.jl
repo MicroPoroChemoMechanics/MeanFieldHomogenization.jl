@@ -116,6 +116,19 @@ layer_param(phase::Symbol, layer::Int, direction::Union{TensND.TensISO, RadialFi
 
 const _LayerLens = Union{LayerParameter, LayerDirection}
 
+# A graded layer has no coefficient: its profile is a function, differentiated
+# with respect to what it depends on by `sensitivity`.
+_no_graded(p) = throw(
+    ArgumentError(
+        "layer $(p.layer) of :$(p.phase) is a graded layer, whose modulus is a function of the radius: " *
+            "it has no coefficient to designate. Differentiate with respect to a parameter of its " *
+            "profile by `sensitivity`, on a function that builds the cell"
+    )
+)
+_layer_scalar(::MFH_Core.GradedLayer, p::LayerParameter) = _no_graded(p)
+_layer_scalar(::MFH_Core.GradedLayer, p::LayerDirection) = _no_graded(p)
+_with_layer_scalar(::MFH_Core.GradedLayer, p::LayerParameter, v) = _no_graded(p)
+_with_layer_scalar(::MFH_Core.GradedLayer, p::LayerDirection, v) = _no_graded(p)
 _layer_scalar(t, p::LayerParameter) = get_coefficient(t, p.selector)
 _with_layer_scalar(t, p::LayerParameter, v) = set_coefficient(t, p.selector, v)
 _layer_scalar(t, p::LayerDirection) = zero(promote_type(eltype(t), eltype(p.direction)))

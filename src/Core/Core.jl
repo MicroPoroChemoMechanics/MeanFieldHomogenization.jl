@@ -38,6 +38,7 @@ using LinearAlgebra
 using StaticArrays
 using TensND
 using QuadGK
+using OrdinaryDiffEqTsit5: ODEProblem, Tsit5, solve
 using ForwardDiff
 using ..Elliptic
 using Polynomials
@@ -65,6 +66,7 @@ include("dispatch_pair.jl")
 
 # Abstractions
 export HillCache, with_hill_cache
+export GradedLayer
 export AbstractInclusion, AbstractEllipsoidalInclusion,
     AbstractCrack, AbstractLayeredInclusion, AbstractCustomInclusion
 

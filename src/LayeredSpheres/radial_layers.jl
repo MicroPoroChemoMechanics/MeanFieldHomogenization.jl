@@ -57,7 +57,13 @@ _conductivities(c::RadialField{2}) = MFH_Core.radial_coefficients(c)
 _shell_average(c::RadialField{4}) = TensND.best_fit_iso(c.pattern)
 _shell_average(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); TensISO{3}((2 * kₜ + kᵣ) / 3))
 
-const RadialLayers = Tuple{RadialField, Vararg{RadialField}}
+# A layer of a sphere solved through its states: a uniform radial field, or
+# moduli that vary with the radius.
+const _RadialLayer = Union{RadialField, MFH_Core.GradedLayer}
+const RadialLayers = Tuple{_RadialLayer, Vararg{_RadialLayer}}
+
+# The modulus of a graded layer at a radius, as a radial field.
+_modulus_at(g::MFH_Core.GradedLayer, r) = _radial_field(g.profile(r))
 const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 
 # ── The radial problems as first-order systems ───────────────────────────────
@@ -104,35 +110,63 @@ _system(c::RadialField{2}, ::Val{1}) = _cond_system(c)
 
 # The state the interface matrices act on is (displacement, traction) at the
 # radius r; Y carries r times the traction in its second half.
-_scaling(::SMatrix{2, 2}, r) = SMatrix{2, 2}(one(r), zero(r), zero(r), r)
-_scaling(::SMatrix{4, 4}, r) = SMatrix{4, 4}(Diagonal(SVector(one(r), one(r), r, r)))
+# The argument gives the number of rows of the state only.
+_scaling(::SMatrix{2}, r) = SMatrix{2, 2}(one(r), zero(r), zero(r), r)
+_scaling(::SMatrix{4}, r) = SMatrix{4, 4}(Diagonal(SVector(one(r), one(r), r, r)))
 
 # ── The states at the boundaries of the layers ───────────────────────────────
 
+# The states (displacement, traction) of the solutions regular at the center,
+# at the radius of the core, and the crossing of a layer. A uniform layer is
+# crossed by the power of its system; a graded one by the integration of its
+# system, started for a core near the center on the regular solutions of the
+# medium found there.
+function _core_states(c::RadialField, probes::Val, r, ::Type{TP}) where {TP}
+    M = map(TP, _system(c, probes))
+    return inv(_scaling(M, r)) * MFH_Core.regular_states(M, probes)
+end
+function _core_states(g::MFH_Core.GradedLayer, probes::Val, r, ::Type{TP}) where {TP}
+    system(ρ) = map(TP, _system(_modulus_at(g, ρ), probes))
+    Y = MFH_Core.regular_transfer(system, g, r, probes)
+    return inv(_scaling(Y, r)) * Y
+end
+
+function _cross(c::RadialField, probes::Val, r_in, r_out, S, ::Type{TP}) where {TP}
+    M = map(TP, _system(c, probes))
+    return inv(_scaling(M, r_out)) * (MFH_Core.radial_power(M, r_out / r_in) * (_scaling(M, r_in) * S))
+end
+function _cross(g::MFH_Core.GradedLayer, probes::Val, r_in, r_out, S, ::Type{TP}) where {TP}
+    system(ρ) = map(TP, _system(_modulus_at(g, ρ), probes))
+    return inv(_scaling(S, r_out)) * MFH_Core.radial_transfer(system, g, r_in, r_out, _scaling(S, r_in) * S)
+end
+
 # The states of `nprobes` solutions regular at the center, carried to the
-# matrix: for each interface k, the state (displacement, traction) on the inside
-# (r_k⁻) and on the outside (r_k⁺), one column per solution.
+# matrix: for each interface k, the state on the inside (r_k⁻) and on the
+# outside (r_k⁺), one column per solution.
 function _radial_states(sphere::RadialLayeredSphere{T, N}, interface, probes::Val, ::Type{TP}) where {T, N, TP}
     radii = map(TP, sphere.radii)
-    system(k) = map(TP, _system(layer_modulus(sphere, k), probes))
-    M = system(1)
-    S = inv(_scaling(M, radii[1])) * MFH_Core.regular_states(M, probes)
+    S = _core_states(layer_modulus(sphere, 1), probes, radii[1], TP)
     inside = Vector{typeof(S)}(undef, N)
     outside = Vector{typeof(S)}(undef, N)
     for k in 1:N
         inside[k] = S
         S = typeof(S)(interface(layer_interface(sphere, k), radii[k]) * S)
         outside[k] = S
-        if k < N
-            M = system(k + 1)
-            S = inv(_scaling(M, radii[k + 1])) * (MFH_Core.radial_power(M, radii[k + 1] / radii[k]) * (_scaling(M, radii[k]) * S))
-        end
+        k < N && (S = typeof(S)(_cross(layer_modulus(sphere, k + 1), probes, radii[k], radii[k + 1], S, TP)))
     end
     return inside, outside
 end
 
+# The number type of a layer: that of its modulus, read for a graded layer at
+# its outer radius.
+_layer_eltype(c::RadialField, r) = eltype(c)
+_layer_eltype(g::MFH_Core.GradedLayer, r) = eltype(_modulus_at(g, r))
+
 _radial_eltype(sphere::RadialLayeredSphere{T}, x₀...) where {T} = TensND.float_like(
-    promote_type(T, map(typeof, x₀)..., map(eltype, sphere.moduli)..., interfaces_eltype(sphere.interfaces))
+    promote_type(
+        T, map(typeof, x₀)..., map(_layer_eltype, sphere.moduli, sphere.radii)...,
+        interfaces_eltype(sphere.interfaces)
+    )
 )
 
 # The states per unit remote strain, spherical then deviatoric.
@@ -189,8 +223,11 @@ _boundary_state(inside, outside, external::Bool) = external ? last(outside) : la
 
 # One radial layer makes every layer a radial field: an isotropic layer is the
 # particular case whose five moduli are those of an isotropic tensor.
-_as_layers(moduli::Tuple) = any(c -> c isa TensND.ChartTens, moduli) ? map(_radial_field, moduli) : moduli
+_as_layers(moduli::Tuple) = any(c -> c isa Union{TensND.ChartTens, Function, MFH_Core.GradedLayer}, moduli) ? map(_radial_layer, moduli) : moduli
 _as_layers(moduli) = moduli
+_radial_layer(c) = _radial_field(c)
+_radial_layer(g::MFH_Core.GradedLayer) = g
+_radial_layer(profile::Function) = MFH_Core.GradedLayer(profile)
 
 # ── What the schemes ask of the sphere ───────────────────────────────────────
 #
@@ -327,8 +364,21 @@ end
 
 # ── Bounds: the volume averages of the moduli ────────────────────────────────
 
-_radial_average(sphere::RadialLayeredSphere{T, N}, modulus) where {T, N} =
-    sum(layer_volume_fraction(sphere, k) * _shell_average(modulus(layer_modulus(sphere, k))) for k in 1:N)
+# The mean of `modulus` of a layer over its volume, between the radii a and b:
+# that over the directions for a uniform layer, weighted by r² along the radius
+# for a graded one.
+_volume_average(c::RadialField, modulus, a, b) = _shell_average(modulus(c))
+function _volume_average(g::MFH_Core.GradedLayer, modulus, a, b)
+    data(r) = collect(TensND.get_data(_shell_average(modulus(_modulus_at(g, r))))) .* r^2
+    integral, _ = quadgk(data, a, b; rtol = g.reltol)
+    return TensISO{3}((3 .* integral ./ (b^3 - a^3))...)
+end
+
+_radial_average(sphere::RadialLayeredSphere{T, N}, modulus) where {T, N} = sum(
+    layer_volume_fraction(sphere, k) *
+        _volume_average(layer_modulus(sphere, k), modulus, k == 1 ? zero(T) : sphere.radii[k - 1], sphere.radii[k])
+        for k in 1:N
+)
 layer_property_average(sphere::RadialLayeredSphere, ::Val{4}) = _radial_average(sphere, identity)
 layer_property_average(sphere::RadialLayeredSphere, ::Val{2}) = _radial_average(sphere, identity)
 layer_inverse_property_average(sphere::RadialLayeredSphere, ::Val{4}) = _radial_average(sphere, _inverse)

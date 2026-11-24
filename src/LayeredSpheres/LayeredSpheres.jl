@@ -11,6 +11,7 @@ module LayeredSpheres
 
 using LinearAlgebra
 using StaticArrays: SMatrix, SVector
+using QuadGK: quadgk
 using TensND
 
 import ..Core
