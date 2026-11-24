@@ -6,17 +6,16 @@
 #  (`radial_ti(SphericalChart(), …)`): a stiffness of five moduli or a
 #  conductivity of two. Such a layer keeps the spherical symmetry of the
 #  composite sphere, so that the remote strain still splits into a spherical
-#  and a deviatoric part and each part is still carried by a few radial modes,
-#  now powers of r with exponents that are no longer integers:
-#
-#    spherical part    u = r^s e_r,                 n s(s + 1) = 2(2k − l);
-#    deviatoric part   u = r^s (a P₂ e_r + b P₂′ e_θ),
-#                      n p t⁴ − B t² + C = 0 with t = s + 1/2;
-#    conduction        T = r^s cos θ,               k_r s(s + 1) = 2 k_t,
-#
-#  (n, l, k, m, p) being Hill's moduli about e_r. They are derived symbolically
-#  in the tutorial "Layered sphere: layers transversely isotropic about the
-#  radius", and the theory page states them.
+#  and a deviatoric part. Each part, and the conduction problem, is a system of
+#  the first order in the radius, r dY/dr = M Y, on the state Y that an
+#  interface transmits (displacement and traction, temperature and flux), with
+#  M a function of the moduli at that radius: Hill's moduli (n, l, k, m, p)
+#  about e_r, or the two conductivities. The exponents of the radial modes
+#  (which are no longer integers, and may be complex in the deviatoric part)
+#  are the eigenvalues of M; the layers are crossed by the power of M, without
+#  them. The systems are derived symbolically in the tutorial "Layered sphere:
+#  layers transversely isotropic about the radius", and stated in its theory
+#  page.
 #
 #  The states (displacement and traction, or temperature and flux) are carried
 #  from the core to the matrix through the interface matrices of
@@ -64,105 +63,132 @@ _shell_average(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); TensISO{
 const RadialLayers = Tuple{RadialField, Vararg{RadialField}}
 const RadialLayeredSphere{T, N} = LayeredSphere{T, N, <:RadialLayers}
 
-# ── Exponents ────────────────────────────────────────────────────────────────
+# ── The radial problems as first-order systems ───────────────────────────────
 #
-# s = −1/2 ± t. In the spherical problem and in conduction, t² is positive for
-# every positive definite modulus: 1/4 + 2(2k − l)/n ≥ (1/2 − 2√(k/n))², since
-# n k > l². In the deviatoric problem the two values of t² are the roots of a
-# quadratic, which are complex conjugates for some positive definite moduli:
-# the radial modes then oscillate, and the computation is made on complex
-# numbers, `CT`, the solution being real.
+# With the state Y made of the radial functions of the displacement and of r
+# times those of the traction (of the temperature and of r times the outward
+# flux), each radial problem reads
+#
+#     r dY/dr = M Y,
+#
+# M depending on the moduli at the radius r alone: no derivative of a modulus
+# enters, the state being what an interface transmits. The matrices below are
+# derived symbolically in the tutorial `scripts/101`. In a layer of uniform
+# moduli M is constant, and the state is carried from a radius to another by
+# the power (r_out/r_in)^M; the exponents of the radial modes are the
+# eigenvalues of M, which are not computed.
 
-_bulk_exponent(h) = sqrt(1 // 4 + 2 * (2 * h.k - h.l) / h.n)
-_cond_exponent(c::RadialField{2}) = ((kₜ, kᵣ) = _conductivities(c); sqrt(1 // 4 + 2 * kₜ / kᵣ))
+# Spherical part, Y = (u_r, r σ_rr).
+_bulk_system(h) = SMatrix{2, 2}(-2 * h.l / h.n, 4 * h.k - 4 * h.l^2 / h.n, 1 / h.n, 2 * h.l / h.n - 1)
 
-# n p τ² − B τ + C = 0, of roots τ = t²: its coefficients B and C.
-function _shear_quadratic(h)
+# Deviatoric part, Y = (U, W, r σ_rr, r σ_rθ) for u = U P₂ e_r + W P₂′ e_θ.
+function _shear_system(h)
     (; n, l, k, m, p) = h
-    B = 6 * k * n + 4 * k * p - 6 * l^2 - 14 * l * p + 4 * m * n + 5 * n * p / 2
-    C = 16 * k * m + 3 * k * n / 2 + 9 * k * p - 3 * l^2 / 2 - 8 * l * m + 9 * l * p / 2 + m * n + 24 * m * p + 9 * n * p / 16
-    return B, C
+    c = k - l^2 / n
+    z = zero(c)
+    return SMatrix{4, 4}(
+        -2 * l / n, -one(c), 4 * c, -2 * c,
+        6 * l / n, one(c), -12 * c, 6 * c + 4 * m,
+        1 / n, z, 2 * l / n - 1, -l / n,
+        z, 1 / p, 6 * one(c), -2 * one(c),
+    )
 end
 
-function _shear_exponents(h, ::Type{CT}) where {CT}
-    B, C = _shear_quadratic(h)
-    Δ = sqrt(CT(B^2 - 4 * h.n * h.p * C))
-    return sqrt((B - Δ) / (2 * h.n * h.p)), sqrt((B + Δ) / (2 * h.n * h.p))
+# Conduction, Y = (T̂, r q̂) with q̂ = −k_r ∂T̂/∂r the outward flux.
+function _cond_system(c::RadialField{2})
+    kₜ, kᵣ = _conductivities(c)
+    return SMatrix{2, 2}(zero(kₜ), -2 * kₜ, -1 / kᵣ, -one(kₜ))
 end
 
-# Whether the exponents of a layer are complex. A symbol is not compared: its
-# exponents are kept as the expressions they are.
-_oscillates(c::RadialField{4}) = _oscillates(Val(is_hard_numeric(eltype(c))), _hill_moduli(c))
-_oscillates(::Val{false}, h) = false
-function _oscillates(::Val{true}, h)
-    B, C = _shear_quadratic(h)
-    return B^2 < 4 * h.n * h.p * C
+_system(c::RadialField{4}, ::Val{1}) = _bulk_system(_hill_moduli(c))
+_system(c::RadialField{4}, ::Val{2}) = _shear_system(_hill_moduli(c))
+_system(c::RadialField{2}, ::Val{1}) = _cond_system(c)
+
+# X = M + 1/2 has eigenvalues in opposite pairs ±t: s = −1/2 ± t are the
+# exponents, those of positive real part being the solutions regular at the
+# center. For a system of size 2, X² = t² 𝟙 exactly, so that the power and the
+# regular solution are closed forms, which symbols go through:
+#     ρ^M = ρ^(−1/2) [cosh(t ln ρ) 𝟙 + sinh(t ln ρ) X/t],    X v = t v for v = (X + t 𝟙) e.
+_half_trace_free(M) = M + one(M) / 2
+_exponent(X::SMatrix{2, 2}) = sqrt(X[1, 1]^2 + X[1, 2] * X[2, 1])
+
+function _radial_power(M::SMatrix{2, 2}, ρ)
+    X = _half_trace_free(M)
+    t = _exponent(X)
+    x = t * log(ρ)
+    return (cosh(x) * one(M) + (sinh(x) / t) * X) / sqrt(ρ)
 end
-_mode_type(sphere, ::Type{TP}) where {TP} = any(_oscillates, sphere.moduli) ? Complex{TP} : TP
-_real_part(x::AbstractArray{<:Complex}) = real(x)
-_real_part(x::AbstractArray) = x
-# r^s. With a complex exponent, by the exponential: the power of Julia converts
-# an exponent whose value is an integer to an `Int`, which a dual number is not.
-_power(r, s) = r^s
-_power(r::Complex, s) = exp(s * log(r))
+# Of any size, by the exponential: exponents real or complex, distinct or not.
+_radial_power(M::SMatrix, ρ) = exp(M * log(ρ))
 
-# ── Fundamental matrices: the state of each mode at the radius r ─────────────
-
-# Spherical part, state (u_r, σ_rr), modes r^(−1/2 + t) and r^(−1/2 − t).
-function _bulk_modes(h, r)
-    t = oftype(r, _bulk_exponent(h))
-    column(s) = (rs = _power(r, s); (rs, (h.n * s + 2 * h.l) * rs / r))
-    return SMatrix{2, 2}(column(-1 // 2 + t)..., column(-1 // 2 - t)...)
+# A basis of the states of the solutions regular at the center: columns of the
+# projector on the eigenvalues of M of real part above −1/2.
+function _regular_states(M::SMatrix{2, 2}, ::Val{1})
+    X = _half_trace_free(M)
+    P = X + _exponent(X) * one(M)
+    return _columns(P, _largest_columns(Val(is_hard_numeric(eltype(P))), P))
+end
+function _regular_states(M::SMatrix{4, 4}, ::Val{2})
+    P = (one(M) + _matrix_sign(_half_trace_free(M))) / 2
+    return _columns(P, _independent_columns(P))
 end
 
-# Deviatoric part, state (U, W, σ_rr, σ_rθ) of u = U P₂ e_r + W P₂′ e_θ. The
-# shape (a, b) of a mode is in the kernel of the two equilibrium equations; of
-# the two expressions of it, the one of larger norm is kept, so that neither
-# vanishes at the moduli where the other one does.
-function _shear_shape(h, s)
-    (; n, l, k, m, p) = h
-    q = s * (s + 1)
-    from_θ = (6 * k + 4 * m + 2 * p - p * q, 2 * k + (l + p) * s + 2 * p)
-    from_r = (6 * l * (s + 1) + 6 * p * (s - 1) - 12 * k, n * q - 4 * k + 2 * l - 6 * p)
-    return _larger(Val(is_hard_numeric(typeof(q))), from_θ, from_r)
-end
-_larger(::Val{false}, u, v) = u
-_larger(::Val{true}, u, v) = sum(abs2, u) ≥ sum(abs2, v) ? u : v
-
-function _shear_modes(h, r::CT) where {CT}
-    t₁, t₂ = _shear_exponents(h, CT)
-    function column(s)
-        a, b = _shear_shape(h, s)
-        rs = _power(r, s)
-        return (a * rs, b * rs, ((h.n * s + 2 * h.l) * a - 6 * h.l * b) * rs / r, h.p * (a + (s - 1) * b) * rs / r)
+# The sign of a matrix without imaginary eigenvalue, by Newton's iteration
+# X ← (X + X⁻¹)/2, which converges quadratically. It is stopped on the values;
+# two more steps then bring the derivatives carried by dual numbers, up to the
+# third order, to the same accuracy.
+function _matrix_sign(X::SMatrix)
+    tol = 16 * eps(float(TensND.primal(one(eltype(X)))))
+    for _ in 1:100
+        Y = (X + inv(X)) / 2
+        settled = _value_norm(Y - X) ≤ tol * _value_norm(Y)
+        X = Y
+        settled && break
     end
-    # The two modes that are regular at the center first.
-    return SMatrix{4, 4}(column(-1 // 2 + t₁)..., column(-1 // 2 + t₂)..., column(-1 // 2 - t₁)..., column(-1 // 2 - t₂)...)
+    X = (X + inv(X)) / 2
+    return (X + inv(X)) / 2
+end
+_value_norm(X) = sqrt(sum(x -> abs2(TensND.primal(x)), X))
+
+# The column of P of largest norm, or the two whose Gram determinant is the
+# largest, so that the basis kept is well conditioned. Compared on values; a
+# symbolic projector of size 2 has proportional columns, the first one is kept.
+_columns(P::SMatrix{N, N}, idx::NTuple{1, Int}) where {N} = SMatrix{N, 1}(P[:, idx[1]])
+_columns(P::SMatrix{N, N}, idx::NTuple{2, Int}) where {N} = hcat(P[:, idx[1]], P[:, idx[2]])
+_largest_columns(::Val{false}, P) = (1,)
+_largest_columns(::Val{true}, P::SMatrix{N, N}) where {N} = (argmax(j -> _value_norm(P[:, j]), 1:N),)
+function _independent_columns(P::SMatrix{4, 4})
+    V = map(TensND.primal, P)
+    gram(i, j) = (V[:, i] ⋅ V[:, i]) * (V[:, j] ⋅ V[:, j]) - (V[:, i] ⋅ V[:, j])^2
+    pairs = ((1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4))
+    return pairs[argmax(map(ij -> gram(ij...), pairs))]
 end
 
-# Conduction, state (T̂, q̂) with q̂ = −k_r ∂T̂/∂r the outward flux.
-function _cond_modes(c::RadialField{2}, r)
-    t = oftype(r, _cond_exponent(c))
-    kᵣ = last(_conductivities(c))
-    column(s) = (rs = _power(r, s); (rs, -kᵣ * s * rs / r))
-    return SMatrix{2, 2}(column(-1 // 2 + t)..., column(-1 // 2 - t)...)
-end
+# The state the interface matrices act on is (displacement, traction) at the
+# radius r; Y carries r times the traction in its second half.
+_scaling(::SMatrix{2, 2}, r) = SMatrix{2, 2}(one(r), zero(r), zero(r), r)
+_scaling(::SMatrix{4, 4}, r) = SMatrix{4, 4}(Diagonal(SVector(one(r), one(r), r, r)))
 
 # ── The states at the boundaries of the layers ───────────────────────────────
 
 # The states of `nprobes` solutions regular at the center, carried to the
-# matrix: for each interface k, the state on the inside (r_k⁻) and on the
-# outside (r_k⁺), one column per solution.
-function _radial_states(sphere::RadialLayeredSphere{T, N}, modes, interface, ::Val{nprobes}, ::Type{TP}) where {T, N, nprobes, TP}
-    radii = sphere.radii
-    S = modes(layer_modulus(sphere, 1), TP(radii[1]))[:, SVector{nprobes}(1:nprobes)]
+# matrix: for each interface k, the state (displacement, traction) on the inside
+# (r_k⁻) and on the outside (r_k⁺), one column per solution.
+function _radial_states(sphere::RadialLayeredSphere{T, N}, interface, probes::Val, ::Type{TP}) where {T, N, TP}
+    radii = map(TP, sphere.radii)
+    system(k) = map(TP, _system(layer_modulus(sphere, k), probes))
+    M = system(1)
+    S = inv(_scaling(M, radii[1])) * _regular_states(M, probes)
     inside = Vector{typeof(S)}(undef, N)
     outside = Vector{typeof(S)}(undef, N)
     for k in 1:N
         inside[k] = S
-        S = typeof(S)(interface(layer_interface(sphere, k), TP(radii[k])) * S)
+        S = typeof(S)(interface(layer_interface(sphere, k), radii[k]) * S)
         outside[k] = S
-        k < N && (S = modes(layer_modulus(sphere, k + 1), TP(radii[k + 1])) * (inv(modes(layer_modulus(sphere, k + 1), TP(radii[k]))) * S))
+        if k < N
+            M = system(k + 1)
+            S = inv(_scaling(M, radii[k + 1])) * (_radial_power(M, radii[k + 1] / radii[k]) * (_scaling(M, radii[k]) * S))
+        end
     end
     return inside, outside
 end
@@ -177,21 +203,16 @@ function _radial_elastic_states(sphere::RadialLayeredSphere{T, N}, C₀::TensND.
     TP = _radial_eltype(sphere, κ₀, μ₀)
     R = TP(sphere.radii[N])
     u = one(TP)
-    bulk_in, bulk_out = _radial_states(
-        sphere, (c, r) -> _bulk_modes(_hill_moduli(c), r), (itf, r) -> _bulk_interface_T(itf, u, u, r), Val(1), TP
-    )
+    bulk_in, bulk_out = _radial_states(sphere, (itf, r) -> _bulk_interface_T(itf, u, u, r), Val(1), TP)
     A∞, _ = _bulk_extract_AB(R, TP(κ₀), TP(μ₀), bulk_out[N][1], bulk_out[N][2])
-    dev_in, dev_out = _radial_states(
-        sphere, (c, r) -> _shear_modes(_hill_moduli(c), r), (itf, r) -> _shear_interface_T(itf, u, u, real(r)), Val(2),
-        _mode_type(sphere, TP)
-    )
+    dev_in, dev_out = _radial_states(sphere, (itf, r) -> _shear_interface_T(itf, u, u, r), Val(2), TP)
     # The combination of the two regular solutions whose remote part is the unit
     # uniform strain: amplitudes (a, b) = (1, 0) in the matrix.
     amplitudes = _shear_M_inverse(R, TP(κ₀), TP(μ₀)) * dev_out[N]
     λ = inv(SMatrix{2, 2}(amplitudes[1, 1], amplitudes[2, 1], amplitudes[1, 2], amplitudes[2, 2])) * SVector(u, zero(u))
     return (
         bulk_in = map(S -> S[:, 1] / A∞, bulk_in), bulk_out = map(S -> S[:, 1] / A∞, bulk_out),
-        dev_in = map(S -> _real_part(S * λ), dev_in), dev_out = map(S -> _real_part(S * λ), dev_out),
+        dev_in = map(S -> S * λ, dev_in), dev_out = map(S -> S * λ, dev_out),
     )
 end
 
@@ -199,7 +220,7 @@ end
 function _radial_conduction_states(sphere::RadialLayeredSphere{T, N}, K₀::TensND.TensISO{2, 3}) where {T, N}
     k₀ = _iso_scalar(K₀)
     TP = _radial_eltype(sphere, k₀)
-    inside, outside = _radial_states(sphere, _cond_modes, (itf, r) -> _cond_interface_T(itf, one(TP), r), Val(1), TP)
+    inside, outside = _radial_states(sphere, (itf, r) -> _cond_interface_T(itf, one(TP), r), Val(1), TP)
     A∞, _ = _cond_extract_AB(TP(sphere.radii[N]), TP(k₀), outside[N][1], outside[N][2])
     return (inside = map(S -> S[:, 1] / A∞, inside), outside = map(S -> S[:, 1] / A∞, outside))
 end

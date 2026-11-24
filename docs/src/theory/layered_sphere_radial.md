@@ -111,8 +111,8 @@ traction, on ``P_2`` and ``P_2'``.
 The two values of ``t^2`` are not always real. When ``B^2 < 4npC``, which
 positive definite moduli allow, the exponents are complex,
 ``s = -\tfrac12 \pm (\alpha \pm i\beta)``, and the modes oscillate as
-``r^{-1/2 \pm \alpha}\cos(\beta\ln r)``. The computation is then made on complex
-numbers; the displacement is real.
+``r^{-1/2 \pm \alpha}\cos(\beta\ln r)``. The layers are crossed without the
+exponents (section 5), so that this case needs no particular treatment.
 
 ```@example radial
 using MeanFieldHomogenization, TensND, LinearAlgebra
@@ -120,7 +120,7 @@ const LS = MeanFieldHomogenization.LayeredSpheres
 
 shell = radial_ti(SphericalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
 oscillating = radial_ti(SphericalChart(); n = 0.768, l = 0.622, k = 1.2855, m = 1.2335, p = 3.6)
-exponents(c) = -1 / 2 .+ collect(LS._shear_exponents(LS._hill_moduli(c), ComplexF64))
+exponents(c) = eigvals(Matrix(LS._shear_system(LS._hill_moduli(c))))     # of the system of section 5
 (isotropic = exponents(radial_ti(SphericalChart(), iso_stiffness(4.0, 3.0))), shell = exponents(shell), oscillating = exponents(oscillating))
 ```
 
@@ -147,11 +147,68 @@ property_contribution(ball, TensISO{3}(kᵣ * s₊))
 
 ## 5. Chaining the layers, and the means
 
-The states of the modes that are regular at the center (one in the spherical
-part and in conduction, two in the deviatoric part) are carried outward: across
-an interface by its matrix ([Layered sphere](@ref th-layered-sphere), section
-3), across a layer by the matrix of its modes at its two radii. In the matrix,
-which is isotropic, the amplitude of the uniform strain is read and set to one.
+Each of the three problems is a system of the first order on the state that an
+interface transmits. With ``Y`` the radial functions of the displacement and
+``r`` times those of the traction (the temperature and ``r`` times the outward
+flux),
+
+```math
+r\,\frac{\mathrm{d}Y}{\mathrm{d}r} = \boldsymbol{M}\,Y ,
+```
+
+where ``\boldsymbol{M}`` depends on the moduli at the radius ``r`` alone. For
+the spherical part, ``Y = (u_r,\; r\,\sigma_{rr})``, and for conduction,
+``Y = (\hat T,\; r\,\hat q)``:
+
+```math
+\boldsymbol{M} = \begin{pmatrix} -\dfrac{2l}{n} & \dfrac{1}{n} \\[2mm] 4k - \dfrac{4l^2}{n} & \dfrac{2l}{n} - 1 \end{pmatrix} ,
+\qquad
+\boldsymbol{M} = \begin{pmatrix} 0 & -\dfrac{1}{k_r} \\[2mm] -2k_t & -1 \end{pmatrix} .
+```
+
+For the deviatoric part,
+``Y = (U,\; W,\; r\,\sigma_{rr},\; r\,\sigma_{r\theta})`` and, with
+``c = k - l^2/n``,
+
+```math
+\boldsymbol{M} = \begin{pmatrix}
+ -\dfrac{2l}{n} & \dfrac{6l}{n} & \dfrac{1}{n} & 0 \\[2mm]
+ -1 & 1 & 0 & \dfrac{1}{p} \\[2mm]
+ 4c & -12c & \dfrac{2l}{n} - 1 & 6 \\[2mm]
+ -2c & 6c + 4m & -\dfrac{l}{n} & -2
+\end{pmatrix} .
+```
+
+The exponents of sections 2 to 4 are the eigenvalues of these matrices. In a
+layer of uniform moduli ``\boldsymbol{M}`` is constant, and the system is
+solved by a power of ``r``: the state is carried from the inner radius of the
+layer to its outer one by
+
+```math
+Y(r_{\mathrm{out}}) = \Bigl(\frac{r_{\mathrm{out}}}{r_{\mathrm{in}}}\Bigr)^{\boldsymbol{M}}\,Y(r_{\mathrm{in}}) ,
+\qquad
+\rho^{\boldsymbol{M}} = \exp(\boldsymbol{M}\ln\rho) ,
+```
+
+whatever the exponents: real or complex, distinct or equal. The eigenvalues of
+``\boldsymbol{X} = \boldsymbol{M} + \tfrac12\boldsymbol{1}`` come in opposite
+pairs ``\pm t``. For the two systems of size two,
+``\boldsymbol{X}^2 = t^2\,\boldsymbol{1}`` and the power is the closed form
+
+```math
+\rho^{\boldsymbol{M}} = \rho^{-1/2}\,\Bigl[\cosh(t\ln\rho)\,\boldsymbol{1} + \frac{\sinh(t\ln\rho)}{t}\,\boldsymbol{X}\Bigr] .
+```
+
+At the center, the solutions that are regular are those of the exponents of
+real part above ``-\tfrac12``; their states span the range of the projector
+``\tfrac12\,(\boldsymbol{1} + \operatorname{sign}\boldsymbol{X})``, which is
+``(\boldsymbol{X} + t\,\boldsymbol{1})/(2t)`` at size two and is computed by
+Newton's iteration ``\boldsymbol{X} \leftarrow \tfrac12(\boldsymbol{X} + \boldsymbol{X}^{-1})``
+at size four. These states (one in the spherical part and in conduction, two in
+the deviatoric part) are carried outward: across a layer by the power above,
+across an interface by its matrix ([Layered sphere](@ref th-layered-sphere),
+section 3). In the matrix, which is isotropic, the amplitude of the uniform
+strain is read and set to one.
 
 The means that the schemes need are then read on the states, without the
 amplitudes of the layers. The mean strain of a ball of radius ``R`` and its mean
@@ -257,9 +314,8 @@ isotropic sphere, computed by other formulas.
   breaks the symmetry of the sphere and is refused.
 - **Matrix.** The reference medium is isotropic, as for the isotropic sphere.
 - **Numbers.** Real numbers and dual numbers, nested, in elasticity; symbols
-  as well in conduction. Oscillating modes are treated; two equal values of
-  ``t^2`` in the deviatoric part (``B^2 = 4npC`` exactly) are not, the two
-  modes being then the same.
+  as well in conduction. Oscillating modes and equal exponents need no
+  particular treatment.
 - **Not available with radial layers:** the pointwise fields, the response to
   a harmonic of any degree (multipole expansion), and aging viscoelasticity.
 

@@ -187,8 +187,47 @@ end
         @test abs(TensND.get_data(N)[1]) < 1.0e-12
     end
 
+    @testset "derivatives, against those of closed forms" begin
+        # A homogeneous radial ball is, for its surroundings, an isotropic ball of
+        # conductivity k✶ = k_r s₊, or of bulk modulus k✶ = (n s₊ + 2l)/3 under a
+        # spherical strain: its contribution is that of the isotropic sphere,
+        # 3k₀ (k✶ − k₀)/(k✶ + 2k₀), resp. 3 (k✶ − k₀)(3k₀ + 4μ₀)/(3k✶ + 4μ₀) on 𝕁.
+        k₀ = 1.3
+        apparent(kₜ, kᵣ) = kᵣ / 2 * (-1 + sqrt(1 + 8kₜ / kᵣ))
+        closed(kₜ, kᵣ) = (k✶ = apparent(kₜ, kᵣ); 3k₀ * (k✶ - k₀) / (k✶ + 2k₀))
+        computed(kₜ, kᵣ) = only(TensND.get_data(property_contribution(LayeredSphere((1.0,), (radial_ti(SphericalChart(), kₜ, kᵣ),)), TensISO{3}(k₀))))
+        ∂(f, x) = ForwardDiff.derivative(f, x)
+        @test ∂(x -> computed(x, 2.0), 5.0) ≈ ∂(x -> closed(x, 2.0), 5.0) rtol = 1.0e-12
+        @test ∂(x -> computed(5.0, x), 2.0) ≈ ∂(x -> closed(5.0, x), 2.0) rtol = 1.0e-12
+        @test ∂(y -> ∂(x -> computed(x, y), 5.0), 2.0) ≈ ∂(y -> ∂(x -> closed(x, y), 5.0), 2.0) rtol = 1.0e-10
+        K₀, μ₀ = 10.0, 6.0
+        function closed_bulk(n, l, k)
+            k✶ = (n * (-1 / 2 + sqrt(1 / 4 + 2 * (2k - l) / n)) + 2l) / 3
+            return 3 * (k✶ - K₀) * (3K₀ + 4μ₀) / (3k✶ + 4μ₀)
+        end
+        computed_bulk(n, l, k) = TensND.get_data(
+            property_contribution(LayeredSphere((1.0,), (radial_ti(SphericalChart(); n, l, k, m = 11.0, p = 4.0),)), rl_C₀, rl_C₀)
+        )[1]
+        @test computed_bulk(12.0, 5.0, 19.0) ≈ closed_bulk(12.0, 5.0, 19.0) rtol = 1.0e-12
+        for (i, x₀) in enumerate((12.0, 5.0, 19.0))
+            at(f) = x -> f(Base.setindex((12.0, 5.0, 19.0), x, i)...)
+            @test ∂(at(computed_bulk), x₀) ≈ ∂(at(closed_bulk), x₀) rtol = 1.0e-11
+            @test ∂(y -> ∂(at(computed_bulk), y), x₀) ≈ ∂(y -> ∂(at(closed_bulk), y), x₀) rtol = 1.0e-9
+        end
+        # Through the deviatoric system (exponential and projector): the contribution is
+        # homogeneous of degree one in the moduli and of degree zero in the radii.
+        sphere(t, s) = LayeredSphere(s .* rl_radii, (t * rl_C[1], t * rl_shell); interfaces = (SpringInterface(; sn = 0.02 * s / t, st = 0.05 * s / t), PerfectInterface()))
+        dev(t, s) = TensND.get_data(property_contribution(sphere(t, s), t * rl_C₀, t * rl_C₀))[2]
+        @test ∂(t -> dev(t, 1.0), 1.0) ≈ dev(1.0, 1.0) rtol = 1.0e-10
+        @test abs(∂(s -> dev(1.0, s), 1.0)) < 1.0e-10 * abs(dev(1.0, 1.0))
+        @test abs(∂(t -> ∂(u -> dev(u, 1.0), t), 1.0)) < 1.0e-8 * abs(dev(1.0, 1.0))
+    end
+
     @testset "oscillating modes" begin
-        @test RL._oscillates(rl_oscillating) && !RL._oscillates(rl_shell)
+        # The exponents of the deviatoric modes, eigenvalues of the system of the layer.
+        exponents(c) = eigvals(Matrix(RL._shear_system(RL._hill_moduli(c))))
+        @test !isreal(exponents(rl_oscillating)) && isreal(exponents(rl_shell))
+        @test sort(real(exponents(radial_ti(SphericalChart(), rl_C[2])))) ≈ [-4, -2, 1, 3]
         whole = LayeredSphere(rl_radii, (rl_C[1], rl_oscillating))
         cut = LayeredSphere((0.6, 0.8, 1.0), (rl_C[1], rl_oscillating, rl_oscillating))
         N = property_contribution(whole, rl_C₀, rl_C₀)

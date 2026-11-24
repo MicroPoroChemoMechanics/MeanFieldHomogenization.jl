@@ -94,15 +94,69 @@ interface is the displacement and the radial stress, here for the mode
 factor(σrr / r^(s - 1))
 ````
 
-The package builds the matrix of the two modes from these two rows:
+The same problem is a system of the first order on the state that an
+interface transmits, the displacement and the traction. With
+``Y = (f,\; r\,\sigma_{rr})``, the constitutive law gives ``r f'`` and
+equilibrium gives ``r\,(r\sigma_{rr})'``, both linear in ``Y``:
+``r\,Y' = \boldsymbol{M}\,Y``. The function below builds ``\boldsymbol{M}``
+from the expression of the state and from the equilibrium equations, for any
+of the three problems; the moduli are taken as functions of ``r``, to see
+whether their derivatives enter.
+
+````@example layered_sphere_radial_symbolic
+fn(name) = SymFunction(name, positive = true)(r)
+nʳ, lʳ, kʳ, mʳ, pʳ = fn("n"), fn("l"), fn("k"), fn("m"), fn("p")
+ℂʳ = tensor_at(radial_ti(SphericalChart(); n = nʳ, l = lʳ, k = kʳ, m = mʳ, p = pʳ), Sph)
+stressʳ(u) = ℂʳ ⊡ symgrad(u, Sph)
+function first_order(Y, unknowns, equations)
+    d₁ = [diff(g, r) for g in unknowns]
+    d₂ = [diff(g, r, 2) for g in unknowns]
+    y = [symbols("y$i", real = true) for i in eachindex(Y)]
+    nu = length(unknowns)
+    from_law = solve([Y[nu + i] - y[nu + i] for i in 1:nu], d₁)        # r g′ from the traction
+    from_equilibrium = solve(equations, d₂)                             # g″ from equilibrium
+    rhs = [r * diff(Yᵢ, r) for Yᵢ in Y]
+    rhs = [subs(e, [d₂[i] => from_equilibrium[d₂[i]] for i in 1:nu]...) for e in rhs]
+    rhs = [subs(e, [d₁[i] => from_law[d₁[i]] for i in 1:nu]...) for e in rhs]
+    rhs = [subs(e, [unknowns[i] => y[i] for i in 1:nu]...) for e in rhs]
+    return [simplify(diff(expand(simplify(e)), yⱼ)) for e in rhs, yⱼ in y]
+end
+g = SymFunction("g", real = true)(r)
+σ = stressʳ(g * 𝐞ʳ)
+M_bulk = first_order([g, simplify(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ))], [g], [simplify(divergence(σ, Sph) ⋅ 𝐞ʳ)])
+````
+
+No derivative of a modulus appears: the matrix depends on the moduli at the
+radius ``r`` alone, so that it holds for moduli that vary with the radius as
+for uniform layers. It is the matrix of the package, and its eigenvalues are
+the two exponents:
 
 ````@example layered_sphere_radial_symbolic
 const LS = MeanFieldHomogenization.LayeredSpheres
+uniform = (nʳ => n, lʳ => l, kʳ => k, mʳ => m, pʳ => p)
 h = (n = n, l = l, k = k, m = m, p = p)
-t_bulk = sqrt(Sym(1) / 4 + 2 * (2k - l) / n)
-state(q) = [r^q, (n * q + 2l) * r^(q - 1)]
-@assert all(iszero, simplify.(LS._bulk_modes(h, r) .- hcat(state(-Sym(1) / 2 + t_bulk), state(-Sym(1) / 2 - t_bulk))))
+@assert all(iszero, simplify.(subs.(M_bulk, uniform...) .- LS._bulk_system(h)))
+@assert iszero(expand(det(LS._bulk_system(h) - s * [1 0; 0 1]) * n - bulk_equation))
 ````
+
+In a layer of uniform moduli the state is carried from the radius ``r_1`` to
+the radius ``r_2`` by the power ``(r_2/r_1)^{\boldsymbol{M}}``, the solution of
+``\rho\,\mathrm{d}\boldsymbol{P}/\mathrm{d}\rho = \boldsymbol{M}\,\boldsymbol{P}``
+equal to the identity at ``\rho = 1``. For a system of size two,
+``\boldsymbol{X} = \boldsymbol{M} + \tfrac12\boldsymbol{1}`` has the square
+``t^2\,\boldsymbol{1}``, which gives the power in closed form:
+
+````@example layered_sphere_radial_symbolic
+ρ = symbols("rho", positive = true)
+Mₕ = Matrix(LS._bulk_system(h))
+X = Mₕ + [1 0; 0 1] / Sym(2)
+@assert all(iszero, simplify.(X * X - (Sym(1) / 4 + 2 * (2k - l) / n) * [1 0; 0 1]))
+P = Matrix(LS._radial_power(LS._bulk_system(h), ρ))
+@assert all(iszero, simplify.(ρ .* diff.(P, ρ) .- Mₕ * P)) && all(iszero, simplify.(subs.(P, ρ => 1) .- [1 0; 0 1]))
+simplify.(subs.(P, isotropic...))
+````
+
+The last matrix is that of an isotropic layer, where ``t = \tfrac32``.
 
 ## 3. Deviatoric part
 
@@ -150,23 +204,15 @@ quartic = sympy.collect(expand(subs(det(system), s => t - Sym(1) / 2)), t)
 factor(subs(det(system), isotropic...))
 ````
 
-The coefficients ``B`` and ``C`` are those of the package:
-
-````@example layered_sphere_radial_symbolic
-B, C = LS._shear_quadratic(h)
-@assert iszero(expand(quartic - (n * p * t^4 - B * t^2 + C)))
-````
-
 The two values of ``t^2`` are not always real: for some positive definite
 moduli the discriminant ``B^2 - 4npC`` is negative, the four exponents are
 complex, ``-\tfrac12 \pm (\alpha \pm i\beta)``, and the modes oscillate as
-``r^{-1/2 \pm \alpha}\cos(\beta \ln r)``. The solution stays real, the
-computation being made on complex numbers. An example of such a layer:
+``r^{-1/2 \pm \alpha}\cos(\beta \ln r)``. An example of such a layer, by the
+eigenvalues of its system (below):
 
 ````@example layered_sphere_radial_symbolic
 oscillating = radial_ti(SphericalChart(); n = 0.768, l = 0.622, k = 1.2855, m = 1.2335, p = 3.6)
-Bₒ, Cₒ = LS._shear_quadratic(LS._hill_moduli(oscillating))
-Bₒ^2 - 4 * 0.768 * 3.6 * Cₒ
+eigvals(Matrix(LS._shear_system(LS._hill_moduli(oscillating))))
 ````
 
 The shape ``(a, b)`` of a mode is in the kernel of the system. Taken from the
@@ -186,6 +232,36 @@ The state is the pair ``(U, W)`` and the radial functions of the traction,
 traction = [expand(at((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ, r^(s - 1) * P₂)), expand(at((σ ⋅ 𝐞ʳ) ⋅ 𝐞ᶿ, r^(s - 1) * diff(P₂, θ)))]
 ````
 
+As a system of the first order, on
+``Y = (U,\; W,\; r\,\sigma_{rr},\; r\,\sigma_{r\theta})``:
+
+````@example layered_sphere_radial_symbolic
+Uʳ, Wʳ = SymFunction("U", real = true)(r), SymFunction("W", real = true)(r)
+uʳ = u_dev(Uʳ, Wʳ)
+σ = stressʳ(uʳ)
+eqʳ = divergence(σ, Sph)
+Y_dev = [Uʳ, Wʳ, at(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ), P₂), at(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ᶿ), diff(P₂, θ))]
+M_dev = first_order(Y_dev, [Uʳ, Wʳ], [at(eqʳ ⋅ 𝐞ʳ, P₂), at(eqʳ ⋅ 𝐞ᶿ, diff(P₂, θ))])
+````
+
+Again without any derivative of the moduli. It is the matrix of the package,
+and its characteristic polynomial is the determinant found above with the
+power laws, so that its eigenvalues are the four exponents:
+
+````@example layered_sphere_radial_symbolic
+@assert all(iszero, simplify.(subs.(M_dev, uniform...) .- LS._shear_system(h)))
+𝟙₄ = Sym.(Matrix(1I, 4, 4))
+@assert iszero(expand(det(Matrix(LS._shear_system(h)) - s * 𝟙₄) * n * p - det(system)))
+````
+
+The power of this matrix is computed numerically, by the exponential of
+``\boldsymbol{M}\ln(r_2/r_1)``: real or complex exponents, distinct or equal,
+are one case. The solutions that are regular at the center are those of the
+exponents of real part above ``-\tfrac12``; their states span the range of
+the projector ``\tfrac12(\boldsymbol{1} + \operatorname{sign}\boldsymbol{X})``,
+``\boldsymbol{X} = \boldsymbol{M} + \tfrac12\boldsymbol{1}`` having its
+eigenvalues in opposite pairs.
+
 ## 4. Conduction
 
 With a conductivity ``k_r`` along the radius and ``k_t`` across it, the
@@ -199,7 +275,21 @@ grad_T = diff(r^s * cos(θ), r) * 𝐞ʳ + diff(r^s * cos(θ), θ) / r * 𝐞ᶿ
 factor(simplify(divergence(𝐊 ⋅ grad_T, Sph) / (r^(s - 2) * cos(θ))))
 ````
 
-``k_r\,s(s + 1) = 2k_t``. A homogeneous sphere of such a material, of regular
+``k_r\,s(s + 1) = 2k_t``. The state is the temperature and the outward flux,
+``Y = (\hat T,\; r\,\hat q)`` with ``\hat q = -k_r\,\hat T'``, and the system of
+the package is
+
+````@example layered_sphere_radial_symbolic
+M_cond = Matrix(LS._cond_system(radial_ti(SphericalChart(), kt, kr)))
+````
+
+whose characteristic polynomial is the equation of the exponents:
+
+````@example layered_sphere_radial_symbolic
+@assert iszero(expand(det(M_cond - s * [1 0; 0 1]) * kr - (kr * s * (s + 1) - 2kt)))
+````
+
+A homogeneous sphere of such a material, of regular
 mode ``r^{s}`` with ``s = -\tfrac12 + \sqrt{\tfrac14 + 2k_t/k_r}``, has the
 flux ``-k_r\,s\,r^{s-1}`` at its surface for the temperature ``r^s``: it
 disturbs nothing in a medium of conductivity ``k_r\,s``, the result of

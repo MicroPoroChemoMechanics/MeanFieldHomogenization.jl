@@ -40,9 +40,11 @@ chapter in which every page stands with the notion it treats.
   and tangential conductivities). Until now a layer had to be isotropic. Such a
   layer keeps the symmetry of the sphere: its radial modes are powers of `r`
   whose exponents depend on the moduli, real in the spherical part and in
-  conduction, real or complex (oscillating modes) in the deviatoric part, and
-  the layers are chained by the interface matrices of the isotropic sphere,
-  with every kind of interface. The mean strain and stress of the sphere and of
+  conduction, real or complex (oscillating modes) in the deviatoric part. Each
+  radial problem is written as a system of the first order on the state that
+  an interface transmits, `r dY/dr = M·Y`, and a layer is crossed by the power
+  `(r_out/r_in)^M`, without the exponents; the layers are chained by the
+  interface matrices of the isotropic sphere, with every kind of interface. The mean strain and stress of the sphere and of
   its layers are read on the states at the boundaries of the layers, so that
   they do not depend on the law of a layer; every scheme takes the sphere.
   Checked against the isotropic sphere (to rounding), against the neutral
