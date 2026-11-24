@@ -131,6 +131,20 @@ end
         @test_throws ArgumentError LENS.property_coefficient(Ts, lens_p(:C1111; symmetry = (:ORTHO, TensND.RotatedBasis(0.3, 0.2, 0.1))))
     end
 
+    @testset "a conductivity: the scalar of an isotropic tensor of order 2" begin
+        K = TensISO{3}(2.5)
+        @test get_coefficient(K, :scalar) == 2.5
+        @test get_coefficient(set_coefficient(K, :scalar, 4.0), :scalar) == 4.0
+        @test_throws ArgumentError get_coefficient(K, :k)
+        # Dilute spheres of conductivity k₁ in k₀: K = k₀ (1 + 3f (k₁ − k₀)/(k₁ + 2k₀)), whose
+        # derivative with respect to k₁ is 9 f k₀² / (k₁ + 2k₀)².
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:K => TensISO{3}(1.0)); fraction = :rest)
+        add_phase!(rve, :I, Ellipsoid(1.0), Dict(:K => K); fraction = 0.1)
+        d = derivative(rve, Dilute(), property(:I, :K, :scalar); output = :K, indexer = X -> canonical_components(X)[3, 3])
+        @test d ≈ 9 * 0.1 * 1.0^2 / (2.5 + 2 * 1.0)^2 rtol = 1.0e-12
+    end
+
     @testset "a Hill tensor by three routes, on the tensor alone" begin
         C₀ = iso_stiffness(10.0, 6.0)
         sph = Ellipsoid(1.0, 1.0, 3.0)
