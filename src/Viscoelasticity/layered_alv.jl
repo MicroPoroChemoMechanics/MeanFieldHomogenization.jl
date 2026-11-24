@@ -104,6 +104,16 @@ function _layer_iso_volterra(C, times::AbstractVector{<:Real})
     α, β = iso_params_from_blocks(R)
     return (α ./ 3, β ./ 2)   # (M_κ, M_μ)
 end
+_layer_iso_volterra(C::TensND.ChartTens, ::AbstractVector{<:Real}) = _no_radial_alv(C)
+
+# A layer transversely isotropic about the radial direction (a field of
+# TensND) is solved in elasticity and in conduction only.
+_no_radial_alv(P) = throw(
+    ArgumentError(
+        "aging viscoelasticity is not available for a layer transversely isotropic about the radial " *
+            "direction; got $(P)"
+    )
+)
 
 # ── Interface parameter promotion ──────────────────────────────────────────
 

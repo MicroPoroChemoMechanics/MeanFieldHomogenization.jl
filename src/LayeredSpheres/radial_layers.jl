@@ -33,9 +33,9 @@
 # A layer transversely isotropic about the radius: a field of the spherical
 # chart whose pattern is transversely isotropic about the radial vector of the
 # local frame (`TensND.radial_ti(SphericalChart(), …)`).
-const RadialField{order} = TensND.ChartTens{order, 3, <:Any, <:TensND.TensTI{order}, TensND.SphericalChart}
+const RadialField{order} = MFH_Core.RadialField{order, TensND.SphericalChart}
 
-_radial_field(c::RadialField) = TensND.isparallel(TensND.axis(c.pattern), TensND.radial_axis(c.chart)) ? c : _not_radial_field(c)
+_radial_field(c::RadialField) = MFH_Core.is_radial(c) ? c : _not_radial_field(c)
 _radial_field(c::TensND.TensISO) = TensND.radial_ti(TensND.SphericalChart(), c)
 _radial_field(c) = _not_radial_field(c)
 _not_radial_field(c) = throw(
@@ -46,14 +46,11 @@ _not_radial_field(c) = throw(
     )
 )
 
-# Hill's moduli about e_r: n = C_rrrr, l = C_rrθθ, k = (C_θθθθ + C_θθφφ)/2,
-# m = (C_θθθθ − C_θθφφ)/2, p = C_rθrθ, from the Walpole coefficients of the pattern.
-function _hill_moduli(c::RadialField{4})
-    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.get_data(c.pattern)
-    return (n = ℓ₁, l = ℓ₃ / sqrt(convert(TensND.sqrt2_eltype(typeof(ℓ₃)), 2)), k = ℓ₂ / 2, m = ℓ₅ / 2, p = ℓ₆ / 2)
-end
-# The conductivities across the radius and along it.
-_conductivities(c::RadialField{2}) = TensND.get_data(c.pattern)
+# Hill's moduli about e_r, n = C_rrrr, l = C_rrθθ, k = (C_θθθθ + C_θθφφ)/2,
+# m = (C_θθθθ − C_θθφφ)/2, p = C_rθrθ, and the conductivities across the radius
+# and along it.
+_hill_moduli(c::RadialField{4}) = MFH_Core.radial_hill_moduli(c)
+_conductivities(c::RadialField{2}) = MFH_Core.radial_coefficients(c)
 
 # The mean over all directions of the tensor of the layer: an isotropic tensor,
 # which is its volume average over a spherical shell.

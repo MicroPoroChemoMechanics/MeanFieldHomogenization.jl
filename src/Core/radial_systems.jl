@@ -24,6 +24,39 @@
 #  inclusions (`LayeredSpheres/radial_layers.jl`, `LayeredCylinders/…`).
 # =============================================================================
 
+# ── Moduli transversely isotropic about the radial direction ─────────────────
+
+"""
+    RadialField{order, C}
+
+A tensor field of TensND, `ChartTens`, of the chart `C`, whose pattern is
+transversely isotropic: about the radial vector of the chart when
+[`is_radial`](@ref) holds, the case the layered sphere and the layered cylinder
+solve.
+"""
+const RadialField{order, C} = TensND.ChartTens{order, 3, <:Any, <:TensND.TensTI{order}, C}
+
+"Whether the axis of the pattern of `c` is the radial direction of its chart."
+is_radial(c::RadialField) = TensND.isparallel(TensND.axis(c.pattern), TensND.radial_axis(c.chart))
+
+"""
+    radial_hill_moduli(c::RadialField{4}) -> (; n, l, k, m, p)
+
+Hill's moduli about the radial direction ``r``, with ``t, t'`` two orthogonal
+directions across it: ``n = C_{rrrr}``, ``l = C_{rrtt}``,
+``k = (C_{tttt} + C_{ttt't'})/2``, ``m = (C_{tttt} - C_{ttt't'})/2``,
+``p = C_{rtrt}``, from the Walpole coefficients of the pattern.
+"""
+function radial_hill_moduli(c::RadialField{4})
+    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.get_data(c.pattern)
+    return (n = ℓ₁, l = ℓ₃ / sqrt(convert(TensND.sqrt2_eltype(typeof(ℓ₃)), 2)), k = ℓ₂ / 2, m = ℓ₅ / 2, p = ℓ₆ / 2)
+end
+
+"The coefficients `(tangential, radial)` of a field of order 2 transversely isotropic about the radius."
+radial_coefficients(c::RadialField{2}) = TensND.get_data(c.pattern)
+
+# ── The power of a system and its regular solutions ──────────────────────────
+
 _trace_free(M::SMatrix{N, N}) where {N} = M - (tr(M) / N) * one(M)
 _exponent(X::SMatrix{2, 2}) = sqrt(X[1, 1]^2 + X[1, 2] * X[2, 1])
 

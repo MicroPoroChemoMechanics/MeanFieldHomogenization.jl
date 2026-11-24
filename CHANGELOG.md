@@ -54,6 +54,23 @@ chapter in which every page stands with the notion it treats.
   response to a harmonic of any degree and aging viscoelasticity are not
   available with such layers.
 
+- **Layers of a `LayeredCylinder` that are transversely isotropic about its
+  radial direction** (`radial_ti(CylindricalChart(); n, l, k, m, p)`): a wound
+  or a deposited material, whose plane of isotropy turns around the axis, in
+  elasticity and in conduction. They mix with layers that are isotropic or
+  transversely isotropic about the axis, with the four imperfect interfaces of
+  the cylinder, with real or complex moduli and with dual numbers. Each of the
+  four radial problems (antiplane shear, dilatation with the axial strain,
+  transverse shear, transverse conduction) is a system of the first order in
+  such a layer, crossed by a matrix power; the mean axial stress of a layer,
+  which no traction on its boundaries gives, is obtained from the integral of
+  the radial displacement carried along. Checked against the cylinder of
+  isotropic layers (to rounding), against the closed forms of a homogeneous
+  radial cylinder, and, for each of the five moduli and each layer, against the
+  integral of the pointwise field of the isotropic cylinder. The pointwise
+  fields, the two-dimensional cell and aging viscoelasticity are not available
+  with such layers.
+
 - **`layer_param(phase, layer, name)`**, a parameter that designates a
   coefficient of one layer of a layered sphere (`LayerParameter`), or its
   abscissa along a tensor (`LayerDirection`): the derivative with respect to

@@ -167,6 +167,34 @@ end
 #  entries (a number type or a matrix type), which the caller has promoted the
 #  moduli and the seed to.
 
+# ── A layer: its start on the axis, and its crossing ─────────────────────────
+#
+#  Each returns the pair (amplitudes of the layer, state at its outer radius).
+#  A layer transversely isotropic about the axis is solved through its
+#  amplitudes, below; one that is transversely isotropic about the radial
+#  direction has its own methods (`radial_layers.jl`), selected by its moduli.
+
+@inline _pot_core(r, c, A₁) = ((A₁, zero(A₁)), _pot_state(r, c, A₁, zero(A₁)))
+@inline function _pot_cross(r_in, r_out, c, state)
+    amps = _pot_amplitudes(r_in, c, state...)
+    return amps, _pot_state(r_out, c, amps...)
+end
+
+@inline _axi_core(r, L, A₁, ε) = ((A₁, zero(A₁)), _axi_state(r, L, A₁, zero(A₁), ε))
+@inline function _axi_cross(r_in, r_out, L, state, ε)
+    amps = _axi_amplitudes(r_in, L, state..., ε)
+    return amps, _axi_state(r_out, L, amps..., ε)
+end
+
+@inline function _shear_core(r, L, a₁, b₁)
+    amps = (a₁, b₁, zero(a₁), zero(a₁))
+    return amps, _shear_state(r, L.k, L.m, amps...)
+end
+@inline function _shear_cross(r_in, r_out, L, state)
+    amps = _shear_amplitudes(r_in, L.k, L.m, state...)
+    return amps, _shear_state(r_out, L.k, L.m, amps...)
+end
+
 """
     _pot_sequence(pb, radii, cs, interfaces, A₁) -> (inside, outside, amps)
 
@@ -178,25 +206,23 @@ it, the layers inside it are shielded and carry no field, and its own field,
 ``A\\,(r - r_{k-1}^2/r)``, vanishes on its inner face (the limit of a vanishing
 modulus). The sequence then restarts in that layer with the amplitude `A₁`.
 """
-function _pot_sequence(pb, radii::NTuple{N}, cs::NTuple{N, S}, interfaces, A₁::S) where {N, S}
+function _pot_sequence(pb, radii::NTuple{N}, cs::Tuple{Vararg{Any, N}}, interfaces, A₁::S) where {N, S}
     inside = Vector{NTuple{2, S}}(undef, N)
     outside = Vector{NTuple{2, S}}(undef, N)
     amps = Vector{NTuple{2, S}}(undef, N)
-    A, B = A₁, zero(A₁)
     for k in 1:N
-        if k > 1
-            if _is_impermeable(cs[k])
-                _is_impermeable(cs[k - 1]) && _adjacent_impermeable("LayeredCylinder", k)
-                for j in 1:(k - 1)
-                    inside[j] = outside[j] = amps[j] = (zero(A₁), zero(A₁))
-                end
-                A, B = A₁, -radii[k - 1]^2 * A₁
-            else
-                A, B = _pot_amplitudes(radii[k - 1], cs[k], outside[k - 1]...)
+        if k == 1
+            amps[k], inside[k] = _pot_core(radii[k], cs[k], A₁)
+        elseif _is_impermeable(cs[k])
+            _is_impermeable(cs[k - 1]) && _adjacent_impermeable("LayeredCylinder", k)
+            for j in 1:(k - 1)
+                inside[j] = outside[j] = amps[j] = (zero(A₁), zero(A₁))
             end
+            amps[k] = (A₁, -radii[k - 1]^2 * A₁)
+            inside[k] = _pot_state(radii[k], cs[k], amps[k]...)
+        else
+            amps[k], inside[k] = _pot_cross(radii[k - 1], radii[k], cs[k], outside[k - 1])
         end
-        amps[k] = (A, B)
-        inside[k] = _pot_state(radii[k], cs[k], A, B)
         outside[k] = _jump(interfaces[k], pb, radii[k], inside[k])
     end
     return inside, outside, amps
@@ -208,17 +234,13 @@ end
 States ``(u_r, \\sigma_{rr})`` of the axisymmetric problem and amplitudes
 ``(A, B)`` of each layer, for the core amplitude `A₁` and the axial strain `ε`.
 """
-function _axi_sequence(radii::NTuple{N}, Ls::NTuple{N}, interfaces, A₁::S, ε::S) where {N, S}
+function _axi_sequence(radii::NTuple{N}, Ls::Tuple{Vararg{Any, N}}, interfaces, A₁::S, ε::S) where {N, S}
     inside = Vector{NTuple{2, S}}(undef, N)
     outside = Vector{NTuple{2, S}}(undef, N)
     amps = Vector{NTuple{2, S}}(undef, N)
-    A, B = A₁, zero(A₁)
     for k in 1:N
-        if k > 1
-            A, B = _axi_amplitudes(radii[k - 1], Ls[k], outside[k - 1]..., ε)
-        end
-        amps[k] = (A, B)
-        inside[k] = _axi_state(radii[k], Ls[k], A, B, ε)
+        amps[k], inside[k] = k == 1 ? _axi_core(radii[k], Ls[k], A₁, ε) :
+            _axi_cross(radii[k - 1], radii[k], Ls[k], outside[k - 1], ε)
         outside[k] = _jump(interfaces[k], Axisymmetric(), radii[k], inside[k], ε)
     end
     return inside, outside, amps
@@ -231,17 +253,13 @@ States ``(U, V, \\sigma_{rr}, \\sigma_{r\\theta})`` of the transverse shear prob
 and amplitudes ``(a, b, c, d)`` of each layer, for the core amplitudes
 ``(a_1, b_1)`` of its two regular modes.
 """
-function _shear_sequence(radii::NTuple{N}, Ls::NTuple{N}, interfaces, a₁::S, b₁::S) where {N, S}
+function _shear_sequence(radii::NTuple{N}, Ls::Tuple{Vararg{Any, N}}, interfaces, a₁::S, b₁::S) where {N, S}
     inside = Vector{NTuple{4, S}}(undef, N)
     outside = Vector{NTuple{4, S}}(undef, N)
     amps = Vector{NTuple{4, S}}(undef, N)
-    amp = (a₁, b₁, zero(a₁), zero(a₁))
     for k in 1:N
-        if k > 1
-            amp = _shear_amplitudes(radii[k - 1], Ls[k].k, Ls[k].m, outside[k - 1]...)
-        end
-        amps[k] = amp
-        inside[k] = _shear_state(radii[k], Ls[k].k, Ls[k].m, amp...)
+        amps[k], inside[k] = k == 1 ? _shear_core(radii[k], Ls[k], a₁, b₁) :
+            _shear_cross(radii[k - 1], radii[k], Ls[k], outside[k - 1])
         outside[k] = _jump(interfaces[k], TransverseShear(), radii[k], inside[k])
     end
     return inside, outside, amps
@@ -264,7 +282,7 @@ Potential problem under the unit remote amplitude ``A_\\infty = 1``
 (``\\varphi \\to r\\cos\\theta``): the sequence of the unit core amplitude,
 divided on the right by the amplitude ``A`` it produces in the matrix `c₀`.
 """
-function _solve_potential(pb, radii::NTuple{N}, cs::NTuple{N, S}, interfaces, c₀::S) where {N, S}
+function _solve_potential(pb, radii::NTuple{N}, cs::Tuple{Vararg{Any, N}}, interfaces, c₀) where {N}
     inside, outside, amps = _pot_sequence(pb, radii, cs, interfaces, one(c₀))
     A∞, _ = _pot_amplitudes(radii[N], c₀, outside[N]...)
     X = inv(A∞)
@@ -281,7 +299,7 @@ amplitudes produced by the unit core amplitude and by the unit axial strain,
 the core amplitude under ``(e, \\varepsilon)`` is
 ``\\alpha^{-1}\\circ(e - \\beta\\circ\\varepsilon)``.
 """
-function _solve_axisymmetric(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {N}
+function _solve_axisymmetric(radii::NTuple{N}, Ls::Tuple{Vararg{Any, N}}, interfaces, L₀) where {N}
     𝟙 = one(L₀.k)
     𝟘 = zero(L₀.k)
     dilatation, pa, α = _solve_dilatation(radii, Ls, interfaces, L₀)
@@ -302,7 +320,7 @@ The in-plane equibiaxial problem alone, at no axial strain: the problem of the
 plane. Also returns the sequence of the unit core amplitude and the matrix
 amplitude `α` it produces, which the axial problem reuses.
 """
-function _solve_dilatation(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {N}
+function _solve_dilatation(radii::NTuple{N}, Ls::Tuple{Vararg{Any, N}}, interfaces, L₀) where {N}
     𝟙 = one(L₀.k)
     𝟘 = zero(L₀.k)
     pa = _axi_sequence(radii, Ls, interfaces, 𝟙, 𝟘)
@@ -322,7 +340,7 @@ Transverse shear problem under the unit remote strain
 (``U \\to r``, ``V \\to -r``): the combination of the two core modes for which the
 matrix amplitudes are ``(a, b) = (1, 0)``.
 """
-function _solve_shear(radii::NTuple{N}, Ls::NTuple{N}, interfaces, L₀) where {N}
+function _solve_shear(radii::NTuple{N}, Ls::Tuple{Vararg{Any, N}}, interfaces, L₀) where {N}
     𝟙 = one(L₀.k)
     𝟘 = zero(L₀.k)
     p₁ = _shear_sequence(radii, Ls, interfaces, 𝟙, 𝟘)

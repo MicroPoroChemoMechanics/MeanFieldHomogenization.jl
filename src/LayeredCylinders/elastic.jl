@@ -111,6 +111,8 @@ _wrong_order(P, expected) = throw(
 )
 
 _entries_eltype(nt::NamedTuple) = promote_type(map(typeof, values(nt))...)
+# The modulus of the antiplane problem of a layer transversely isotropic about the axis.
+_antiplane_modulus(L::NamedTuple) = L.p
 
 # The moduli an elastic layer needs are finite, and its shear moduli and
 # plane-strain bulk modulus positive: the recurrences divide by them. Checked
@@ -181,7 +183,7 @@ function _elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls) wher
     itfs = cyl.interfaces
     dilatation, axial = _solve_axisymmetric(radii, Ls, itfs, L₀)
     shear = _solve_shear(radii, Ls, itfs, L₀)
-    antiplane = _solve_potential(Antiplane(), radii, map(L -> L.p, Ls), itfs, L₀.p)
+    antiplane = _solve_potential(Antiplane(), radii, map(_antiplane_modulus, Ls), itfs, L₀.p)
     fractions = ntuple(k -> S(layer_volume_fraction(cyl, k)), Val(N))
     return (; radii, Ls, L₀, fractions, interfaces = itfs, dilatation, axial, shear, antiplane)
 end

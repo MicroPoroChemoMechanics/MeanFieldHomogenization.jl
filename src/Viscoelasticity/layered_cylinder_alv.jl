@@ -124,6 +124,7 @@ _ti_class(::Val{2}, n) = TensTI{2}(1.0, 1.0, n)
 _alv_operator(R::VolterraOperator, times) = R
 _alv_operator(P::Union{TensND.AbstractTens, AbstractMatrix, TensND.AbstractTens{2}}, times) = VolterraOperator(P, times)
 _alv_operator(P, times) = VolterraOperator(_as_visco_law(P), times)
+_alv_operator(P::TensND.ChartTens, times) = _no_radial_alv(P)
 
 # The block matrix of `P` in the frame of `cyl`, `b` rows per instant; refused
 # when `P` is not transversely isotropic about the axis.

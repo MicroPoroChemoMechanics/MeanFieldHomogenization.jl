@@ -193,10 +193,11 @@ end
 
 # ── Layer averages of the properties (Voigt and Reuss bounds) ────────────────
 
-_layer_tensor(cyl::LayeredCylinder, k::Int, ::Val{4}) =
-    _stiffness_tensor(_hill_moduli(layer_modulus(cyl, k), cyl.axis), cyl.axis)
-_layer_tensor(cyl::LayeredCylinder, k::Int, ::Val{2}) =
-    _ti_tensor(_conductivities(layer_modulus(cyl, k), cyl.axis), cyl.axis)
+# The mean of the property of a layer over its section, and that of its inverse:
+# the tensor itself for a layer transversely isotropic about the axis.
+_mean_tensor(C::TensND.AbstractTens{4, 3}, axis) = _stiffness_tensor(_hill_moduli(C, axis), axis)
+_mean_tensor(K::TensND.AbstractTens{2, 3}, axis) = _ti_tensor(_conductivities(K, axis), axis)
+_mean_inverse_tensor(P::TensND.AbstractTens, axis) = inv(_mean_tensor(P, axis))
 
 layer_property_average(cyl::LayeredCylinder, ::TensND.AbstractTens{O, 3}) where {O} =
     layer_property_average(cyl, Val(O))
@@ -214,8 +215,8 @@ end
 _rebuild_ti(::TensND.TensTI{4}, ℓ, axis) = TensND.TensTI{4}(ℓ..., axis)
 _rebuild_ti(::TensND.TensTI{2}, c, axis) = TensND.TensTI{2}(c..., axis)
 
-layer_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N} =
-    _coaxial_average(cyl, ntuple(k -> _layer_tensor(cyl, k, order), Val(N)))
+layer_property_average(cyl::LayeredCylinder{T, N}, ::Val) where {T, N} =
+    _coaxial_average(cyl, ntuple(k -> _mean_tensor(layer_modulus(cyl, k), cyl.axis), Val(N)))
 
-layer_inverse_property_average(cyl::LayeredCylinder{T, N}, order::Val) where {T, N} =
-    _coaxial_average(cyl, ntuple(k -> inv(_layer_tensor(cyl, k, order)), Val(N)))
+layer_inverse_property_average(cyl::LayeredCylinder{T, N}, ::Val) where {T, N} =
+    _coaxial_average(cyl, ntuple(k -> _mean_inverse_tensor(layer_modulus(cyl, k), cyl.axis), Val(N)))

@@ -1,0 +1,221 @@
+# =============================================================================
+#  test_radial_layers.jl — layered cylinder whose layers are transversely
+#  isotropic about its radial direction (`radial_ti(CylindricalChart(), …)`).
+#
+#  References, independent of the solver under test:
+#   1. isotropic layers written as radial fields: the amplitude recurrences of
+#      the cylinder, for its four problems, with every kind of interface;
+#   2. Kreher's theorem in a layer: the derivative of 𝐄:ℕ:𝐄 when the modulus of
+#      a layer moves along a tensor 𝔹 that turns with the point is the integral
+#      of ε:𝔹(x):ε over the layer, computed by a quadrature of the pointwise
+#      field of the isotropic cylinder (`LayeredCylinderFields`), for each of
+#      the five moduli and of the two conductivities, under a remote strain
+#      that excites the four problems;
+#   3. a homogeneous radial cylinder, which its surroundings see as a
+#      homogeneous one: of transverse conductivity √(k_r k_t), of antiplane
+#      shear modulus √(p m), of plane-strain bulk modulus (√(n (k + m)) + l)/2
+#      (the solutions r^s of the three problems of size two);
+#   4. the mean over the angle of the tensor of a layer, by quadrature;
+#   5. a layer cut into two layers of the same moduli is the same cylinder.
+# =============================================================================
+
+isdefined(@__MODULE__, :LCyl) || include(joinpath(@__DIR__, "helpers.jl"))
+import QuadGK
+
+rc_chart = CylindricalChart()
+rc_C₀ = iso_stiffness(10.0, 6.0)
+rc_C = (iso_stiffness(40.0, 20.0), iso_stiffness(4.0, 3.0))
+rc_K = (TensISO{3}(5.0), TensISO{3}(0.3))
+rc_radii = (0.6, 1.0)
+rc_hill = (n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)
+rc_shell = radial_ti(rc_chart; rc_hill...)
+rc_E = Tens(Symmetric([1.0 0.2 0.1; 0.2 -0.5 0.3; 0.1 0.3 0.7]))
+rc_km(t) = collect(mandel(t, TensND.CanonicalBasis{3, Float64}()))
+rc_radial(P) = radial_ti(rc_chart, P)
+rc_unit(i, n) = ntuple(j -> float(i == j), n)
+rc_interfaces = (
+    (PerfectInterface(), PerfectInterface()),
+    (SpringInterface(; sn = 0.02, st = 0.05), MembraneInterface(3.0, 2.0)),
+)
+
+# ∫ g(x) dA over the annulus ra < r < rb of the section, divided by the area of the unit disk.
+function rc_annulus_integral(g, ra, rb; n = 12, nθ = 24)
+    xs, ws = QuadGK.gauss(n)
+    total = 0.0
+    for (xr, wr) in zip(xs, ws), j in 1:nθ
+        r = (ra + rb) / 2 + (rb - ra) / 2 * xr
+        θ = 2π * (j - 0.5) / nθ
+        total += wr * (2π / nθ) * (rb - ra) / 2 * r * g([r * cos(θ), r * sin(θ), 0.3])
+    end
+    return total / π
+end
+
+@testset "LayeredCylinder — layers transversely isotropic about the radius" begin
+    @testset "isotropic layers, written as radial ones" begin
+        ti_core = lc_tensor(LC_F)
+        stacks = (
+            (rc_C, (rc_C[1], rc_radial(rc_C[2]))),
+            (rc_C, (rc_radial(rc_C[1]), rc_radial(rc_C[2]))),
+            ((ti_core, rc_C[2]), (ti_core, rc_radial(rc_C[2]))),      # a core transversely isotropic about the axis
+        )
+        for itf in rc_interfaces, (reference, radial) in stacks, external in (true, false)
+            iso = LayeredCylinder(rc_radii, reference; interfaces = itf)
+            cyl = LayeredCylinder(rc_radii, radial; interfaces = itf)
+            for f in (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+                @test rc_km(f(cyl, rc_C₀, rc_C₀; external)) ≈ rc_km(f(iso, rc_C₀, rc_C₀; external)) rtol = 1.0e-10
+            end
+            for layer in 1:2
+                @test rc_km(gradient_gradient_concentration(cyl, rc_C₀; layer)) ≈ rc_km(gradient_gradient_concentration(iso, rc_C₀; layer)) rtol = 1.0e-10
+                @test rc_km(flux_gradient_concentration(cyl, rc_C₀; layer)) ≈ rc_km(flux_gradient_concentration(iso, rc_C₀; layer)) rtol = 1.0e-10
+            end
+        end
+        K₀ = TensISO{3}(1.0)
+        for itf in ((PerfectInterface(), PerfectInterface()), (KapitzaInterface(0.1), SurfaceConductiveInterface(0.4)))
+            iso = LayeredCylinder(rc_radii, rc_K; interfaces = itf)
+            for radial in ((rc_K[1], rc_radial(rc_K[2])), (rc_radial(rc_K[1]), rc_radial(rc_K[2])))
+                cyl = LayeredCylinder(rc_radii, radial; interfaces = itf)
+                for f in (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+                    @test rc_km(f(cyl, K₀, K₀)) ≈ rc_km(f(iso, K₀, K₀)) rtol = 1.0e-11
+                end
+                for layer in 1:2
+                    @test rc_km(flux_gradient_concentration(cyl, K₀; layer)) ≈ rc_km(flux_gradient_concentration(iso, K₀; layer)) rtol = 1.0e-11
+                end
+            end
+        end
+    end
+
+    @testset "the derivative along a tensor that turns with the point" begin
+        iso = LayeredCylinder(rc_radii, rc_C)
+        fields = LayeredCylinderFields(iso, rc_C₀)
+        energy(cyl) = rc_E ⊡ (property_contribution(cyl, rc_C₀, rc_C₀) ⊡ rc_E)
+        for (layer, (ra, rb)) in enumerate(((0.0, 0.6), (0.6, 1.0))), i in 1:5
+            𝔹 = radial_ti(rc_chart, rc_unit(i, 5)...)
+            moved(t) = LayeredCylinder(rc_radii, Base.setindex(iso.moduli, rc_radial(iso.moduli[layer]) + t * 𝔹, layer))
+            form(x) = (ε = local_gradient(fields, x, rc_E; layer); ε ⊡ (tensor_at(𝔹, x) ⊡ ε))
+            @test ForwardDiff.derivative(t -> energy(moved(t)), 0.0) ≈ rc_annulus_integral(form, ra, rb) rtol = 1.0e-9
+        end
+        K₀ = TensISO{3}(1.0)
+        isoK = LayeredCylinder(rc_radii, rc_K)
+        fieldsK = LayeredCylinderTransportFields(isoK, K₀)
+        G = TensND.Vec{3}((0.3, -0.5, 0.8))
+        Gt = Tens([0.3, -0.5, 0.8])
+        for (layer, (ra, rb)) in enumerate(((0.0, 0.6), (0.6, 1.0))), i in 1:2
+            𝑩 = radial_ti(rc_chart, rc_unit(i, 2)...)
+            moved(t) = LayeredCylinder(rc_radii, Base.setindex(isoK.moduli, rc_radial(isoK.moduli[layer]) + t * 𝑩, layer))
+            form(x) = (g = Tens(collect(local_gradient(fieldsK, x, G; layer))); g ⋅ (tensor_at(𝑩, x) ⋅ g))
+            d = ForwardDiff.derivative(t -> Gt ⋅ (property_contribution(moved(t), K₀, K₀) ⋅ Gt), 0.0)
+            @test d ≈ rc_annulus_integral(form, ra, rb) rtol = 1.0e-9
+        end
+    end
+
+    @testset "a homogeneous radial cylinder, and its derivatives" begin
+        ∂(f, x) = ForwardDiff.derivative(f, x)
+        # Transverse conduction: apparent conductivity √(k_r k_t); a disk of conductivity
+        # k✶ in k₀ contributes 2k₀ (k✶ − k₀)/(k✶ + k₀) across the axis.
+        k₀ = 1.3
+        closed(kₜ, kᵣ) = (k✶ = sqrt(kᵣ * kₜ); 2k₀ * (k✶ - k₀) / (k✶ + k₀))
+        computed(kₜ, kᵣ) = first(TensND.get_data(property_contribution(LayeredCylinder((1.0,), (radial_ti(rc_chart, kₜ, kᵣ),)), TensISO{3}(k₀), TensISO{3}(k₀))))
+        @test computed(5.0, 2.0) ≈ closed(5.0, 2.0) rtol = 1.0e-12
+        @test ∂(x -> computed(x, 2.0), 5.0) ≈ ∂(x -> closed(x, 2.0), 5.0) rtol = 1.0e-12
+        @test ∂(y -> ∂(x -> computed(x, y), 5.0), 2.0) ≈ ∂(y -> ∂(x -> closed(x, y), 5.0), 2.0) rtol = 1.0e-10
+        # Along the axis: the mean of the tangential conductivity.
+        @test last(TensND.get_data(property_contribution(LayeredCylinder((1.0,), (radial_ti(rc_chart, 5.0, 2.0),)), TensISO{3}(k₀), TensISO{3}(k₀)))) ≈ 5.0 - k₀
+        # Elasticity: neutral in the reference whose antiplane modulus is √(p m), resp.
+        # whose plane-strain bulk modulus is (√(n (k + m)) + l)/2.
+        (; n, l, k, m, p) = rc_hill
+        ball = LayeredCylinder((1.0,), (rc_shell,))
+        antiplane(P₀) = TensND.get_data(property_contribution(ball, P₀, P₀))[6]
+        @test abs(antiplane(lc_ti(5.0, 1.0, 2.0, 9.0, sqrt(p * m)))) < 1.0e-12
+        @test antiplane(lc_ti(5.0, 1.0, 2.0, 9.0, 0.9 * sqrt(p * m))) > 0
+        dilatation(P₀) = TensND.get_data(property_contribution(ball, P₀, P₀))[2]
+        @test abs(dilatation(lc_ti((sqrt(n * (k + m)) + l) / 2, 1.0, 2.0, 9.0, 3.0))) < 1.0e-11
+        # The contribution is homogeneous of degree one in the moduli and of degree zero
+        # in the radii, through the four problems and their interfaces.
+        function scaled(t, s)
+            itf = (SpringInterface(; sn = 0.02 * s / t, st = 0.05 * s / t), PerfectInterface())
+            cyl = LayeredCylinder(s .* rc_radii, (t * rc_C[1], t * rc_shell); interfaces = itf)
+            return rc_E ⊡ (property_contribution(cyl, t * rc_C₀, t * rc_C₀) ⊡ rc_E)
+        end
+        @test ∂(t -> scaled(t, 1.0), 1.0) ≈ scaled(1.0, 1.0) rtol = 1.0e-10
+        @test abs(∂(s -> scaled(1.0, s), 1.0)) < 1.0e-10 * abs(scaled(1.0, 1.0))
+        @test abs(∂(t -> ∂(u -> scaled(u, 1.0), t), 1.0)) < 1.0e-8 * abs(scaled(1.0, 1.0))
+    end
+
+    @testset "a layer cut in two, oscillating modes" begin
+        # A positive definite modulus whose transverse shear modes have complex exponents.
+        exponents(c) = eigvals(Matrix(LCyl._shear_system(LCyl._hill_moduli(c, (0.0, 0.0, 1.0)))))
+        @test sort(real(exponents(rc_radial(rc_C[2])))) ≈ [-3, -1, 1, 3]
+        soft = radial_ti(rc_chart; n = 0.8, l = 0.6, k = 1.3, m = 1.2, p = 3.6)
+        for shell in (rc_shell, soft)
+            whole = LayeredCylinder(rc_radii, (rc_C[1], shell))
+            cut = LayeredCylinder((0.6, 0.8, 1.0), (rc_C[1], shell, shell))
+            for f in (gradient_gradient_concentration, flux_gradient_concentration)
+                @test rc_km(f(cut, rc_C₀, rc_C₀)) ≈ rc_km(f(whole, rc_C₀, rc_C₀)) rtol = 1.0e-10
+            end
+        end
+        @test !isreal(exponents(soft))
+    end
+
+    @testset "complex moduli" begin
+        z₀ = iso_stiffness(10.0 + 1.0im, 6.0 + 0.5im)
+        z = (iso_stiffness(40.0 + 3.0im, 20.0 + 2.0im), iso_stiffness(4.0 + 0.8im, 3.0 + 0.6im))
+        zkm(t) = collect(mandel(t, TensND.CanonicalBasis{3, ComplexF64}()))
+        for itf in rc_interfaces
+            iso = LayeredCylinder(rc_radii, z; interfaces = itf)
+            cyl = LayeredCylinder(rc_radii, (z[1], rc_radial(z[2])); interfaces = itf)
+            for f in (gradient_gradient_concentration, flux_gradient_concentration, property_contribution)
+                @test zkm(f(cyl, z₀, z₀)) ≈ zkm(f(iso, z₀, z₀)) rtol = 1.0e-10
+            end
+        end
+        κ₀ = TensISO{3}(1.0 + 0.1im)
+        κ = (TensISO{3}(5.0 + 1.0im), TensISO{3}(0.3 + 0.05im))
+        @test zkm(property_contribution(LayeredCylinder(rc_radii, (κ[1], rc_radial(κ[2]))), κ₀, κ₀)) ≈
+            zkm(property_contribution(LayeredCylinder(rc_radii, κ), κ₀, κ₀)) rtol = 1.0e-11
+        # Analytic in the moduli: an imaginary increment gives the derivative of the dual numbers.
+        contribution(n) = rc_E ⊡ (property_contribution(LayeredCylinder(rc_radii, (rc_C[1], radial_ti(rc_chart; rc_hill..., n))), rc_C₀, rc_C₀) ⊡ rc_E)
+        @test imag(contribution(12.0 + 1.0e-20im)) / 1.0e-20 ≈ ForwardDiff.derivative(contribution, 12.0) rtol = 1.0e-10
+    end
+
+    @testset "the mean of the moduli over a layer, and the schemes" begin
+        cyl = LayeredCylinder((1.0,), (rc_shell,))
+        mean_over_angle(F) = sum(rc_km(tensor_at(F, [cos(θ), sin(θ), 0.0])) for θ in 2π .* ((1:48) .- 0.5) ./ 48) / 48
+        @test rc_km(LCyl.layer_property_average(cyl, rc_C₀)) ≈ mean_over_angle(rc_shell) rtol = 1.0e-12
+        @test rc_km(LCyl.layer_inverse_property_average(cyl, rc_C₀)) ≈ mean_over_angle(inv(rc_shell)) rtol = 1.0e-12
+        κ = radial_ti(rc_chart, 5.0, 2.0)
+        cylK = LayeredCylinder((1.0,), (κ,))
+        @test rc_km(LCyl.layer_property_average(cylK, TensISO{3}(1.0))) ≈ mean_over_angle(κ) rtol = 1.0e-12
+        # In an inclined cylinder the layer turns about its axis.
+        axis = Tuple(TensND.normalize([1.0, 2.0, 2.0]))
+        inclined = LayeredCylinder(rc_radii, (rc_C[1], rc_shell); axis)
+        straight = LayeredCylinder(rc_radii, (rc_C[1], rc_shell))
+        @test TensND.get_data(property_contribution(inclined, rc_C₀, rc_C₀)) |> collect ≈ collect(TensND.get_data(property_contribution(straight, rc_C₀, rc_C₀))) rtol = 1.0e-12
+        # Voigt, Mori-Tanaka and Reuss, on the energy of a strain.
+        rve = RVE()
+        add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => rc_C₀); fraction = :rest)
+        add_phase!(rve, :I, straight, Dict(:C => rc_C₀); fraction = 0.3)
+        W = [rc_E ⊡ (homogenize(rve, s, :C) ⊡ rc_E) for s in (Reuss(), MoriTanaka(), Voigt())]
+        @test issorted(W)
+    end
+
+    @testset "refused inputs" begin
+        cyl = LayeredCylinder(rc_radii, (rc_C[1], rc_shell))
+        @test_throws ArgumentError LayeredCylinderFields(cyl, rc_C₀)
+        @test_throws ArgumentError LayeredCylinderTransportFields(LayeredCylinder((1.0,), (radial_ti(rc_chart, 5.0, 2.0),)), TensISO{3}(1.0))
+        # A field of another axis of the local frame, of another chart, of another order.
+        along_θ = ChartTens(TensTI{4}(TensND.get_data(rc_shell.pattern)..., (0.0, 1.0, 0.0)), rc_chart)
+        @test_throws ArgumentError property_contribution(LayeredCylinder(rc_radii, (rc_C[1], along_θ)), rc_C₀, rc_C₀)
+        @test_throws MethodError property_contribution(LayeredCylinder(rc_radii, (rc_C[1], radial_ti(SphericalChart(); rc_hill...))), rc_C₀, rc_C₀)
+        @test_throws ArgumentError property_contribution(cyl, TensISO{3}(1.0), TensISO{3}(1.0))
+        @test_throws ArgumentError property_contribution(LayeredCylinder((1.0,), (radial_ti(rc_chart, 5.0, 2.0),)), rc_C₀, rc_C₀)
+        # Moduli that are not those of a solid.
+        @test_throws ArgumentError property_contribution(LayeredCylinder(rc_radii, (rc_C[1], radial_ti(rc_chart; rc_hill..., p = -1.0))), rc_C₀, rc_C₀)
+        @test_throws ArgumentError property_contribution(LayeredCylinder((1.0,), (radial_ti(rc_chart, 5.0, -2.0),)), TensISO{3}(1.0), TensISO{3}(1.0))
+        # A two-dimensional cell.
+        c₀ = plane_strain_stiffness(rc_C₀)
+        @test_throws ArgumentError property_contribution(cyl, c₀, c₀)
+        @test_throws ArgumentError property_contribution(LayeredCylinder((1.0,), (radial_ti(rc_chart, 5.0, 2.0),)), TensISO{2}(1.0), TensISO{2}(1.0))
+        # Aging viscoelasticity.
+        @test_throws ArgumentError MeanFieldHomogenization.Viscoelasticity._alv_operator(rc_shell, [0.0, 1.0])
+        @test_throws ArgumentError MeanFieldHomogenization.Viscoelasticity._layer_iso_volterra(radial_ti(SphericalChart(); rc_hill...), [0.0, 1.0])
+    end
+end

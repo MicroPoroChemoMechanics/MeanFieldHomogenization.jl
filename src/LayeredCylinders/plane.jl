@@ -39,6 +39,7 @@ The two problems of the plane of the rings in the reference `c₀`, each under
 its unit remote loading: `dilatation` and `shear`.
 """
 function _plane_elastic_solution(cyl::LayeredCylinder{T, N}, c₀::_Plane4) where {T, N}
+    _has_radial_layer(cyl) && _no_radial("the two-dimensional cell")
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     L₀ = _plane_moduli(c₀)
     Ls = map(_plane_moduli, cyl.moduli)
@@ -61,6 +62,7 @@ function _plane_elastic_solution(::Type{S}, cyl::LayeredCylinder{T, N}, L₀, Ls
 end
 
 function _plane_conduction_solution(cyl::LayeredCylinder{T, N}, κ₀::_Plane2) where {T, N}
+    _has_radial_layer(cyl) && _no_radial("the two-dimensional cell")
     MFH_Core._bump!(MFH_Core.LAYER_RECURRENCES)
     k₀ = (; t = _plane_conductivity(κ₀))
     ks = map(K -> (; t = _plane_conductivity(K)), cyl.moduli)

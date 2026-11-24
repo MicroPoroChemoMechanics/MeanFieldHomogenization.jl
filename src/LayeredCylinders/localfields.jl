@@ -123,6 +123,7 @@ struct LayeredCylinderFields{C <: LayeredCylinder, S, M, T0}
 end
 
 function LayeredCylinderFields(cyl::LayeredCylinder, C₀::_Order4)
+    _has_radial_layer(cyl) && _no_radial("the pointwise field")
     sol = _elastic_solution(cyl, C₀)
     return LayeredCylinderFields(cyl, sol, _matrix_amplitudes(sol), _stiffness_tensor(sol.L₀, cyl.axis))
 end
@@ -195,6 +196,7 @@ struct LayeredCylinderTransportFields{C <: LayeredCylinder, S, M, T0}
 end
 
 function LayeredCylinderTransportFields(cyl::LayeredCylinder, K₀::_Order2)
+    _has_radial_layer(cyl) && _no_radial("the pointwise field")
     sol = _conduction_solution(cyl, K₀)
     return LayeredCylinderTransportFields(cyl, sol, _matrix_transport_amplitudes(sol), _ti_tensor(sol.K₀, cyl.axis))
 end
