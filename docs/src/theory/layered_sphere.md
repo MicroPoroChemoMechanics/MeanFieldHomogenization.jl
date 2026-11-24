@@ -466,13 +466,15 @@ homogenize_alv(rve_alv, MoriTanaka(), :C; times)
 
 ## Where to go next
 
-The next page,
-[Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial),
-keeps the sphere and gives its layers a symmetry axis that turns with the
-point. [Layered cylinder](@ref th-layered-cylinder) then solves the same
-problem for a coated fiber, whose layers may be transversely isotropic. The
-page after it, [Layered spheroid](@ref th-layered-spheroid), solves it for
-confocal spheroidal layers, in conduction and in elasticity; there an imperfect
+The next page, [Layered cylinder](@ref th-layered-cylinder), solves the same
+problem for a coated fiber, whose layers may be transversely isotropic about
+its axis. [The radial problem](@ref th-radial-problems) then writes both
+inclusions as systems of the first order on the state, which opens them to
+layers transversely isotropic about the radius
+([sphere](@ref th-layered-sphere-radial), [cylinder](@ref th-layered-cylinder-radial))
+and to moduli that vary with the radius.
+[Layered spheroid](@ref th-layered-spheroid) solves the problem for confocal
+spheroidal layers, in conduction and in elasticity; there an imperfect
 interface couples the harmonic degrees that a sphere keeps apart. The
 per-layer concentration tensors of §7 are computed on a random multilayer in the
 tutorial

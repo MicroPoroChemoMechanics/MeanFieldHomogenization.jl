@@ -129,8 +129,10 @@ treatment belongs in this group.
 | Page | Pattern |
 | :--- | :------ |
 | [Layered sphere](@ref th-layered-sphere) | a *composite* inclusion: no Hill tensor exists, the response is assembled by a radial recurrence |
-| [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial) | layers whose symmetry axis is the radial direction: radial modes with exponents that depend on the moduli, means read on the boundaries of the layers, derivatives and second moments in the frame that turns with the point |
 | [Layered cylinder](@ref th-layered-cylinder) | a fiber of coaxial layers, each one transversely isotropic about the axis: four radial problems chained from layer to layer |
+| [The radial problem: uniform, power-law and graded layers](@ref th-radial-problems) | each loading mode of a sphere or a cylinder as a system of the first order on the state an interface transmits: a layer crossed by the power of a matrix, or integrated when its moduli vary with the radius |
+| [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial) | the matrices of the three loading modes of the sphere for such layers, their exponents, derivatives and second moments in the frame that turns with the point |
+| [Layered cylinder: layers transversely isotropic about the radius](@ref th-layered-cylinder-radial) | the matrices of the loading modes of the cylinder for wound or deposited layers |
 | [Layered spheroid](@ref th-layered-spheroid) | the same for confocal spheroids, where imperfect interfaces couple harmonic degrees |
 | [The elastic confocal spheroid](@ref th-spheroid-elasticity) | the axisymmetric elastic problem on the same chart |
 | [Layered ellipsoid](@ref th-layered-ellipsoid) | confocal layers of three unequal axes, in conduction, where the mean gradient of each layer follows without a series |

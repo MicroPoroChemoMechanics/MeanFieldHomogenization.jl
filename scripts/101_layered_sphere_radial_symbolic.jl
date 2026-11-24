@@ -82,29 +82,29 @@ factor(σrr / r^(s - 1))
 # equilibrium gives ``r\,(r\sigma_{rr})'``, both linear in ``Y``:
 # ``r\,Y' = \boldsymbol{M}\,Y``. The function below builds ``\boldsymbol{M}``
 # from the expression of the state and from the equilibrium equations, for any
-# of the three problems; the moduli are taken as functions of ``r``, to see
-# whether their derivatives enter.
+# of the three problems (`first_order`); the moduli are taken as functions of
+# ``r``, to see whether their derivatives enter.
+
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "radial_first_order.jl"))
+#md # ```@raw html
+#md # <details class="source-file"><summary>Show the code of <code>scripts/common/radial_first_order.jl</code>, which defines <code>first_order</code></summary>
+#md # ```
+#md #
+#md # ```@eval
+#md # Main.show_source("scripts/common/radial_first_order.jl")
+#md # ```
+#md #
+#md # ```@raw html
+#md # </details>
+#md # ```
 
 fn(name) = SymFunction(name, positive = true)(r)
 nʳ, lʳ, kʳ, mʳ, pʳ = fn("n"), fn("l"), fn("k"), fn("m"), fn("p")
 ℂʳ = tensor_at(radial_ti(SphericalChart(); n = nʳ, l = lʳ, k = kʳ, m = mʳ, p = pʳ), Sph)
 stressʳ(u) = ℂʳ ⊡ symgrad(u, Sph)
-function first_order(Y, unknowns, equations)
-    d₁ = [diff(g, r) for g in unknowns]
-    d₂ = [diff(g, r, 2) for g in unknowns]
-    y = [symbols("y$i", real = true) for i in eachindex(Y)]
-    nu = length(unknowns)
-    from_law = solve([Y[nu + i] - y[nu + i] for i in 1:nu], d₁)        # r g′ from the traction
-    from_equilibrium = solve(equations, d₂)                             # g″ from equilibrium
-    rhs = [r * diff(Yᵢ, r) for Yᵢ in Y]
-    rhs = [subs(e, [d₂[i] => from_equilibrium[d₂[i]] for i in 1:nu]...) for e in rhs]
-    rhs = [subs(e, [d₁[i] => from_law[d₁[i]] for i in 1:nu]...) for e in rhs]
-    rhs = [subs(e, [unknowns[i] => y[i] for i in 1:nu]...) for e in rhs]
-    return [simplify(diff(expand(simplify(e)), yⱼ)) for e in rhs, yⱼ in y]
-end
 g = SymFunction("g", real = true)(r)
 σ = stressʳ(g * 𝐞ʳ)
-M_bulk = first_order([g, simplify(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ))], [g], [simplify(divergence(σ, Sph) ⋅ 𝐞ʳ)])
+M_bulk = first_order([g, simplify(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ))], [g], [simplify(divergence(σ, Sph) ⋅ 𝐞ʳ)], r)
 
 # No derivative of a modulus appears: the matrix depends on the moduli at the
 # radius ``r`` alone, so that it holds for moduli that vary with the radius as
@@ -202,7 +202,7 @@ uʳ = u_dev(Uʳ, Wʳ)
 σ = stressʳ(uʳ)
 eqʳ = divergence(σ, Sph)
 Y_dev = [Uʳ, Wʳ, at(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ʳ), P₂), at(r * ((σ ⋅ 𝐞ʳ) ⋅ 𝐞ᶿ), diff(P₂, θ))]
-M_dev = first_order(Y_dev, [Uʳ, Wʳ], [at(eqʳ ⋅ 𝐞ʳ, P₂), at(eqʳ ⋅ 𝐞ᶿ, diff(P₂, θ))])
+M_dev = first_order(Y_dev, [Uʳ, Wʳ], [at(eqʳ ⋅ 𝐞ʳ, P₂), at(eqʳ ⋅ 𝐞ᶿ, diff(P₂, θ))], r)
 
 # Again without any derivative of the moduli. It is the matrix of the package,
 # and its characteristic polynomial is the determinant found above with the

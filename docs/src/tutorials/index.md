@@ -67,6 +67,7 @@ their volume-averaged concentration tensors instead. Theory:
 | [Layered sphere: layers transversely isotropic about the radius, symbolically](@ref tut-layered-sphere-radial-symbolic) | the radial modes of a layer whose axis turns with the point, derived with symbols: non-integer exponents, oscillating modes, the means read on the boundaries |
 | [Coated fibers: the layered cylinder at work](@ref tut-layered-cylinder) | a unidirectional composite of coated fibers, from one fiber to the effective medium and its creep |
 | [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic) | the modes of the four problems of a coaxial fiber, the conditions at an interface, and the order of the factors when the moduli do not commute |
+| [Layered cylinder: layers transversely isotropic about the radius, symbolically](@ref tut-layered-cylinder-radial-symbolic) | the systems of the first order of a wound layer, derived with symbols for moduli that depend on the radius, and a layer graded as a power of the radius solved in closed form |
 | [Layered spheroids: geometry and effective conductivity](@ref tut-layered-spheroid-effective) | the confocal `n`-layer spheroid, the equivalent particle, harmonic-series accuracy |
 | [Imperfect interfaces: what they do to the local fields](@ref tut-layered-spheroid-interfaces) | pointwise temperature and flux, streamlines, conductance sweep, 3-D view |
 | [Highly conducting interfaces](@ref tut-layered-spheroid-hc) | equivalent conductivity of an HC-coated particle vs aspect ratio |

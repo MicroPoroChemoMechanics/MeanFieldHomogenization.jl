@@ -332,4 +332,86 @@ function theory_parameter_classes(; path = "theory/parameter_classes", panel::Bo
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(), theory_parameter_classes())
+"""
+The radial problem (theory/radial_problems.md). Left: a section of a sphere or
+of a cylinder whose layers are uniform, transversely isotropic about the radius
+(the arcs are its surfaces of isotropy) or graded, with the local frame at a
+point. Right: the same layers along the radius, and what carries the state Y
+across each of them, from the regular solutions at the center to the matrix.
+"""
+function theory_radial_problem(; path = "theory/radial_problem", panel::Bool = true)
+    return sheet(path, 800, 380; panel = panel) do
+        core, sheets, inner, outer = tint(BLUE, 0.55), tint(ORANGE, 0.45), tint(GREEN, 0.25), tint(GREEN, 0.85)
+        graded(t) = mix(inner, outer, t)
+        # ── the section ──
+        c = Point(185, 195)
+        unbounded_box(c, 330, 320; label_tensor = "bb(C)_0")
+        r₁, r₂, R = 42.0, 84.0, 126.0
+        for k in 12:-1:1
+            disk(c, r₂ + (R - r₂) * k / 12; fill = graded((k - 0.5) / 12), stroke = nothing)
+        end
+        disk(c, r₂; fill = sheets, stroke = nothing)
+        @layer begin
+            setcolor(tint(ORANGE, 0.05))
+            setline(0.9)
+            for r in (r₁ + 7):7:(r₂ - 4)
+                circle(c, r, :stroke)
+            end
+        end
+        disk(c, r₁; fill = core, stroke = nothing)
+        foreach(r -> disk(c, r; fill = nothing, stroke = INK, lw = 1.4), (r₁, r₂, R))
+        # the local frame at a point of the second layer
+        θ = -0.62
+        er, eθ = Point(cos(θ), sin(θ)), Point(sin(θ), -cos(θ))
+        x = c + 63 * er
+        @layer (setcolor(GUIDE); setline(1.0); setdash([3, 4]); line(c, x, :stroke))
+        arrow_ab(x, x + 40 * er; color = VECTOR, lw = 2.0)
+        arrow_ab(x, x + 36 * eθ; color = VECTOR, lw = 2.0)
+        @layer (setcolor(INK); circle(x, 2.8, :fill))
+        label(m("underline(e)_r"), x + 40 * er + Point(13, 6); size = 15, color = VECTOR)
+        label(m("underline(e)_theta"), x + 36 * eθ + Point(-4, -11); size = 15, color = VECTOR)
+        # ── the chain along the radius ──
+        x₀, x₁, x₂, x₃, x₄ = 400.0, 480.0, 575.0, 670.0, 770.0
+        top, base = 205.0, 250.0
+        band(xa, xb, fill) = @layer (setcolor(fill); box(Point((xa + xb) / 2, (top + base) / 2), xb - xa, base - top, :fill))
+        band(x₀, x₁, core)
+        band(x₁, x₂, sheets)
+        for k in 1:12
+            band(x₂ + (x₃ - x₂) * (k - 1) / 12, x₂ + (x₃ - x₂) * k / 12 + 0.6, graded((k - 0.5) / 12))
+        end
+        band(x₃, x₄, MATRIX)
+        @layer begin
+            setcolor(INK)
+            setline(1.4)
+            foreach(xk -> line(Point(xk, top - 8), Point(xk, base + 6), :stroke), (x₁, x₂, x₃))
+            line(Point(x₀, top), Point(x₀, base + 6), :stroke)
+        end
+        arrow_ab(Point(x₀, base), Point(x₄ + 12, base); color = INK, lw = 1.4)
+        mid = (top + base) / 2
+        label(txt("uniform"), Point((x₀ + x₁) / 2, mid); size = 11)
+        label(m("\"TI\"(underline(e)_r)"), Point((x₁ + x₂) / 2, mid); size = 13)
+        label(txt("graded"), Point((x₂ + x₃) / 2, mid); size = 11)
+        label(txt("matrix"), Point((x₃ + x₄) / 2, mid); size = 11)
+        label(m("r"), Point(x₄ + 10, base + 15); size = 15)
+        for (name, xk) in (("0", x₀), ("r_1", x₁), ("r_2", x₂), ("R", x₃))
+            label(m(name), Point(xk, base + 18); size = 15)
+        end
+        for (name, xk) in (("bold(J)_1", x₁), ("bold(J)_2", x₂), ("bold(J)_3", x₃))
+            label(m(name), Point(xk, top - 20); size = 15, color = HIGHLIGHT)
+        end
+        label(m("Y = (\"displacement\", thick r times \"traction\")"), Point((x₀ + x₄) / 2, 62); size = 15)
+        label(txt("regular at the center"), Point((x₀ + x₁) / 2 + 4, 108); size = 11, color = MUTED)
+        label(m("1/2 (bold(1) + op(\"sign\") bold(X))"), Point((x₀ + x₁) / 2 + 4, 132); size = 13)
+        label(m("rho^(bold(M))"), Point((x₁ + x₂) / 2 + 18, 150); size = 17)
+        @layer (setcolor(GUIDE); setline(1.0); line(Point((x₁ + x₂) / 2 + 18, 164), Point((x₁ + x₂) / 2 + 18, top - 4), :stroke))
+        label(m("r thin (dif Y)/(dif r) = bold(M)(r) thin Y"), Point((x₂ + x₃) / 2 + 22, 120); size = 13)
+        @layer (setcolor(GUIDE); setline(1.0); line(Point((x₂ + x₃) / 2, 138), Point((x₂ + x₃) / 2, top - 4), :stroke))
+        @layer (setcolor(GUIDE); setline(1.0); line(Point((x₀ + x₁) / 2, 146), Point((x₀ + x₁) / 2, top - 4), :stroke))
+        label(txt("uniform field"), Point((x₃ + x₄) / 2 + 2, 152); size = 11, color = MUTED)
+        label(txt("+ decaying modes"), Point((x₃ + x₄) / 2 + 2, 168); size = 11, color = MUTED)
+        then_arrow(Point(x₀ + 10, 312), Point(x₄ - 10, 312))
+        label(txt("the state is carried outward, then matched to the matrix"), Point((x₀ + x₄) / 2, 334); size = 12, color = MUTED)
+    end
+end
+
+theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(), theory_parameter_classes(), theory_radial_problem())

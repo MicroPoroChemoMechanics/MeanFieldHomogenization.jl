@@ -1,8 +1,8 @@
 # [Layered sphere: layers transversely isotropic about the radius](@id th-layered-sphere-radial)
 
 !!! info "Before this page"
-    [Layered sphere](@ref th-layered-sphere), whose states, interface matrices
-    and chaining of the layers are kept here;
+    [The radial problem](@ref th-radial-problems), which states the system of a
+    loading mode and solves it across uniform, power-law and graded layers;
     [Second moments of the local fields](@ref th-second-moments), for the last
     two sections.
 
@@ -11,14 +11,13 @@ keep its symmetry: it is enough that the material be, at each point,
 transversely isotropic about the radial direction ``\underline{e}_r``. Its
 symmetry axis then turns with the point, as in a coating deposited layer by
 layer or in an oolite. Such a layer has five moduli in elasticity and two
-conductivities, held by a field of TensND, `radial_ti(SphericalChart(), …)`. The remote strain still splits
-into a spherical and a deviatoric part, each carried by a few radial modes, and
-the layers are chained as isotropic ones are. Two things change: the modes are
-powers of ``r`` whose exponents depend on the moduli, and the means over a
-layer are read on its boundaries. The modes were given for the sphere by
-[kushch2021](@citet) and [kushchMogilevskaya2022](@citet), in a setting
-[norrisShuvalov2012](@citet) describe for every degree of harmonics; they are
-derived again, symbolically, in
+conductivities, held by a field of TensND, `radial_ti(SphericalChart(), …)`.
+This page gives, for the three loading modes of the sphere, the radial modes of
+such a layer and the matrix ``\boldsymbol{M}`` of its system; with moduli that
+depend on ``r`` it is the matrix of a graded layer. The modes were given for
+the sphere by [kushch2021](@citet) and [kushchMogilevskaya2022](@citet), in a
+setting [norrisShuvalov2012](@citet) describe for every degree of harmonics;
+they are derived again, symbolically, in
 [the companion tutorial](@ref tut-layered-sphere-radial-symbolic).
 
 ## 1. The moduli of a layer
@@ -145,19 +144,14 @@ ball = LayeredSphere((1.0,), (radial_ti(SphericalChart(), kₜ, kᵣ),))
 property_contribution(ball, TensISO{3}(kᵣ * s₊))
 ```
 
-## 5. Chaining the layers, and the means
+## 5. The systems, and the means
 
-Each of the three problems is a system of the first order on the state that an
-interface transmits. With ``Y`` the radial functions of the displacement and
-``r`` times those of the traction (the temperature and ``r`` times the outward
-flux),
-
-```math
-r\,\frac{\mathrm{d}Y}{\mathrm{d}r} = \boldsymbol{M}\,Y ,
-```
-
-where ``\boldsymbol{M}`` depends on the moduli at the radius ``r`` alone. For
-the spherical part, ``Y = (u_r,\; r\,\sigma_{rr})``, and for conduction,
+On the state ``Y`` of a mode (the radial functions of the displacement and
+``r`` times those of the traction, the temperature and ``r`` times the outward
+flux), the equations of sections 2 to 4 are the system
+``r\,\mathrm{d}Y/\mathrm{d}r = \boldsymbol{M}\,Y`` of
+[the radial problem](@ref th-radial-problems). For the spherical part,
+``Y = (u_r,\; r\,\sigma_{rr})``, and for conduction,
 ``Y = (\hat T,\; r\,\hat q)``:
 
 ```math
@@ -179,36 +173,12 @@ For the deviatoric part,
 \end{pmatrix} .
 ```
 
-The exponents of sections 2 to 4 are the eigenvalues of these matrices. In a
-layer of uniform moduli ``\boldsymbol{M}`` is constant, and the system is
-solved by a power of ``r``: the state is carried from the inner radius of the
-layer to its outer one by
-
-```math
-Y(r_{\mathrm{out}}) = \Bigl(\frac{r_{\mathrm{out}}}{r_{\mathrm{in}}}\Bigr)^{\boldsymbol{M}}\,Y(r_{\mathrm{in}}) ,
-\qquad
-\rho^{\boldsymbol{M}} = \exp(\boldsymbol{M}\ln\rho) ,
-```
-
-whatever the exponents: real or complex, distinct or equal. The eigenvalues of
-``\boldsymbol{X} = \boldsymbol{M} + \tfrac12\boldsymbol{1}`` come in opposite
-pairs ``\pm t``. For the two systems of size two,
-``\boldsymbol{X}^2 = t^2\,\boldsymbol{1}`` and the power is the closed form
-
-```math
-\rho^{\boldsymbol{M}} = \rho^{-1/2}\,\Bigl[\cosh(t\ln\rho)\,\boldsymbol{1} + \frac{\sinh(t\ln\rho)}{t}\,\boldsymbol{X}\Bigr] .
-```
-
-At the center, the solutions that are regular are those of the exponents of
-real part above ``-\tfrac12``; their states span the range of the projector
-``\tfrac12\,(\boldsymbol{1} + \operatorname{sign}\boldsymbol{X})``, which is
-``(\boldsymbol{X} + t\,\boldsymbol{1})/(2t)`` at size two and is computed by
-Newton's iteration ``\boldsymbol{X} \leftarrow \tfrac12(\boldsymbol{X} + \boldsymbol{X}^{-1})``
-at size four. These states (one in the spherical part and in conduction, two in
-the deviatoric part) are carried outward: across a layer by the power above,
-across an interface by its matrix ([Layered sphere](@ref th-layered-sphere),
-section 3). In the matrix, which is isotropic, the amplitude of the uniform
-strain is read and set to one.
+The exponents of sections 2 to 4 are the eigenvalues of these matrices,
+symmetric about ``-\tfrac12``. The layers are crossed by the power of
+``\boldsymbol{M}``, the regular states at the center are those of the projector
+on the exponents above ``-\tfrac12``, and the interfaces are those of the
+[isotropic sphere](@ref th-layered-sphere), section 3. In the matrix, which is
+isotropic, the amplitude of the uniform strain is read and set to one.
 
 The means that the schemes need are then read on the states, without the
 amplitudes of the layers. The mean strain of a ball of radius ``R`` and its mean
@@ -325,6 +295,6 @@ isotropic sphere, computed by other formulas.
 - [Layered sphere: layers transversely isotropic about the radius, symbolically](@ref tut-layered-sphere-radial-symbolic):
   the derivation of sections 2 to 5.
 - [Layered inclusions](@ref man-layered): the syntax.
-- The next page, [Layered cylinder](@ref th-layered-cylinder), treats the
-  coaxial pattern, whose layers may be transversely isotropic about the axis of
-  the fiber.
+- The next page,
+  [Layered cylinder: layers transversely isotropic about the radius](@ref th-layered-cylinder-radial),
+  gives the matrices of the modes of the cylinder.

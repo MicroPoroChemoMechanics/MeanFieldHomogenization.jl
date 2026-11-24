@@ -5,8 +5,9 @@
 A patch release, which adds without changing any existing result: the second
 moments of the strain (or of the gradient, in conduction) over a phase, for
 every cell and every scheme, in any symmetry class; layers of a layered sphere
-that are transversely isotropic about the radius, with the derivatives and the
-second moments in the frame that turns with the point; the theory of the
+or of a layered cylinder that are transversely isotropic about the radius, or
+whose moduli vary with the radius, with the derivatives and the second moments
+in the frame that turns with the point; the theory of the
 derivatives of an estimate, which the documentation did not have; and a Theory
 chapter in which every page stands with the notion it treats.
 
@@ -71,11 +72,35 @@ chapter in which every page stands with the notion it treats.
   fields, the two-dimensional cell and aging viscoelasticity are not available
   with such layers.
 
+- **Layers whose moduli vary with the radius**, in a `LayeredSphere` and in a
+  `LayeredCylinder`, in elasticity and in conduction. A function `r -> modulus`
+  given as the modulus of a layer (a `GradedLayer`, which sets the tolerances)
+  returns an isotropic tensor or a field transversely isotropic about the
+  radius; the system of the first order of each loading mode is then integrated
+  across the layer, instead of the zone being cut in thin uniform layers
+  (`graded_layers`, which remains). A graded core is integrated from the
+  center, where the subspace of the regular solutions is carried by its
+  impedance, a Riccati equation. Graded and uniform layers mix, with every
+  interface and in every scheme; real and complex moduli and dual numbers go
+  through the integration, so that an estimate is differentiated with respect
+  to a parameter of the profile or to a radius. Checked against the closed
+  forms of a shell graded as a power of the radius (to 1e-9, its derivatives
+  included), against the series of Lutz and Zimmerman (2005) for a zone that
+  tends to the matrix, and against thin uniform layers, extrapolated. The mean
+  of the moduli over such a layer, which the bounds use, is a quadrature along
+  the radius.
+
+- **`PowerLawLayer(reference, β; at)`**, a layer whose moduli are those of a
+  reference times `(r/at)^β`. In a sphere it is crossed exactly, by the power of
+  a matrix as a uniform layer is: with the tractions divided by `(r/at)^β` the
+  system has a constant matrix. In a cylinder it is integrated.
+
 - **`layer_param(phase, layer, name)`**, a parameter that designates a
   coefficient of one layer of a layered sphere or cylinder (`LayerParameter`), or its
   abscissa along a tensor (`LayerDirection`): the derivative with respect to
-  `:Crrrr` of a layer is taken in the frame that turns with the point,
-  `(e_r, e_θ, e_φ)` on a sphere and `(e_r, e_θ, e_z)` on a cylinder.
+  `:Crrrr` of a layer is taken in the frame that turns with the point, the
+  names being `:Crrrr`, `:Cθθθθ`, `:Cθθφφ`, `:Crrθθ`, `:Crθrθ` on a sphere and
+  `:Crrrr`, `:Cθθθθ`, `:Cθθzz`, `:Crrθθ`, `:Crθrθ` on a cylinder.
   `second_moment(cell, scheme, (phase, layer), E, 𝔹)` gives the second moments
   of the strain in a layer, those of its components in the local frame
   included: `radial_ti(SphericalChart(), 1, 0, 0, 0, 0)` gives the mean of
@@ -107,10 +132,20 @@ chapter in which every page stands with the notion it treats.
   conduction, and checks it on a laminate and on the composite sphere, in
   numbers and in symbols.
 
-- **Theory, *Layered sphere: layers transversely isotropic about the radius*,**
-  with the tutorial that derives its modes symbolically: the exponents of the
-  three problems, the oscillating modes, the means read on the boundaries, the
-  parameters of a layer and the second moments in its frame.
+- **Theory, *The radial problem: uniform, power-law and graded layers*:** the
+  loading modes of a sphere and of a cylinder, the state an interface
+  transmits and the system of the first order it obeys, derived on the simplest
+  case; a uniform layer crossed by the power of a matrix, a power-law layer by
+  that of a shifted matrix, a graded one by integration; the regular solutions
+  at the center, by a projector or by a Riccati equation; the interfaces, the
+  matrix and the averages.
+
+- **Theory, *Layered sphere: layers transversely isotropic about the radius*
+  and *Layered cylinder: layers transversely isotropic about the radius*,**
+  each with a tutorial that derives its systems symbolically: the matrices of
+  every loading mode, their exponents and the oscillating modes, the axial
+  strain of the cylinder as a second member, the means read on the boundaries,
+  the parameters of a layer and the second moments in its frame.
 
 - **The Theory chapter is ordered by notion.** The torus and the holes given by
   a conformal map, which stood under "Extension to conductivity", are
