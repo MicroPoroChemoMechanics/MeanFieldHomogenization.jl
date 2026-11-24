@@ -72,9 +72,10 @@ chapter in which every page stands with the notion it treats.
   with such layers.
 
 - **`layer_param(phase, layer, name)`**, a parameter that designates a
-  coefficient of one layer of a layered sphere (`LayerParameter`), or its
+  coefficient of one layer of a layered sphere or cylinder (`LayerParameter`), or its
   abscissa along a tensor (`LayerDirection`): the derivative with respect to
-  `:Crrrr` of a layer is taken in the frame that turns with the point.
+  `:Crrrr` of a layer is taken in the frame that turns with the point,
+  `(e_r, e_θ, e_φ)` on a sphere and `(e_r, e_θ, e_z)` on a cylinder.
   `second_moment(cell, scheme, (phase, layer), E, 𝔹)` gives the second moments
   of the strain in a layer, those of its components in the local frame
   included: `radial_ti(SphericalChart(), 1, 0, 0, 0, 0)` gives the mean of

@@ -197,6 +197,43 @@ end
         @test issorted(W)
     end
 
+    @testset "the parameters of a layer, and second moments in a layer" begin
+        function cell(cyl)
+            rve = RVE()
+            add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => rc_C₀); fraction = :rest)
+            add_phase!(rve, :I, cyl, Dict(:C => rc_C₀); fraction = 0.3)
+            return rve
+        end
+        rve = cell(LayeredCylinder(rc_radii, (rc_C[1], rc_shell)))
+        energy(C) = rc_E ⊡ (C ⊡ rc_E)
+        # The names of the frame (e_r, e_θ, e_z), which turns with the point.
+        (; n, l, k, m, p) = rc_hill
+        for (name, value) in ((:Crrrr, n), (:Cθθθθ, k + m), (:Cθθzz, k - m), (:Crrθθ, l), (:Crθrθ, p))
+            lens = layer_param(:I, 2, name)
+            @test get_param(rve, lens) ≈ value
+            rebuilt(x) = energy(homogenize(cell(LayeredCylinder(rc_radii, (rc_C[1], set_coefficient(rc_shell, name, x)))), MoriTanaka(), :C))
+            @test derivative(rve, MoriTanaka(), lens; indexer = energy) ≈ ForwardDiff.derivative(rebuilt, value) rtol = 1.0e-11
+        end
+        @test_throws ArgumentError get_param(rve, layer_param(:I, 2, :Cθθφφ))       # a name of the sphere
+        @test get_param(set_param(rve, layer_param(:I, 2, :ℓ₆), 9.0), layer_param(:I, 2, :Crθrθ)) ≈ 4.5
+        κ = cell(LayeredCylinder(rc_radii, (rc_K[1], radial_ti(rc_chart, 0.2, 0.6))))
+        @test get_param(κ, layer_param(:I, 2, :radial)) == 0.6
+        # ⟨ε_rr²⟩ in the shell of the isotropic cylinder, against its pointwise field.
+        iso = LayeredCylinder(rc_radii, rc_C)
+        fields = LayeredCylinderFields(iso, rc_C₀)
+        𝔹 = radial_ti(rc_chart, 1.0, 0.0, 0.0, 0.0, 0.0)
+        form(x) = (ε = local_gradient(fields, x, rc_E; layer = 2); ε ⊡ (tensor_at(𝔹, x) ⊡ ε))
+        @test second_moment(cell(iso), Dilute(), (:I, 2), rc_E, 𝔹) ≈ rc_annulus_integral(form, 0.6, 1.0) / (1 - 0.6^2) rtol = 1.0e-9
+        @test get_param(cell(iso), layer_param(:I, 2, 𝔹)) == 0
+        # An inclined cylinder keeps its axis when a layer is replaced.
+        axis = Tuple(TensND.normalize([1.0, 2.0, 2.0]))
+        moved = set_param(cell(LayeredCylinder(rc_radii, rc_C; axis)), layer_param(:I, 2, 𝔹), 0.5)
+        @test collect(moved.phases[:I].geometry.axis) ≈ collect(axis)
+        # A layer transversely isotropic about the axis has no radial writing.
+        ti = cell(LayeredCylinder(rc_radii, (lc_tensor(LC_F), rc_C[2])))
+        @test_throws ArgumentError set_param(ti, layer_param(:I, 1, 𝔹), 0.5)
+    end
+
     @testset "refused inputs" begin
         cyl = LayeredCylinder(rc_radii, (rc_C[1], rc_shell))
         @test_throws ArgumentError LayeredCylinderFields(cyl, rc_C₀)
