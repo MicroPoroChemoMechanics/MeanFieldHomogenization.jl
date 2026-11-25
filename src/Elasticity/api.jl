@@ -79,6 +79,16 @@ function _hill_tensor_at(m::Val, incl, C₀, abstol, reltol, maxiters)
     return _hill_kernel(incl, C₀, MFH_Core._resolve_algo(m, incl, C₀), abstol, reltol, maxiters)
 end
 
+# At most one candidate method for inference. Julia infers the body of
+# `hill_tensor` with `method::Symbol` before it propagates any constant, and
+# there the algorithm is unknown: with the default limit of three methods,
+# inference went on through every numerical kernel the call could reach (the
+# residues, the cubatures), two thirds of the compile time of an anisotropic
+# Hill tensor (48 s to 14 s for a stiffness of 12-wide dual numbers, 16 s to
+# 4 s in `Float64`). With one, that call is left to run time, which then knows
+# the algorithm; a known algorithm matches one method and stays inferred.
+Base.Experimental.@max_methods 1 function _hill_kernel end
+
 # A closed form is cheaper than a lookup: it never consults a `HillCache`. A
 # numerical one is read from the cache in scope (`with_hill_cache`) when its
 # inputs are `Float64` and its shape keys it.
