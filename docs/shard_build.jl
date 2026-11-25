@@ -27,8 +27,8 @@
 #
 # The replacement happens in `vitepress_config_transform`, the hook that
 # DocumenterVitepress calls for each plugin after it has written the Markdown of
-# every page and before it runs VitePress (`extension_hooks.jl` of
-# DocumenterVitepress 0.3.10).
+# every page and before it runs VitePress (`extension_hooks.jl`, there since
+# DocumenterVitepress 0.3.6, the floor of its compat bound in `Project.toml`).
 #
 # A local link checked against a file that a block writes (a figure) cannot
 # resolve in a draft page, so `cross_references` is demoted in both modes. What
