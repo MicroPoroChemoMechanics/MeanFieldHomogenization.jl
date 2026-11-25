@@ -14,3 +14,6 @@ Manifest.toml.bak
 
 # Written by make.jl from nomenclature.toml at every build.
 src/.vitepress/nomenclature.json
+
+# What a documentation shard hands over to the assembly (see shard_build.jl).
+shard_out/

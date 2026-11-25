@@ -1,16 +1,12 @@
-# ── Documentation shards: the pages of a pull request, built in parallel ─────
+# ── Documentation shards: the pages of the site, executed in parallel ───────
 #
-# The full site is built in one process, page after page, and a pull request
-# used to wait for all of it before learning whether one `@example` block
-# failed. A shard is a group of pages built on its own runner with
-# `MFH_DOCS_ONLY` (see `partial.jl`), so the pull-request jobs run side by side
-# and the answer arrives after the slowest shard rather than after the sum.
-#
-# What the shards prove together is what a partial build proves, for every page
-# at once: that every executed block runs and every page renders. What none of
-# them proves is that the cross references resolve, since each prunes the pages
-# of the others; the draft pre-flight job checks those on the whole tree, and
-# the full build on `main` remains the one that deploys.
+# One process running every page after the other takes well over two hours, and
+# a pull request used to wait for all of it before learning whether one
+# `@example` block failed. A shard is a group of pages executed on its own
+# runner (`MFH_DOCS_SHARD`, see `shard_build.jl`), so the shards run side by side
+# and the answer arrives after the slowest one rather than after the sum. The
+# same shards build the site of `main` and of a tag: a last job assembles the
+# Markdown they emitted, renders the site once and deploys it.
 #
 # The groups follow what the pages execute, not a measured cost: the two
 # hydration pages couple a chemical solver to the micromechanics, the generated
