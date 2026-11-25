@@ -142,18 +142,6 @@ jobs:
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()
-      - name: Pages of shard ${{ matrix.shard }}
-        shell: julia --color=yes {0}
-        run: |
-            # `pwd()`, not a bare relative path: this script runs from a
-            # temporary file, and `include` resolves against the including file.
-            include(joinpath(pwd(), "docs", "pages.jl"))
-            include(joinpath(pwd(), "docs", "shards.jl"))
-            sel = shard_pages("${{ matrix.shard }}", doc_page_leaves(pages))
-            println(join(sel, "\n"))
-            open(ENV["GITHUB_ENV"], "a") do io
-                println(io, "MFH_DOCS_ONLY=", join(sel, ","))
-            end
       - name: Build the pages of the shard
         env:
             MFH_DOCS_SHARD: ${{ matrix.shard }}
