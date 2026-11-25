@@ -11,11 +11,12 @@ is this pore in the conduction problem, in an isotropic matrix. Its field is
 not uniform and it has no Hill tensor; its concentration tensor is the sum of a
 series, exact to rounding.
 
-```@setup mantorus
+```@example mantorus
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
-include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))  # hide
+nothing # hide
 ```
 
 ## Declaring a torus

@@ -188,8 +188,8 @@ jump_anti = simplify(traction_jump(w₀ * cos(θ) * 𝐞ᶻ) ⋅ 𝐞ᶻ / cos(�
 # [\![\sigma_{rr}]\!] &= \frac{(\kappa^{\mathrm s} + \mu^{\mathrm s})\,u_r/R +
 #   (\kappa^{\mathrm s} - \mu^{\mathrm s})\,\varepsilon}{R}
 #   &&\text{(axisymmetric)},\\
-# [\![\sigma_{rr}]\!] &= (\kappa^{\mathrm s} + \mu^{\mathrm s})\,\frac{U + 2V}{R^2},
-#   \quad [\![\sigma_{r\theta}]\!] = 2(\kappa^{\mathrm s} + \mu^{\mathrm s})\,\frac{U + 2V}{R^2}
+# [\![\sigma_{rr}]\!] &= (\kappa^{\mathrm s} + \mu^{\mathrm s})\,\frac{U + 2V}{R^2},\\
+# [\![\sigma_{r\theta}]\!] &= 2(\kappa^{\mathrm s} + \mu^{\mathrm s})\,\frac{U + 2V}{R^2}
 #   &&\text{(transverse shear)},\\
 # [\![\sigma_{rz}]\!] &= \mu^{\mathrm s}\,\frac{u_z}{R^2}
 #   &&\text{(antiplane shear)},

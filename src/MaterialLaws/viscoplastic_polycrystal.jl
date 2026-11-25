@@ -56,7 +56,8 @@ The strain rate of the crystal under the stress `σ` (Kelvin–Mandel components
 """
 crystal_strain_rate(c::PowerLawCrystal, σ) = c.P * _slip_rates(c, transpose(c.P) * σ)
 
-_slip_rates(c::PowerLawCrystal, τ) = c.γ̇₀ .* abs.(τ ./ c.τ₀) .^ c.n .* sign.(τ)
+# Mapped over the systems rather than broadcast, as the rules of `crystal.jl`.
+_slip_rates(c::PowerLawCrystal, τ) = map(τᵢ -> c.γ̇₀ * abs(τᵢ / c.τ₀)^c.n * sign(τᵢ), τ)
 
 """
     TangentModel()

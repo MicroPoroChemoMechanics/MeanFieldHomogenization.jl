@@ -8,12 +8,13 @@ the crack, in elasticity and in conduction, in a matrix of any anisotropy. It
 then behaves as the cracks of the [Cracks](@ref man-cracks) page: same COD
 tensor, same contributions, same schemes.
 
-```@setup manplanar
+```@example manplanar
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Plots
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ## Describing a contour

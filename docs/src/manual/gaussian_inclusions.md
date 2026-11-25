@@ -22,12 +22,13 @@ Its concentration tensors are computed by the
 [Gaussian approximation](@ref th-gaussian-volume) of its integral equation, in
 elasticity and in conduction. It needs neither a mesh nor an extension.
 
-```@setup mangaussincl
+```@example mangaussincl
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Plots
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ## Describing a shape

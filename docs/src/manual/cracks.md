@@ -11,10 +11,11 @@ ellipsoid. Two consequences run through this page — the amount of cracking is 
 frame ``(\underline{\ell}, \underline{m}, \underline{n})``,
 whose third vector is the normal.
 
-```@setup mancracks
+```@example mancracks
 using MeanFieldHomogenization
 using TensND
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example mancracks

@@ -109,9 +109,10 @@ Multiplied by ``2^{3/2}a\,\sqrt\delta``, the left sides are ``x_3`` and
 ``\varrho``:
 
 ```math
-x_3=a\,\sqrt{\delta}\,\sum_{n\ge1}\frac{4\sqrt2}{\pi}\,n\;Q_{n-1/2}(\cosh\alpha)\,\sin n\beta,
-\qquad
-x_1=\varrho\cos\varphi=a\,\sqrt{\delta}\,\cos\varphi\sum_{n\ge0}\Bigl(-\frac{2\sqrt2}{\pi}\,\epsilon_n\Bigr)\,Q^1_{n-1/2}(\cosh\alpha)\,\cos n\beta .
+\begin{aligned}
+x_3&=a\,\sqrt{\delta}\,\sum_{n\ge1}\frac{4\sqrt2}{\pi}\,n\;Q_{n-1/2}(\cosh\alpha)\,\sin n\beta,\\
+x_1&=\varrho\cos\varphi=a\,\sqrt{\delta}\,\cos\varphi\sum_{n\ge0}\Bigl(-\frac{2\sqrt2}{\pi}\,\epsilon_n\Bigr)\,Q^1_{n-1/2}(\cosh\alpha)\,\cos n\beta .
+\end{aligned}
 ```
 
 Both converge off the axis, their terms decaying as
@@ -123,9 +124,10 @@ For a unit gradient, the temperature is the remote field plus a perturbation
 that vanishes at infinity, of the same dependence on the angles:
 
 ```math
-T=a\,\sqrt{\delta}\;\cos m\varphi\sum_{n}f_n(\alpha)\,w_n(\beta),
-\qquad
-f_n=s_n\,Q^m_{n-1/2}(\cosh\alpha)+b_n\,P^m_{n-1/2}(\cosh\alpha) ,
+\begin{aligned}
+T&=a\,\sqrt{\delta}\;\cos m\varphi\sum_{n}f_n(\alpha)\,w_n(\beta),\\
+f_n&=s_n\,Q^m_{n-1/2}(\cosh\alpha)+b_n\,P^m_{n-1/2}(\cosh\alpha) ,
+\end{aligned}
 ```
 
 with ``m=0``, ``w_n=\sin n\beta`` and ``s_n=\tfrac{4\sqrt2}{\pi}n`` for the
@@ -135,8 +137,11 @@ amplitudes ``b_n`` are the unknowns. The derivative with respect to ``\alpha``
 is
 
 ```math
+\begin{aligned}
 \frac{\partial}{\partial\alpha}\Bigl(\sqrt\delta\sum_nf_n\,w_n\Bigr)
-=\frac{1}{2\sqrt\delta}\Bigl(\sinh\alpha\sum_nf_n\,w_n+2\cosh\alpha\sum_nf_n'\,w_n-\sum_nf_n'\,2\cos\beta\,w_n\Bigr) .
+={}&\frac{1}{2\sqrt\delta}\Bigl(\sinh\alpha\sum_nf_n\,w_n+2\cosh\alpha\sum_nf_n'\,w_n\\
+&-\sum_nf_n'\,2\cos\beta\,w_n\Bigr) .
+\end{aligned}
 ```
 
 The last sum is rearranged with
@@ -162,8 +167,10 @@ With the unknowns ``x_n=b_n\,P_n`` and the ratios
 ``P^m_{n-1/2}(\cosh\alpha_0)``, the relations are the tridiagonal system
 
 ```math
-\bigl(\sinh\alpha_0+2\cosh\alpha_0\,\ell_n\bigr)\,x_n-\omega_n\,\ell_{n-1}\,x_{n-1}-\ell_{n+1}\,x_{n+1}
-=-\Bigl[s_n\bigl(\sinh\alpha_0\,Q_n+2\cosh\alpha_0\,Q_n'\bigr)-\omega_n\,s_{n-1}\,Q_{n-1}'-s_{n+1}\,Q_{n+1}'\Bigr] .
+\begin{aligned}
+&\bigl(\sinh\alpha_0+2\cosh\alpha_0\,\ell_n\bigr)\,x_n-\omega_n\,\ell_{n-1}\,x_{n-1}-\ell_{n+1}\,x_{n+1}\\
+&\qquad=-\Bigl[s_n\bigl(\sinh\alpha_0\,Q_n+2\cosh\alpha_0\,Q_n'\bigr)-\omega_n\,s_{n-1}\,Q_{n-1}'-s_{n+1}\,Q_{n+1}'\Bigr] .
+\end{aligned}
 ```
 
 Dividing the unknowns by ``P_n``, which grows as ``\mathrm{e}^{n\alpha_0}``,
@@ -255,9 +262,10 @@ The remote part of the temperature contributes
 perturbation ``a\sqrt\delta\,\cos m\varphi\sum_nb_n\,P^m_{n-1/2}\,w_n`` adds
 
 ```math
-A_n-1=\frac{2\pi\,a^3\sinh^2\alpha_0}{|\Omega|}\sum_{n\ge1}b_n\,P_{n-1/2}\int_{-\pi}^{\pi}\frac{\sin\beta\,\sin n\beta}{\delta^{5/2}}\,\mathrm{d}\beta,
-\qquad
-A_t-1=\frac{\pi\,a^3\sinh\alpha_0}{|\Omega|}\sum_{n\ge0}b_n\,P^1_{n-1/2}\int_{-\pi}^{\pi}\frac{(\cosh\alpha_0\cos\beta-1)\,\cos n\beta}{\delta^{5/2}}\,\mathrm{d}\beta .
+\begin{aligned}
+A_n-1&=\frac{2\pi\,a^3\sinh^2\alpha_0}{|\Omega|}\sum_{n\ge1}b_n\,P_{n-1/2}\int_{-\pi}^{\pi}\frac{\sin\beta\,\sin n\beta}{\delta^{5/2}}\,\mathrm{d}\beta,\\
+A_t-1&=\frac{\pi\,a^3\sinh\alpha_0}{|\Omega|}\sum_{n\ge0}b_n\,P^1_{n-1/2}\int_{-\pi}^{\pi}\frac{(\cosh\alpha_0\cos\beta-1)\,\cos n\beta}{\delta^{5/2}}\,\mathrm{d}\beta .
+\end{aligned}
 ```
 
 The two integrals are Fourier coefficients, read on the series of section 3
@@ -266,11 +274,11 @@ and on their derivatives with respect to ``\alpha``. With
 respect to ``\alpha``,
 
 ```math
-\frac{\sin\beta}{\delta^{5/2}}=-\frac{8\sqrt2}{3\pi\,\sinh\alpha}\sum_{n\ge1}n\,Q^1_{n-1/2}\,\sin n\beta,
-\qquad
-\frac{1}{\delta^{3/2}}=-\frac{2\sqrt2}{\pi\,\sinh\alpha}\sum_{n\ge0}\epsilon_n\,Q^1_{n-1/2}\,\cos n\beta,
-\qquad
-\frac{1}{\delta^{5/2}}=\frac{4\sqrt2}{3\pi\,\sinh^2\alpha}\sum_{n\ge0}\epsilon_n\,\bigl(Q^{1\prime}_{n-1/2}-\coth\alpha\,Q^1_{n-1/2}\bigr)\cos n\beta ,
+\begin{aligned}
+\frac{\sin\beta}{\delta^{5/2}}&=-\frac{8\sqrt2}{3\pi\,\sinh\alpha}\sum_{n\ge1}n\,Q^1_{n-1/2}\,\sin n\beta,\\
+\frac{1}{\delta^{3/2}}&=-\frac{2\sqrt2}{\pi\,\sinh\alpha}\sum_{n\ge0}\epsilon_n\,Q^1_{n-1/2}\,\cos n\beta,\\
+\frac{1}{\delta^{5/2}}&=\frac{4\sqrt2}{3\pi\,\sinh^2\alpha}\sum_{n\ge0}\epsilon_n\,\bigl(Q^{1\prime}_{n-1/2}-\coth\alpha\,Q^1_{n-1/2}\bigr)\cos n\beta ,
+\end{aligned}
 ```
 
 and, since ``\cosh\alpha\cos\beta-1=\sinh^2\alpha-\cosh\alpha\,\delta``,
@@ -283,9 +291,10 @@ With ``a^3/|\Omega|=\sinh^3\alpha_0/(2\pi^2\cosh\alpha_0)``, all functions
 being taken at ``\alpha_0``,
 
 ```math
-A_n=1-\frac{8\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge1}n\,b_n\,P_{n-1/2}\,Q^1_{n-1/2},
-\qquad
-A_t=1+\frac{2\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge0}b_n\,P^1_{n-1/2}\,\bigl(2\,Q^{1\prime}_{n-1/2}+\coth\alpha_0\,Q^1_{n-1/2}\bigr) .
+\begin{aligned}
+A_n&=1-\frac{8\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge1}n\,b_n\,P_{n-1/2}\,Q^1_{n-1/2},\\
+A_t&=1+\frac{2\sqrt2}{3\pi}\,\frac{\sinh^4\alpha_0}{\cosh\alpha_0}\sum_{n\ge0}b_n\,P^1_{n-1/2}\,\bigl(2\,Q^{1\prime}_{n-1/2}+\coth\alpha_0\,Q^1_{n-1/2}\bigr) .
+\end{aligned}
 ```
 
 These sums and those of section 6 are equal for the amplitudes that satisfy

@@ -13,15 +13,16 @@ cavity in elasticity and an insulator in conduction, in a matrix that is
 isotropic or transversely isotropic about the axis of the cavity. Its field is
 not uniform and it has no Hill tensor; its concentration tensors are exact.
 
-```@setup manconformal
+```@example manconformal
 using MeanFieldHomogenization
 using TensND
 using LinearAlgebra
 using Plots
-gr()
-include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+gr()  # hide
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))  # hide
 # rounded for display, without negative zeros
 tidy(M; digits = 3) = round.(Matrix(M); digits) .+ 0.0
+nothing # hide
 ```
 
 ## Declaring a hole

@@ -192,12 +192,13 @@ plt_kernel
 # functions depend on ``t - t'`` only:
 #
 # ```math
-# R(t, t') = E_\infty + E_1\,e^{-(t-t')/\tau},
-# \qquad
-# J(t, t') = \frac{1}{E_\infty} - \Big(\frac{1}{E_\infty} - \frac{1}{E_\infty + E_1}\Big)
+# \begin{aligned}
+# R(t, t') &= E_\infty + E_1\,e^{-(t-t')/\tau},\\
+# J(t, t') &= \frac{1}{E_\infty} - \Big(\frac{1}{E_\infty} - \frac{1}{E_\infty + E_1}\Big)
 #   e^{-(t-t')/\tau_r},
 # \qquad
 # \tau_r = \tau\,\frac{E_\infty + E_1}{E_\infty} .
+# \end{aligned}
 # ```
 #
 # The creep function starts at the instantaneous compliance ``1/(E_\infty + E_1)``, ends

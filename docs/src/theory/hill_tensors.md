@@ -834,9 +834,9 @@ three roots of the upper half plane for a cubic matrix of moduli
 ``C_{2323} = \mu\,(1 + p)``, isotropic at ``p = 0``, around an ellipsoid of
 semi-axes ``1``, ``0.6`` and ``0.3``.
 
-```@setup hillresder
+```@example hillresder
 using MeanFieldHomogenization, TensND, ForwardDiff, LinearAlgebra, Plots
-gr()
+gr()  # hide
 
 # Cubic matrix, isotropic at p = 0, entered as a general tensor.
 function cubic_matrix(p; k = 30.0, μ = 18.0)
@@ -895,6 +895,7 @@ right = plot(pp, root_rate.(pp); xscale = :log10, yscale = :log10, lw = 2,
     xlabel = "p", label = "|dz/dp|, a root of Q", title = "rates as p → 0", legend = :right)
 plot!(right, pp, [norm(dhill(p, :residues)) for p in pp]; lw = 2, label = "‖dℙ/dp‖")
 root_figure = plot(left, right; layout = (1, 2), size = (900, 380), left_margin = 4Plots.mm, bottom_margin = 4Plots.mm)
+nothing # hide
 ```
 
 ```@example hillresder
@@ -911,11 +912,12 @@ be reached through the roots.
 ``W_n`` under the integral sign,
 
 ```math
+\begin{aligned}
 \frac{\partial W_n}{\partial p}
-= -\int_{-\infty}^{\infty} \frac{\xi^n\,\partial_p Q(\xi)\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2}
-= -\sum_{k=0}^{6} \frac{\partial q_k}{\partial p}\,W^{(1)}_{n+k},
-\qquad
-W^{(1)}_m = \int_{-\infty}^{\infty} \frac{\xi^m\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2},
+&= -\int_{-\infty}^{\infty} \frac{\xi^n\,\partial_p Q(\xi)\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2}
+= -\sum_{k=0}^{6} \frac{\partial q_k}{\partial p}\,W^{(1)}_{n+k},\\
+W^{(1)}_m &= \int_{-\infty}^{\infty} \frac{\xi^m\,\mathrm{d}\xi}{2\,(1+\xi^2)^{3/2}\,Q(\xi)^2},
+\end{aligned}
 ```
 
 with ``m = 0, \dots, 12``. The moments ``W^{(1)}_m`` do not involve the
@@ -975,7 +977,7 @@ residue work does not depend on the number of parameters. The figure shows the
 poles of the two denominators for a triclinic matrix around a triaxial
 ellipsoid.
 
-```@setup hillresder
+```@example hillresder
 const ME = MeanFieldHomogenization.Elasticity
 KM_tri = [
     210.0 80.0 75.0 5.0 4.0 3.0;
@@ -1007,6 +1009,7 @@ function pole_panel(mult, title)
 end
 pole_figure = plot(pole_panel(1, "poles of D: the value"), pole_panel(2, "poles of the first derivative");
     layout = (1, 2), size = (900, 360), bottom_margin = 4Plots.mm)
+nothing # hide
 ```
 
 ```@example hillresder

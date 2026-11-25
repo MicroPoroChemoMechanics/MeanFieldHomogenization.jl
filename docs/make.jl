@@ -61,6 +61,10 @@ write_nomenclature_json(joinpath(@__DIR__, "src", ".vitepress", "nomenclature.js
 # `literate.jl`, so that the generated pages exist when the tree is pruned.
 include("partial.jl")
 
+# The full site built in shards that run side by side, then assembled and
+# rendered once: `MFH_DOCS_SHARD` and `MFH_DOCS_ASSEMBLE`. See its header.
+include("shard_build.jl")
+
 # Links to TensND's documentation, `[`mandel`](@extref TensND TensND.mandel)`,
 # resolved against the inventory TensND publishes: a name or a section that
 # disappears or is renamed there fails this build, naming the page to correct.
@@ -432,7 +436,9 @@ function Logging.handle_message(
     )
 end
 
-PARTIAL_BUILD || let t0 = time()
+# Skipped by a shard and by the assembly as well: the pre-flight is a job of its
+# own there, which the assembly waits for.
+(PARTIAL_BUILD || SHARD_BUILD || ASSEMBLY_BUILD) || let t0 = time()
     @info "pre-flight: draft build (checks only, no example executed)"
     mktempdir() do draftdir
         Logging.with_logger(RecordingLogger(Logging.current_logger(), _PREFLIGHT_LOG)) do
@@ -445,7 +451,7 @@ PARTIAL_BUILD || let t0 = time()
                     edit_link = nothing, repolink = nothing,
                     size_threshold = nothing, size_threshold_warn = nothing,
                 ),
-                source = DOCS_SOURCE,
+                source = BUILD_SOURCE,
                 build = draftdir,
                 pages = pages,
                 plugins = [
@@ -506,11 +512,15 @@ makedocs(;
         devurl = "dev",
         deploy_url = "https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl",
         description = "Mean-field homogenization of heterogeneous materials in Julia",
+        # A shard stops at the Markdown; the assembly renders the site.
+        build_vitepress = !SHARD_BUILD,
     ),
-    plugins = [bib, links],
+    plugins = ASSEMBLY_BUILD ?
+        [bib, links, ShardOutputs(DOCS_ASSEMBLE, source_pages(joinpath(@__DIR__, "src")))] :
+        [bib, links],
     # `src`, or the pruned tree a partial build stands up. Filtering `pages`
     # alone would leave every other page still executing.
-    source = DOCS_SOURCE,
+    source = BUILD_SOURCE,
     pages = pages,
     # Only exported names have to appear on a curated page: the internals in
     # the eighteen sub-modules above are documented for the reader of the
@@ -525,9 +535,12 @@ makedocs(;
     #
     # A partial build can resolve neither a reference into a page it did not
     # build nor a docstring whose API page it pruned, so those two are demoted
-    # THERE AND ONLY THERE.
+    # there. A shard and the assembly build the pages they do not execute as
+    # drafts, whose figures are not written, so `cross_references` alone is
+    # demoted there; `shard_build.jl` says what checks it instead.
     warnonly = PARTIAL_BUILD ?
         [:docs_block, :cross_references, :missing_docs, :linkcheck] :
+        (SHARD_BUILD || ASSEMBLY_BUILD) ? [:docs_block, :cross_references] :
         [:docs_block],
 )
 
@@ -539,6 +552,11 @@ makedocs(;
 # other page offline.
 if PARTIAL_BUILD
     @info "partial build: deployment skipped"
+elseif SHARD_BUILD
+    export_shard(
+        joinpath(@__DIR__, "build"), joinpath(@__DIR__, "src"), SHARD_EXECUTED,
+        joinpath(@__DIR__, "shard_out", DOCS_SHARD),
+    )
 else
     DocumenterVitepress.deploydocs(;
         repo = "github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl.git",

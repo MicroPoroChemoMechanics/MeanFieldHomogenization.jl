@@ -12,107 +12,13 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
-  # The full build, and the only one that deploys. It runs on `main`, on tags and
-  # on demand; a pull request is checked instead by the two jobs that follow it,
-  # `preflight` and `pages`, which together cover every executed block and every
-  # cross reference in a fraction of the wall time. Run this one by hand
-  # (`workflow_dispatch`) on a branch when the rendered site itself is in doubt.
-  build:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    # A bound keeps a hung build from occupying a runner indefinitely. It is a
-    # safety net, not a capacity plan: when a build approaches it, the cause is
-    # to be found rather than the number raised.
-    timeout-minutes: 240
-    permissions:
-      actions: write
-      pull-requests: read
-      contents: write
-      statuses: write
-      pages: write
-    steps:
-      # Full history, so `git tag` is complete. DocumenterVitepress decides
-      # whether a tagged build should also become `stable` by checking for a
-      # higher release tag; with the default shallow checkout it sees no tags,
-      # answers "none higher", and would overwrite `stable` even when re-tagging
-      # the docs of an older release.
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: julia-actions/setup-julia@v3
-        id: julia
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v3
-        with:
-          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
-      # Node itself comes from NodeJS_20_jll, which the Julia depot cache above
-      # already covers; this caches only what `npm install` fetches for the
-      # VitePress build (MathJax, mermaid, plotly), keyed on the manifest that
-      # determines it.
-      - uses: actions/cache@v6
-        with:
-          path: docs/node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('docs/package.json') }}
-          restore-keys: ${{ runner.os }}-npm-
-      # The Pkg server intermittently advertises a General tree hash that its
-      # CDN then answers with a 404, which kills the first `Pkg.add` of a cold
-      # depot before any of this repository's code runs.  Install the registry
-      # up front and fall back to a direct clone when that happens; package
-      # tarballs keep going through the Pkg server either way.
-      - name: Install the General registry
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg
-          regdir = joinpath(first(DEPOT_PATH), "registries")
-          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
-              @info "General registry already installed"
-          else
-              try
-                  Pkg.Registry.add("General")
-              catch err
-                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
-                  withenv("JULIA_PKG_SERVER" => "") do
-                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
-                  end
-              end
-          end
-      - name: Install dependencies
-        shell: julia --project=docs/ --color=yes {0}
-        run: |
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()
-      # Documenter only reports a name listed in an `@docs` block with no
-      # docstring after it has executed every `@example` and Literate script,
-      # which is an hour and a half into the build. The same condition is
-      # decidable from the loaded module in seconds, so decide it first.
-      - name: Check every @docs entry is documented
-        run: julia --project=docs/ .github/scripts/check_docs_blocks.jl
-      # `JULIA_DEBUG=Documenter` makes Documenter name each page as it expands
-      # it. Without it the `ExpandTemplates` stage, where every `@example` block
-      # runs and nearly all the time goes, prints nothing, and a build working
-      # normally cannot be told from one that hangs.
-      # The VitePress step renders the whole site in one Node process, whose
-      # default heap limit (about 2 GB) the site reaches: the build of the tag
-      # v0.26.7 died there ("JavaScript heap out of memory") while the same
-      # commit built on `main`. The runner has 16 GB; 6 GB leaves Julia, still
-      # alive during that step, its share.
-      - name: Build and deploy
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-            JULIA_DEBUG: Documenter
-            OPENBLAS_NUM_THREADS: '1'
-            NODE_OPTIONS: --max-old-space-size=6144
-        run: julia --project=docs/ docs/make.jl
-
-  # Pull requests, part one: the draft build of the WHOLE page tree, with every
-  # `@example` skipped. It decides what no shard can -- the cross references
-  # between pages, the page tree, the bibliography, the `@docs` entries -- in
-  # minutes.
+  # The site is built in three steps, the same on a pull request, on `main` and
+  # on a tag; only the last step deploys, and only on `main` and on a tag.
+  #
+  # One: the draft build of the WHOLE page tree, with every `@example` skipped.
+  # It decides in minutes what the shards leave to it -- the cross references
+  # between pages, the page tree, the bibliography, the `@docs` entries.
   preflight:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -171,13 +77,12 @@ jobs:
             MFH_DOCS_PREFLIGHT_ONLY: '1'
         run: julia --project=docs/ docs/make.jl
 
-  # Pull requests, part two: every page, built for real, in shards that run side
-  # by side. The groups and how they are chosen live in `docs/shards.jl`; a page
-  # no group names falls into `rest`. Each shard is a partial build
-  # (`docs/partial.jl`), which demotes cross references to warnings and refuses
-  # to deploy -- the references are the preflight's to check.
+  # Two: every page executed, in shards that run side by side. The groups and how
+  # they are chosen live in `docs/shards.jl`; a page no group names falls into
+  # `rest`. A shard builds the whole page tree but executes only its own pages,
+  # the others as drafts, and hands over the Markdown of its pages and the files
+  # their blocks wrote (`docs/shard_build.jl`).
   pages:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -237,23 +142,93 @@ jobs:
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()
-      - name: Pages of shard ${{ matrix.shard }}
-        shell: julia --color=yes {0}
-        run: |
-            # `pwd()`, not a bare relative path: this script runs from a
-            # temporary file, and `include` resolves against the including file.
-            include(joinpath(pwd(), "docs", "pages.jl"))
-            include(joinpath(pwd(), "docs", "shards.jl"))
-            sel = shard_pages("${{ matrix.shard }}", doc_page_leaves(pages))
-            println(join(sel, "\n"))
-            open(ENV["GITHUB_ENV"], "a") do io
-                println(io, "MFH_DOCS_ONLY=", join(sel, ","))
-            end
-      # The heap of the VitePress step, as in the full build: a shard renders
-      # fewer pages, but `theory-manual` reaches Node's default limit (about
-      # 2 GB) on its own.
       - name: Build the pages of the shard
         env:
+            MFH_DOCS_SHARD: ${{ matrix.shard }}
+            JULIA_DEBUG: Documenter
+            OPENBLAS_NUM_THREADS: '1'
+        run: julia --project=docs/ docs/make.jl
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-shard-${{ matrix.shard }}
+          path: docs/shard_out/${{ matrix.shard }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
+
+  # Three: the whole tree built once more as drafts, the Markdown of every page
+  # replaced by the one its shard emitted, then rendered by VitePress, which
+  # refuses dead links, and deployed (`main` and tags; `deploydocs` declines on
+  # a pull request).
+  assemble:
+    needs: [preflight, pages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      pull-requests: read
+      contents: write
+      statuses: write
+      pages: write
+    steps:
+      # Full history, so `git tag` is complete. DocumenterVitepress decides
+      # whether a tagged build should also become `stable` by checking for a
+      # higher release tag; with the default shallow checkout it sees no tags,
+      # answers "none higher", and would overwrite `stable` even when re-tagging
+      # the docs of an older release.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: julia-actions/setup-julia@v3
+        id: julia
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+        with:
+          cache-name: julia-cache;workflow=${{ github.workflow }};job=${{ github.job }};julia=${{ steps.julia.outputs.julia-version }}
+      - uses: actions/cache@v6
+        with:
+          path: docs/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('docs/package.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+      - name: Install the General registry
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          regdir = joinpath(first(DEPOT_PATH), "registries")
+          if isdir(joinpath(regdir, "General")) || isfile(joinpath(regdir, "General.tar.gz"))
+              @info "General registry already installed"
+          else
+              try
+                  Pkg.Registry.add("General")
+              catch err
+                  @warn "Pkg server could not serve the registry; cloning from GitHub" err
+                  withenv("JULIA_PKG_SERVER" => "") do
+                      Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))
+                  end
+              end
+          end
+      - name: Install dependencies
+        shell: julia --project=docs/ --color=yes {0}
+        run: |
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()
+      # One directory per shard under `docs/shard_in`.
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: docs-shard-*
+          path: docs/shard_in
+      # The VitePress step renders the whole site in one Node process, whose
+      # default heap limit (about 2 GB) the site reaches: the build of the tag
+      # v0.26.7 died there ("JavaScript heap out of memory") while the same
+      # commit built on `main`. The runner has 16 GB; 6 GB leaves Julia, still
+      # alive during that step, its share.
+      - name: Assemble, render and deploy
+        env:
+            MFH_DOCS_ASSEMBLE: ${{ github.workspace }}/docs/shard_in
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
             JULIA_DEBUG: Documenter
             OPENBLAS_NUM_THREADS: '1'
             NODE_OPTIONS: --max-old-space-size=6144

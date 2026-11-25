@@ -115,9 +115,10 @@ rotate. The second half of the page repeats everything with the pores flattened
 to ``\omega = 0.2``, which is the same picture with squashed pores and a very
 different answer:
 
-```@setup tutporousbenchviz
+```@example tutporousbenchviz
 using MeanFieldHomogenization
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example tutporousbenchviz
