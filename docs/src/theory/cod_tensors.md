@@ -79,9 +79,10 @@ and the second condition reads
 are the corresponding semi-axes, and the in-plane aspect ratio is
 ``\eta = b/a\le 1``.
 
-```@setup codgeom
+```@example codgeom
 using MeanFieldHomogenization
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example codgeom
@@ -96,14 +97,16 @@ pseudo-inverse, the only part of the definition that remains finite, and it
 leaves
 
 ```math
+\begin{gathered}
 \lim_{a\to+\infty}\bigl(\boldsymbol{A}^{\!T}\!\cdot\boldsymbol{A}\bigr)^{+}
 = \frac{\underline{m}\otimes\underline{m}}{b^{2}},
-\qquad\text{hence}\qquad
+\qquad\text{hence}\\
 \underline{x}\in\mathcal{R}
 \iff
 \underline{x}\cdot\underline{n}=0
 \quad\text{and}\quad
 \lvert\underline{x}\cdot\underline{m}\rvert\le b .
+\end{gathered}
 ```
 
 ``\mathcal{R}`` is thus invariant by translation along ``\underline{\ell}``, of
@@ -360,10 +363,12 @@ and the lower half the lip facing ``-\underline{n}``, where
 With ``S`` the area of ``\mathcal{I}`` and the definition of §2,
 
 ```math
+\begin{aligned}
 \lim_{\rho\to 0}\int_{\partial\Omega_c}\underline{u}\stackrel{s}{\otimes}\underline{\nu}\,\mathrm{d}S
-= \int_{\mathcal{I}}[\![\underline{u}]\!]\stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
-= S\,\bigl\langle[\![\underline{u}]\!]\bigr\rangle_{\mathcal{I}}\stackrel{s}{\otimes}\underline{n}
-= S\,b\,\bigl(\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n}\bigr)\stackrel{s}{\otimes}\underline{n}.
+&= \int_{\mathcal{I}}[\![\underline{u}]\!]\stackrel{s}{\otimes}\underline{n}\,\mathrm{d}S
+= S\,\bigl\langle[\![\underline{u}]\!]\bigr\rangle_{\mathcal{I}}\stackrel{s}{\otimes}\underline{n}\\
+&= S\,b\,\bigl(\boldsymbol{B}\cdot\boldsymbol{\Sigma}\cdot\underline{n}\bigr)\stackrel{s}{\otimes}\underline{n}.
+\end{aligned}
 \tag{3}
 ```
 

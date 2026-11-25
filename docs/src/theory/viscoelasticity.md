@@ -167,13 +167,14 @@ sum over the intervals ``[t_{k-1}, t_k]``, with
 and ``\boldsymbol{\varepsilon}(t_{-1}) = 0``:
 
 ```math
-\boldsymbol{\sigma}(t_i) = \sum_{k=0}^{i} \mathbb{W}_{ik} : \Delta\boldsymbol{\varepsilon}_k,
-\qquad
+\begin{gathered}
+\boldsymbol{\sigma}(t_i) = \sum_{k=0}^{i} \mathbb{W}_{ik} : \Delta\boldsymbol{\varepsilon}_k,\\[4pt]
 \mathbb{W}_{ik} =
 \begin{cases}
 \tfrac{1}{2}\bigl[\mathbb{C}(t_i,t_{k-1}) + \mathbb{C}(t_i,t_k)\bigr], & t_{k-1} < t_k,\\[4pt]
 \mathbb{C}(t_i,t_k), & k = 0 \text{ or } t_{k-1} = t_k.
 \end{cases}
+\end{gathered}
 ```
 
 The first line is the trapezoidal rule. The second is the Stieltjes integral of a jump,
@@ -226,8 +227,8 @@ taken linear in ``t`` as well. With ``a`` and ``b`` the cells of ``t`` and ``t'`
 ```math
 \widehat{\mathbb{C}}(t,t') =
 \begin{cases}
-(1-\theta)(1-\varphi)\,\mathbb{C}_{ab} + (1-\theta)\varphi\,\mathbb{C}_{a,b+1}
-+ \theta(1-\varphi)\,\mathbb{C}_{a+1,b} + \theta\varphi\,\mathbb{C}_{a+1,b+1}, & a > b,\\[4pt]
+(1-\theta)(1-\varphi)\,\mathbb{C}_{ab} + (1-\theta)\varphi\,\mathbb{C}_{a,b+1} & \\
+\quad + \theta(1-\varphi)\,\mathbb{C}_{a+1,b} + \theta\varphi\,\mathbb{C}_{a+1,b+1}, & a > b,\\[4pt]
 (1-\theta)\,\mathbb{C}_{aa} + (\theta - \varphi)\,\mathbb{C}_{a+1,a} + \varphi\,\mathbb{C}_{a+1,a+1}, & a = b,\ t' \le t,\\[4pt]
 0, & t' > t.
 \end{cases}
@@ -658,11 +659,11 @@ fixed. It is the order of the flat limit of a void ellipsoid, whose Hill kernel
 combines ``J_{\mathrm{long}}`` and ``J_{\mathrm{shear}}`` alone (§3):
 
 ```math
-\widetilde{B}_{\ell} = \tfrac{8}{3}\,\widetilde{L}_{\ell}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
-\qquad
-\widetilde{B}_{m} = \tfrac{8}{3}\,\widetilde{L}_{m}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
-\qquad
-\widetilde{B}_{n} = \tfrac{8}{3\,\mathcal{E}}\,(2\alpha + \beta)^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
+\begin{aligned}
+\widetilde{B}_{\ell} &= \tfrac{8}{3}\,\widetilde{L}_{\ell}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},\\
+\widetilde{B}_{m} &= \tfrac{8}{3}\,\widetilde{L}_{m}^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},\\
+\widetilde{B}_{n} &= \tfrac{8}{3\,\mathcal{E}}\,(2\alpha + \beta)^{-1^{\circ}}\circ(\alpha + 2\beta)\circ\beta^{-1^{\circ}},
+\end{aligned}
 ```
 
 ```math

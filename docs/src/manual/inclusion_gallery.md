@@ -12,10 +12,11 @@ zoom — and each one is built by passing the very same inclusion instance that 
 separate drawing to keep in sync: if a constructor sorts semi-axes or permutes a
 frame, the picture moves with it.
 
-```@setup zoo
+```@example zoo
 using MeanFieldHomogenization
 using TensND
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 The zoo splits in three, along the line that matters for the theory:

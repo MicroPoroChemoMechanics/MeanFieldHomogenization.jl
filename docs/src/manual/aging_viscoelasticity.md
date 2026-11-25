@@ -22,8 +22,9 @@ kernels of the same kind; conduction and diffusion (second-order kernels) are
 treated in [section 6](@ref man-visco-order2). Everything below runs as is; longer
 versions are in `scripts/50_visco_law_basics.jl` … `scripts/59_alv_sensitivities.jl`.
 
-```@setup vo
+```@example vo
 using MeanFieldHomogenization, TensND, LinearAlgebra
+nothing # hide
 ```
 
 ## [1. A law and an operator](@id man-visco-law-operator)

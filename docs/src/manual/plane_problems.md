@@ -12,10 +12,11 @@ plane strain or in plane stress. The cell holds tensors and inclusions of the
 plane, and [`homogenize`](@ref) is called as in three dimensions: the schemes
 are the same, on smaller tensors.
 
-```@setup manplane
+```@example manplane
 using MeanFieldHomogenization
 using TensND
 using Printf
+nothing # hide
 ```
 
 ## Two states, one problem of the plane

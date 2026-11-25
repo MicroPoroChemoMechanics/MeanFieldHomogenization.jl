@@ -35,10 +35,11 @@ first column of the basis, and the transverse semi-axes `(b, c)` (with
 `b ≥ c` for real element types) are associated with the second and
 third columns respectively.
 
-```@setup cylinders
+```@example cylinders
 using MeanFieldHomogenization
 using TensND
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example cylinders

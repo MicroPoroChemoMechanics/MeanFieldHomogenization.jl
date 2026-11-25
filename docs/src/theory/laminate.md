@@ -40,9 +40,10 @@ and periodic of period ``L`` along ``\underline{n}``. One period contains
 ``N`` layers ``\mathcal{L}_i``, of uniform stiffness ``\mathbb{C}_i``,
 thickness ``h_i`` and volume fraction ``f_i = h_i/L``.
 
-```@setup laminate
+```@example laminate
 using MeanFieldHomogenization
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example laminate

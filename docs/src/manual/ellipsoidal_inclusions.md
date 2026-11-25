@@ -31,10 +31,11 @@ hill_tensor(Ellipsoid(1.0, 0.5), TensISO{2}(3*(λ+2μ/3), 2μ))
 The two aspect ratios that recur everywhere are the in-plane ``\eta = b/a`` and
 the flatness ``\omega = c/a``; both are read off the stored semi-axes:
 
-```@setup ellipsoids
+```@example ellipsoids
 using MeanFieldHomogenization
 using TensND
 include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
+nothing # hide
 ```
 
 ```@example ellipsoids

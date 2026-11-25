@@ -341,7 +341,7 @@ Drag to rotate: the turned fiber, its core and its coating cut open, and its
 axis ``\underline n``.
 
 ```@example layered
-include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))  # hide
+include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.jl"))
 plotly_scene(shape_traces(fiber_n); uid = "layered-fiber-turned", height = 420,
     title = "The fiber turned to n = (1, −2, 2)/3")
 ```
