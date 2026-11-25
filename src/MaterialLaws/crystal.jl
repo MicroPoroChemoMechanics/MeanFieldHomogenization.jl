@@ -109,17 +109,24 @@ end
 
 _crystal_stress(ε, y, p) = p.ℂ * (ε - p.P * y.γ)
 _crystal_resolved(ε, y, p) = transpose(p.P) * _crystal_stress(ε, y, p)
-_crystal_critical(v, p) = p.τ₀ .+ p.Q .* (p.H * (1 .- exp.(-p.b .* v)))
+# The rules of the systems are written for one system and mapped over the twelve,
+# rather than broadcast: the same operations in the same order, but a fused
+# broadcast over a static vector is inferred again for every combination of
+# number types the derivatives bring, and these few lines took a fifth of the
+# compilation of a crystal response (123 s to 98 s for a response and its
+# derivative with respect to a hardening parameter).
+_crystal_critical(v, p) = map(x -> p.τ₀ + p.Q * x, p.H * map(vᵢ -> 1 - exp(-p.b * vᵢ), v))
 
-# The slip rate of each system: zero below its critical stress.
-_crystal_rate(τ, r, p) = (max.((abs.(τ) .- r) ./ p.K, 0)) .^ p.n .* sign.(τ)
+# The slip rate of a system: zero below its critical stress.
+_slip_rate(τ, r, K, n) = max((abs(τ) - r) / K, 0)^n * sign(τ)
+_crystal_rate(τ, r, p) = map((τᵢ, rᵢ) -> _slip_rate(τᵢ, rᵢ, p.K, p.n), τ, r)
 
 function _crystal_residual(y, g, prev, Δt, p)
     τ = _crystal_resolved(g.ε, y, p)
     Δγ = y.γ - prev.y.γ
     return (
         γ = Δγ - Δt * _crystal_rate(τ, _crystal_critical(y.v, p), p),
-        v = (y.v - prev.y.v) - abs.(Δγ),
+        v = (y.v - prev.y.v) - map(abs, Δγ),
     )
 end
 
