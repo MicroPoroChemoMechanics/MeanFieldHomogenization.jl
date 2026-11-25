@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.29.2 — faster compilation of anisotropic Hill tensors and crystal laws
+
+A patch release: no result changes, every tensor is the same to the last bit.
+
+### Changed
+
+- **The first call of `hill_tensor` in an anisotropic matrix compiles three
+  times faster** (16 s to 4 s in `Float64`, 48 s to 14 s for a stiffness of
+  12-wide dual numbers, measured on a sphere). Julia infers the body of
+  `hill_tensor` for a method given as a `Symbol` before it propagates the
+  default `:auto`, and there the algorithm is not known: inference went on
+  through every numerical kernel the call could reach (the residues, the
+  cubatures), which was two thirds of the time. That call is now left to run
+  time; a call whose algorithm is known stays inferred. The cost was paid once
+  per number type, so that the laws built on anisotropic tangents gained the
+  most: the first response of the affine composite of two power laws compiles
+  in 55 s instead of 132 s, that of the second-order composite in 316 s instead
+  of 682 s, and the `affine-laws` part of the test suite runs in 18 minutes
+  instead of 32.
+
+- **The single-crystal and polycrystal laws compile faster**: the slip rules
+  (`CrystalViscoplasticity`, `PowerLawCrystal`) are written for one system and
+  mapped over the systems, instead of broadcast over them, the same operations
+  in the same order. A fused broadcast over a static vector was inferred again
+  for every combination of number types that the derivatives bring: the first
+  response of a crystal with its derivative with respect to a hardening
+  parameter compiles in 96 s instead of 123 s, and the `polycrystals` part of
+  the test suite runs in 13 minutes instead of 16.
+
+### Documentation
+
+- Every function, constant or package a page uses in its visible code is
+  defined in visible code: the definitions held in hidden setup blocks (`tidy`
+  of the conformal holes, the cubic matrix and the poles of the theory of Hill
+  tensors, the `using` lines of the manual pages) are shown.
+- The display equations that were broken into lines at the width of the site
+  (theory of Hill tensors, of COD tensors, of toroidal inclusions and of
+  viscoelasticity, two generated tutorials) are laid out with `aligned` or
+  `gathered`.
+
 ## v0.29.1 — second moments of the local fields, radially anisotropic layers, and a theory of the derivatives
 
 A patch release, which adds without changing any existing result: the second
