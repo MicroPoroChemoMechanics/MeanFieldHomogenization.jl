@@ -22,8 +22,9 @@
 """
     LayeredSphere{T, N, Cs, Is} <: AbstractLayeredInclusion{3, T}
 
-Isotropic `N`-layer spherical composite inclusion (core + concentric
-shells) embedded in an infinite matrix.  Type parameters:
+`N`-layer spherical composite inclusion (core + concentric shells) embedded in
+an infinite isotropic matrix. Each layer is isotropic or transversely isotropic
+about the radial direction, uniform or graded.  Type parameters:
 
 - `T` — element type of the radii (`Float64`, `BigFloat`,
   `ForwardDiff.Dual`, `SymPyPythonCall.Sym`, `Symbolics.Num`, …).
@@ -38,6 +39,12 @@ interfaces)` for most cases.
 ## Convention
 - Radii ``(r_1, \\dots, r_N)`` are ascending, ``r_0 = 0`` implicit.
 - Moduli ``(\\mathbb{C}_1, \\dots, \\mathbb{C}_N)`` per layer, layer ``k`` between ``r_{k-1}`` and ``r_k``.
+  A modulus is an isotropic tensor (`TensISO{4,3}`, or `TensISO{2,3}` in
+  conduction); a field transversely isotropic about the radius,
+  `TensND.radial_ti(SphericalChart(), …)`, whose five constants are Hill's
+  moduli, components, engineering constants or Hoenig's parameters (`form`,
+  `role`), or its two conductivities; a function of the radius that returns one
+  of these, or a [`GradedLayer`](@ref); a [`PowerLawLayer`](@ref).
 - Interfaces ``(I_1, \\dots, I_N)`` at each radius ``r_k``; interface ``N`` is the
   outer boundary with the matrix.
 """

@@ -1,5 +1,73 @@
 # Changelog
 
+## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
+
+A patch release: no result changes beyond the last bit of a rounding. It
+needs TensND 0.16.4.
+
+### Changed
+
+- **Hill's moduli come from TensND** (`hill_moduli`, `form = :hill` of
+  `ti_from_constants` and `radial_ti`, TensND 0.16.3) instead of being written
+  again in the package: the moduli of a layer about the radius, those of an
+  isotropic layer of a cylinder, and the stiffness rebuilt from Hill's moduli
+  of a cylinder. The last one is now built from `2k` rather than from
+  `(k + m) + (k − m)`, which differ by a rounding.
+- A Walpole coefficient of a layer (`layer_param(phase, layer, :ℓ₅)`,
+  `get_coefficient`, `set_coefficient`) is read by `walpole_coeffs(t, Val(5))`
+  of TensND 0.16.4 instead of by its rank in the stored data: the fourth of
+  the five is `ℓ₅` whatever the number of coefficients the field is stored on,
+  and a field without major symmetry is refused instead of being misread.
+- The compat bound of TensND is `0.16.4`.
+
+### Documentation
+
+- **The layers of a sphere and of a cylinder may be entered in every notation
+  of a transversely isotropic material**, which the manual did not say: Hill's
+  moduli, the components, the engineering constants or Hoenig's parameters,
+  about the axis of a fiber (`ti_from_constants(…, axis; form, role)`) or about
+  the radius (`radial_ti(chart, …; form, role)`). *Layered inclusions* gains a
+  section that lists them, with the conversions, the `role = :stiffness`
+  that the engineering constants need, and what to check on the order of each
+  notation and on the five Walpole coefficients, with links to TensND; the docstrings of `LayeredSphere` and
+  `LayeredCylinder` list every kind of layer they take.
+- **The theory of the layered sphere and of the layered cylinder is three
+  pages instead of five, and presents two strategies side by side.** *Layered
+  spheres and cylinders: the radial problem* comes first: the state an
+  interface transmits, the radial modes of a layer with their transfer matrix
+  (Hervé and Zaoui), the system of the first order crossed by the power of a
+  matrix, why the two give the same transfer and which layers each one
+  reaches. *Layered sphere* and *Layered cylinder* then follow one plan:
+  constituents, isotropic layers by both strategies, layers transversely
+  isotropic about the radius, interfaces, averages, pointwise fields,
+  parameters and second moments, schemes, aging viscoelasticity, scope. The
+  former pages on the layers transversely isotropic about the radius are
+  sections of these, under the same anchors; nothing was removed. The systems
+  of the first order of an isotropic layer, and of a layer of a cylinder
+  transversely isotropic about its axis, are new.
+- Three tutorials. *Layered sphere: the systems of the first order,
+  symbolically* and its counterpart for the cylinder build the matrices from
+  the field equations with moduli that depend on the radius, find the exponents
+  as eigenvalues and the modes as eigenvectors, and recover the transfer
+  matrices of the modes as powers of a matrix. *Graded isotropic layers with
+  interfaces at given radii* solves a particle and a fiber whose bulk and shear
+  moduli are functions of the radius (the profile of Lutz and Zimmerman, 2005),
+  with a spring and a membrane at chosen radii, checks them against thin
+  uniform layers and differentiates the effective moduli.
+- One notation on these pages: the state ``Y``, the matrix ``M`` of its
+  system, the matrix ``Φ`` of the states of the modes, the transfer ``T``, the
+  jump ``J``, the ratio ``ξ`` of the radii of a layer (``ρ`` being the Kapitza
+  resistance), ``k_θ`` for the conductivity across the radius (``k_t`` being
+  the tangential stiffness of a spring), and Hill's moduli in the order
+  ``(k, l, m, n, p)``.
+
+### Tests
+
+- The power of the system of a layer is the transfer matrix of its modes, for
+  every loading mode of the sphere and of the cylinder, with numbers, dual
+  numbers (first and second order) and symbols; a layer entered by each
+  notation gives the same tensors.
+
 ## v0.29.2 — faster compilation of anisotropic Hill tensors and crystal laws
 
 A patch release: no result changes, every tensor is the same to the last bit.

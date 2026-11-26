@@ -9,7 +9,8 @@
 #  first derivatives of the unknowns from the tractions, the equilibrium
 #  equations give their second derivatives. `first_order` is the matrix M of
 #  r dY/dr = M Y, and `first_order_forcing` what remains when Y = 0 (a loading
-#  that acts inside the layer).
+#  that acts inside the layer). For a constant M, `mode_states` gives the states
+#  of the radial modes r^s: the eigenvectors of M.
 #
 #  Include it with
 #
@@ -46,4 +47,18 @@ end
 function first_order_forcing(Y, unknowns, equations, r)
     rhs, y = first_order_rhs(Y, unknowns, equations, r)
     return [simplify(subs(e, [yⱼ => 0 for yⱼ in y]...)) for e in rhs]
+end
+
+"""
+    mode_states(M, exponents) -> Matrix
+
+The states of the radial modes of a constant matrix `M`: for each `s` of
+`exponents`, in order, a basis of the kernel of `M - s 1` (a solution of
+`r dY/dr = M Y` is `r^s y` with `M y = s y`), each vector scaled by its first
+entry that is not zero. One column per mode.
+"""
+function mode_states(M, exponents)
+    𝟙 = [i == j ? one(eltype(M)) : zero(eltype(M)) for i in axes(M, 1), j in axes(M, 2)]
+    columns = [simplify.(vec(v) ./ v[findfirst(!iszero, v)]) for s in exponents for v in (M - s * 𝟙).nullspace()]
+    return reduce(hcat, columns)
 end

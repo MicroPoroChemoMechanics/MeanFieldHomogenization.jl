@@ -5,7 +5,7 @@
     layer tensor ``\mathbb{P}_i`` used below, the
     [Voigt and Reuss bounds](@ref th-scheme-bounds), which the laminate
     saturates, and the interface models of
-    [Layered sphere](@ref th-layered-sphere) §3, reused here on a plane.
+    [Layered sphere, section 4](@ref th-layered-sphere-interfaces), reused here on a plane.
 
 A **laminate** is a periodic stack of parallel layers: a unit cell of
 *periodic* homogenization, with no matrix, no auxiliary Eshelby problem and

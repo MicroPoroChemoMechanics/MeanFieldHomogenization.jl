@@ -4,7 +4,7 @@
 #     The tutorial [Hill polarization tensors in practice](@ref tut-hill-tensors),
 #     whose dilute estimate built from one concentration tensor is extended here
 #     to an inclusion of several layers, and the theory page
-#     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+#     [Layered sphere](@ref th-layered-sphere),
 #     where the recurrence evaluated below is derived.
 #
 # Volume-averaged strain and stress concentration tensors of an isotropic

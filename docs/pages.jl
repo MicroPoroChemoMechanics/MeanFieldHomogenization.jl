@@ -65,11 +65,11 @@ pages = [
         # solved for its average concentration tensor. Any pattern admitting
         # that treatment belongs here.
         "The generalized Eshelby problem — morphological patterns" => [
+            # The radial problem and its two strategies first, then the two
+            # patterns it serves, each on one page.
+            "theory/radial_problems.md",
             "theory/layered_sphere.md",
             "theory/layered_cylinder.md",
-            "theory/radial_problems.md",
-            "theory/layered_sphere_radial.md",
-            "theory/layered_cylinder_radial.md",
             "theory/layered_spheroid.md",
             "theory/layered_spheroid_elasticity.md",
             "theory/layered_ellipsoid.md",
@@ -235,10 +235,13 @@ pages = [
             "tutorials/generated/layered_sphere.md",
             "tutorials/generated/layered_sphere_local_fields.md",
             "tutorials/generated/layered_sphere_symbolic.md",
+            "tutorials/generated/layered_sphere_first_order_symbolic.md",
             "tutorials/generated/layered_sphere_radial_symbolic.md",
             "tutorials/generated/layered_cylinder.md",
             "tutorials/generated/layered_cylinder_symbolic.md",
+            "tutorials/generated/layered_cylinder_first_order_symbolic.md",
             "tutorials/generated/layered_cylinder_radial_symbolic.md",
+            "tutorials/generated/graded_layers_interfaces.md",
             "tutorials/generated/layered_spheroid_effective.md",
             "tutorials/generated/layered_spheroid_interfaces.md",
             "tutorials/generated/layered_spheroid_hc.md",

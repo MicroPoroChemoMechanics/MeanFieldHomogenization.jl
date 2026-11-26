@@ -41,7 +41,7 @@ include(joinpath(pkgdir(MeanFieldHomogenization), "scripts", "common", "docviz.j
 default(; left_margin = 5Plots.mm, bottom_margin = 5Plots.mm)
 
 const ez = (0.0, 0.0, 1.0)
-hill(k, l, m, n, p) = ti_from_constants(k + m, k - m, l, n, p, ez)
+hill(k, l, m, n, p) = ti_from_constants(k, l, m, n, p, ez; form = :hill)
 isotropic(E, ν) = iso_stiffness(E / (3 * (1 - 2ν)), E / (2 * (1 + ν)))
 const C_fiber = hill(12.0, 6.0, 5.0, 230.0, 20.0)
 const C_sizing = isotropic(2.0, 0.4)
@@ -208,4 +208,4 @@ plot!(times[2:end], 1.0e3 .* creep(3)[2:end]; label = "axial, J₃₃")
 
 # The axial creep is held by the elastic fibers; the transverse one follows the
 # matrix. The aging cylinder is the elastic one evaluated on Volterra matrices
-# ([theory, section 9](@ref th-layered-cylinder)).
+# ([theory, section 10](@ref th-layered-cylinder)).

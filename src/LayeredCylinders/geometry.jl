@@ -13,16 +13,22 @@
     LayeredCylinder{T, N, Cs, Is, A} <: AbstractLayeredInclusion{3, T}
 
 Infinite cylinder of circular section made of `N` coaxial layers (core and
-coatings), embedded in an infinite matrix. Each layer is isotropic or
-transversely isotropic about the cylinder axis, and so is the matrix: the
-problem then splits into four radial problems solved in closed form
+coatings), embedded in an infinite matrix. Each layer is isotropic,
+transversely isotropic about the cylinder axis or about the radial direction
+of the section, uniform or graded; the matrix is isotropic or transversely
+isotropic about the axis. The problem then splits into four radial problems
 (see the theory page).
 
 - `radii`: ``(r_1, \\dots, r_N)``, ascending; layer ``k`` lies between
   ``r_{k-1}`` and ``r_k``, with ``r_0 = 0``.
 - `moduli`: one property per layer, a stiffness (`TensISO{4,3}` or a
-  `TensTI{4}` whose axis is the cylinder axis) or a conductivity
-  (`TensISO{2,3}` or `TensTI{2}`).
+  `TensTI{4}` whose axis is the cylinder axis, as
+  `TensND.ti_from_constants(…, axis; form, role)` builds from Hill's moduli,
+  components, engineering constants or Hoenig's parameters) or a conductivity
+  (`TensISO{2,3}` or `TensTI{2}`); a field transversely isotropic about the
+  radius, `TensND.radial_ti(CylindricalChart(), …)`, in the same notations; a
+  function of the radius that returns an isotropic tensor or such a field, a
+  [`GradedLayer`](@ref) or a [`PowerLawLayer`](@ref).
 - `interfaces`: the condition at each ``r_k``
   ([`PerfectInterface`](@ref) by default); interface ``N`` is the boundary
   with the matrix.

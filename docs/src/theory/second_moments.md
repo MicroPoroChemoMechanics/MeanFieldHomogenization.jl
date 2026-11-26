@@ -166,7 +166,7 @@ The nine components of the stiffness multiply ``\varepsilon_{ii}^2``
 
 In a layer of a layered sphere, the direction may turn with the point, and
 the moments of the components of the strain in the local frame follow
-([Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial),
+([Layered sphere, section 3](@ref th-layered-sphere-radial),
 section 7).
 
 A class gives as many moments as it has coefficients, and no more: the

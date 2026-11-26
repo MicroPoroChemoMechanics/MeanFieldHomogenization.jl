@@ -1,14 +1,14 @@
-# # [Layered sphere: the transfer matrices, symbolically](@id tut-layered-sphere-symbolic)
+# # [Layered sphere: modes and transfer matrices, symbolically](@id tut-layered-sphere-symbolic)
 #
 # !!! info "Before this page"
 #     The theory page
-#     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere)
+#     [Layered sphere](@ref th-layered-sphere)
 #     states the recurrences of an `n`-layer sphere. This page derives them with
 #     TensND's symbolic differential operators: the transfer matrices of
 #     [herve1993](@citet), their extension to imperfect interfaces
 #     [herveLuanco2014](@cite), and the order of the products when the moduli
 #     are operators. The cylinder has its own page,
-#     [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic).
+#     [Layered cylinder: modes and transfer relations, symbolically](@ref tut-layered-cylinder-symbolic).
 #
 # A [`LayeredSphere`](@ref) is a core and concentric isotropic shells in an
 # infinite isotropic matrix, under a remote uniform strain. That strain splits
@@ -275,3 +275,7 @@ check(3, 6(3Xʳ - 2) * bo, (15Xʳ + 11) * bo)
 # ``\widetilde\mu^{-1}\circ\widetilde k`` applied on the left in the mode shapes,
 # and the products of section 6 in the transfers. Their use is described in
 # [Aging viscoelasticity](@ref man-viscoelasticity).
+#
+# The same loading modes are written as systems of the first order, crossed by
+# the power of a matrix, in
+# [Layered sphere: the systems of the first order, symbolically](@ref tut-layered-sphere-first-order-symbolic).

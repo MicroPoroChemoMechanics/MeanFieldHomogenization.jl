@@ -3,7 +3,7 @@
 !!! info "Before this page"
     [Friction of a granular medium from its contacts](@ref app-granular-friction),
     the same polycrystal with rigid grains, and
-    [Layered sphere §7](@ref th-layered-sphere-jumps) for the strain carried by
+    [Layered sphere, section 5](@ref th-layered-sphere-jumps) for the strain carried by
     the opening of an interface.
 
 A sandstone is a sand whose grains have been cemented together. Its strength

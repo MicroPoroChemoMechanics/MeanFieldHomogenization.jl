@@ -1,0 +1,84 @@
+{
+  "schema": "mfh-literature/1",
+  "source": {
+    "key": "lutzIJSS2005",
+    "doi": "10.1016/j.ijsolstr.2004.06.046",
+    "citation": "Lutz, M. P., Zimmerman, R. W. (2005). Effect of an inhomogeneous interphase zone on the bulk modulus and conductivity of a particulate composite. International Journal of Solids and Structures 42(2), 429-437.",
+    "location": "Eq. (5), p. 431; Section 3 and Fig. 2, p. 433; Section 4 and Fig. 3, p. 436"
+  },
+  "transcription": {
+    "from": "the published article (PDF): Eq. (5) and the text that describes Figs. 2 and 3, read on the page text",
+    "checked_against_source": true,
+    "note": "Only the parameters of the two examples are transcribed; no value is read on the curves of the figures."
+  },
+  "quantities": {
+    "profile_exponent": {
+      "value": 10,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Section 3, p. 433",
+      "description": "Integer exponent b of the profile of Eq. (5), K(r) = K_m + (K_if - K_m) (r/a)^(-b) and the same for the shear modulus, a being the radius of the inclusion; b = 10 is an interphase whose thickness is about one eighth of the diameter of the inclusion."
+    },
+    "stiffness_contrast": {
+      "value": 5,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Section 3 and caption of Fig. 2, p. 433",
+      "description": "Ratio of the moduli of the inclusion to those of the pure matrix, K_i / K_m."
+    },
+    "poisson_ratio": {
+      "value": 0.25,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Section 3 and caption of Fig. 2, p. 433",
+      "description": "Poisson ratio, the same in the matrix, in the interphase and in the inclusion."
+    },
+    "conductivity_contrast": {
+      "value": 5,
+      "unit": "1",
+      "kind": "published",
+      "uncertainty": null,
+      "location": "Section 4, p. 436",
+      "description": "Ratio of the conductivity of the inclusion to that of the pure matrix, in the example of Fig. 3."
+    }
+  },
+  "tables": {
+    "interphase_contrasts": [
+      {
+        "D": -0.75,
+        "interphase": "stiffer than the pure matrix"
+      },
+      {
+        "D": -0.5,
+        "interphase": "stiffer than the pure matrix"
+      },
+      {
+        "D": -0.25,
+        "interphase": "stiffer than the pure matrix"
+      },
+      {
+        "D": 0.0,
+        "interphase": "none: uniform matrix"
+      },
+      {
+        "D": 0.25,
+        "interphase": "softer than the pure matrix"
+      },
+      {
+        "D": 0.5,
+        "interphase": "softer than the pure matrix"
+      },
+      {
+        "D": 0.75,
+        "interphase": "softer than the pure matrix"
+      }
+    ]
+  },
+  "notes": [
+    "Table interphase_contrasts: the values of D = (K_m - K_if) / K_m that label the curves of Fig. 2, p. 433 (the same parameter is defined on the conductivities in Fig. 3).",
+    "The profile reaches the moduli of the pure matrix at infinity only; the article solves the hydrostatic and the conduction problems for it in series."
+  ]
+}
