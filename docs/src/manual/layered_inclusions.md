@@ -214,6 +214,29 @@ material being its direction 3 (the fiber axis, or the radial direction):
     Hill's moduli and the components are those of the tensor itself, and need
     no `role`.
 
+!!! warning "Each notation has its own order, and the Walpole coefficients are five"
+    - Five numbers given in the order of another notation build a valid layer,
+      of another material, without any error. Hill's moduli are
+      ``(k, l, m, n, p)``; the Walpole coefficients
+      ``(\ell_1, \ell_2, \ell_3, \ell_5, \ell_6)`` start with the one along the
+      axis and carry factors: ``\ell_1 = n``, ``\ell_2 = 2k``,
+      ``\ell_3 = \sqrt2\,l``, ``\ell_5 = 2m``, ``\ell_6 = 2p``.
+    - `radial_ti(chart, c₁, …, c₅)` **without `form` reads Walpole
+      coefficients**, not Hill's moduli: write `form = :hill`, or the keywords
+      `n, l, k, m, p`, for the latter.
+    - `walpole_coeffs(t)` of TensND returns **six** coefficients, ``\ell_4 = \ell_3``
+      included, whereas a layer takes **five**, without ``\ell_4``: the six
+      cannot be passed back as they are.
+    - The axis of these notations is the direction 3 of the constants: the
+      fiber axis for `ti_from_constants`, the **radial** direction for
+      `radial_ti`, so that ``E_3`` is then the modulus along the radius.
+
+    The definitions, the relations between the notations and the three lengths
+    in which the Walpole coefficients are read are in the documentation of
+    TensND: [Transversely isotropic parametrizations](@extref TensND th-ti-parametrizations),
+    [The Walpole basis](@extref TensND th-walpole) and
+    [Parametrizations and conversions](@extref TensND man-parametrizations).
+
 Hill's moduli about the radius are also taken by name,
 `radial_ti(chart; n, l, k, m, p)`. [`hill_moduli`](@extref TensND TensND.hill_moduli)
 reads them back from a tensor or from a field, and `ti_constants(t; form, role)`

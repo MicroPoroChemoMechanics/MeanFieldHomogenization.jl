@@ -22,8 +22,9 @@ needs TensND 0.16.3.
   moduli, the components, the engineering constants or Hoenig's parameters,
   about the axis of a fiber (`ti_from_constants(…, axis; form, role)`) or about
   the radius (`radial_ti(chart, …; form, role)`). *Layered inclusions* gains a
-  section that lists them, with the conversions and the `role = :stiffness`
-  that the engineering constants need; the docstrings of `LayeredSphere` and
+  section that lists them, with the conversions, the `role = :stiffness`
+  that the engineering constants need, and what to check on the order of each
+  notation and on the five Walpole coefficients, with links to TensND; the docstrings of `LayeredSphere` and
   `LayeredCylinder` list every kind of layer they take.
 - **The theory of the layered sphere and of the layered cylinder is three
   pages instead of five, and presents two strategies side by side.** *Layered

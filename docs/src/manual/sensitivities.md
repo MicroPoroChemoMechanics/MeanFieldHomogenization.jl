@@ -170,8 +170,10 @@ The moduli of a [`LayeredSphere`](@ref) are held by the sphere, one per layer.
 sphere of the phase `:I`: `:k`, `:μ` (or `:scalar`) for an isotropic layer; for
 a layer transversely isotropic about the radius, a component in the frame that
 turns with the point, `:Crrrr`, `:Cθθθθ`, `:Cθθφφ`, `:Crrθθ`, `:Crθrθ`, a
-Walpole coefficient `:ℓ₁`, `:ℓ₂`, `:ℓ₃`, `:ℓ₅`, `:ℓ₆`, or a conductivity
-`:radial`, `:tangential`. With a tensor in place of the name,
+Walpole coefficient `:ℓ₁`, `:ℓ₂`, `:ℓ₃`, `:ℓ₅`, `:ℓ₆` (five, without ``\ell_4``,
+and with the factors of the Walpole basis:
+[The moduli of a layer, in every notation](@ref man-layered-moduli)), or a
+conductivity `:radial`, `:tangential`. With a tensor in place of the name,
 `layer_param(:I, 2, 𝔹)` is the abscissa of the modulus of the layer along `𝔹`,
 an isotropic tensor or a field of TensND, `radial_ti(SphericalChart(), …)`.
 
