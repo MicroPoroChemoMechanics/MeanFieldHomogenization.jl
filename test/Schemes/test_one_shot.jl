@@ -219,7 +219,7 @@ end
         homogenize(rve, MoriTanaka(), :C; kw...)
     end
     x = mt(C₀)
-    @test x isa TensND.TensOrtho{4, Float64, 9}
+    @test x isa TensND.TensOrtho{4, 3, Float64, 9}
     y = mt(TensND.generic_tens(C₀); method = :nestedquadgk, reltol = 1.0e-12, abstol = 1.0e-14)
     @test norm(mandel(x) - mandel(y)) / norm(mandel(y)) < 1.0e-12
 end

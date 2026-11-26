@@ -230,9 +230,9 @@ end
 
 const _ORTHO9 = (:C1111, :C2222, :C3333, :C1122, :C1133, :C2233, :C2323, :C1313, :C1212)
 const _ORTHO12 = (_ORTHO9..., :C2211, :C3311, :C3322)
-_coefficient(::TensND.TensOrtho{4, T, 9}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO9, "an orthotropic tensor of order 4")
-_coefficient(::TensND.TensOrtho{4, T, 12}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO12, "an orthotropic tensor of order 4 without major symmetry")
-_coefficient(::TensND.TensOrtho{2}, sel::Symbol) = _named_rank(sel, (:a1, :a2, :a3), "an orthotropic tensor of order 2")
+_coefficient(::TensND.TensOrtho{4, 3, T, 9}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO9, "an orthotropic tensor of order 4")
+_coefficient(::TensND.TensOrtho{4, 3, T, 12}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO12, "an orthotropic tensor of order 4 without major symmetry")
+_coefficient(::TensND.TensOrtho{2, 3}, sel::Symbol) = _named_rank(sel, (:a1, :a2, :a3), "an orthotropic tensor of order 2")
 _coefficient(::TensND.TensCubic, sel::Symbol) = _named_rank(sel, (:α, :β, :γ), "a cubic tensor")
 
 _coefficient(::Any, i::Int) = (i, 1)

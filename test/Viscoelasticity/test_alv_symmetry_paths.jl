@@ -82,7 +82,7 @@ end
     frame = TensND.RotatedBasis(0.4, 0.9, 0.2)
     laws = (
         s -> ViscoLaw((t, tp) -> (1 + s * exp(tp - t)) * TensTI{4}(5.0 + s, 4.0, 1.0, 0.5 + 0.1s, 2.0, 1.5, axis)),
-        s -> ViscoLaw((t, tp) -> (1 + s * exp(tp - t)) * TensOrtho{4, Float64}(ntuple(k -> 1.0 + 0.3k + 0.1s * isodd(k), 12), frame)),
+        s -> ViscoLaw((t, tp) -> (1 + s * exp(tp - t)) * TensOrtho{4, 3, Float64}(ntuple(k -> 1.0 + 0.3k + 0.1s * isodd(k), 12), frame)),
     )
     for law in laws
         op(s) = VolterraOperator(law(s), times)

@@ -651,7 +651,7 @@ _sc_pd_guard_apply(x::TensND.AbstractTens, ε_pos) = x
 # Every stored coefficient is an eigenvalue: on (𝕁, 𝕂), on (𝕁, 𝔼, 𝕋), on (nT, nₙ),
 # on (P₁, P₂, P₃).
 function _sc_pd_guard_apply(
-        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}, TensND.TensOrtho{2}}, ε_pos
+        x::Union{TensND.TensISO, TensND.TensCubic, TensND.TensTI{2, <:Any, 2}, TensND.TensOrtho{2, 3}}, ε_pos
     )
     d = TensND.get_data(x)
     all(v -> _sc_above(v, ε_pos), d) && return x
@@ -696,7 +696,7 @@ end
 
 # (C₁₁, C₂₂, C₃₃, C₁₂, C₁₃, C₂₃, C₄₄, C₅₅, C₆₆): a 3×3 block in the material
 # frame, and the eigenvalues 2C₄₄, 2C₅₅, 2C₆₆.
-function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 9}, ε_pos)
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, 3, <:Any, 9}, ε_pos)
     c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆ = TensND.get_data(x)
     B = SMatrix{3, 3}(c₁₁, c₁₂, c₁₃, c₁₂, c₂₂, c₂₃, c₁₃, c₂₃, c₃₃)
     shear = (c₄₄, c₅₅, c₆₆)
@@ -710,7 +710,7 @@ end
 # An orthotropic tensor without major symmetry, (C₁₁, …, C₆₆, C₂₁, C₃₁, C₃₂): as
 # the six-parameter TI one, the guard acts on the symmetric part of the normal
 # block, and its skew part (Cₘₙ - Cₙₘ)/2 is kept.
-function _sc_pd_guard_apply(x::TensND.TensOrtho{4, <:Any, 12}, ε_pos)
+function _sc_pd_guard_apply(x::TensND.TensOrtho{4, 3, <:Any, 12}, ε_pos)
     c₁₁, c₂₂, c₃₃, c₁₂, c₁₃, c₂₃, c₄₄, c₅₅, c₆₆, c₂₁, c₃₁, c₃₂ = TensND.get_data(x)
     s₁₂, s₁₃, s₂₃ = (c₁₂ + c₂₁) / 2, (c₁₃ + c₃₁) / 2, (c₂₃ + c₃₂) / 2
     a₁₂, a₁₃, a₂₃ = (c₁₂ - c₂₁) / 2, (c₁₃ - c₃₁) / 2, (c₂₃ - c₃₂) / 2

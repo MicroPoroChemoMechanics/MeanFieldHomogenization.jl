@@ -91,7 +91,7 @@ struct ScalarClass end
 const _StructuredClass = Union{
     TensISO{4}, TensISO{2}, TensCubic,
     TensTI{4, <:Any, 5}, TensTI{4, <:Any, 6}, TensTI{2, <:Any, 2},
-    TensOrtho{4}, TensOrtho{2},
+    TensOrtho{4, 3}, TensOrtho{2, 3},
 }
 const _OperatorClass = Union{_StructuredClass, DenseClass, ScalarClass}
 # The classes of the plane: its operators are stored by blocks of the plane.
