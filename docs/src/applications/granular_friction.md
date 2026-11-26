@@ -2,7 +2,7 @@
 
 !!! info "Before this page"
     [Layered inclusions](@ref man-layered) for the spring interface of a
-    composite sphere, [Layered sphere §7](@ref th-layered-sphere-jumps) for the
+    composite sphere, [Layered sphere, section 5](@ref th-layered-sphere-jumps) for the
     strain its opening carries, and [Self-consistent schemes](@ref th-scheme-self-consistent)
     for the self-consistent estimate.
 

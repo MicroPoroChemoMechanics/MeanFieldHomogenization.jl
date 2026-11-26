@@ -2,7 +2,7 @@
 EditURL = "../../../../scripts/68_layered_cylinder_symbolic.jl"
 ```
 
-# [Layered cylinder: the transfer relations, symbolically](@id tut-layered-cylinder-symbolic)
+# [Layered cylinder: modes and transfer relations, symbolically](@id tut-layered-cylinder-symbolic)
 
 !!! tip "The whole page as one script"
     Every block of this page, in order, is [`scripts/68_layered_cylinder_symbolic.jl`](https://github.com/MicroPoroChemoMechanics/MeanFieldHomogenization.jl/blob/main/scripts/68_layered_cylinder_symbolic.jl).
@@ -49,7 +49,7 @@ r, θ, z = get_coords(Cyl)
 𝐞ʳ, 𝐞ᶿ, 𝐞ᶻ = unitvec(Cyl)
 k, m, n, p = symbols("k m n p", positive = true)
 l = symbols("l", real = true)
-ℂ = ti_from_constants(k + m, k - m, l, n, p, (Sym(0), Sym(0), Sym(1)))
+ℂ = ti_from_constants(k, l, m, n, p, (Sym(0), Sym(0), Sym(1)); form = :hill)
 stress(u) = ℂ ⊡ symgrad(u, Cyl)
 equilibrium(u) = divergence(stress(u), Cyl)
 nothing #hide
@@ -284,8 +284,8 @@ homogeneous fiber of moduli [hashinRosen1964](@cite)
 
 ````@example layered_cylinder_symbolic
 k₁, p₁, k₂, m₂, p₂, a₁ = symbols("k_1 p_1 k_2 m_2 p_2 a", positive = true)
-coating = ti_from_constants(k₂ + m₂, k₂ - m₂, l, n, p₂, (Sym(0), Sym(0), Sym(1)))
-fiber = ti_from_constants(k₁ + m, k₁ - m, l, n, p₁, (Sym(0), Sym(0), Sym(1)))
+coating = ti_from_constants(k₂, l, m₂, n, p₂, (Sym(0), Sym(0), Sym(1)); form = :hill)
+fiber = ti_from_constants(k₁, l, m, n, p₁, (Sym(0), Sym(0), Sym(1)); form = :hill)
 sol = LC._elastic_solution(LayeredCylinder((a₁, Sym(1)), (fiber, coating)), coating)
 u_R, σ_R = sol.dilatation.outside[2]
 k_eff = factor(simplify(σ_R / (2u_R)))
@@ -356,6 +356,10 @@ residual((Χʳ - 1) * bh, (Χʳ + 2) * bh, 3)
 The package writes the three problems once, for numbers and for operators,
 each product in this order; the aging cylinder is the elastic one evaluated on
 Volterra matrices. See [Aging viscoelasticity](@ref man-viscoelasticity) for its use.
+
+The same radial problems are written as systems of the first order, crossed
+by the power of a matrix, in
+[Layered cylinder: the systems of the first order, symbolically](@ref tut-layered-cylinder-first-order-symbolic).
 
 ---
 

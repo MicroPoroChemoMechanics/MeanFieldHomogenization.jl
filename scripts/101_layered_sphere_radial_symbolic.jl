@@ -1,9 +1,9 @@
 # # [Layered sphere: layers transversely isotropic about the radius, symbolically](@id tut-layered-sphere-radial-symbolic)
 #
 # !!! info "Before this page"
-#     [Layered sphere: the transfer matrices, symbolically](@ref tut-layered-sphere-symbolic),
+#     [Layered sphere: modes and transfer matrices, symbolically](@ref tut-layered-sphere-symbolic),
 #     whose method is followed step by step, and the theory page
-#     [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial),
+#     [Layered sphere, section 3](@ref th-layered-sphere-radial),
 #     which states the results derived here.
 #
 # A layer of a [`LayeredSphere`](@ref) may be transversely isotropic about the
@@ -119,17 +119,17 @@ h = (n = n, l = l, k = k, m = m, p = p)
 
 # In a layer of uniform moduli the state is carried from the radius ``r_1`` to
 # the radius ``r_2`` by the power ``(r_2/r_1)^{\boldsymbol{M}}``, the solution of
-# ``\rho\,\mathrm{d}\boldsymbol{P}/\mathrm{d}\rho = \boldsymbol{M}\,\boldsymbol{P}``
-# equal to the identity at ``\rho = 1``. For a system of size two,
+# ``\xi\,\mathrm{d}\boldsymbol{P}/\mathrm{d}\xi = \boldsymbol{M}\,\boldsymbol{P}``
+# equal to the identity at ``\xi = 1``. For a system of size two,
 # ``\boldsymbol{X} = \boldsymbol{M} + \tfrac12\boldsymbol{1}`` has the square
 # ``t^2\,\boldsymbol{1}``, which gives the power in closed form:
 
-ρ = symbols("rho", positive = true)
+ξ = symbols("xi", positive = true)
 Mₕ = Matrix(LS._bulk_system(h))
 X = Mₕ + [1 0; 0 1] / Sym(2)
 @assert all(iszero, simplify.(X * X - (Sym(1) / 4 + 2 * (2k - l) / n) * [1 0; 0 1]))
-P = Matrix(MeanFieldHomogenization.Core.radial_power(LS._bulk_system(h), ρ))
-@assert all(iszero, simplify.(ρ .* diff.(P, ρ) .- Mₕ * P)) && all(iszero, simplify.(subs.(P, ρ => 1) .- [1 0; 0 1]))
+P = Matrix(MeanFieldHomogenization.Core.radial_power(LS._bulk_system(h), ξ))
+@assert all(iszero, simplify.(ξ .* diff.(P, ξ) .- Mₕ * P)) && all(iszero, simplify.(subs.(P, ξ => 1) .- [1 0; 0 1]))
 simplify.(subs.(P, isotropic...))
 
 # The last matrix is that of an isotropic layer, where ``t = \tfrac32``.
@@ -222,34 +222,34 @@ M_dev = first_order(Y_dev, [Uʳ, Wʳ], [at(eqʳ ⋅ 𝐞ʳ, P₂), at(eqʳ ⋅ �
 #
 # ## 4. Conduction
 #
-# With a conductivity ``k_r`` along the radius and ``k_t`` across it, the
+# With a conductivity ``k_r`` along the radius and ``k_\theta`` across it, the
 # temperature under a remote uniform gradient is ``T = r^s\cos\theta``:
 
-kr, kt = symbols("k_r k_t", positive = true)
+kr, kθ = symbols("k_r k_theta", positive = true)
 𝟏 = TensISO{3}(Sym(1))
-𝐊 = kr * 𝐞ʳ ⊗ 𝐞ʳ + kt * (𝟏 - 𝐞ʳ ⊗ 𝐞ʳ)
+𝐊 = kr * 𝐞ʳ ⊗ 𝐞ʳ + kθ * (𝟏 - 𝐞ʳ ⊗ 𝐞ʳ)
 grad_T = diff(r^s * cos(θ), r) * 𝐞ʳ + diff(r^s * cos(θ), θ) / r * 𝐞ᶿ
 factor(simplify(divergence(𝐊 ⋅ grad_T, Sph) / (r^(s - 2) * cos(θ))))
 
-# ``k_r\,s(s + 1) = 2k_t``. The state is the temperature and the outward flux,
+# ``k_r\,s(s + 1) = 2k_\theta``. The state is the temperature and the outward flux,
 # ``Y = (\hat T,\; r\,\hat q)`` with ``\hat q = -k_r\,\hat T'``, and the system of
 # the package is
 
-M_cond = Matrix(LS._cond_system(radial_ti(SphericalChart(), kt, kr)))
+M_cond = Matrix(LS._cond_system(radial_ti(SphericalChart(), kθ, kr)))
 
 # whose characteristic polynomial is the equation of the exponents:
 
-@assert iszero(expand(det(M_cond - s * [1 0; 0 1]) * kr - (kr * s * (s + 1) - 2kt)))
+@assert iszero(expand(det(M_cond - s * [1 0; 0 1]) * kr - (kr * s * (s + 1) - 2kθ)))
 
 # A homogeneous sphere of such a material, of regular
-# mode ``r^{s}`` with ``s = -\tfrac12 + \sqrt{\tfrac14 + 2k_t/k_r}``, has the
+# mode ``r^{s}`` with ``s = -\tfrac12 + \sqrt{\tfrac14 + 2k_\theta/k_r}``, has the
 # flux ``-k_r\,s\,r^{s-1}`` at its surface for the temperature ``r^s``: it
 # disturbs nothing in a medium of conductivity ``k_r\,s``, the result of
 # [schulgasser1983](@citet) (see also [milton2002](@cite), section 7.5). The
 # package finds a vanishing contribution there:
 
-s₊ = -Sym(1) / 2 + sqrt(Sym(1) / 4 + 2kt / kr)
-ball = LayeredSphere((1,), (radial_ti(SphericalChart(), kt, kr),))
+s₊ = -Sym(1) / 2 + sqrt(Sym(1) / 4 + 2kθ / kr)
+ball = LayeredSphere((1,), (radial_ti(SphericalChart(), kθ, kr),))
 simplify(only(TensND.get_data(property_contribution(ball, TensISO{3}(kr * s₊)))))
 
 # ## 5. From the states to the means
@@ -297,7 +297,7 @@ estimate(set_coefficient(radial_ti(SphericalChart(), C₂), :Crrrr, 4 * get_coef
 
 # ## Where to go next
 #
-# - [Layered sphere: layers transversely isotropic about the radius](@ref th-layered-sphere-radial):
+# - [Layered sphere, section 3](@ref th-layered-sphere-radial):
 #   the statement of these results, the parameters of a layer and the second
 #   moments in a layer.
 # - [Layered inclusions](@ref man-layered): the syntax.

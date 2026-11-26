@@ -781,7 +781,7 @@ the frame of the cylinders, ``(\underline t_1, \underline t_2, \underline n)``: 
 laws are written there once, every iteration runs there, and the converged
 estimate alone is brought back to the canonical frame. A frame does not depend
 on time, so neither change alters the order of the Volterra products
-([Layered cylinder](@ref th-layered-cylinder), section 9).
+([Layered cylinder](@ref th-layered-cylinder), section 10).
 
 ## 8. The differential scheme in ALV
 

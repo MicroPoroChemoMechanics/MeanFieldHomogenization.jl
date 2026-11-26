@@ -51,9 +51,8 @@ Hill's moduli of a stiffness that is isotropic, or transversely isotropic about
 (a running estimate in aging viscoelasticity).
 """
 function _hill_moduli(C::TensND.TensISO{4, 3}, axis)
-    κ, μ = TensND.k_mu(C)
-    l = κ - 2 * μ / 3
-    return (; k = κ + μ / 3, l, m = μ, n = κ + 4 * μ / 3, p = μ, lt = l)
+    h = TensND.hill_moduli(C)
+    return (; h..., lt = h.l)
 end
 
 # Read on the Walpole coefficients, as the block matrices of aging
@@ -234,5 +233,4 @@ end
 
 _ti_tensor(c::NamedTuple{(:t, :a)}, axis) = TensND.TensTI{2}(c.t, c.a, axis)
 
-_stiffness_tensor(L, axis) =
-    TensND.ti_from_constants(L.k + L.m, L.k - L.m, L.l, L.n, L.p, axis)
+_stiffness_tensor(L, axis) = TensND.ti_from_constants(L.k, L.l, L.m, L.n, L.p, axis; form = :hill)

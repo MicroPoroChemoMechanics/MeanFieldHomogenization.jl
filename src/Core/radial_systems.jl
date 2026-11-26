@@ -40,17 +40,15 @@ const RadialField{order, C} = TensND.ChartTens{order, 3, <:Any, <:TensND.TensTI{
 is_radial(c::RadialField) = TensND.isparallel(TensND.axis(c.pattern), TensND.radial_axis(c.chart))
 
 """
-    radial_hill_moduli(c::RadialField{4}) -> (; n, l, k, m, p)
+    radial_hill_moduli(c::RadialField{4}) -> (; k, l, m, n, p)
 
 Hill's moduli about the radial direction ``r``, with ``t, t'`` two orthogonal
 directions across it: ``n = C_{rrrr}``, ``l = C_{rrtt}``,
 ``k = (C_{tttt} + C_{ttt't'})/2``, ``m = (C_{tttt} - C_{ttt't'})/2``,
-``p = C_{rtrt}``, from the Walpole coefficients of the pattern.
+``p = C_{rtrt}`` (`TensND.hill_moduli` of the pattern, whose axis is the
+radius).
 """
-function radial_hill_moduli(c::RadialField{4})
-    ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆ = TensND.get_data(c.pattern)
-    return (n = ℓ₁, l = ℓ₃ / sqrt(convert(TensND.sqrt2_eltype(typeof(ℓ₃)), 2)), k = ℓ₂ / 2, m = ℓ₅ / 2, p = ℓ₆ / 2)
-end
+radial_hill_moduli(c::RadialField{4}) = TensND.hill_moduli(c)
 
 "The coefficients `(tangential, radial)` of a field of order 2 transversely isotropic about the radius."
 radial_coefficients(c::RadialField{2}) = TensND.get_data(c.pattern)

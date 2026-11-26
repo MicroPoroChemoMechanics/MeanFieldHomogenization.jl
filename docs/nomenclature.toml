@@ -1382,27 +1382,139 @@ pages = ["theory/layered_sphere.md", "manual/layered_inclusions.md", "tutorials/
 
 [[symbol]]
 group = "Interfaces and layered inclusions"
-tex = '\mathbf{s}'
-label = "<b>s</b>"
-name = "state vector carried across the layers"
+tex = 'Y'
+label = "Y"
+name = "state of a loading mode: the radial functions of the displacement and r times those of the traction"
 unit = ""
-pages = ["theory/layered_sphere.md"]
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
 
 [[symbol]]
 group = "Interfaces and layered inclusions"
-tex = '\mathbf{T}'
+tex = '\boldsymbol{M}'
+label = "<b>M</b>"
+name = "matrix of the system of the first order of a loading mode, r dY/dr = <b>M</b> Y"
+unit = ""
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\boldsymbol{\Phi}'
+label = "<b>Φ</b>"
+name = "matrix of the states of the radial modes of a layer, one column per mode"
+unit = ""
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\boldsymbol{T}'
 label = "<b>T</b>"
 name = "transfer matrix of a layer"
 unit = ""
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\boldsymbol{J}'
+label = "<b>J</b>"
+name = "jump matrix of an interface"
+unit = ""
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\boldsymbol{D}'
+label = "<b>D</b>"
+name = "diagonal matrix that multiplies the tractions of a state by r"
+unit = ""
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\xi'
+label = "ξ"
+name = "ratio of the outer radius of a layer to its inner radius"
+unit = "1"
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\tau'
+label = "τ"
+name = "logarithm of the radius, ln r"
+unit = ""
+pages = ["theory/radial_problems.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = '\omega'
+label = "ω"
+name = "ratio 3κ/(3κ + 4μ) of an isotropic layer, equal to one when it is incompressible"
+unit = "1"
 pages = ["theory/layered_sphere.md"]
 
 [[symbol]]
 group = "Interfaces and layered inclusions"
-tex = '\mathbf{J}'
-label = "<b>J</b>"
-name = "jump matrix of an interface"
-unit = ""
-pages = ["theory/layered_sphere.md"]
+tex = '\kappa'
+label = "κ"
+name = "bulk modulus of an isotropic layer"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k'
+label = "k"
+name = "Hill's modulus (C<sub>1111</sub> + C<sub>1122</sub>)/2 of a layer, the direction 3 being its axis: the plane-strain bulk modulus"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'l'
+label = "l"
+name = "Hill's modulus C<sub>1133</sub> of a layer, the direction 3 being its axis"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'm'
+label = "m"
+name = "Hill's modulus (C<sub>1111</sub> − C<sub>1122</sub>)/2 of a layer: the shear modulus across its axis"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'n'
+label = "n"
+name = "Hill's modulus C<sub>3333</sub> of a layer, along its axis"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'p'
+label = "p"
+name = "Hill's modulus C<sub>2323</sub> of a layer: the shear modulus along its axis"
+unit = "Pa"
+pages = ["theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k_r'
+label = "k<sub>r</sub>"
+name = "conductivity of a layer along the radius"
+unit = "W/(m·K)"
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
+
+[[symbol]]
+group = "Interfaces and layered inclusions"
+tex = 'k_\theta'
+label = "k<sub>θ</sub>"
+name = "conductivity of a layer across the radius"
+unit = "W/(m·K)"
+pages = ["theory/radial_problems.md", "theory/layered_sphere.md", "theory/layered_cylinder.md", "tutorials/generated/layered_sphere_first_order_symbolic.md", "tutorials/generated/layered_cylinder_first_order_symbolic.md", "tutorials/generated/layered_sphere_radial_symbolic.md", "tutorials/generated/layered_cylinder_radial_symbolic.md"]
 
 [[symbol]]
 group = "Interfaces and layered inclusions"

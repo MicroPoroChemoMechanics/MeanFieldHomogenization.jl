@@ -5,7 +5,7 @@
     crack introduces the finite cell and its corrected boundary condition,
     derived in
     [The finite Eshelby cell with a corrected boundary condition](@ref th-corrected-cell),
-    and [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere)
+    and [Layered sphere](@ref th-layered-sphere)
     for the concentric limit against which every result below is checked.
 
 Recycling concrete means crushing it, and what comes out is not a clean

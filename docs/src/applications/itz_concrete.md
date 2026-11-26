@@ -3,7 +3,7 @@
 !!! info "Before this page"
     [Layered inclusions](@ref man-layered), which explains how a composite
     sphere enters a scheme as a phase, the recurrences behind it in
-    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+    [Layered sphere](@ref th-layered-sphere),
     and [Self-consistent schemes](@ref th-scheme-self-consistent) and
     [Mori–Tanaka](@ref th-scheme-mori-tanaka) for the estimates of the four
     scales.

@@ -371,7 +371,7 @@ reactions, and feeds them to a four-scale model of the same family.
 keeps the Powers fractions and a three-layer composite sphere, and homogenizes
 the same microstructure for diffusivity as well as for stiffness. The
 recurrences behind [`LayeredSphere`](@ref) are derived in
-[Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+[Layered sphere](@ref th-layered-sphere),
 and the Biot coefficients and undrained stiffness written out by hand above are
 computed by the library from a drained stiffness and a homogeneous solid, as
 described in [Poromechanics](@ref manual-poromechanics).

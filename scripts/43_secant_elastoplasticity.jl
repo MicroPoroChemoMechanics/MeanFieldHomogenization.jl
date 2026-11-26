@@ -5,7 +5,7 @@
 #     `ForwardDiff` derivative supplies the closure below, and
 #     [Nonlinear solvers for the self-consistent fixed point](@ref tut-nonlinear-solvers),
 #     for the scheme that is differentiated; the layered sphere is described in
-#     [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere).
+#     [Layered sphere](@ref th-layered-sphere).
 #
 # Every scheme in `MeanFieldHomogenization` is linear: it maps phase stiffnesses to an
 # effective stiffness. A *nonlinear* material can still be treated with those

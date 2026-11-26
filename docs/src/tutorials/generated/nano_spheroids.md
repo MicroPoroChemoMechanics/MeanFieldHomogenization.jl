@@ -13,7 +13,7 @@ EditURL = "../../../../scripts/96_nano_spheroids.jl"
     The tutorial [The n-layer confocal spheroid: geometry and effective conductivity](@ref tut-layered-spheroid-effective),
     where an imperfect interface is already condensed into an equivalent
     particle, in conduction, and the theory page
-    [Layered sphere — bulk + shear recurrences and imperfect interfaces](@ref th-layered-sphere),
+    [Layered sphere](@ref th-layered-sphere),
     whose membrane interface is the surface elasticity condensed below.
 
 When the interface energy is of the same order as the bulk energy — the

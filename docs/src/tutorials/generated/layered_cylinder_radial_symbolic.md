@@ -10,10 +10,10 @@ EditURL = "../../../../scripts/102_layered_cylinder_radial_symbolic.jl"
     once, then `julia scripts/102_layered_cylinder_radial_symbolic.jl`, runs it end to end.
 
 !!! info "Before this page"
-    [Layered cylinder: the transfer relations, symbolically](@ref tut-layered-cylinder-symbolic),
+    [Layered cylinder: modes and transfer relations, symbolically](@ref tut-layered-cylinder-symbolic),
     for the loading modes of the cylinder, and the theory pages
     [The radial problem](@ref th-radial-problems) and
-    [Layered cylinder: layers transversely isotropic about the radius](@ref th-layered-cylinder-radial),
+    [Layered cylinder, section 3](@ref th-layered-cylinder-radial),
     which state the results derived here.
 
 A layer of a [`LayeredCylinder`](@ref) may be transversely isotropic about
@@ -102,7 +102,7 @@ M_anti = first_order(Y_anti, [φ], [simplify(divergence(σ, Cyl) ⋅ 𝐞ᶻ / c
 
 No derivative of a modulus appears, and the matrix is that of the package,
 which solves the antiplane shear and the conduction across the axis as one
-problem, with ``(p, m)`` or ``(k_r, k_t)``:
+problem, with ``(p, m)`` or ``(k_r, k_\theta)``:
 
 ````@example layered_cylinder_radial_symbolic
 @assert same(M_anti, LC._pot_system(LC._antiplane_modulus(h)))
@@ -203,7 +203,7 @@ solution = dsolve(antiplane_equation, φ)
 The exponents are the roots of ``s\,(s + \beta) = m_0/p_0``. They are the
 eigenvalues of the matrix of the reference moduli, ``\beta`` being subtracted
 from the diagonal of its traction row
-([The radial problem](@ref th-radial-problems), section 4):
+([The radial problem](@ref th-radial-problems), section 6):
 
 ````@example layered_cylinder_radial_symbolic
 M₀ = Matrix(LC._pot_system(LC._antiplane_modulus(h)))
@@ -283,7 +283,7 @@ estimate(set_coefficient(wound, :Crrrr, 4 * get_coefficient(wound, :Crrrr)))
 
 - [The radial problem](@ref th-radial-problems): the statement of the
   problem and its resolution across uniform, power-law and graded layers.
-- [Layered cylinder: layers transversely isotropic about the radius](@ref th-layered-cylinder-radial):
+- [Layered cylinder, section 3](@ref th-layered-cylinder-radial):
   the matrices found here, the averages and the parameters of a layer.
 - [Layered inclusions](@ref man-layered): the syntax.
 

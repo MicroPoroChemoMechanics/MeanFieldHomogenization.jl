@@ -1,13 +1,15 @@
 # [Layered inclusions](@id man-layered)
 
 !!! info "Before this page"
-    [Layered spheres](@ref th-layered-sphere),
+    [The radial problem](@ref th-radial-problems),
+    [Layered sphere](@ref th-layered-sphere),
     [Layered cylinder](@ref th-layered-cylinder),
     [Layered spheroids](@ref th-layered-spheroid) and
     [The elastic layered spheroid](@ref th-spheroid-elasticity), where the
-    algebra behind the two families used below is derived — the Hervé–Zaoui
-    transfer matrices, the confocal spheroidal harmonics and the
-    Papkovich–Neuber elastic solution.
+    algebra behind the families used below is derived: the Hervé–Zaoui
+    transfer matrices and the systems of the first order of the sphere and of
+    the cylinder, the confocal spheroidal harmonics and the Papkovich–Neuber
+    elastic solution.
 
 ## What this is
 
@@ -27,8 +29,8 @@ Four families are shipped, and they share their whole surface:
 
 | Type | Geometry | Layers | Physics |
 |:--|:--|:--|:--|
-| [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) | concentric spheres | isotropic | elasticity, conduction, aging viscoelasticity |
-| [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) | coaxial infinite cylinders | isotropic or transversely isotropic about the axis | elasticity, conduction, aging viscoelasticity |
+| [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) | concentric spheres | isotropic or transversely isotropic about the radius, uniform or graded | elasticity, conduction, aging viscoelasticity |
+| [`LayeredCylinder`](@ref MeanFieldHomogenization.LayeredCylinders.LayeredCylinder) | coaxial infinite cylinders | isotropic, transversely isotropic about the axis or about the radius, uniform or graded | elasticity, conduction, aging viscoelasticity |
 | [`LayeredSpheroid`](@ref MeanFieldHomogenization.LayeredSpheroids.LayeredSpheroid) | **confocal** spheroids | isotropic | elasticity and conduction |
 | [`LayeredEllipsoid`](@ref MeanFieldHomogenization.LayeredEllipsoids.LayeredEllipsoid) | **confocal** ellipsoids of three unequal axes | isotropic | conduction |
 
@@ -136,7 +138,7 @@ gradient_gradient_concentration(coated, C₀, C₀; external = false)   # outer 
 ```
 
 The averages of the next section are over the material and count no opening.
-[Layered spheres §7](@ref th-layered-sphere-jumps) derives the jump terms and
+[Layered sphere, section 5](@ref th-layered-sphere-jumps) derives the jump terms and
 lists the options, per layer included. A Kapitza resistance is treated the
 same way in conduction.
 
@@ -180,17 +182,85 @@ Three checks come free and are worth using on a new configuration:
 and the continuity of tractions across every interface — with the displacement
 jump matching the interface law where there is one.
 
+### [5. The moduli of a layer, in every notation](@id man-layered-moduli)
+
+A layer is entered by its modulus, a tensor of TensND, and TensND reads the
+constants of a material in several notations. The same constructors serve the
+layers of a sphere and of a cylinder:
+
+| Layer | Entered as |
+|:--|:--|
+| isotropic stiffness | `iso_stiffness(κ, μ)`, `iso_stiffness_young_poisson(E, ν)`, or any other pair of moduli |
+| isotropic conductivity | `TensISO{3}(k)` |
+| transversely isotropic about the axis of a cylinder | `ti_from_constants(c₁, c₂, c₃, c₄, c₅, axis; form, role = :stiffness)` |
+| transversely isotropic about the radius | `radial_ti(chart, c₁, c₂, c₃, c₄, c₅; form, role = :stiffness)`, with `SphericalChart()` or `CylindricalChart()` |
+| conductivity, transversely isotropic | `TensTI{2}(k_T, k_A, axis)` about the axis, `radial_ti(chart, k_t, k_r)` about the radius |
+| graded | a function `r -> ` one of the isotropic or radial tensors above, a [`GradedLayer`](@ref) or a [`PowerLawLayer`](@ref) |
+
+The keyword `form` says how the five constants are read, the axis of the
+material being its direction 3 (the fiber axis, or the radial direction):
+
+| `form` | Constants | |
+|:--|:--|:--|
+| `:hill` | ``(k, l, m, n, p)`` | Hill's moduli: ``k = \tfrac12(C_{1111} + C_{1122})``, ``l = C_{1133}``, ``m = \tfrac12(C_{1111} - C_{1122})``, ``n = C_{3333}``, ``p = C_{2323}`` |
+| `:components` | ``(C_{1111}, C_{1122}, C_{1133}, C_{3333}, C_{2323})`` | the default of `ti_from_constants` |
+| `:engineering` | ``(E_1, E_3, \nu_{12}, \nu_{31}, G_{31})`` | Young's moduli across and along the axis, Poisson's ratios, axial shear modulus |
+| `:hoenig` | ``(E, \nu_1, \nu_2, H, \Gamma)`` | Hoenig's parameters |
+| `:walpole` | ``(\ell_1, \ell_2, \ell_3, \ell_5, \ell_6)`` | the default of `radial_ti` |
+
+!!! warning "The engineering constants build a compliance unless told otherwise"
+    With `form = :engineering` or `:hoenig`, TensND builds the **compliance** of
+    the material by default. A layer is a stiffness: pass `role = :stiffness`.
+    Hill's moduli and the components are those of the tensor itself, and need
+    no `role`.
+
+Hill's moduli about the radius are also taken by name,
+`radial_ti(chart; n, l, k, m, p)`. [`hill_moduli`](@extref TensND TensND.hill_moduli)
+reads them back from a tensor or from a field, and `ti_constants(t; form, role)`
+the constants of any form, which converts one notation into another
+([Hill form](@extref TensND th-ti-hill)). Here a shell
+transversely isotropic about the radius is entered by Hill's moduli, read in
+engineering constants, and entered again by those:
+
+```@example manlayered_forms
+using MeanFieldHomogenization, TensND
+chart = SphericalChart()
+shell = radial_ti(chart, 19.0, 5.0, 11.0, 12.0, 4.0; form = :hill)          # k, l, m, n, p about the radius
+Eₜ, Eᵣ, νₜ, νᵣₜ, Gᵣₜ = ti_constants(shell.pattern; form = :engineering, role = :stiffness)
+```
+
+```@example manlayered_forms
+same = radial_ti(chart, Eₜ, Eᵣ, νₜ, νᵣₜ, Gᵣₜ; form = :engineering, role = :stiffness)
+core, C₀ = iso_stiffness(40.0, 20.0), iso_stiffness(10.0, 6.0)
+contribution(layer) = TensND.get_data(property_contribution(LayeredSphere((0.6, 1.0), (core, layer)), C₀, C₀))
+contribution(shell), contribution(same)
+```
+
+and a fiber transversely isotropic about its axis by its engineering
+constants, with Hill's moduli read from it:
+
+```@example manlayered_forms
+ez = (0.0, 0.0, 1.0)
+carbon = ti_from_constants(15.0, 230.0, 0.07, 0.2, 15.0, ez; form = :engineering, role = :stiffness)   # E₁, E₃, ν₁₂, ν₃₁, G₃₁
+hill_moduli(carbon)
+```
+
+```@example manlayered_forms
+fiber = LayeredCylinder((0.8, 1.0), (carbon, iso_stiffness(4.0, 1.5)))
+hill_moduli(best_fit_ti(property_contribution(fiber, iso_stiffness(3.0, 1.2)), ez))
+```
+
 ## The four geometries
 
 ### Concentric spheres
 
 [`LayeredSphere`](@ref MeanFieldHomogenization.LayeredSpheres.LayeredSphere) is
-the classical Hervé–Zaoui pattern: isotropic layers, any number of them, both
+the classical Hervé–Zaoui pattern: concentric layers, any number of them, both
 physics. Nothing constrains the radii but that they ascend. Its tensors are
 isotropic and have no axis, and the reference medium must be isotropic too;
 since a cell of isotropic phases keeps every scheme in that class, the
 self-consistent and differential schemes take it with an ordinary spherical
-matrix ([Layered sphere, section 9](@ref th-layered-sphere)). The tutorials
+matrix ([Layered sphere, section 8](@ref th-layered-sphere)). The tutorials
 [n-layer sphere: volume-averaged concentration tensors](@ref tut-layered-sphere)
 and [n-layer sphere: pointwise fields](@ref tut-layered-sphere-local-fields)
 work through one in detail.
@@ -199,8 +269,9 @@ work through one in detail.
 
 A layer may have the radial direction as its symmetry axis, at every point. It
 is then a field of TensND, `radial_ti(SphericalChart(), …)`, in place of an
-isotropic tensor, given by its Hill moduli about ``\underline{e}_r`` or, in
-conduction, by its tangential and radial conductivities
+isotropic tensor, given by its Hill moduli about ``\underline{e}_r``, by any
+other [notation](@ref man-layered-moduli) of a transversely isotropic material
+or, in conduction, by its tangential and radial conductivities
 ([theory](@ref th-layered-sphere-radial)).
 
 ```@example manlayered_radial
@@ -279,7 +350,10 @@ property_contribution(LayeredSphere((a, 3a), (TensISO{3}(10.0), shell)), TensISO
 
 These layers take the interfaces of the others and enter the schemes as they
 do. Real, complex and dual numbers go through the integration; the pointwise
-fields are not available with them.
+fields are not available with them. An elastic zone whose bulk and shear
+moduli are functions of the radius, with a spring and a membrane at chosen
+radii, is worked through in
+[Graded isotropic layers with interfaces at given radii](@ref tut-graded-layers-interfaces).
 
 ### [Coaxial cylinders](@id man-layered-cylinders)
 
@@ -291,7 +365,7 @@ symmetry of an aligned-fiber composite; a self-consistent or a differential
 scheme on aligned fibers then stays within it.
 
 ```@example layered
-ti(k, l, m, n, p) = ti_from_constants(k + m, k - m, l, n, p, (0.0, 0.0, 1.0))  # Hill's moduli
+ti(k, l, m, n, p) = ti_from_constants(k, l, m, n, p, (0.0, 0.0, 1.0); form = :hill)  # Hill's moduli about e₃
 fiber = LayeredCylinder(
     (0.8, 1.0),
     (ti(30.0, 12.0, 9.0, 150.0, 14.0),                  # carbon-like core
@@ -312,7 +386,7 @@ and its moduli may vary with the radius, as for the sphere
 ([theory](@ref th-layered-cylinder-radial)):
 
 ```@example layered
-wound = radial_ti(CylindricalChart(); n = 12.0, l = 5.0, k = 19.0, m = 11.0, p = 4.0)   # Hill's moduli about e_r
+wound = radial_ti(CylindricalChart(), 19.0, 5.0, 11.0, 12.0, 4.0; form = :hill)        # Hill's moduli (k, l, m, n, p) about e_r
 softening(r) = iso_stiffness(4.0 / r, 1.5 / r)                                          # a profile, for 0.8 < r < 1
 wrapped = LayeredCylinder((0.6, 0.8, 1.0), (ti(30.0, 12.0, 9.0, 150.0, 14.0), wound, softening))
 ti_constants(best_fit_ti(property_contribution(wrapped, iso_stiffness(3.0, 1.2)), (0.0, 0.0, 1.0)))
@@ -326,7 +400,7 @@ with ``\underline e_3``. The same fiber, turned to
 
 ```@example layered
 n = (1.0, -2.0, 2.0) ./ 3
-ti_n(k, l, m, n₃₃, p) = ti_from_constants(k + m, k - m, l, n₃₃, p, n)
+ti_n(k, l, m, n₃₃, p) = ti_from_constants(k, l, m, n₃₃, p, n; form = :hill)
 fiber_n = LayeredCylinder(
     (0.8, 1.0),
     (ti_n(30.0, 12.0, 9.0, 150.0, 14.0), iso_stiffness(4.0, 1.5)),
@@ -450,7 +524,8 @@ coated sphere for an aggregate and its transition zone.
 [A graded interphase around a spherical particle](@ref app-graded-interphase)
 replaces the uniform shell by a zone whose moduli vary with the radius.
 
-- [Layered spheres](@ref th-layered-sphere),
+- [The radial problem](@ref th-radial-problems),
+  [Layered sphere](@ref th-layered-sphere),
   [Layered cylinder](@ref th-layered-cylinder),
   [Layered spheroids](@ref th-layered-spheroid),
   [The elastic layered spheroid](@ref th-spheroid-elasticity) — the derivations

@@ -376,6 +376,7 @@ end
         include("LayeredSpheres/test_christensen.jl")
         include("LayeredSpheres/test_local_fields.jl")
         include("LayeredSpheres/test_radial_layers.jl")
+        include("LayeredSpheres/test_two_strategies.jl")
         include("LayeredSpheres/test_generic.jl")
         include("LayeredSpheres/test_interface_sensitivity.jl")
         include("LayeredSpheres/test_scheme_integration.jl")
@@ -391,6 +392,7 @@ end
         include("LayeredCylinders/test_local_fields.jl")
         include("LayeredCylinders/test_scheme_integration.jl")
         include("LayeredCylinders/test_radial_layers.jl")
+        include("LayeredCylinders/test_two_strategies.jl")
         include("LayeredCylinders/test_prolate_limit.jl")
         HAS_SYMBOLIC_BACKENDS && include("LayeredCylinders/test_generic.jl")
     end
