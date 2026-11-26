@@ -83,6 +83,20 @@ end
             @test all(get_coefficient(d, o) ≈ get_coefficient(rl_shell, o) for o in others)
         end
         κ = radial_ti(SphericalChart(), 2.0, 5.0)                           # tangential, radial
+        # A field stored on six coefficients (a product of two tensors of the
+        # class): its five Walpole coefficients are read by name, ℓ₅ being the
+        # fifth stored and not the fourth; without major symmetry it is refused.
+        six = ChartTens(rl_shell.pattern ⊡ one(rl_shell.pattern), SphericalChart())
+        @test six.pattern isa TensTI{4, Float64, 6}
+        for sel in (:ℓ₁, :ℓ₂, :ℓ₃, :ℓ₅, :ℓ₆)
+            @test get_coefficient(six, sel) ≈ get_coefficient(rl_shell, sel)
+            @test rl_data(set_coefficient(six, sel, 2.5).pattern) ≈ rl_data(set_coefficient(rl_shell, sel, 2.5).pattern)
+            @test ForwardDiff.derivative(v -> get_coefficient(set_coefficient(six, sel, v), sel), 2.5) == 1
+        end
+        @test (@inferred get_coefficient(rl_shell, :ℓ₅)) == 2 * 11.0
+        skew = ChartTens(rl_shell.pattern ⊡ TensTI{4}(1.0, 2.0, 0.3, 0.7, 1.1, TensND.radial_axis(SphericalChart())), SphericalChart())
+        @test_throws "not major-symmetric" get_coefficient(skew, :ℓ₅)
+        @test_throws "not major-symmetric" set_coefficient(skew, :ℓ₅, 1.0)
         @test get_coefficient(κ, :radial) == 5.0
         @test get_coefficient(set_coefficient(κ, :tangential, 3.0), :tangential) == 3.0
         @test_throws ArgumentError get_coefficient(rl_shell, :k)

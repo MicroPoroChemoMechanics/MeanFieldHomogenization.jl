@@ -42,19 +42,23 @@ function _from_components(c::RadialField{4}, C)
     return TensND.radial_ti(c.chart; n = Crrrr, l = Crrₜₜ, k = (Cₜₜₜₜ + Cₜₜₛₛ) / 2, m = (Cₜₜₜₜ - Cₜₜₛₛ) / 2, p = Crₜrₜ)
 end
 
+# The five Walpole coefficients (ℓ₁, ℓ₂, ℓ₃, ℓ₅, ℓ₆) of the pattern, whatever the
+# number it is stored on: a pattern without major symmetry is refused.
+_radial_walpole(c::RadialField{4}) = TensND.walpole_coeffs(c.pattern, Val(5))
+
 _radial_rank(names, sel) = findfirst(==(sel), names)
 _not_radial(sel, names) = _unknown_coefficient(sel, "a tensor transversely isotropic about the radius", join(repr.(names), ", "))
 
 function get_coefficient(c::RadialField{4}, sel::Symbol; symmetry::Nothing = nothing)
     i = _radial_rank(_RADIAL_WALPOLE, sel)
-    i === nothing || return TensND.get_data(c.pattern)[i]
+    i === nothing || return _radial_walpole(c)[i]
     sel in _component_names(c.chart) || _not_radial(sel, (_component_names(c.chart)..., _RADIAL_WALPOLE...))
     return _radial_components(c)[sel]
 end
 
 function set_coefficient(c::RadialField{4}, sel::Symbol, v; symmetry::Nothing = nothing)
     i = _radial_rank(_RADIAL_WALPOLE, sel)
-    i === nothing || return TensND.radial_ti(c.chart, Base.setindex(TensND.get_data(c.pattern), v, i)...)
+    i === nothing || return TensND.radial_ti(c.chart, Base.setindex(_radial_walpole(c), v, i)...)
     sel in _component_names(c.chart) || _not_radial(sel, (_component_names(c.chart)..., _RADIAL_WALPOLE...))
     return _from_components(c, merge(_radial_components(c), NamedTuple{(sel,)}((v,))))
 end

@@ -3,7 +3,7 @@
 ## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
 
 A patch release: no result changes beyond the last bit of a rounding. It
-needs TensND 0.16.3.
+needs TensND 0.16.4.
 
 ### Changed
 
@@ -13,7 +13,12 @@ needs TensND 0.16.3.
   isotropic layer of a cylinder, and the stiffness rebuilt from Hill's moduli
   of a cylinder. The last one is now built from `2k` rather than from
   `(k + m) + (k − m)`, which differ by a rounding.
-- The compat bound of TensND is `0.16.3`.
+- A Walpole coefficient of a layer (`layer_param(phase, layer, :ℓ₅)`,
+  `get_coefficient`, `set_coefficient`) is read by `walpole_coeffs(t, Val(5))`
+  of TensND 0.16.4 instead of by its rank in the stored data: the fourth of
+  the five is `ℓ₅` whatever the number of coefficients the field is stored on,
+  and a field without major symmetry is refused instead of being misread.
+- The compat bound of TensND is `0.16.4`.
 
 ### Documentation
 
