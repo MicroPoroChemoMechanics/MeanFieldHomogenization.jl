@@ -21,7 +21,7 @@ recurrence, a grid of Gaussians, a mesh, a network — and every one of them end
 |:--|:--|:--|
 | an ellipsoid, or one of its limits | [Ellipsoidal inclusions](@ref man-ellipsoidal-inclusions) | Eshelby's closed form |
 | a fiber, a cylinder | [Cylindrical inclusions](@ref man-cylindrical-inclusions) | the same, in the cylindrical limit |
-| a crack, a family of cracks | [Cracks](@ref man-cracks) | the crack-opening tensor and its algebra |
+| a crack, a family of cracks | [Cracks](@ref man-cracks) | the crack-opening tensor and its algebra; cracks of a plane that interact |
 | a flat crack of any contour, contacts between its faces | [Planar cracks of any contour](@ref man-planar-cracks) | its integral equation, solved on a grid of Gaussians |
 | a coated particle, an interphase | [Layered inclusions](@ref man-layered) | a recurrence over the layers |
 | a ring-shaped pore | [Toroidal inclusions](@ref man-toroidal-inclusions) | a series of toroidal harmonics |
@@ -51,8 +51,9 @@ cost.
   [non-aging viscoelasticity](@ref man-viscoelasticity-nonaging) with its
   [rheological models](@ref man-rheological-models) and
   [Laplace–Carson inversion](@ref man-laplace-inversion),
-  [aging viscoelasticity](@ref man-viscoelasticity), and
-  [poromechanics](@ref manual-poromechanics).
+  [aging viscoelasticity](@ref man-viscoelasticity),
+  [poromechanics](@ref manual-poromechanics), and the
+  [seismic signatures](@ref man-seismic) of a cell.
 - **[Sensitivities](@ref man-sensitivities)** — differentiating an effective
   property with respect to a modulus, a fraction or a shape parameter, and which
   inclusion types can and cannot serve that.

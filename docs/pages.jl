@@ -61,6 +61,7 @@ pages = [
             "theory/cod_tensors.md",
             "theory/thermal_cracks.md",
             "theory/rice_crack_contributions.md",
+            "theory/interacting_cracks.md",
             "theory/degenerate_shapes.md",
         ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
@@ -117,8 +118,10 @@ pages = [
             "theory/multipole_expansion_spheroids.md",
             "theory/multipole_expansion_anisotropic.md",
             "theory/multipole_expansion_cracks.md",
-            # Not a scheme: what every scheme's concentration tensors give
-            # beyond the effective stiffness.
+            # Not schemes: what the estimate of every scheme gives beyond the
+            # effective stiffness, the share of each crack family in the
+            # compliance, then the response to free strains and prestresses.
+            "theory/fracture_compliance.md",
             "theory/levin.md",
         ],
         # What the derivatives of an estimate are and what they give: how the
@@ -198,6 +201,7 @@ pages = [
             "manual/nonaging_viscoelasticity.md",
             "manual/aging_viscoelasticity.md",
             "manual/poromechanics.md",
+            "manual/seismic.md",
         ],
         "Differentiation" => [
             "manual/sensitivities.md",
@@ -464,6 +468,7 @@ pages = [
         "api/interactions.md",
         "api/schemes.md",
         "api/poromechanics.md",
+        "api/seismic.md",
         "api/constitutive.md",
         "api/material_laws.md",
         "api/assemblies.md",

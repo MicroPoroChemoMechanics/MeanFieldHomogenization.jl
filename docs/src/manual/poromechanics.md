@@ -175,8 +175,10 @@ geometry and amounts are what `squirt_flow` reads.
 
 ## Where to go next
 
-[Sensitivities](@ref man-sensitivities) differentiates the effective
-properties of the preceding pages with respect to any input of their RVE. The
+[Seismic signatures](@ref man-seismic), the next page, gives what a wave sees
+of a cell, its fluid included. [Sensitivities](@ref man-sensitivities)
+differentiates the effective properties of the preceding pages with respect to
+any input of their RVE. The
 Biot coefficients of this page are the material side of
 [The coupled poroelastic problem](@ref fe-poro-coupling), where a
 finite-element code consumes them, and

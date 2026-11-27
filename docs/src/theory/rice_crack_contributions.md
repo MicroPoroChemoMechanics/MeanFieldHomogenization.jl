@@ -421,7 +421,8 @@ these contributions against the geometry.
 
 ## Where to go next
 
-The next page, [Degenerate shapes and extreme aspect ratios](@ref th-degenerate-shapes),
+The next page, [Interacting cracks](@ref th-interacting-cracks), lets several
+cracks of a plane load each other. [Degenerate shapes and extreme aspect ratios](@ref th-degenerate-shapes)
 closes the chapter with the shapes at which the closed forms of the ellipsoid
 and of the crack reach removable limits. A contour for which neither the
 opening nor the intensity factors are published is treated by the integral

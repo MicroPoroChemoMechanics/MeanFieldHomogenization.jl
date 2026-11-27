@@ -151,6 +151,8 @@ The tables are recomputed in the application
 ## Where to go next
 
 Every scheme of this chapter estimates the concentration tensors of the phases
-along with the effective property. The last page,
-[Levin's theorem](@ref th-levin), draws from them the response to free strains
-and prestresses.
+along with the effective property. The next page,
+[Cracks seen as fractures](@ref th-fracture-compliance), reads on the estimate
+of each scheme the share of each crack family in the compliance; the last
+page, [Levin's theorem](@ref th-levin), draws from the concentration tensors the
+response to free strains and prestresses.
