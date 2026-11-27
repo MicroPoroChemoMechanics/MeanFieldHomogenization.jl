@@ -10,7 +10,10 @@
 #  in closed form (Westergaard's functions), so that the mean tractions solve a
 #  linear system of size 2N, and the traction along each crack, mean of the
 #  others included, gives its stress intensity factors. In an isotropic plane
-#  the stresses of a loaded crack do not depend on the elastic constants.
+#  the stresses of a loaded crack do not depend on the elastic constants; in an
+#  anisotropic one they are those of the slit, the ellipse of `ConformalHoles`
+#  flattened (Mauge and Kachanov 1994), whose method `ConformalHoles` adds to
+#  `_crack_field`.
 # =============================================================================
 
 # The stress, in the frame (m, n) of a crack of half-length l centered at the
@@ -48,21 +51,26 @@ end
 # The point at abscissa ξ along crack k, and the tractions (opening, sliding) on
 # its line of the stress the faces of crack j create under (p, τ).
 _point(k::_PlacedSegment, ξ) = k.c + ξ * k.m
-function _traction_from(j::_PlacedSegment, k::_PlacedSegment, ξ, p, τ)
+# `field(x, y, p, τ)` is the stress of crack j in its own frame (m, n).
+function _traction_from(field, j::_PlacedSegment, k::_PlacedSegment, ξ, p, τ)
     d = _point(k, ξ) - j.c
     R = hcat(j.m, j.n)                              # frame of crack j
-    σ = R * _loaded_crack_stress(transpose(j.m) * d, transpose(j.n) * d, j.l, p, τ) * transpose(R)
+    σ = R * field(transpose(j.m) * d, transpose(j.n) * d, p, τ) * transpose(R)
     t = σ * k.n
     return SVector(transpose(k.n) * t, transpose(k.m) * t)
 end
+
+# The field of a uniformly loaded crack in the plane of stiffness C₀, in the
+# frame of the crack: Westergaard's in an isotropic plane.
+_crack_field(::TensND.TensISO{4, 2}, j::_PlacedSegment) = (x, y, p, τ) -> _loaded_crack_stress(x, y, j.l, p, τ)
 
 # The mean over crack k of that traction, per unit (p, τ) of crack j: a 2×2 block.
 # The quadratures run on fixed intervals whose bounds have the type of the
 # primal number: a dual number carries its derivatives through the integrand.
 _bounds_type(x) = typeof(float(TensND.primal(x)))
-function _transmission(j::_PlacedSegment, k::_PlacedSegment; rtol)
+function _transmission(field, j::_PlacedSegment, k::_PlacedSegment; rtol)
     R = _bounds_type(k.l)
-    col(p, τ) = first(quadgk(u -> _traction_from(j, k, u * k.l, p, τ), -one(R), one(R); rtol)) / 2
+    col(p, τ) = first(quadgk(u -> _traction_from(field, j, k, u * k.l, p, τ), -one(R), one(R); rtol)) / 2
     return hcat(col(one(k.l), zero(k.l)), col(zero(k.l), one(k.l)))
 end
 
@@ -73,8 +81,10 @@ Stress intensity factors of interacting cracks of a two-dimensional isotropic
 body under the remote stress `Σ` (a tensor of the plane), by the method of
 average tractions of [kachanov1987](@citet). `cracks` lists `center => crack`
 pairs, each crack a [`RibbonCrack`](@ref) (a segment of half-length `b`) placed
-at `center`, a point of the plane; `C₀`, isotropic, only says that the problem is
-that of the plane (the stresses do not depend on the elastic constants).
+at `center`, a point of the plane. `C₀` is the stiffness of the plane: an
+isotropic one only says that the problem is that of the plane, the stresses of a
+loaded crack not depending on the elastic constants; an anisotropic one gives
+the fields of the slit in that material, as [mauge1994](@citet) do.
 
 Each crack ``k`` carries the traction ``\\boldsymbol\\Sigma\\cdot\\underline n_k`` and
 the tractions the faces of the other cracks send onto its line; every crack
@@ -103,35 +113,26 @@ mean tractions. Numbers and dual numbers; one crack gives the
 [`sif`](@ref) of an isolated one.
 """
 function sif(cracks::AbstractVector{<:Pair}, C₀::_Plane4, Σ::_Plane2; rtol::Real = 1.0e-10)
-    _check_isotropic_plane(C₀)
     segs = [_placed(first(c), last(c)) for c in cracks]
+    fields = [_crack_field(C₀, s) for s in segs]
     S = SMatrix{2, 2}(TensND.canonical_components(Σ))
     N = length(segs)
     remote = [SVector(transpose(s.n) * S * s.n, transpose(s.m) * S * s.n) for s in segs]
     T = mapreduce(s -> eltype(s.c), promote_type, segs; init = eltype(S))
     # Λ by 2×2 blocks, Λ_kj sent by crack j onto crack k; none onto itself.
-    blocks = [j == k ? zero(SMatrix{2, 2, T}) : _transmission(segs[j], segs[k]; rtol) for k in 1:N, j in 1:N]
+    blocks = [j == k ? zero(SMatrix{2, 2, T}) : _transmission(fields[j], segs[j], segs[k]; rtol) for k in 1:N, j in 1:N]
     Λ = reduce(vcat, [reduce(hcat, map(Matrix, blocks[k, :])) for k in 1:N])   # dynamic: N varies
     t = (I - Λ) \ reduce(vcat, remote)
     means = [SVector(t[2k - 1], t[2k]) for k in 1:N]
-    return [_tip_factors(segs, means, remote, k; rtol) for k in 1:N]
+    return [_tip_factors(fields, segs, means, remote, k; rtol) for k in 1:N]
 end
 
 # The factors at the two tips of crack k from its traction along its line.
-function _tip_factors(segs, means, remote, k; rtol)
+function _tip_factors(fields, segs, means, remote, k; rtol)
     s = segs[k]
-    t(ξ) = remote[k] + sum((_traction_from(segs[j], s, ξ, means[j]...) for j in eachindex(segs) if j != k); init = zero(remote[k]))
+    t(ξ) = remote[k] + sum((_traction_from(fields[j], segs[j], s, ξ, means[j]...) for j in eachindex(segs) if j != k); init = zero(remote[k]))
     # ξ = ∓l cos θ makes the weight √((l ± ξ)/(l ∓ ξ)) dξ = l (1 ∓ cos θ) dθ regular.
     R = _bounds_type(s.l)
     K(sgn) = first(quadgk(θ -> t(-sgn * s.l * cos(θ)) * s.l * (1 - cos(θ)), zero(R), R(π); rtol)) / sqrt(R(π) * s.l)
     return (plus = K(1), minus = K(-1), traction = means[k])
 end
-
-_check_isotropic_plane(::TensND.TensISO) = nothing
-_check_isotropic_plane(C₀) = throw(
-    ArgumentError(
-        "the method of average tractions is implemented for an isotropic plane; got a " *
-            "$(nameof(typeof(C₀))). An anisotropic plane needs the fields of a loaded crack " *
-            "of Mauge and Kachanov (1994)"
-    )
-)

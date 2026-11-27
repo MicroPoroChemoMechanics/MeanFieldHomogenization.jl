@@ -9,7 +9,11 @@
 #    (data/literature/kachanov1987.json);
 #  - the transmission factor between two collinear cracks of the periodic row,
 #    Λ⁽ᵏ⁾ of the same article (p. 27), read on the mean traction 1/(1 − Λ);
-#  - invariance under a rotation of the whole body.
+#  - invariance under a rotation of the whole body;
+#  - an anisotropic plane: an isotropic stiffness given as a generic tensor
+#    recovers Westergaard's fields; an isolated crack has √(πb) Σ·n whatever
+#    the anisotropy; collinear cracks are those of the isotropic plane (Mauge
+#    and Kachanov 1994); the rotation of the body, of its stiffness included.
 # =============================================================================
 
 using Test
@@ -82,12 +86,41 @@ end
     end
 end
 
-@testset "interacting cracks of a plane: sliding, and the refusals" begin
+@testset "interacting cracks of an anisotropic plane" begin
+    C_gen = Tens(Array(get_array(TensND.express(C0_IP, TensND.CanonicalBasis{2, Float64}()))))
+    C_ort = from_mandel([10.0 2.0 0.0; 2.0 3.0 0.0; 0.0 0.0 3.0])
+    Σ = Tens([0.2 0.3; 0.3 1.0])
+    cfg = [[0.0, 0.0] => RibbonCrack(0.5; angle = 0.3), [0.4, 0.9] => RibbonCrack(0.4; angle = 1.1)]
+    a, b = sif(cfg, C0_IP, Σ), sif(cfg, C_gen, Σ)
+    @test all(a[k].plus ≈ b[k].plus && a[k].minus ≈ b[k].minus for k in 1:2)
+    one_ = only(sif([[0.3, 0.1] => RibbonCrack(0.6; angle = 0.7)], C_ort, Σ))
+    _, (KI, KII) = sif(RibbonCrack(0.6; angle = 0.7), C0_IP, Σ)
+    @test one_.plus ≈ [KI, KII] && one_.minus ≈ [KI, KII]
+    for θ in (0.0, 0.6)
+        @test sif(_ip_pair(0.1; θ), C_ort, _ip_tension(θ))[2].minus ≈ sif(_ip_pair(0.1; θ), C0_IP, _ip_tension(θ))[2].minus atol = 1.0e-12
+    end
+    # stacked cracks see the anisotropy
+    stack = [[0.0, 0.0] => RibbonCrack(0.5; angle = 0.0), [0.0, 0.4] => RibbonCrack(0.5; angle = 0.0)]
+    @test abs(sif(stack, C_ort, _ip_tension(0.0))[1].plus[1] - sif(stack, C0_IP, _ip_tension(0.0))[1].plus[1]) > 1.0e-3
+    # the whole body turned, its stiffness included
+    θ = 0.8
+    R = [cos(θ) -sin(θ); sin(θ) cos(θ)]
+    C_rot = Tens(Array(get_array(TensND.express(C_ort, TensND.RotatedBasis(-θ)))))
+    turned = [R * [0.0, 0.0] => RibbonCrack(0.5; angle = 0.3 + θ), R * [0.4, 0.9] => RibbonCrack(0.4; angle = 1.1 + θ)]
+    r0, r1 = sif(cfg, C_ort, Σ), sif(turned, C_rot, Tens(R * Matrix(canonical_components(Σ)) * transpose(R)))
+    @test all(r0[k].plus ≈ r1[k].plus && r0[k].minus ≈ r1[k].minus for k in 1:2)
+    # dual numbers through the roots of the anisotropic material, against a
+    # centered difference as the reference of the test
+    g(e) = sif(stack, from_mandel([e 2.0 0.0; 2.0 3.0 0.0; 0.0 0.0 3.0]), _ip_tension(0.0))[1].plus[1]
+    h = 1.0e-4
+    @test ForwardDiff.derivative(g, 10.0) ≈ (g(10.0 + h) - g(10.0 - h)) / (2h) rtol = 1.0e-6
+end
+
+@testset "interacting cracks of a plane: sliding, and a crack out of the plane" begin
     # two parallel cracks under shear: the stack shields, sliding only
     pair = [[0.0, 0.0] => RibbonCrack(0.5; angle = 0.0), [0.0, 0.3] => RibbonCrack(0.5; angle = 0.0)]
     r = sif(pair, C0_IP, Tens([0.0 1.0; 1.0 0.0]))
     @test 0 < abs(r[1].plus[2]) < sqrt(π * 0.5)
-    A = zeros(2, 2, 2, 2)
-    A[1, 1, 1, 1] = 1.0
-    @test_throws ArgumentError sif(pair, C0_IP + Tens(A), Tens([0.0 1.0; 1.0 0.0]))
+    # a crack is a segment of the plane
+    @test_throws ArgumentError sif([[0.0, 0.0] => RibbonCrack(0.5; euler_angles = (0.3, 0.0, 0.0))], C0_IP, Tens([0.0 1.0; 1.0 0.0]))
 end

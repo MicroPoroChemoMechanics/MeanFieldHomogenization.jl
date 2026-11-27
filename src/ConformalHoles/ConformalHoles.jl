@@ -32,6 +32,7 @@ using TensND
 using TensND: is_hard_numeric
 
 import ..Core
+import ..Cracks
 # The moduli of a medium that is isotropic, or transversely isotropic about a
 # given axis: read as a layered cylinder reads those of its layers.
 import ..LayeredCylinders: _hill_moduli, _conductivities
