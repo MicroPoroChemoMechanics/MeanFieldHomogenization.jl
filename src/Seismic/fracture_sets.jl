@@ -84,7 +84,7 @@ orthotropic pattern of the frame) being left out. For three sets,
 `fractured_stiffness(ℂ_b, (eᵢ => (Z_N[i], Z_T[i]) for i in 1:3)...)` is the
 converse. The method of [rasolofosaonGJI2000](@citet), eq. (3), who find the frame
 as the best orthotropic one of the cracked medium
-([`project`](@extref TensND) with `:ORTHO` in TensND).
+([`project`](@extref TensND TensND.project) with `:ORTHO` in TensND).
 """
 function orthogonal_fracture_compliances(ΔS::TensND.AbstractTens{4, 3}, frame::AbstractMatrix)
     D = _sym4(canonical_components(ΔS))
