@@ -1,0 +1,92 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "kachanov1987",
+  "doi": "10.1016/0020-7683(87)90030-8",
+  "citation": "Kachanov, Mark (1987). Elastic solids with many cracks: A simple method of analysis. International Journal of Solids and Structures 23(1), 23-43.",
+  "location": "Table 1 (p. 25) and Table 2 (p. 27)"
+ },
+ "transcription": {
+  "from": "the published article (PDF), tables read on the page images",
+  "checked_against_source": true,
+  "note": "Table 1: two equal collinear cracks (-1,-k) and (k,1) under a remote tension normal to them; K_I at the inner tip x = k and at the outer tip x = 1, divided by K_I0 = p sqrt(pi (1 - k)/2), the factor of an isolated crack of the same length. Table 2: a periodic row of collinear cracks of length 2l and period h, K_I/K_I0 with K_I0 = p sqrt(pi l). The 'exact' columns are quoted by the article from Tada, Paris and Irwin, The Stress Analysis of Cracks Handbook (1973), not read here; the 'method' columns are the article's eqs (6) and (9)."
+ },
+ "quantities": {},
+ "tables": {
+  "two_collinear": [
+   {
+    "k": 0.2,
+    "inner_exact": 1.112,
+    "inner_method": 1.112,
+    "outer_exact": 1.052,
+    "outer_method": 1.052
+   },
+   {
+    "k": 0.1,
+    "inner_exact": 1.255,
+    "inner_method": 1.251,
+    "outer_exact": 1.086,
+    "outer_method": 1.086
+   },
+   {
+    "k": 0.05,
+    "inner_exact": 1.473,
+    "inner_method": 1.452,
+    "outer_exact": 1.12,
+    "outer_method": 1.118
+   },
+   {
+    "k": 0.02,
+    "inner_exact": 1.905,
+    "inner_method": 1.809,
+    "outer_exact": 1.159,
+    "outer_method": 1.154
+   },
+   {
+    "k": 0.01,
+    "inner_exact": 2.372,
+    "inner_method": 2.134,
+    "outer_exact": 1.184,
+    "outer_method": 1.175
+   }
+  ],
+  "periodic_row": [
+   {
+    "gap_over_length": 1.0,
+    "exact": 1.128,
+    "method": 1.128
+   },
+   {
+    "gap_over_length": 0.5,
+    "exact": 1.286,
+    "method": 1.286
+   },
+   {
+    "gap_over_length": 0.25,
+    "exact": 1.565,
+    "method": 1.572
+   },
+   {
+    "gap_over_length": 0.1,
+    "exact": 2.207,
+    "method": 2.271
+   },
+   {
+    "gap_over_length": 0.05,
+    "exact": 2.987,
+    "method": 3.194
+   },
+   {
+    "gap_over_length": 0.025,
+    "exact": 4.126,
+    "method": 4.666
+   },
+   {
+    "gap_over_length": 0.01,
+    "exact": 6.499,
+    "method": 7.973
+   }
+  ]
+ },
+ "notes": "The article states the errors of its method in percent beside each row; they are not stored, being the relative differences of the two columns."
+}

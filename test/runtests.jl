@@ -202,6 +202,7 @@ end
         include("Cracks/test_rice.jl")
         include("Cracks/test_annular.jl")
         include("Cracks/test_arc.jl")
+        include("Cracks/test_interacting_plane.jl")
     end
 
     rungroup("Conductivity") && @testset "Conductivity" begin
