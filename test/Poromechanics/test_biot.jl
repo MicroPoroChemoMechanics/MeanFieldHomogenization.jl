@@ -4,6 +4,8 @@ using TensND
 using LinearAlgebra
 using ForwardDiff
 
+using StaticArrays: SMatrix
+
 # Reference solid phase, reused everywhere below.
 const KS_PORO, MUS_PORO = 20.0, 12.0
 const CS_PORO = TensISO{3}(3 * KS_PORO, 2 * MUS_PORO)
@@ -11,6 +13,9 @@ const CS_PORO = TensISO{3}(3 * KS_PORO, 2 * MUS_PORO)
 # Mori-Tanaka bulk modulus of a solid with spherical pores, closed form:
 #   k_MT = 4 μ_s k_s (1-φ) / (4 μ_s + 3 k_s φ)
 _k_mt_porous(ks, μs, φ) = 4 * μs * ks * (1 - φ) / (4 * μs + 3 * ks * φ)
+
+# 1/M of an incompressible fluid, as the module computes it without `k_f`.
+_inverse_biot_modulus_ref(C_hom, φ) = inverse_biot_modulus(CS_PORO, biot_tensor(C_hom, CS_PORO), φ)
 
 function _porous_rve(φ; C_s = CS_PORO)
     rve = RVE()
@@ -131,6 +136,41 @@ end
     p₀ = 3.0
     Σ = -p₀ * TensND.tens_Id2(Val(3), Val(Float64))
     @test -(Bsk ⊡ Σ) ≈ p₀ * S_scalar rtol = 1.0e-12
+end
+
+# Kelvin-Mandel matrix in the canonical basis, whatever the basis of the tensor.
+_mandel_can(C) = Matrix(mandel(C, TensND.CanonicalBasis{3, Float64}()))
+# Bulk and shear moduli read on that matrix for an isotropic stiffness.
+_k_of(C) = (m = _mandel_can(C); (m[1, 1] + 2m[1, 2]) / 3)
+_μ_of(C) = _mandel_can(C)[4, 4] / 2
+
+# A compressible fluid: the isotropic Gassmann relation written out,
+#   K_sat = K_d + (1 − K_d/K_s)² / (φ/K_f + (1 − φ)/K_s − K_d/K_s²),
+# the shear modulus unchanged.
+@testset "compressible fluid: Gassmann" begin
+    φ, k_f = 0.2, 2.2
+    rve = _porous_rve(φ)
+    C_hom = homogenize(rve, MoriTanaka())
+    k_d = _k_of(C_hom)                     # the pores are soft, not empty: the drained modulus as computed
+    @test k_d ≈ _k_mt_porous(KS_PORO, MUS_PORO, φ) rtol = 1.0e-9
+    par = poroelastic_parameters(C_hom, CS_PORO, φ; k_f)
+    C_u = undrained_stiffness(C_hom, par.B, par.modulus)
+    K_sat = k_d + (1 - k_d / KS_PORO)^2 / (φ / k_f + (1 - φ) / KS_PORO - k_d / KS_PORO^2)
+    @test _k_of(C_u) ≈ K_sat rtol = 1.0e-12
+    @test _μ_of(C_u) ≈ _μ_of(C_hom) rtol = 1.0e-12
+    @test biot_modulus(CS_PORO, par.B, φ; k_f) ≈ par.modulus rtol = 1.0e-14
+    @test inverse_biot_modulus(CS_PORO, par.B, φ; k_f) ≈ inverse_biot_modulus(CS_PORO, par.B, φ) + φ / k_f
+    # the Skempton coefficient of a fluid softer than the grains is below one
+    @test 0 < skempton_tensor(C_hom, par.B, par.modulus)[1, 1] < 1
+    # without k_f, the values of an incompressible fluid, to the bit
+    @test poroelastic_parameters(C_hom, CS_PORO, φ).inverse_modulus === _inverse_biot_modulus_ref(C_hom, φ)
+    # the Kelvin-Mandel route agrees
+    Mh, Ms = SMatrix{6, 6}(_mandel_can(C_hom)), SMatrix{6, 6}(_mandel_can(CS_PORO))
+    @test poroelastic_parameters(Mh, Ms, φ; k_f).inverse_modulus ≈ par.inverse_modulus rtol = 1.0e-12
+    # derivative with respect to the fluid modulus
+    dK(k) = (q = poroelastic_parameters(C_hom, CS_PORO, φ; k_f = k); _k_of(undrained_stiffness(C_hom, q.B, q.modulus)))
+    Kref(k) = k_d + (1 - k_d / KS_PORO)^2 / (φ / k + (1 - φ) / KS_PORO - k_d / KS_PORO^2)
+    @test ForwardDiff.derivative(dK, k_f) ≈ ForwardDiff.derivative(Kref, k_f) rtol = 1.0e-10
 end
 
 @testset "effective stresses" begin
