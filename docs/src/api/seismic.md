@@ -1,4 +1,8 @@
-# Seismic signatures
+# [API — Seismic signatures](@id api-seismic)
+
+```@docs
+MeanFieldHomogenization.Seismic
+```
 
 What a wave sees of a cell: its mass density, and the compliances of the sets of
 fractures its crack families are. Syntax in [Seismic signatures](@ref man-seismic),

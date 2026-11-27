@@ -47,10 +47,19 @@ lets the cracks of a plane load each other.
 
 ### Documentation
 
-- Theory: *Cracks seen as fractures* and *Interacting cracks*; Levin's
-  theorem §5 derives Gassmann's relation, the pressure of sealed pores and the
-  squirt flow. Manual: *Seismic signatures*, the fluid in the pores, interacting
-  cracks. Applications: a section *Cracked and saturated rocks*.
+- Theory: *Cracks seen as fractures*, *Interacting cracks* (with the exact
+  solutions of two collinear cracks and of a periodic row) and *Cross-property
+  connections*; Levin's theorem §5 derives Gassmann's relation, the pressure of
+  sealed pores and the squirt flow. Manual: *Seismic signatures*, the fluid in
+  the pores, interacting cracks, the contributions of one inclusion in both
+  physics.
+- Applications, each recomputing a published study with its parameters: a
+  section *Cracked and saturated rocks* (fluid-filled pores after Shafiro and
+  Kachanov, squirt flow after Guéguen and Sarout, the cracks of the KTB gneiss
+  after Rasolofosaon et al.), a section *Cross-property connections* (dry
+  cracks, a closed-cell aluminum foam, plasma-sprayed coatings), interacting
+  cracks after Kachanov, elliptical holes in an anisotropic plate after Tsukrov
+  and Kachanov.
 
 ## v0.30.0 — cells of the plane with an anisotropic matrix
 

@@ -19,6 +19,7 @@ TensND's; nothing of them is re-implemented here.
 | [`fractured_stiffness`](@ref) | a background crossed by sets of fractures declared by ``(\\underline{n}, \\boldsymbol{Z})`` |
 | [`linear_slip_change`](@ref) | ``\\Delta\\mathbb{S} = \\operatorname{sym}(\\underline{n}\\otimes\\boldsymbol{Z}\\otimes\\underline{n})`` |
 | [`slip_compliance`](@ref) | ``\\boldsymbol{Z}`` from a change of compliance of the form ``\\operatorname{sym}(\\underline{n}\\otimes\\boldsymbol{Z}\\otimes\\underline{n})`` |
+| [`orthogonal_fracture_compliances`](@ref) | ``Z_N^i``, ``Z_T^i`` of three orthogonal sets read on a change of compliance |
 """
 module Seismic
 
