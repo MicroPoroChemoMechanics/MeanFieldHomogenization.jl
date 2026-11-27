@@ -21,6 +21,12 @@ drained_stiffness
 skempton_tensor
 ```
 
+## Fluid sealed in its pores
+
+```@docs
+pore_pressure_tensor
+```
+
 ## Effective stresses and porosity
 
 ```@docs

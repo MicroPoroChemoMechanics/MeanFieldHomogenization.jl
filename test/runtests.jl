@@ -444,6 +444,7 @@ end
     # `Schemes` to be exercised — same position as in the load order.
     rungroup("Poromechanics") && @testset "Poromechanics" begin
         include("Poromechanics/test_biot.jl")
+        include("Poromechanics/test_closed_pores.jl")
     end
 
     # `Seismic` reads homogenized cells, after the schemes and the poromechanics.
