@@ -15,23 +15,18 @@
 #  -----
 #  - two balls / two disks + isotropic reference        → Analytical (exact)
 #  - any other pair of ellipsoids + isotropic reference → Multipole
-#  - any pair + anisotropic reference (3D, or 2D cond.) → Multipole
-#  - any pair + anisotropic reference, 2D elasticity    → Multipole, and
-#                                                         `green_operator` then
-#                                                         refuses (Stroh)
+#  - any pair + anisotropic reference, plane or space  → Multipole
 #  - explicit `:quadrature`                             → NestedQuadGK
 #  - explicit `:multipole`                              → Multipole
 #  - explicit `:analytical`                             → Analytical (errors in
 #                                                         the kernel table if no
 #                                                         closed form exists)
 #
-#  Anisotropic references ARE supported (since `Core/green_aniso.jl` landed):
-#  they resolve to `Multipole`, because the exactness of the closed forms rests
-#  on the isotropic Green function being biharmonic — which a general
-#  anisotropic one is not — so even a ball pair needs the truncated expansion
-#  there.  The single remaining gap is plane-strain elasticity with an
-#  anisotropic reference, which would need the Stroh formalism and is refused
-#  with a message naming the limitation.
+#  Anisotropic references resolve to `Multipole`, in the plane as in space,
+#  for elasticity and for conduction (`Core/green_aniso.jl`,
+#  `Core/green_plane_aniso.jl`): the exactness of the closed forms rests on the
+#  isotropic Green function being biharmonic, which a general anisotropic one
+#  is not, so even a ball pair needs the truncated expansion there.
 #
 #  As everywhere else in the package, new rules are added as new methods —
 #  never by editing an existing one.

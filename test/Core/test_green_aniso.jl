@@ -24,8 +24,7 @@ using ForwardDiff
 #   4. Genuine anisotropy: minor and major symmetries, homogeneity of degree -3,
 #      and agreement with a finite difference of the Green function.
 #   5. The dispatcher picks the closed form for an isotropic reference.
-#   6. Error paths: the origin, and plane-strain elasticity (Stroh, not
-#      implemented).
+#   6. Error paths: the origin.
 #   7. `ForwardDiff` through the anisotropic operator, and the memoized
 #      Gauss-Legendre rule.
 # =============================================================================
@@ -180,9 +179,7 @@ end
 @testset "Anisotropic Green — error paths" begin
     @test_throws DomainError green_function_aniso(_Ciso(), [0.0, 0.0, 0.0])
     @test_throws DomainError green_operator_aniso(TensISO{3}(2.0), [0.0, 0.0, 0.0])
-    # Plane-strain elasticity with an anisotropic reference needs Stroh.
-    C2 = Tens(get_array(TensISO{2}(3.0, 2.0)))
-    @test_throws ArgumentError green_operator(C2, [1.0, 2.0])
+    @test_throws DomainError green_operator(Tens(get_array(TensISO{2}(3.0, 2.0))), [0.0, 0.0])
 end
 
 @testset "Anisotropic Green — ForwardDiff and the memoized rule" begin

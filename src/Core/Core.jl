@@ -28,6 +28,8 @@ Contents
 - `green_aniso.jl`        : its anisotropic counterpart — Barnett line integral
                              for elasticity, closed form for conduction — and
                              the `green_operator` dispatcher over both
+- `green_plane_aniso.jl`  : the Green operator of an anisotropic elastic medium
+                             of the plane, a finite part on the unit circle
 - `quadrature.jl`         : DECUHR cubature backend seam
 - `dispatch.jl`           : central `_resolve_algo` mechanism
 - `dispatch_pair.jl`      : `_resolve_pair_algo` — its two-inclusion counterpart
@@ -59,6 +61,7 @@ include("green_helpers.jl")
 include("green_dipole.jl")
 include("green_operator.jl")
 include("green_aniso.jl")
+include("green_plane_aniso.jl")
 include("quadrature.jl")
 include("radial_systems.jl")
 include("dispatch.jl")
