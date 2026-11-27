@@ -87,8 +87,8 @@ does not depend on the reading.
 | the Hill tensor of an ellipse, in an isotropic or an anisotropic plane | [Hill polarization tensors](@ref th-hill-plane) |
 | the Green operator of an anisotropic plane, and the interaction tensors of two inclusions of the plane | [The Green operator of an anisotropic plane](@ref th-plane-green), [Two-inclusion interaction tensors](@ref th-interaction) |
 | the crack of the plane, a segment, as the trace of a ribbon crack | [Crack opening displacement and compliance](@ref th-cod-tensors) |
-| holes given by a conformal map, in plane strain and in a plate, in a matrix isotropic in the plane; the stress along their contour | [Holes given by a conformal map](@ref th-conformal-mapping) |
-| the elliptic hole in an anisotropic plane; a hole of several terms is not solved there | [The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse), [Holes given by a conformal map](@ref th-conformal-mapping), section 10 |
+| holes given by a conformal map, in plane strain and in a plate, in a matrix isotropic in the plane; the stress along their contour and in the matrix | [Holes given by a conformal map](@ref th-conformal-mapping), [The stress in the matrix](@ref th-matrix-stress) |
+| the elliptic hole in an anisotropic plane, in elasticity and in conduction; a hole of several terms is not solved there | [The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse), [Conduction around the insulating ellipse](@ref th-ellipse-conduction), [Holes given by a conformal map](@ref th-conformal-mapping), section 10 |
 | the complex potentials of plane elasticity, isotropic and anisotropic | [Complex potentials](@ref th-complex-potentials) |
 | concentric rings | [Layered cylinder](@ref th-layered-cylinder) |
 | conduction across the axis | [Extension to conductivity](@ref th-conductivity) |

@@ -129,7 +129,7 @@ MeanFieldHomogenization.ToroidalShape
 A cylindrical cavity whose cross-section is given by a conformal map with a
 finite number of terms, entered through the concentration level (B) of the
 custom-inclusion interface, and the stress along the contour of such a hole of
-the plane; see [Conformal holes](@ref man-conformal-holes)
+the plane and in the matrix around it; see [Conformal holes](@ref man-conformal-holes)
 and [Holes given by a conformal map](@ref th-conformal-mapping).
 
 ```@docs
@@ -138,6 +138,7 @@ MeanFieldHomogenization.ConformalHole
 MeanFieldHomogenization.ConformalShape
 MeanFieldHomogenization.polygon_map
 MeanFieldHomogenization.contour_stress
+MeanFieldHomogenization.matrix_stress
 ```
 
 ## Finite-element inclusions

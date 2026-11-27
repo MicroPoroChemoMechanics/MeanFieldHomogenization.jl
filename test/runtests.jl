@@ -281,6 +281,10 @@ end
         # The elliptic hole of the plane in an anisotropic matrix.
         include("CustomInclusions/test_elliptic_hole_anisotropic.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_elliptic_hole_anisotropic_symbolic.jl")
+        # The stress in the matrix around a hole of the plane, and the
+        # insulating ellipse in an anisotropic conductivity.
+        include("CustomInclusions/test_hole_matrix_stress.jl")
+        include("CustomInclusions/test_elliptic_hole_conduction.jl")
         # Two-dimensional problems through the three-dimensional schemes: their
         # phases are the cylinders and the holes above.
         include("Schemes/test_plane_problems.jl")

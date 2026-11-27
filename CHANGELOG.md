@@ -16,9 +16,9 @@ plane; this release brings the plane closer to space.
   elastic reference of the plane (see below): code that relied on the
   `ArgumentError` gets an operator.
 - An elliptic `ConformalHole`, whose map has its first term only, no longer
-  refuses an anisotropic stiffness of a cell of the plane (see below): code
-  that relied on the `ArgumentError` gets the concentration tensor. A map of
-  several terms is refused as before.
+  refuses an anisotropic stiffness or an anisotropic conductivity of a cell of
+  the plane (see below): code that relied on the `ArgumentError` gets the
+  concentration tensor. A map of several terms is refused as before.
 
 ### Added
 
@@ -57,6 +57,28 @@ plane; this release brings the plane closer to space.
   anisotropic one with `contour_stress(hole, Σ, θ, C₀)`. It gives the stress
   concentration at the edge of the hole, which the concentration tensors,
   averages over the hole, do not.
+- **`matrix_stress(hole, Σ, x)`**, the stress tensor at a point, or at each
+  of a collection of points, of the matrix around a free hole of the plane:
+  any map in an isotropic matrix, and the ellipse in an anisotropic one with
+  `matrix_stress(hole, Σ, x, C₀)`. It tells how far from the edge the stress
+  comes back to the remote one. The second potential is written so that the
+  powers of the variable of the map that cancel are removed on the
+  coefficients: a map of many terms keeps its digits far from the hole, where
+  the expression as it reads loses them all. In the anisotropic matrix the
+  stress is evaluated either with the two characteristic roots or on the mean
+  and the divided difference of each quantity over them, whichever divides by
+  the larger quantity: an isotropic stiffness given as a general tensor gives
+  the isotropic field to rounding, where the formulas with the two roots alone
+  lose about half the digits. Numbers and dual numbers; a point inside the hole
+  throws a `DomainError`.
+- **The insulating elliptic hole in an anisotropic conductor of the plane.**
+  `gradient_gradient_concentration(ConformalHole((m,)), K₁, K₀)` in a cell of
+  the plane takes any symmetric conductivity `K₀`, symbols included: the
+  temperature is the real part of a function of one complex variable, the
+  root of a quadratic in closed form, and the gradient concentration tensor,
+  not symmetric in general, is in closed form. It equals that of
+  `Ellipsoid(a, b; angle)` given by the Hill tensor. A map of several terms
+  still needs an isotropic conductivity.
 - `data/literature/lekhnitskii1981.json`: the constants of Lekhnitskii's birch
   plywood and his Tables 8, 9 and 10, the largest stresses on the edge of an
   elliptic hole in a plywood and in an isotropic plate.
@@ -96,14 +118,18 @@ plane; this release brings the plane closer to space.
 - Two appendices to the Theory derive the complex representation of plane
   elasticity, from the holomorphic functions to the potentials of
   Kolosov–Muskhelishvili and of Lekhnitskii, and the elliptic hole in an
-  anisotropic matrix. The theory and the manual of conformal holes give the
-  stress along the contour and the anisotropic ellipse.
+  anisotropic matrix, the stress in the matrix around a hole, and the
+  insulating ellipse in an anisotropic conductor. The theory and the manual of
+  conformal holes give the stress along the contour and in the matrix, and the
+  anisotropic ellipse in elasticity and in conduction.
 - The application *The elliptic hole, from an isotropic to an anisotropic
   plate* (`scripts/90_elliptic_hole.jl`) computes the stress along the edge
   against Muskhelishvili's closed form, Lekhnitskii's Eqs. (31.13)–(31.16) and
   his Tables 8, 9 and 10, lists with both values the printed cells that
-  differ, and checks the hole as an inclusion against the Hill tensor of the
-  ellipse, its derivatives and its symbolic tip stress.
+  differ, follows the stress ahead of the tip against Kirsch's closed form for
+  the circle, and checks the hole as an inclusion and as an insulator against
+  the Hill tensor of the ellipse, its derivatives and its symbolic tip
+  stress.
 
 ## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
 

@@ -10,8 +10,9 @@ Hill tensor. In a matrix that is isotropic in the plane of the section its
 response is nonetheless exact when the outside of the section is the image of
 the outside of a disk by a map with a finite number of terms: the complex
 potentials of plane elasticity are then finite sums. This page derives the
-concentration tensors of such a cavity, then the stress along its contour, and
-the elliptic hole in a matrix of any anisotropy of the plane. The complex representation of plane
+concentration tensors of such a cavity, then the stress along its contour and
+in the matrix, and the elliptic hole in a matrix of any anisotropy of the
+plane, in elasticity and in conduction. The complex representation of plane
 elasticity and its use with a conformal map are those of
 [Muskhelishvili](@cite muskhelishvili1977), whose sections and equations are
 quoted where they are used; the syntax is given in
@@ -403,6 +404,15 @@ In a cell of the plane the variable is ``z=x_1+\mathrm{i}\,x_2`` and the
 remote stress a tensor of the plane; [`contour_stress`](@ref) evaluates the
 formula above.
 
+Away from the contour the stress needs the second potential ``\psi`` as well.
+The condition of the free contour, written between functions rational in
+``\sigma``, gives it in closed form in the whole matrix, and the powers of
+``\zeta`` that cancel in it are removed on the coefficients, so that the
+stress keeps its digits far from the hole; the derivation is in
+[The stress in the matrix](@ref th-matrix-stress), and
+[`matrix_stress`](@ref)`(hole, Σ, x)` gives the stress tensor at the point
+``x`` of the matrix, for a map of any number of terms.
+
 ## 10. An anisotropic matrix of the plane
 
 This section says which holes are solved in a matrix of any anisotropy of the
@@ -433,11 +443,22 @@ longer gives the same point of the contour in the three planes.
 
 The package therefore solves the elliptic hole, `ConformalHole((m,))`, in a
 cell of the plane whose matrix has any anisotropy: its strain concentration
-tensor, which is that of the ellipse given by its Hill tensor, and the stress
-along its contour. The formulas are written with the sum and the product of
-``\mu_1`` and ``\mu_2``, so that the isotropic matrix, where the two roots
-coincide, is an ordinary case. A map of several terms in an anisotropic
-matrix is refused.
+tensor, which is that of the ellipse given by its Hill tensor, the stress
+along its contour, and the stress in the matrix
+([The stress in the matrix](@ref th-matrix-stress)). The formulas are written
+with the sum and the product of ``\mu_1`` and ``\mu_2``, or with the mean and
+the divided difference of a quantity over the two roots, so that the
+isotropic matrix, where the two roots coincide, is an ordinary case.
+
+In conduction the temperature is the real part of a function of the one
+variable ``z_\mu=x_1+\mu\,x_2``, ``\mu`` the root of positive imaginary part
+of ``K_{22}\mu^2+2K_{12}\mu+K_{11}=0``, and the same argument holds with one
+plane instead of two: the insulating ellipse takes any symmetric conductivity
+of the plane, and its gradient concentration tensor, which is not symmetric
+in general, is in closed form
+([Conduction around the insulating ellipse](@ref th-ellipse-conduction)); for
+an isotropic conductivity it is the tensor of section 5. A map of several
+terms in an anisotropic matrix is refused, in elasticity and in conduction.
 
 ## 11. Checks
 
@@ -518,12 +539,14 @@ corner is reached in the limit of an infinite map only: a cut map rounds it,
 and the tensors converge with the number of terms
 ([Prismatic pores with corners](@ref app-conformal-holes)). The coefficients
 are numbers, dual numbers or symbols. [`ConformalHole`](@ref) is the
-inclusion, and [`contour_stress`](@ref) the stress along the contour of a hole
-of the plane. In a cell of the plane the ellipse is solved in a matrix of any
-anisotropy (section 10). Outside the method are a map of several terms in a
-matrix anisotropic in the plane of the section, a cavity of space in such a
-matrix, for which the elliptic [`Cylinder`](@ref) has a Hill tensor, the
-stress away from the contour, and holes that interact.
+inclusion, [`contour_stress`](@ref) the stress along the contour of a hole of
+the plane, and [`matrix_stress`](@ref) the stress at any point of its matrix,
+for numbers and dual numbers: the point of the circle that a point of the
+matrix comes from is chosen by a comparison of moduli. In a cell of the plane the ellipse is solved in a matrix of any
+anisotropy, in elasticity and in conduction (section 10). Outside the method
+are a map of several terms in a matrix anisotropic in the plane of the
+section, a cavity of space in such a matrix, for which the elliptic
+[`Cylinder`](@ref) has a Hill tensor, and holes that interact.
 
 ## Where to go next
 
@@ -531,8 +554,12 @@ The complex representation used on this page is derived in the appendices
 [Holomorphic functions](@ref th-holomorphic-functions) and
 [Complex potentials](@ref th-complex-potentials), and its anisotropic
 counterpart, for the ellipse, in
-[The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse).
-The stress along the contour is computed in an isotropic and in a plywood plate
+[The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse); the
+stress in the matrix and the insulating ellipse in an anisotropic conductor in
+[The stress in the matrix](@ref th-matrix-stress) and
+[Conduction around the insulating ellipse](@ref th-ellipse-conduction).
+The stress along the contour and ahead of the tip is computed in an isotropic
+and in a plywood plate
 in [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole).
 
 A shape with neither a closed form nor an exact series is the subject of the

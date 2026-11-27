@@ -21,8 +21,9 @@ stress several times the applied one. This page computes that stress in an
 isotropic plate, against the closed form of
 [Muskhelishvili](@cite muskhelishvili1977), then in an orthotropic plywood
 sheet, against the formulas and the tables of
-[Lekhnitskii](@cite lekhnitskii1981), and ends with the same hole as an
-inclusion of a homogenized sheet.
+[Lekhnitskii](@cite lekhnitskii1981), follows the stress away from the edge,
+and ends with the same hole as an inclusion of a homogenized sheet and as an
+insulator.
 
 ````@example elliptic_hole
 using MeanFieldHomogenization
@@ -328,10 +329,10 @@ end
 
 Most cells agree with the printed values. The values computed here meet the
 closed forms of the same book, Eqs. (31.13) to (31.16), to the last digits,
-and the closed form of Muskhelishvili in the isotropic plate; the next
-section checks that the hole has the mean strain the Hill tensor of the
-ellipse gives, and the tests of the package check that the traction vanishes
-on the edge. On the cell ``\varphi = 90^\circ``, ``\psi = 0`` (and ``180^\circ``),
+and the closed form of Muskhelishvili in the isotropic plate; the section on
+the hole as an inclusion checks that it has the mean strain the Hill tensor
+of the ellipse gives, and the tests of the package check that the traction
+vanishes on the edge. On the cell ``\varphi = 90^\circ``, ``\psi = 0`` (and ``180^\circ``),
 Table 8 prints 7.20 where Eq. (31.13) gives ``1 + c\,n/k = 7.298``, the value
 computed. Several cells of the columns ``\psi = 45^\circ`` and ``135^\circ``, and a few
 others, differ by more than the rounding; Table 10 differs at ``45^\circ`` and
@@ -378,6 +379,62 @@ plot!(pull_sweep, φc, [maximum(contour_stress(hole, uniaxial(deg2rad(φ)), θs)
 scatter!(pull_sweep, φs, isotropic_printed; color = :black, marker = :diamond, markersize = 3, label = "Table 10")
 ````
 
+## Away from the edge
+
+The stress is largest on the edge; how fast it comes back to the pull
+decides whether a neighboring hole or an edge of the plate feels the hole.
+[`matrix_stress`](@ref) gives the stress tensor at a point of the plate, in
+the axes and at the scale of the map, with the stiffness as its last
+argument in the anisotropic plate
+([The stress in the matrix](@ref th-matrix-stress)). Ahead of the tip, on
+the major axis at the distance ``d`` from the end ``x_1 = a`` of the hole,
+under the pull across that axis, the stress ``\sigma_{22}`` is computed for
+the circle, for the ellipse ``a/b = 2`` in the isotropic plate, and for the
+same ellipse in the plywood plate with the fibers along (``\psi = 0``) and
+across (``\psi = 90^\circ``) the hole. For the circle, of radius 1, the
+closed form of Kirsch at ``r = 1 + d``, derived in the same appendix, is
+``\sigma_{22}/p = 1 + 1/(2r^2) + 3/(2r^4)``.
+
+````@example elliptic_hole
+semi_axes = (2c / (c + 1), 2 / (c + 1))                          ## 1 + m and 1 - m
+distance = range(0, 8; length = 801)                             ## from the tip, along e₁
+ahead(hole, a, C...) = [canonical_components(σ)[2, 2] for σ in matrix_stress(hole, across, [[a + d, 0.0] for d in distance], C...)]
+kirsch(r) = 1 + 1 / (2r^2) + 3 / (2r^4)
+curves = [
+    "circle" => ahead(circle, 1.0),
+    "a/b = 2, isotropic" => ahead(hole, semi_axes[1]),
+    "a/b = 2, plywood ψ = 0" => ahead(hole, semi_axes[1], plywood(0.0)),
+    "a/b = 2, plywood ψ = 90°" => ahead(hole, semi_axes[1], plywood(π / 2)),
+]
+maximum(abs, last(curves[1]) - kirsch.(1 .+ distance))           ## the circle against Kirsch
+````
+
+````@example elliptic_hole
+away = plot(;
+    xlabel = "distance to the tip", ylabel = "σ₂₂ / p", xlims = (0, 4), legend = :topright,
+    title = "Ahead of the tip, pull across the major axis", titlefontsize = 10, size = (600, 340)
+)
+for (label, σ) in curves
+    plot!(away, distance, σ; lw = 2, label)
+end
+scatter!(away, distance[1:20:201], kirsch.(1 .+ distance[1:20:201]); color = :black, markersize = 2, label = "Kirsch")
+hline!(away, [1.1]; color = :gray, ls = :dot, label = "1.1 p")
+away
+````
+
+The distance beyond which ``\sigma_{22}`` stays within 10 % of the pull, on
+the points of the curves. For the circle,
+``1/(2r^2) + 3/(2r^4) = 1/10`` gives ``1/r^2 = (\sqrt{85} - 5)/30``:
+
+````@example elliptic_hole
+println("hole                        stress at the tip   within 10 % beyond the distance")
+for (label, σ) in curves
+    i = findlast(s -> abs(s - 1) > 0.1, σ)                        ## the last point outside the band
+    @printf "%-27s %10.3f          %5.2f\n" label first(σ) distance[i + 1]
+end
+@printf "circle, closed form                              %6.3f\n" 1 / sqrt((sqrt(85) - 5) / 30) - 1
+````
+
 ## The same hole as an inclusion
 
 The potentials that give the stress along the edge also give the
@@ -389,7 +446,6 @@ computes the concentration of `Ellipsoid(a, b)`. The two routes, for several
 angles of the fibers:
 
 ````@example elliptic_hole
-semi_axes = (2c / (c + 1), 2 / (c + 1))                          ## 1 + m and 1 - m
 for ψ in (0, 30, 45, 90)
     C = plywood(deg2rad(ψ))
     A_map = canonical_components(gradient_gradient_concentration(hole, 0 * C, C))
@@ -417,6 +473,36 @@ for (name, scheme) in ("dilute" => Dilute(), "Mori-Tanaka" => MoriTanaka())
     E_hill = young_moduli(homogenize(perforated(plywood(0.0), 0.05; shape = Ellipsoid(semi_axes...)), scheme, :C)) ./ E_sheet
     @printf "%-12s ConformalHole %.5f %.5f   Ellipsoid %.5f %.5f\n" name E_map[1] E_map[2] E_hill[1] E_hill[2]
 end
+````
+
+## The same hole as an insulator
+
+In conduction the hole is an insulator, and the elliptic hole takes any
+symmetric conductivity of the plane
+([Conduction around the insulating ellipse](@ref th-ellipse-conduction)). The
+conductivities below are illustrative, not taken from the book: an
+orthotropic sheet that conducts three times better along its fibers than
+across them, the fibers at the angle ``\psi`` from the major axis. The
+gradient concentration tensor of the hole, by its map and by the Hill tensor
+of `Ellipsoid(a, b)`, for several angles; it is not symmetric when the
+fibers are oblique:
+
+````@example elliptic_hole
+conductor(ψ) = TensOrtho{2}(3.0, 1.0, Basis(ψ))                    ## illustrative: along and across the fibers
+for ψ in (0, 30, 45, 90)
+    K = conductor(deg2rad(ψ))
+    A_map = canonical_components(gradient_gradient_concentration(hole, 0 * K, K))
+    A_hill = canonical_components(gradient_gradient_concentration(Ellipsoid(semi_axes...), 0 * K, K))
+    @printf "ψ = %2d°   A₁₁ %.4f   A₂₂ %.4f   A₁₂ - A₂₁ %+.1e   largest difference %.1e\n" ψ A_map[1, 1] A_map[2, 2] (A_map[1, 2] - A_map[2, 1]) maximum(abs, A_map - A_hill)
+end
+````
+
+With the fibers along the major axis the tensor is diagonal,
+``A_{11} = 1 + (b/a)\sqrt{k_1/k_2}`` and ``A_{22} = 1 + (a/b)\sqrt{k_2/k_1}``,
+``k_1 = 3`` and ``k_2 = 1`` the conductivities along and across the fibers:
+
+````@example elliptic_hole
+1 + sqrt(3.0) / c, 1 + c / sqrt(3.0)
 ````
 
 ## Derivatives
@@ -472,6 +558,9 @@ across_hole = Dict(E₁ => ply.E₂, E₂ => ply.E₁, G => ply.G, ν₁ => ply.
 - [The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse):
   the derivation of the potentials used here, and why the ellipse is the one
   hole solved in an anisotropic plate.
+- [The stress in the matrix](@ref th-matrix-stress) and
+  [Conduction around the insulating ellipse](@ref th-ellipse-conduction):
+  the stress away from the edge, and the insulating hole.
 - [Holes given by a conformal map](@ref th-conformal-mapping): the hole of
   several terms in an isotropic matrix, and the stress along its edge.
 - [Conformal holes](@ref man-conformal-holes): the syntax.

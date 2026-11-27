@@ -237,7 +237,7 @@ export BrinkmanMedium, BrinkmanPorous, BrinkmanFluid, BrinkmanSolid
 export BrinkmanForm, ResistanceForm, PermeabilityForm
 export AbstractBrinkmanInclusion, BrinkmanSphere, BrinkmanCylinder, BrinkmanLayer, BrinkmanCoatedSphere
 export InsulatingTorus, ToroidalShape
-export ConformalHole, ConformalShape, polygon_map, contour_stress
+export ConformalHole, ConformalShape, polygon_map, contour_stress, matrix_stress
 
 # ── Finite-element inclusions (need a backend extension) ─────────────────────
 export FECache, fe_assembly_count, fe_reset!, fe_available_gb

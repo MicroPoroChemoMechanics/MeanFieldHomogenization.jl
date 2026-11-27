@@ -12,7 +12,9 @@ function. In an isotropic medium this function is written with two holomorphic
 functions of ``z=x_1+\mathrm{i}\,x_2``, the complex potentials of Kolosov and
 Muskhelishvili (sections 1 to 6); in an anisotropic medium, with two
 holomorphic functions of two other complex variables (sections 7 to 9). The
-elliptic hole is solved in closed form in both. The isotropic part follows
+elliptic hole is solved in closed form in both. Section 10 gives the stress at
+any point of the matrix around the hole, and section 11 the insulating ellipse
+in an anisotropic conductor, which needs one such variable. The isotropic part follows
 [Muskhelishvili](@cite muskhelishvili1977), chapters 5, 7 and 15, the
 anisotropic one [Lekhnitskii](@cite lekhnitskii1981), chapters 3 and 4; their
 sections and equations are quoted where they are used, the derivations being
@@ -1065,16 +1067,566 @@ across = contour_stress(ellipse, pull, [0.0, π / 2], sheet(E₁, E₂, G, ν₁
 along .- (1 + ab * nL / kL, -kL), across .- (1 + ab * nL, -1 / kL)
 ```
 
+## [10. The stress in the matrix](@id th-matrix-stress)
+
+The distance over which the stress comes back to the remote one decides
+whether a neighboring hole, an edge or a crack feels the hole. This section
+gives the stress at any point of the matrix, around a hole of any map in an
+isotropic matrix and around the ellipse in an anisotropic one; it is what
+[`matrix_stress`](@ref)`(hole, Σ, x)` computes. The potentials are those of
+sections 4 to 9; the two ways of evaluating them below, which keep their
+digits far from the hole and at isotropy, are written for this package.
+
+### An isotropic matrix, any map
+
+The map is ``\omega(\zeta)=\zeta+\sum_{k=1}^{N}m_k\,\zeta^{-k}`` and the first
+potential of the free hole is the finite sum
+``\Phi(\zeta)=\Gamma\,\zeta+\sum_{k=1}^{N}a_k\,\zeta^{-k}``
+([Holes given by a conformal map](@ref th-conformal-mapping), section 3). With
+``t=1/\zeta``, which stays in the unit disk while ``\zeta`` runs over the
+matrix, the derivatives of ``\Phi`` and of ``\omega`` are two polynomials of
+degree ``N+1``,
+
+```math
+\Phi'(\zeta)=A(t)=\Gamma-\sum_{k=1}^{N}k\,a_k\,t^{k+1},
+\qquad
+\omega'(\zeta)=D(t)=1-\sum_{k=1}^{N}k\,m_k\,t^{k+1},
+\qquad
+D(0)=1 .
+```
+
+**The second potential.** On the circle
+``\overline{\Phi(\sigma)}=\bar\Phi(1/\sigma)``, with
+``\bar\Phi(1/\zeta)=\Gamma/\zeta+\sum_k\overline{a_k}\,\zeta^{k}`` (``\Gamma``
+is real, section 3), and the condition of the free contour of section 4 reads
+``\Psi(\sigma)=G(\sigma)``, where
+
+```math
+G(\zeta)=-\bar\Phi(1/\zeta)-\bar\omega(1/\zeta)\,\frac{\Phi'(\zeta)}{\omega'(\zeta)} .
+```
+
+``G`` is a rational function, whose poles are ``0`` and the zeros of
+``\omega'``, which lie inside the unit disk: ``\omega'`` does not vanish
+outside it ([Holes given by a conformal map](@ref th-conformal-mapping),
+section 2). ``G-\Psi`` is then holomorphic outside the disk, continuous up to
+the circle, and zero on it: each of its coefficients, an integral over the
+circle ([Holomorphic functions and conformal maps](@ref th-holomorphic-functions),
+section 4), vanishes, and the condition, written on the circle, holds in the
+whole matrix:
+
+```math
+\Psi(\zeta)=-\bar\Phi(1/\zeta)-\bar\omega(1/\zeta)\,\frac{\Phi'(\zeta)}{\omega'(\zeta)},
+\qquad
+\lvert\zeta\rvert\ge1 .
+```
+
+**A form without cancellation.** The two terms of this expression hold the
+powers ``\zeta,\dots,\zeta^N``, which cancel but for ``\Gamma'\zeta``.
+Computed as written, far from the hole, the result is the difference of terms
+of size ``\lvert\zeta\rvert^N``: for ``N=31`` at ``\lvert\zeta\rvert=3`` the
+rounding is multiplied by ``3^{31}\approx6\cdot10^{14}``, and one significant
+digit is left at best.
+The cancellation is carried out on the coefficients instead. With
+``\bar\omega(1/\zeta)=t+\sum_k\overline{m_k}\,t^{-k}=E(t)/t^N``,
+
+```math
+E(t)=t^{N+1}+\sum_{k=1}^{N}\overline{m_k}\,t^{N-k} ,
+```
+
+let ``C(t)=\sum_{j=0}^{N-1}C_j\,t^j`` be the first ``N`` terms of the power
+series of ``E\,A/D`` at ``t=0``. Since ``D(0)=1``, the product ``D\,C``
+reproduces ``E\,A`` up to ``t^{N-1}`` when, with ``(EA)_j`` and ``D_i`` the
+coefficients of the polynomials ``E\,A`` and ``D``,
+
+```math
+C_j=(EA)_j-\sum_{i=1}^{j}D_i\,C_{j-i},\qquad j=0,\dots,N-1 .
+```
+
+The polynomial ``E\,A-D\,C`` then has no term below ``t^N``, and
+``Q(t)=(E\,A-D\,C)/t^N`` is a polynomial:
+
+```math
+\bar\omega(1/\zeta)\,\frac{\Phi'(\zeta)}{\omega'(\zeta)}=\frac{E(t)\,A(t)}{t^N\,D(t)}=\frac{C(t)}{t^N}+\frac{Q(t)}{D(t)} .
+```
+
+The first term holds the powers ``\zeta^1`` to ``\zeta^N``; the second is a
+power series of ``t`` that converges on the closed disk, the zeros of ``D``
+lying outside it. In ``G`` the positive powers of ``\zeta`` are therefore
+
+```math
+-\sum_{k=1}^{N}\overline{a_k}\,\zeta^{k}-\frac{C(t)}{t^N}=-\sum_{k=1}^{N}\bigl(\overline{a_k}+C_{N-k}\bigr)\,\zeta^{k},
+```
+
+and ``\Psi`` has the single one ``\Gamma'\zeta``: the equations
+``\overline{a_k}+C_{N-k}=-\Gamma'\,\delta_{k1}`` are the linear system of
+[Holes given by a conformal map](@ref th-conformal-mapping), section 3, whose
+coefficients ``c_k`` of the positive powers of ``F`` are the ``C_{N-k}`` here.
+What is left is
+
+```math
+\Psi(\zeta)=\Gamma'\,\zeta-\Gamma\,t-\frac{Q(t)}{D(t)},
+\qquad
+t=\frac{1}{\zeta},
+```
+
+in which every polynomial is evaluated at ``\lvert t\rvert\le1``.
+
+**The stress.** With ``\mathrm{d}/\mathrm{d}\zeta=-t^2\,\mathrm{d}/\mathrm{d}t``
+and a division by ``\omega'=D``, the derivatives with respect to ``z`` are,
+the primes on ``A``, ``D`` and ``Q`` denoting derivatives with respect to
+``t``,
+
+```math
+\varphi'(z)=\frac{A}{D},
+\qquad
+\varphi''(z)=-t^2\,\frac{A'D-A\,D'}{D^3},
+\qquad
+\psi'(z)=\frac{1}{D}\,\Bigl[\Gamma'+t^2\,\Bigl(\Gamma+\frac{Q'D-Q\,D'}{D^2}\Bigr)\Bigr],
+```
+
+and section 2 gives
+``\sigma_{11}+\sigma_{22}=4\operatorname{Re}\varphi'(z)`` and
+``\sigma_{22}-\sigma_{11}+2\mathrm{i}\,\sigma_{12}=2\,[\bar z\,\varphi''(z)+\psi'(z)]``.
+
+**The point.** A point ``z=x_1+\mathrm{i}\,x_2`` is given; its variable
+``\zeta`` solves ``\omega(\zeta)=z``, that is
+
+```math
+\zeta^{N+1}-z\,\zeta^{N}+\sum_{k=1}^{N}m_k\,\zeta^{N-k}=0 .
+```
+
+The map is one-to-one from the outside of the disk onto the matrix: a point of
+the matrix has exactly one root outside the disk, the root of largest modulus,
+and a point of the hole has none, which [`matrix_stress`](@ref) refuses with a
+`DomainError`. The roots are those of the companion matrix, refined by
+Newton's method on ``\omega(\zeta)=z``; the choice of the root compares
+moduli, and the function takes numbers and dual numbers, not symbols.
+
+**The circle.** ``N=1``, ``m_1=0``, under a unit pull along
+``\underline{e}_2``: ``\Gamma=1/4``, ``\Gamma'=1/2``, ``a_1=-1/2``, and
+``\Psi(\zeta)=\zeta/2-1/(2\zeta)-1/(2\zeta^3)``. At the point ``(r,0)``,
+``\varphi'=1/4+1/(2r^2)``, ``\varphi''=-1/r^3`` and
+``\psi'=1/2+1/(2r^2)+3/(2r^4)``, so that
+
+```math
+\sigma_{11}=\frac{3}{2r^2}-\frac{3}{2r^4},
+\qquad
+\sigma_{22}=1+\frac{1}{2r^2}+\frac{3}{2r^4},
+\qquad
+\sigma_{12}=0 ,
+```
+
+the solution of Kirsch on the line normal to the pull: ``3`` at the edge,
+``1+1/8+3/32`` at ``r=2``. A collection of points gives a collection of
+tensors:
+
+```@example thpotentials
+kirsch(r) = (3 / (2r^2) - 3 / (2r^4), 1 + 1 / (2r^2) + 3 / (2r^4))   # (σ₁₁, σ₂₂) at (r, 0)
+circle = ConformalHole(())
+rs = [1.0, 1.5, 3.0, 10.0]
+stresses = matrix_stress(circle, pull, [[r, 0.0] for r in rs])
+maximum(abs, [canonical_components(S)[i, i] - kirsch(r)[i] for (S, r) in zip(stresses, rs), i in 1:2])
+```
+
+For the square of three terms of [`polygon_map`](@ref), under the remote
+stress of section 9: on the contour the traction vanishes and the hoop
+stress is that of [`contour_stress`](@ref); far from the hole the deviation
+from ``\boldsymbol{\Sigma}``, multiplied by the square of the distance, tends
+to a constant, with three terms and with thirty (a map of degree 119):
+
+```@example thpotentials
+square = ConformalHole(polygon_map(4, 3)...)
+ωₛ(ζ) = ζ + sum(mₖ * ζ^(-k) for (k, mₖ) in pairs(square.coefficients))
+dωₛ(ζ) = 1 - sum(k * mₖ * ζ^(-k - 1) for (k, mₖ) in pairs(square.coefficients))
+edge = map(θs) do θ
+    z, dz = ωₛ(cis(θ)), im * cis(θ) * dωₛ(cis(θ))  # the point of the contour and its derivative in θ
+    t = [real(dz), imag(dz)] / abs(dz)          # the unit tangent
+    S = canonical_components(matrix_stress(square, Σ, [real(z), imag(z)]))
+    max(norm(S * [t[2], -t[1]]), abs(transpose(t) * S * t - contour_stress(square, Σ, θ)))
+end
+fine = ConformalHole(polygon_map(4, 30)...)
+far = [norm(canonical_components(matrix_stress(h, Σ, [r, r]) - Σ)) * r^2 for h in (square, fine), r in (10.0, 100.0, 1000.0)]
+maximum(edge), round.(far; digits = 4)
+```
+
+The stress satisfies equilibrium: with the Jacobian of
+``(\sigma_{11},\sigma_{22},\sqrt2\,\sigma_{12})`` with respect to
+``(x_1,x_2)``, by dual numbers, the two components of
+``\operatorname{div}\boldsymbol{\sigma}`` vanish:
+
+```@example thpotentials
+stress_divergence(stress, x) = (J = ForwardDiff.jacobian(stress, x); (J[1, 1] + J[3, 2] / √2, J[3, 1] / √2 + J[2, 2]))
+maximum(abs, stress_divergence(x -> TensND.mandel(matrix_stress(square, Σ, x)), [1.5, 0.8]))
+```
+
+### An anisotropic matrix, the ellipse
+
+The potentials ``\Phi_k=B_k/\zeta_k`` of section 9 hold in the whole matrix.
+At a point ``(x_1,x_2)`` the variable ``\zeta_k`` is that of the map
+``z_k=\alpha_k\,\zeta_k+\beta_k/\zeta_k`` of the plane of ``z_k``, found in each
+plane separately: ``\zeta_1=\zeta_2`` on the contour only.
+
+**The point.** ``\alpha_k\zeta_k^2-z_k\,\zeta_k+\beta_k=0`` has two roots of
+product ``\beta_k/\alpha_k``, of modulus less than 1; the map being one-to-one
+outside the disk, a point of the matrix has one root outside it,
+
+```math
+\zeta_k=\frac{z_k+R_k}{2\alpha_k},
+\qquad
+R_k^2=z_k^2-4\alpha_k\beta_k,
+```
+
+``R_k`` taken on the branch of the larger ``\lvert z_k+R_k\rvert``. The other
+root is ``(z_k-R_k)/(2\alpha_k)=\beta_k/(\alpha_k\zeta_k)``, hence
+``\alpha_k\zeta_k-\beta_k/\zeta_k=R_k``. A point of the hole has
+``\lvert\zeta\rvert<1`` for the map ``\zeta+m/\zeta`` of the ellipse itself,
+and is refused.
+
+**The derivative.** ``\mathrm{d}z_k/\mathrm{d}\zeta_k=\alpha_k-\beta_k/\zeta_k^2=R_k/\zeta_k``,
+which does not vanish for ``\lvert\zeta_k\rvert\ge1`` since
+``\lvert\beta_k\rvert<\lvert\alpha_k\rvert``. Then
+``\Phi_k'(z_k)=B_k\,T_k``, with
+
+```math
+T_k=\frac{\mathrm{d}(1/\zeta_k)}{\mathrm{d}z_k}=-\frac{1}{\zeta_k\,R_k}=-\frac{2\alpha_k}{(z_k+R_k)\,R_k} .
+```
+
+The last form divides by ``z_k+R_k=2\alpha_k\zeta_k`` and holds ``\alpha_k``,
+which never vanishes; the same quantity written with ``\beta_k``,
+``-(z_k-R_k)/(2\beta_k R_k)``, would be ``0/0`` for the circle in an isotropic
+matrix, where ``\alpha_k=1`` and ``\beta_k=m=0``. By section 8, for
+``(\sigma_{11},\sigma_{22},\sigma_{12})``,
+
+```math
+\boldsymbol{\sigma}=\boldsymbol{\Sigma}+2\operatorname{Re}\bigl(S_2,\;S_0,\;-S_1\bigr),
+\qquad
+S_n=\sum_{k=1}^{2}\mu_k^n\,B_k\,T_k .
+```
+
+**Divided differences.** Let ``f`` take the values ``f_1``, ``f_2`` at the two
+roots and ``f[\mu_1,\mu_2]=(f_1-f_2)/(\mu_1-\mu_2)`` be its divided
+difference. With the ``B_k`` of section 9 and ``g=\mu^nT``,
+
+```math
+S_n=B_1\,g_1+B_2\,g_2=c_2\,\frac{g_1-g_2}{\mu_1-\mu_2}-c_1\,\frac{\mu_2\,g_1-\mu_1\,g_2}{\mu_1-\mu_2} ,
+```
+
+and ``\mu_2g_1-\mu_1g_2=\mu_1\mu_2\,(g_1/\mu_1-g_2/\mu_2)``, the roots being
+nonzero:
+
+```math
+S_n=c_2\,(\mu^nT)[\mu_1,\mu_2]-c_1\,p\,(\mu^{n-1}T)[\mu_1,\mu_2] .
+```
+
+A divided difference still divides by ``\mu_1-\mu_2``. It is computed without
+that division by an algebra on the two values.
+
+**The algebra of pairs.** A quantity ``f`` known at the two roots is
+represented by its mean and its divided difference,
+
+```math
+f_{+}=\frac{f_1+f_2}{2},
+\qquad
+f_{-}=f[\mu_1,\mu_2],
+\qquad
+f_{1,2}=f_{+}\pm\delta\,f_{-},
+\qquad
+\delta=\frac{\mu_1-\mu_2}{2},
+\qquad
+\delta^2=\frac{s^2-4p}{4} .
+```
+
+The product of two quantities has the values
+``(a_{+}\pm\delta a_{-})(b_{+}\pm\delta b_{-})=a_{+}b_{+}+\delta^2a_{-}b_{-}\pm\delta\,(a_{+}b_{-}+a_{-}b_{+})``,
+hence the pair
+
+```math
+(ab)_{+}=a_{+}b_{+}+\delta^2\,a_{-}b_{-},
+\qquad
+(ab)_{-}=a_{+}b_{-}+a_{-}b_{+} .
+```
+
+The pairs multiply as the numbers ``a_{+}+a_{-}\delta`` in which ``\delta^2``
+is replaced by ``(s^2-4p)/4``, a polynomial of ``(s,p)``. The inverse follows
+from ``(a_{+}+a_{-}\delta)(a_{+}-a_{-}\delta)=a_{+}^2-\delta^2a_{-}^2=a_1a_2``:
+
+```math
+\Bigl(\frac1a\Bigr)_{+}=\frac{a_{+}}{a_{+}^2-\delta^2a_{-}^2},
+\qquad
+\Bigl(\frac1a\Bigr)_{-}=\frac{-a_{-}}{a_{+}^2-\delta^2a_{-}^2} .
+```
+
+No operation divides by ``\mu_1-\mu_2``. At ``\delta=0`` the divided difference
+is the derivative with respect to ``\mu``, and the pairs are the dual numbers
+``a_{+}+a_{-}\delta``, ``\delta^2=0``: the isotropic matrix is an ordinary
+case.
+
+A quantity of the form ``u+v\,\mu`` has the pair ``(u+v\,s/2,\;v)``:
+
+```math
+\mu\to\Bigl(\frac s2,\,1\Bigr),
+\quad
+z\to\Bigl(x_1+\frac{s\,x_2}{2},\,x_2\Bigr),
+\quad
+\alpha\to\Bigl(\frac{\overline{\xi}+s\,\overline{\eta}/2}{2},\,\frac{\overline{\eta}}{2}\Bigr),
+\quad
+\beta\to\Bigl(\frac{\xi+s\,\eta/2}{2},\,\frac{\eta}{2}\Bigr),
+```
+
+and the inverse of the pair of ``\mu`` gives
+``1/\mu\to\bigl(s/(2p),\,-1/p\bigr)``, since ``s^2/4-\delta^2=p``. The square
+``q=R^2=z^2-4\alpha\beta`` is computed in the algebra. ``R`` itself is not a
+rational function of ``\mu``: its divided difference is
+
+```math
+R_{-}=\frac{R_1-R_2}{\mu_1-\mu_2}=\frac{R_1^2-R_2^2}{(\mu_1-\mu_2)(R_1+R_2)}=\frac{q_{-}}{R_1+R_2},
+\qquad
+R_{+}=\frac{R_1+R_2}{2},
+```
+
+and the sum ``R_1+R_2`` follows from ``q`` alone:
+
+```math
+(R_1+R_2)^2=R_1^2+R_2^2+2R_1R_2=2q_{+}+2\Pi,
+\qquad
+\Pi^2=q_1\,q_2=q_{+}^2-\delta^2q_{-}^2 ,
+```
+
+``\Pi=R_1R_2`` and ``R_1+R_2`` being the square roots on the branches fixed by
+the values of ``R_1`` and ``R_2``. Then ``T=-2\alpha/((z+R)\,R)`` and the
+``\mu^nT``, ``n=-1,\dots,2``, are products and one inverse in the algebra, and
+``(\mu^nT)[\mu_1,\mu_2]`` is the second member of the pair of ``\mu^nT``.
+
+**Two exact evaluations.** The pairs divide by ``R_1+R_2``, the formulas
+written with the two roots by ``\mu_1-\mu_2``. [`matrix_stress`](@ref) takes
+the evaluation whose divisor is the larger relative to its terms: it compares
+``\lvert\mu_1-\mu_2\rvert/(\lvert\mu_1\rvert+\lvert\mu_2\rvert)`` with
+``\lvert R_1+R_2\rvert/(\lvert R_1\rvert+\lvert R_2\rvert)``. For the sheet of
+section 7 and the ellipse of section 9, the two agree:
+
+```@example thpotentials
+CH = MeanFieldHomogenization.ConformalHoles
+exterior_roots(x₁, x₂, μs) = map(μ -> CH._exterior_root(x₁ + μ * x₂, (conj(ξ) + μ * conj(η)) * (ξ + μ * η) / 4), μs)
+x₁, x₂ = 1.6, 0.9                                   # a point of the matrix
+R₁, R₂ = exterior_roots(x₁, x₂, (μ₁, μ₂))
+by_roots = CH._field_by_roots(x₁, x₂, ξ, η, c₁, c₂, (μ₁, μ₂), (R₁, R₂))   # (S₀, S₁, S₂)
+by_pairs = CH._field_by_pairs(x₁, x₂, ξ, η, c₁, c₂, s, p, R₁, R₂)
+maximum(abs, by_roots .- by_pairs) / maximum(abs, by_roots)
+```
+
+On the contour the stress is that of the two roots written in section 9, far
+away it tends to ``\boldsymbol{\Sigma}`` as the inverse square of the
+distance, and it satisfies equilibrium:
+
+```@example thpotentials
+edge = maximum(θs) do θ
+    σ₁₁, σ₂₂, σ₁₂ = contour_point(θ)
+    x = [real(ξ * cis(-θ)), real(η * cis(-θ))]     # the point σ = e^{iθ} of the contour
+    maximum(abs, canonical_components(matrix_stress(hole, Σ, x, C₀)) - [σ₁₁ σ₁₂; σ₁₂ σ₂₂])
+end
+far = [norm(canonical_components(matrix_stress(hole, Σ, [r, r], C₀) - Σ)) * r^2 for r in (10.0, 100.0, 1000.0)]
+edge, round.(far; digits = 4), maximum(abs, stress_divergence(x -> TensND.mandel(matrix_stress(hole, Σ, x, C₀)), [x₁, x₂]))
+```
+
+An isotropic stiffness given as a general tensor has its pair by the Newton
+iteration of section 9, exact to rounding, and goes through the pairs: it
+gives the field of the isotropic matrix computed above. The two roots drawn
+from that pair are separated by about the square root of the rounding, and
+the formulas that divide by their difference are not exact to rounding:
+
+```@example thpotentials
+iso_general = Tens(Array(canonical_components(iso_stiffness(Val(2), 5.0, 2.0))))   # its class forgotten
+isotropic_field = canonical_components(matrix_stress(hole, Σ, [x₁, x₂]))   # the isotropic matrix, any map
+sᵢ, pᵢ = CH._characteristic_pair(iso_general)
+μᵢ = ((sᵢ + sqrt(sᵢ^2 - 4pᵢ)) / 2, (sᵢ - sqrt(sᵢ^2 - 4pᵢ)) / 2)
+S₀, S₁, S₂ = CH._field_by_roots(x₁, x₂, ξ, η, c₁, c₂, μᵢ, exterior_roots(x₁, x₂, μᵢ))
+by_two_roots = [Σ₁₁ + 2real(S₂) Σ₁₂ - 2real(S₁); Σ₁₂ - 2real(S₁) Σ₂₂ + 2real(S₀)]
+relative(X) = norm(X - isotropic_field) / norm(isotropic_field)
+relative(canonical_components(matrix_stress(hole, Σ, [x₁, x₂], iso_general))), relative(by_two_roots)
+```
+
+## [11. Conduction around the insulating ellipse](@id th-ellipse-conduction)
+
+The affine images of section 9 also solve the insulating ellipse in an
+anisotropic conductor, with one complex variable instead of two. This section
+gives its gradient concentration tensor.
+
+**The variable.** Let ``\boldsymbol{K}`` be a symmetric conductivity of the
+plane, ``\underline{q}=-\boldsymbol{K}\cdot\operatorname{grad}T`` the flux of
+the temperature ``T``, and ``\operatorname{div}\underline{q}=0``, that is
+``K_{11}\,\partial_{11}T+2K_{12}\,\partial_{12}T+K_{22}\,\partial_{22}T=0``. A
+function ``T=\operatorname{Re}f(z_\mu)``, ``z_\mu=x_1+\mu\,x_2``, has
+``\partial_1\to f'`` and ``\partial_2\to\mu f'``; it is a solution for every
+``f`` if and only if
+
+```math
+K_{22}\,\mu^2+2K_{12}\,\mu+K_{11}=0,
+\qquad
+\mu=\frac{-K_{12}+\mathrm{i}\,\sqrt{K_{11}K_{22}-K_{12}^2}}{K_{22}} ,
+```
+
+the root of positive imaginary part, ``\boldsymbol{K}`` being positive
+definite. The root is a closed form, which accepts symbols. As in section 8,
+the operator factors as
+``K_{22}\,(\partial_2-\mu\,\partial_1)(\partial_2-\bar\mu\,\partial_1)``, and
+every solution on a simply connected domain is of this form. For an isotropic
+conductivity ``\mu=\mathrm{i}`` and ``z_\mu=z``.
+
+**The flux.** With ``\operatorname{grad}T=(\operatorname{Re}f',\operatorname{Re}(\mu f'))``,
+
+```math
+q_2=-\operatorname{Re}\bigl[(K_{12}+K_{22}\,\mu)\,f'\bigr]=-\operatorname{Re}(c\,f'),
+\qquad
+c=K_{12}+K_{22}\,\mu=\mathrm{i}\,\sqrt{\det\boldsymbol{K}} ,
+```
+
+and the equation of ``\mu``, written
+``\mu\,(K_{22}\mu+K_{12})+(K_{12}\mu+K_{11})=0``, gives
+``K_{11}+K_{12}\mu=-\mu\,c``, so that ``q_1=\operatorname{Re}(\mu\,c\,f')``.
+The flux function ``\Psi_q=\operatorname{Re}(c\,f)`` has
+``\partial_2\Psi_q=q_1`` and ``-\partial_1\Psi_q=q_2``: across an arc of
+normal ``\underline{n}\,\mathrm{d}s=(\mathrm{d}x_2,-\mathrm{d}x_1)``, the flux is
+``q_1\,\mathrm{d}x_2-q_2\,\mathrm{d}x_1=\mathrm{d}\Psi_q``. A contour is
+insulated if and only if ``\operatorname{Re}(c\,f)`` is constant on it.
+
+**The remote gradient.** A uniform gradient ``\underline{G}`` is
+``\underline{G}\cdot\underline{x}=\operatorname{Re}(\gamma\,z_\mu)`` with
+
+```math
+\gamma=G_1+\mathrm{i}\,\frac{G_1\operatorname{Re}\mu-G_2}{\operatorname{Im}\mu} ,
+```
+
+since ``\operatorname{Re}(\gamma z_\mu)=\operatorname{Re}\gamma\,x_1+(\operatorname{Re}\gamma\operatorname{Re}\mu-\operatorname{Im}\gamma\operatorname{Im}\mu)\,x_2``.
+
+**The insulated contour.** On the contour of the ellipse
+``z_\mu=\alpha\,\sigma+\beta\,\bar\sigma``, with
+``\alpha=(\overline{\xi}+\mu\,\overline{\eta})/2`` and
+``\beta=(\xi+\mu\,\eta)/2`` (section 9, with the one root ``\mu``), and
+``z_\mu=\alpha\,\zeta_\mu+\beta/\zeta_\mu`` maps the outside of the disk onto
+the outside of the image of the hole. The perturbation is sought as
+``B/\zeta_\mu``. On the contour
+``\operatorname{Re}(c\,\gamma\,\alpha\,\sigma)=\operatorname{Re}(\overline{c\gamma\alpha}\,\bar\sigma)``, so that
+
+```math
+\operatorname{Re}(c\,f)=\operatorname{Re}\Bigl\{\bigl[\overline{c\gamma\alpha}+c\gamma\beta+c\,B\bigr]\,\bar\sigma\Bigr\} ,
+```
+
+constant if and only if the bracket vanishes. ``c`` is purely imaginary,
+``\bar c=-c``:
+
+```math
+B=-\gamma\beta-\frac{\overline{c\gamma\alpha}}{c}=-\gamma\beta+\overline{\gamma\alpha} .
+```
+
+The temperature on the contour is
+``T=\operatorname{Re}\{[\overline{\gamma\alpha}+\gamma\beta+B]\,\bar\sigma\}=\operatorname{Re}(W\bar\sigma)``,
+``W=2\,\overline{\gamma\alpha}``.
+
+**The mean gradient of the hole.** It is
+``(1/\lvert\Omega\rvert)\oint T\,\underline{n}\,\mathrm{d}s``, the normal
+pointing out of the hole, ``\underline{n}\,\mathrm{d}s=(\mathrm{d}x_2,-\mathrm{d}x_1)``,
+with ``\mathrm{d}x_1/\mathrm{d}\theta=\operatorname{Im}(\xi\bar\sigma)`` and
+``\mathrm{d}x_2/\mathrm{d}\theta=\operatorname{Im}(\eta\bar\sigma)``. The
+integrals of products of section 9,
+``\oint\operatorname{Re}(P\bar\sigma)\operatorname{Im}(Q\bar\sigma)\,\mathrm{d}\theta=\pi\operatorname{Im}(\overline{P}Q)``,
+and ``\lvert\Omega\rvert=\pi(1-\lvert m\rvert^2)`` give
+
+```math
+g_1=\frac{\operatorname{Im}(2\gamma\alpha\,\eta)}{1-\lvert m\rvert^2},
+\qquad
+g_2=-\frac{\operatorname{Im}(2\gamma\alpha\,\xi)}{1-\lvert m\rvert^2} .
+```
+
+For ``\underline{G}=\underline{e}_1`` and ``\underline{e}_2`` these are the two
+columns of the gradient concentration tensor ``\boldsymbol{A}``, the mean
+gradient of the hole being ``\boldsymbol{A}\cdot\underline{G}``. It depends on
+the conductivity through ``\mu`` only, and it is not symmetric in general.
+
+**The isotropic conductor.** ``\mu=\mathrm{i}``, ``\alpha=1``, and
+``\gamma=G_1-\mathrm{i}\,G_2``. For ``\underline{G}=\underline{e}_1``,
+``g_1=2\operatorname{Re}(1-m)/(1-\lvert m\rvert^2)`` and
+``g_2=-2\operatorname{Im}m/(1-\lvert m\rvert^2)``; for
+``\underline{G}=\underline{e}_2``, ``\gamma=-\mathrm{i}``,
+``g_1=-2\operatorname{Im}m/(1-\lvert m\rvert^2)`` and
+``g_2=2\,(1+\operatorname{Re}m)/(1-\lvert m\rvert^2)``: the tensor of
+[Holes given by a conformal map](@ref th-conformal-mapping), section 5.
+
+**An orthotropic conductor in the axes of the ellipse.** ``m`` real,
+``a=1+m``, ``b=1-m``, and ``\boldsymbol{K}`` of conductivities ``k_1`` along
+``\underline{e}_1`` and ``k_2`` along ``\underline{e}_2``: ``\mu=\mathrm{i}\lambda``
+with ``\lambda=\sqrt{k_1/k_2}``, ``\xi=a``, ``\eta=\mathrm{i}\,b``,
+``\alpha=(a+\lambda b)/2``, real. For ``\underline{G}=\underline{e}_1``,
+``\gamma=1`` and ``g_1=(a+\lambda b)\,b/(ab)``, ``g_2=0``; for
+``\underline{G}=\underline{e}_2``, ``\gamma=-\mathrm{i}/\lambda`` and
+``g_1=0``, ``g_2=(a+\lambda b)\,a/(\lambda ab)``:
+
+```math
+\boldsymbol{A}=\Bigl(1+\frac ba\sqrt{\frac{k_1}{k_2}}\Bigr)\,\underline{e}_1\otimes\underline{e}_1+\Bigl(1+\frac ab\sqrt{\frac{k_2}{k_1}}\Bigr)\,\underline{e}_2\otimes\underline{e}_2 .
+```
+
+It is the tensor of the insulating ellipse of semi-axes ``a`` and
+``b\sqrt{k_1/k_2}`` in an isotropic conductor, ``1+b'/a`` and ``1+a/b'``:
+the change of variable ``x_2'=x_2\sqrt{k_1/k_2}`` makes the conductivity
+isotropic, stretches the hole across ``\underline{e}_1``, and multiplies the
+gradient along ``\underline{e}_2`` and its mean over the hole by the same
+factor.
+
+The formulas, for a conductivity of no symmetry and the ellipse turned of
+section 9: the flux function on the contour, the columns against the package,
+and the concentration of `Ellipsoid(a, b; angle)` given by its Hill tensor:
+
+```@example thpotentials
+K = Tens([3.0 0.7; 0.7 1.2])                         # a symmetric conductivity of no symmetry
+Kc = canonical_components(K)
+μK = (-Kc[1, 2] + im * sqrt(det(Kc))) / Kc[2, 2]     # K₂₂μ² + 2K₁₂μ + K₁₁ = 0, Im μ > 0
+cK = Kc[1, 2] + Kc[2, 2] * μK                         # i √(det K)
+αK, βK = (conj(ξ) + μK * conj(η)) / 2, (ξ + μK * η) / 2
+function insulated(G₁, G₂)                            # flux function on the contour, mean gradient of the hole
+    γ = complex(G₁, (G₁ * real(μK) - G₂) / imag(μK))    # G·x = Re(γ z_μ)
+    B = conj(γ * αK) - γ * βK
+    flux = maximum(θ -> abs(real(cK * (γ * (αK * cis(θ) + βK * cis(-θ)) + B * cis(-θ)))), θs)
+    return flux, [imag(2γ * αK * η), -imag(2γ * αK * ξ)] / (1 - abs2(m))
+end
+(flux₁, g₁), (flux₂, g₂) = insulated(1.0, 0.0), insulated(0.0, 1.0)
+A_K = canonical_components(gradient_gradient_concentration(hole, 0 * K, K))
+A_E = canonical_components(gradient_gradient_concentration(Ellipsoid(1 + abs(m), 1 - abs(m); angle = angle(m) / 2), 0 * K, K))
+max(flux₁, flux₂), maximum(abs, [g₁ g₂] - A_K), maximum(abs, A_K - A_E), A_K[1, 2] - A_K[2, 1]
+```
+
+On symbols, for the orthotropic conductor in the axes of the ellipse of
+semi-axes proportional to ``a`` and ``b``, ``m=(a-b)/(a+b)``: the two diagonal
+components of the tensor, and the deviation of the whole tensor from the closed
+form above at numbers substituted:
+
+```@example thpotentials
+let
+    Symbolics.@variables k₁ k₂ a b
+    K = TensOrtho{2}(k₁, k₂, CanonicalBasis{2, Symbolics.Num}())
+    A = canonical_components(gradient_gradient_concentration(ConformalHole(((a - b) / (a + b),)), 0 * K, K))
+    closed = [1 + b / a * sqrt(k₁ / k₂) 0; 0 1 + a / b * sqrt(k₂ / k₁)]
+    at = Dict(k₁ => 3.0, k₂ => 0.5, a => 2.0, b => 0.7)
+    value(x) = Symbolics.value(Symbolics.substitute(x, at; fold = Val(true)))
+    Symbolics.simplify_fractions.((A[1, 1], A[2, 2])), maximum(abs, value.(A - closed))
+end
+```
+
+A map of several terms gives, on the contour, a ``z_\mu`` that holds the
+powers ``\sigma^j``, ``j\ge2``, with the factor ``(1+\mathrm{i}\mu)/2``, as in
+[Holes given by a conformal map](@ref th-conformal-mapping), section 10: the
+insulating hole of several terms is solved in an isotropic conductor only.
+
 ## Where to go next
 
 [Holes given by a conformal map](@ref th-conformal-mapping) solves the free
 hole of a map with any number of terms in an isotropic matrix, by the
 identification of section 5, and adds the shear along the axis and the axial
 stress of a cylindrical cavity; [Conformal holes](@ref man-conformal-holes)
-gives the syntax of [`ConformalHole`](@ref) and [`contour_stress`](@ref), and
+gives the syntax of [`ConformalHole`](@ref), [`contour_stress`](@ref) and
+[`matrix_stress`](@ref), and
 [Problems of the plane](@ref th-plane-problems) the cells of the plane in which
 the holes are placed. The stress along the contour of an elliptic hole in an
-isotropic and in an anisotropic plate is computed in
+isotropic and in an anisotropic plate, the stress ahead of its tip and the
+same hole as an insulator are computed in
 [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole).
 The functions and maps used here are recalled in
 [Holomorphic functions and conformal maps](@ref th-holomorphic-functions). The

@@ -28,12 +28,12 @@ and the cell of the plane, whose matrix is isotropic in the plane or not.
 | springs between the faces of a crack (`K_interface`) | yes | yes | yes |
 | layered sphere, spheroid, ellipsoid | yes | no | no |
 | layered cylinder ([`LayeredCylinder`](@ref)), with its interfaces | yes | yes, layers isotropic in the plane | no |
-| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse; not a map of several terms |
+| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse, in elasticity and in conduction; not a map of several terms |
 | torus, grid of Gaussians, mesh, network | yes | no | no |
 | Voigt, Reuss, dilute, Mori–Tanaka, self-consistent, differential | yes | yes | yes |
 | laminate | yes | no | no |
 | interaction tensors ([`interaction_tensor`](@ref)) | yes | yes | yes |
-| conduction | yes | ellipses, segments, rings, holes | ellipses, segments |
+| conduction | yes | ellipses, segments, rings, holes | ellipses, segments, elliptic holes |
 | aging viscoelasticity | yes | disks, ellipses, segments, rings | no |
 
 Maxwell's scheme, that of Ponte Castañeda and Willis, the asymmetric
@@ -336,7 +336,8 @@ as that of the ribbon crack in the medium invariant along the axis. An elliptic
 hole given by its map, `ConformalHole((m,))`, accepts it too, and has the
 concentration tensor of the ellipse of the same semi-axes
 ([Conformal holes](@ref man-conformal-holes)); its potentials give besides the
-stress along its edge, [`contour_stress`](@ref). Stiff
+stress along its edge, [`contour_stress`](@ref), and in the matrix around it,
+[`matrix_stress`](@ref). Stiff
 ellipses in the orthotropic matrix `c₀`:
 
 ```@example manplane
@@ -427,6 +428,21 @@ add_phase!(rve, :ellipses, Ellipsoid(1.0, 0.4), Dict(:K => TensISO{2}(10.0)); fr
 canonical_components(homogenize(rve, MoriTanaka(), :K))
 ```
 
+Insulating elliptic holes in the same matrix, given by their map and by the
+ellipse of the same semi-axes, give the same estimate
+([Conformal holes](@ref man-conformal-holes)):
+
+```@example manplane
+function insulated(hole)
+    rve = RVE()
+    add_phase!(rve, :matrix, disk, Dict(:K => TensOrtho{2}(3.0, 1.0, Basis(0.3))); fraction = :rest)
+    add_phase!(rve, :holes, hole, Dict(:K => TensISO{2}(0.0)); fraction = 0.2)
+    return canonical_components(homogenize(rve, MoriTanaka(), :K))
+end
+K_map = insulated(ConformalHole((0.4,)))                 # semi-axes 1.4 and 0.6
+K_map, norm(K_map - insulated(Ellipsoid(1.4, 0.6)))
+```
+
 ## The same medium in three dimensions
 
 A medium invariant along an axis is also a three-dimensional cell of aligned
@@ -500,7 +516,8 @@ end
 ## [What is restricted, and why](@id man-plane-restricted)
 
 **Holes given by a map of several terms and concentric rings take a matrix
-isotropic in the plane**, and the rings layers isotropic in the plane. The hole
+isotropic in the plane**, in elasticity and in conduction, and the rings
+layers isotropic in the plane. The hole
 is solved with the complex potentials of Kolosov and Muskhelishvili, the rings
 with radial problems that separate harmonic by harmonic: both rest on the
 isotropy of the plane. An anisotropic plane needs the potentials of
@@ -522,8 +539,8 @@ catch err
 end
 ```
 
-An ellipse, the elliptic hole included, and a segment accept any anisotropy
-of the plane. The other restrictions are these.
+An ellipse, the elliptic hole included in elasticity and in conduction, and a
+segment accept any anisotropy of the plane. The other restrictions are these.
 
 - **Aging viscoelasticity takes a matrix isotropic in the plane**: its Hill
   kernel is known against an isotropic reference only. The schemes it applies

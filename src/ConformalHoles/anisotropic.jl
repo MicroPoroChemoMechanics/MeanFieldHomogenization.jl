@@ -220,3 +220,35 @@ function _anisotropic_ellipse_stress(m::Complex, s, p, Σ, θ)
     N₂ = -c₂ * (s * x₁′ + p * x₂′) + c₁ * p * x₁′
     return (Σ[1] + 2 * real(w * N₂), Σ[2] + 2 * real(w * N₀), Σ[3] - 2 * real(w * N₁)), (x₁′, x₂′)
 end
+
+# ── Conduction ───────────────────────────────────────────────────────────────
+
+"""
+    _anisotropic_ellipse_gradient(m, K₀) -> SMatrix{2, 2}
+
+Gradient concentration, in the canonical axes, of the insulating elliptic hole
+of map ``\\zeta + m/\\zeta`` in a matrix of symmetric conductivity `K₀`.
+
+The temperature is the real part of a function of ``z_\\mu = x_1 + \\mu\\,x_2``,
+with ``\\mu`` the root of positive imaginary part of
+``K_{22}\\mu^2 + 2K_{12}\\mu + K_{11} = 0``, in closed form. A remote gradient
+``\\underline{G}`` is ``\\operatorname{Re}(\\gamma\\,z_\\mu)``; the flux
+function ``\\operatorname{Re}(c\\,f)``, ``c = K_{12} + K_{22}\\mu`` purely
+imaginary, is constant on the contour for the perturbation
+``-(\\gamma\\beta - \\overline{\\gamma\\alpha})/\\zeta_\\mu``, and the temperature on
+the contour is ``\\operatorname{Re}(2\\,\\overline{\\gamma\\alpha}\\,\\bar\\sigma)``,
+whose integral with the normal gives the mean gradient.
+"""
+function _anisotropic_ellipse_gradient(m::Complex, K₀::TensND.AbstractTens{2, 2})
+    K = TensND.canonical_components(K₀)
+    K₁₁, K₂₂, K₁₂ = K[1, 1], K[2, 2], (K[1, 2] + K[2, 1]) / 2
+    μ = complex(-K₁₂ / K₂₂, sqrt(K₁₁ * K₂₂ - K₁₂^2) / K₂₂)
+    ξ, η = _contour_vectors(m)
+    α = (conj(ξ) + μ * conj(η)) / 2
+    area = 1 - abs2(m)
+    columns = map(((1, 0), (0, 1))) do (G₁, G₂)
+        w = 2 * complex(G₁, (G₁ * real(μ) - G₂) / imag(μ)) * α      # 2 γ α
+        (imag(w * η) / area, -imag(w * ξ) / area)
+    end
+    return SMatrix{2, 2}(columns[1]..., columns[2]...)
+end

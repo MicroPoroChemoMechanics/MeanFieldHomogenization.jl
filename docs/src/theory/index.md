@@ -154,7 +154,7 @@ torus, elasticity and conduction for the cylindrical cavities.
 | Page | Inclusion |
 | :--- | :-------- |
 | [Toroidal inclusions](@ref th-toroidal-inclusions) | the insulating torus in conduction: a series of toroidal harmonics, and the same tensor from an integral over the torus |
-| [Holes given by a conformal map](@ref th-conformal-mapping) | a cylindrical cavity whose section is the image of a disk by a map with a finite number of terms: complex potentials in plane strain, antiplane shear, conduction and plane stress |
+| [Holes given by a conformal map](@ref th-conformal-mapping) | a cylindrical cavity whose section is the image of a disk by a map with a finite number of terms: complex potentials in plane strain, antiplane shear, conduction and plane stress; the stress along the contour |
 
 ## Arbitrary shapes by Gaussian approximation
 
@@ -250,7 +250,7 @@ problem itself that must be generalized.
 | [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [concentration](@ref th-concentration) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
 | [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
 | [Holomorphic functions and conformal maps](@ref th-holomorphic-functions) | the complex variable of the plane: derivatives with respect to ``z`` and ``\bar z``, harmonic and biharmonic functions, series on the unit circle, conformal maps |
-| [Complex potentials of plane elasticity](@ref th-complex-potentials) | the stress and the displacement of a plane problem written with two holomorphic functions, in an isotropic and in an anisotropic medium, and the elliptic hole solved in both |
+| [Complex potentials of plane elasticity](@ref th-complex-potentials) | the stress and the displacement of a plane problem written with two holomorphic functions, in an isotropic and in an anisotropic medium, the elliptic hole solved in both, the stress in the matrix around a hole, and the insulating ellipse in an anisotropic conductor |
 
 ## Where the two physics meet
 

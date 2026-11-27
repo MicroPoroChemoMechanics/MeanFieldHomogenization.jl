@@ -68,12 +68,18 @@ struct _IsotropicContour{T}
     b::Vector{Complex{T}}
 end
 
-function _isotropic_contour(h::ConformalHole, Σ)
+_isotropic_contour(h::ConformalHole, Σ) = ((m, Γ, _, b) = _loaded_potential(h, Σ); _IsotropicContour(m, Γ, b))
+
+# The potential Φ = Γ ζ + Σ bₖ ζ⁻ᵏ of the hole under the remote stress
+# (Σ₁₁, Σ₂₂, Σ₁₂), a combination of those of the three unit loads, with the
+# constant Γ′ of the second potential and the map at the same element type.
+function _loaded_potential(h::ConformalHole, Σ)
     a, loads = _potential_coefficients(h.coefficients)
     weights = (Σ[1], Σ[2], sqrt(2 * one(Σ[3])) * Σ[3])
-    return _IsotropicContour(
-        h.coefficients .* one(eltype(weights)), sum(w * Γ for (w, (Γ, _)) in zip(weights, loads)),
-        [sum(weights[q] * a[k, q] for q in 1:3) for k in axes(a, 1)]
+    return (
+        h.coefficients .* one(eltype(weights)),
+        sum(w * Γ for (w, (Γ, _)) in zip(weights, loads)), sum(w * Γ′ for (w, (_, Γ′)) in zip(weights, loads)),
+        [sum(weights[q] * a[k, q] for q in 1:3) for k in axes(a, 1)],
     )
 end
 

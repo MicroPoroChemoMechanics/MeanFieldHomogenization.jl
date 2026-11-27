@@ -94,12 +94,12 @@ scheme accepts:
 | springs between the faces of a crack (`K_interface`) | yes | yes | yes |
 | layered sphere, spheroid, ellipsoid | yes | no | no |
 | layered cylinder ([`LayeredCylinder`](@ref)), with its interfaces | yes | yes, layers isotropic in the plane | no |
-| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse; not a map of several terms |
+| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse, in elasticity and in conduction; not a map of several terms |
 | torus, grid of Gaussians, mesh, network | yes | no | no |
 | Voigt, Reuss, dilute, Mori–Tanaka, self-consistent, differential | yes | yes | yes |
 | laminate | yes | no | no |
 | interaction tensors ([`interaction_tensor`](@ref)) | yes | yes | yes |
-| conduction | yes | ellipses, segments, rings, holes | ellipses, segments |
+| conduction | yes | ellipses, segments, rings, holes | ellipses, segments, elliptic holes |
 | aging viscoelasticity | yes | disks, ellipses, segments, rings | no |
 
 ## [Lineage: Echoes](@id index-lineage-echoes)
