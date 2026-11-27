@@ -1,5 +1,57 @@
 # Changelog
 
+## v0.31.0 — seismic signatures, fluids in the pores, interacting cracks
+
+A minor release: it needs TensND 0.18.1, whose elastic waves turn the
+estimates of the package into velocities. A wave sees a cell through its
+stiffness and its density; this release gives the density, reads on the
+estimate of each scheme the compliance of the fracture set a crack family is,
+puts a compressible fluid in the pores, sealed, connected or exchanging, and
+lets the cracks of a plane load each other.
+
+### Breaking
+
+- The compat bound of TensND is `0.18.1`: a package that fixes TensND at `0.17`
+  cannot install this release. No function of the package changes its results.
+
+### Added
+
+- **Seismic signatures** (`MeanFieldHomogenization.Seismic`):
+  `average_density` (the volume average of the phase property `:ρ`),
+  `fracture_compliance` (the compliance of linear slip, ``Z_N``, ``Z_T``, of a
+  crack family under a scheme), `slip_compliance`, `linear_slip_change` and
+  `fractured_stiffness` (sets of fractures declared by their compliances,
+  Schoenberg and Sayers; one set is the periodic laminate with a spring
+  interface), `orthogonal_fracture_compliances` (three orthogonal sets read on
+  a change of compliance, the method of Rasolofosaon et al., 2000). The
+  velocities are those of TensND applied to the estimate.
+- `crack_family_compliances` decomposes the estimate of the dilute schemes
+  (`Dilute`, `DiluteDual`), of `Maxwell` and of `PonteCastanedaWillis` as it did
+  that of `SelfConsistent` and `MoriTanaka`.
+- **Fluids in the pores.** `poroelastic_parameters`, `biot_modulus` and
+  `inverse_biot_modulus` take the bulk modulus of the fluid, `k_f`, so that the
+  undrained stiffness is the anisotropic Gassmann (Brown–Korringa) relation;
+  without it the incompressible fluid is kept, to the bit.
+  `pore_pressure_tensor` gives the pressure of a fluid sealed in a family of
+  pores from the concentration tensors of any scheme (the pressure
+  polarization of Shafiro and Kachanov, 1997). `squirt_flow` gives the complex
+  compliance and stiffness of pore families exchanging fluid with a relaxation
+  time (the exchange law of Jakobsen and Chapman, 2009), from the sealed pores
+  at high frequency to Gassmann at low frequency, under any scheme that accepts
+  complex moduli.
+- **Interacting cracks of a plane.** `sif` on a list of `center => RibbonCrack`
+  pairs gives the stress intensity factors of interacting cracks by the method
+  of average tractions of Kachanov (1987), in an isotropic plane (Westergaard's
+  fields) and in an anisotropic one (the slit of `ConformalHoles`, as Mauge and
+  Kachanov, 1994).
+
+### Documentation
+
+- Theory: *Cracks seen as fractures* and *Interacting cracks*; Levin's
+  theorem §5 derives Gassmann's relation, the pressure of sealed pores and the
+  squirt flow. Manual: *Seismic signatures*, the fluid in the pores, interacting
+  cracks. Applications: a section *Cracked and saturated rocks*.
+
 ## v0.30.0 — cells of the plane with an anisotropic matrix
 
 A minor release: it needs TensND 0.17, whose orthotropic and cubic tensors

@@ -231,6 +231,7 @@ tensor of order two, then applied to a flow whose inclusions carry a size.
 | Page | What it adds |
 | :--- | :----------- |
 | [Extension to conductivity](@ref th-conductivity) | the order-4 ↔ order-2 dictionary stated once — Hooke against Fourier, Fick, Darcy and Ohm — what transposes untouched, and the two things that genuinely differ |
+| [Cross-property connections](@ref th-cross-property) | when the elastic and conductive contributions of the same pores and cracks are tied, exactly or approximately, and what the approximation drops |
 | [Permeability from Stokes flow](@ref th-brinkman) | Darcy's law at the scale of the pores does not hold: the permeability from the Brinkman inhomogeneity problem, whose solution depends on the size of the inclusion |
 
 ## Extension to viscoelasticity

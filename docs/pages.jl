@@ -134,6 +134,7 @@ pages = [
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
+            "theory/cross_property.md",
             # The permeability from the Stokes flow in the pores: the same
             # schemes, fed with size-dependent Brinkman inclusions.
             "theory/brinkman.md",
@@ -325,6 +326,7 @@ pages = [
             "applications/generated/insulating_torus.md",
             "applications/generated/conformal_holes.md",
             "applications/generated/elliptic_hole.md",
+            "applications/generated/elliptical_holes_anisotropic.md",
         ],
         "Interactions between particles" => [
             "applications/generated/cluster_model.md",
@@ -335,6 +337,7 @@ pages = [
         "Cracks" => [
             "applications/generated/crack_contacts.md",
             "applications/generated/narrow_cracks.md",
+            "applications/generated/interacting_cracks.md",
         ],
         # A shell of uniform properties around the particle, then a graded
         # one, then the published closures set beside the exact solution, then
@@ -347,6 +350,10 @@ pages = [
         ],
         "Transport in pores" => [
             "applications/generated/stokes_darcy_permeability.md",
+        ],
+        # The same pores and cracks seen by elasticity and by conduction.
+        "Cross-property connections" => [
+            "applications/generated/cross_property.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
         # the ITZ pages use the paste model of the strength page.
@@ -367,6 +374,14 @@ pages = [
             "applications/lamellar_clay.md",
             "applications/granular_friction.md",
             "applications/sandstone_strength.md",
+        ],
+        # What a wave sees of a rock whose cracks and pores hold a fluid: the
+        # pressure in sealed pores, the dispersion when the fluid flows between
+        # cracks, then the cracks read back on measured velocities.
+        "Cracked and saturated rocks" => [
+            "applications/generated/fluid_filled_pores.md",
+            "applications/generated/squirt_dispersion.md",
+            "applications/generated/ktb_cracks.md",
         ],
         "Bituminous materials" => [
             "applications/bituminous.md",
