@@ -4,12 +4,12 @@
   "key": "rasolofosaonGJI2000",
   "doi": "10.1046/j.1365-246x.2000.00093.x",
   "citation": "Rasolofosaon, Patrick N. J., Rabbel, Wolfgang, Siegesmund, Siegfried, Vollbrecht, Axel (2000). Characterization of crack distribution: fabric analysis versus ultrasonic inversion. Geophysical Journal International 141(2), 413-424.",
-  "location": "Figs 5 and 6 (pp. 419-420), text of pp. 420-421 (eqs 2-4), p. 422 (eq. 7)"
+  "location": "Figs 5 and 6 (pp. 419-420), text of pp. 418 and 420-422 (eqs 1-7)"
  },
  "transcription": {
   "from": "the published article (PDF), on pages rendered at 300 dpi; every value compared with the page image",
   "checked_against_source": true,
-  "note": "Paragneiss sample 767 G3y of the KTB pilot hole (depth 3145 m). The stiffness matrices are in the two-index (Voigt) notation, GPa, in the sample frame (X, Y, Z), Z vertical; the figures print the upper triangle, stored here in full. The excess compliance and the fracture compliances are in the two-index notation of compliances (S44 = 4 S2323), in the crack frame (Xc, Yc, Zc), 1e-12 Pa^-1. The crack frame was found by the authors as the best orthotropic frame of the cracked medium (programs of Arts et al. 1991 and Arts 1993, not described in the article). The frame printed is left-handed (determinant -1), which does not change a fourth-order tensor."
+  "note": "Paragneiss sample 767 G3y of the KTB pilot hole (depth 3145 m). The stiffness matrices are in the two-index (Voigt) notation, GPa, in the sample frame (X, Y, Z), Z vertical; the figures print the upper triangle, stored here in full. The excess compliance and the fracture compliances are in the two-index notation of compliances (S44 = 4 S2323), in the crack frame (Xc, Yc, Zc), 1e-12 Pa^-1. The crack frame was found by the authors as the best orthotropic frame of the cracked medium (programs of Arts et al. 1991 and Arts 1993, not described in the article). The frame printed is left-handed (determinant -1), which does not change a fourth-order tensor. The deviations from higher symmetries are the boxes 'Deviations from higher symmetries' of Figs 5 and 6, in per cent; the article defines them by reference to Arts et al. (1991) without giving the formula."
  },
  "quantities": {
   "density": {
@@ -67,6 +67,30 @@
    "uncertainty": null,
    "location": "p. 422",
    "description": "Square of the ratio of the S and P velocities of the intact rock."
+  },
+  "poisson_ratio_matrix": {
+   "value": 0.25,
+   "unit": "1",
+   "kind": "assumed",
+   "uncertainty": null,
+   "location": "p. 422, text after eq. (6)",
+   "description": "Average Poisson ratio of the matrix with which the article evaluates the ratio R for cracks of various fillings (formulae of Schoenberg and Douma 1988)."
+  },
+  "R_dry_cracks": {
+   "value": 2.63,
+   "unit": "1",
+   "kind": "derived",
+   "uncertainty": null,
+   "location": "p. 422, item (a)",
+   "description": "Ratio R = E_N/E_T of dry cracks for a matrix of Poisson ratio 0.25."
+  },
+  "crack_density_family2": {
+   "value": 0.07,
+   "unit": "1",
+   "kind": "derived",
+   "uncertainty": null,
+   "location": "p. 422, item (1)",
+   "description": "Crack density (number of cracks per unit volume times the cube of their radius) required to explain E_2^N and E_2^T."
   }
  },
  "tables": {
@@ -431,6 +455,57 @@
     "family": 3,
     "E_N_percent": 12.0,
     "E_T_percent": 7.5
+   }
+  ],
+  "deviations_from_higher_symmetries": [
+   {
+    "figure": "5a",
+    "state": "measured, 400 MPa",
+    "ISO_percent": 12.1,
+    "TI_percent": 2.7,
+    "ORT_percent": 2.0,
+    "MON_percent": 1.0
+   },
+   {
+    "figure": "5b",
+    "state": "measured, 10 MPa",
+    "ISO_percent": 25.5,
+    "TI_percent": 6.7,
+    "ORT_percent": 4.1,
+    "MON_percent": 3.0
+   },
+   {
+    "figure": "6a",
+    "state": "isotropic rock with the cracks, 10 MPa",
+    "ISO_percent": 22.6,
+    "TI_percent": 5.6,
+    "ORT_percent": 3.7,
+    "MON_percent": 2.7
+   },
+   {
+    "figure": "6b",
+    "state": "intact rock with three sets of fractures, 10 MPa",
+    "ISO_percent": 21.4,
+    "TI_percent": 5.1,
+    "ORT_percent": 1.7,
+    "MON_percent": 0.8
+   }
+  ],
+  "ratio_R_10MPa": [
+   {
+    "family": 1,
+    "R": 1.48,
+    "location": "p. 422, item (3)"
+   },
+   {
+    "family": 2,
+    "R": 3.7,
+    "location": "p. 422, item (1)"
+   },
+   {
+    "family": 3,
+    "R": 1.03,
+    "location": "p. 422, item (2)"
    }
   ]
  },

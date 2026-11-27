@@ -109,7 +109,48 @@ on the line of a crack, ahead of its tips, is the same as in an isotropic
 plane, so that collinear cracks interact as they do there [mauge1994](@cite);
 any other arrangement depends on the anisotropy.
 
-## 4. In the package
+## 4. Two exact solutions
+
+Two arrangements of collinear cracks have exact solutions, against which the
+method is measured. Both use Westergaard's function ``Z(z)``, analytic outside
+the cracks, which gives on the axis ``x_2 = 0`` the normal stress
+``\sigma_{22} = \operatorname{Re}Z`` under a biaxial tension ``p`` at infinity; the
+uniaxial tension differs from it by a uniform ``\sigma_{11}``, which leaves the
+intensity factors unchanged. At a tip ``z_0``, ``K_{\mathrm I} = \lim\sqrt{2\pi(z - z_0)}\,Z``.
+
+**Two collinear cracks** ``k < |x_1| < 1``. The function
+
+```math
+Z(z) = p\,\frac{z^2 - \lambda^2}{\sqrt{(z^2 - k^2)(z^2 - 1)}}
+```
+
+is purely imaginary on the cracks, whose faces are thus free, real on the
+ligament and outside, and tends to ``p`` at infinity. The constant ``\lambda`` makes
+the opening vanish at the outer tip,
+``\int_k^1 (x^2 - \lambda^2)/\sqrt{(x^2 - k^2)(1 - x^2)}\,\mathrm dx = 0``. With
+``x^2 = 1 - m\sin^2\varphi``, ``m = 1 - k^2``, the two integrals are the complete
+elliptic integrals ``K(m)`` and ``E(m)``, so that ``\lambda^2 = E(m)/K(m)``, and with
+``K_{\mathrm I}^0 = p\sqrt{\pi(1 - k)/2}`` the factor of an isolated crack of the
+same length,
+
+```math
+\frac{K_{\mathrm I}(1)}{K_{\mathrm I}^0} = \frac{1 - \lambda^2}{\sqrt{1 - k^2}}\sqrt{\frac{2}{1 - k}},
+\qquad
+\frac{K_{\mathrm I}(k)}{K_{\mathrm I}^0} = \frac{\lambda^2 - k^2}{\sqrt{k}\,\sqrt{1 - k^2}}\sqrt{\frac{2}{1 - k}} .
+```
+
+**A periodic row** of cracks of half-length ``l`` and period ``h``. The function
+``Z = p\,\sin(\pi z/h)/\sqrt{\sin^2(\pi z/h) - \sin^2(\pi l/h)}`` is purely
+imaginary on the cracks, real on the ligaments, periodic, and tends to ``p`` as
+``x_2 \to \pm\infty``. Near the tip ``z = l``,
+``\sin^2(\pi z/h) - \sin^2(\pi l/h) \simeq (\pi/h)\sin(2\pi l/h)\,(z - l)``, whence
+
+```math
+\frac{K_{\mathrm I}}{K_{\mathrm I}^0} = \sqrt{\frac{h}{\pi l}\tan\frac{\pi l}{h}},
+\qquad K_{\mathrm I}^0 = p\sqrt{\pi l} .
+```
+
+## 5. In the package
 
 [`sif`](@ref) on a list of `center => crack` pairs, each crack a
 [`RibbonCrack`](@ref), returns the factors at the two tips and the mean tractions

@@ -1,0 +1,70 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "tsukrov2000",
+  "doi": "10.1016/S0020-7683(99)00244-9",
+  "citation": "Tsukrov, I. and Kachanov, M. (2000). Effective moduli of an anisotropic material with elliptical holes of arbitrary orientational distribution. International Journal of Solids and Structures 37(41), 5919-5941.",
+  "location": "Captions of Figs. 5, 6 and 7 (pp. 5933 and 5937); Eqs. (22)-(29), pp. 5926-5931; Eqs. (41)-(44), pp. 5936-5937"
+ },
+ "transcription": {
+  "from": "the published article (PDF), captions and equations read on the page images",
+  "checked_against_source": true,
+  "note": "The orthotropic matrix of the three figures is given by ratios only: E1/E2 = 4.1, E1/G12 = 10, nu12 = 0.277 and nu21 = 0.068 (= 0.277/4.1 to its rounding). The plate is two-dimensional, in plane stress. The figures plot E1/E2 for randomly oriented elliptical holes: against the area fraction p for b/a = 1, 1/2 and 1/4 (Fig. 5), against b/a at fixed crack densities rho = 0.05 and 0.1 of the major axes (Fig. 6), and against b/a at fixed p = 0.2 and 0.3 (Fig. 7); the curves are not transcribed, the page recomputes them and sets them against Eq. (44)."
+ },
+ "quantities": {
+  "E1_over_E2": {
+   "value": 4.1,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs. 5-7",
+   "description": "Ratio of the Young moduli of the matrix along and across its stiff axis."
+  },
+  "E1_over_G12": {
+   "value": 10.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs. 5-7",
+   "description": "Ratio of the Young modulus along the stiff axis to the shear modulus of the matrix."
+  },
+  "nu12": {
+   "value": 0.277,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs. 5-7",
+   "description": "Poisson ratio nu12 of the matrix."
+  },
+  "nu21": {
+   "value": 0.068,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs. 5-7",
+   "description": "Poisson ratio nu21 of the matrix, nu12 E2/E1 rounded."
+  }
+ },
+ "tables": {
+  "figure_settings": [
+   {
+    "figure": "5",
+    "abscissa": "p from 0 to 0.4",
+    "curves": "b/a = 1, 1/2, 1/4"
+   },
+   {
+    "figure": "6",
+    "abscissa": "b/a from 0 to 1",
+    "curves": "rho = 0.05, 0.1 (density of the major axes, sum of a^2 over A)"
+   },
+   {
+    "figure": "7",
+    "abscissa": "b/a from 0.1 to 1",
+    "curves": "p = 0.2, 0.3"
+   }
+  ]
+ },
+ "notes": [
+  "E1/E2 of the matrix is 4.1, the value at p = 0 of Fig. 5."
+ ]
+}
