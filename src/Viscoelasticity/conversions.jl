@@ -1,6 +1,6 @@
 # =============================================================================
-#  conversions.jl — convert between a `(6n×6n)` block matrix and per-symmetry
-#  scalar parameter matrices `n×n`.
+#  conversions.jl — convert between a `(6n×6n)` block matrix of isotropic
+#  blocks and its two scalar parameter matrices `n×n`.
 #
 #  An isotropic 4-tensor in Mandel form is described by two scalars
 #  `(α, β)` (with `α = 3K`, `β = 2μ`).  An iso block matrix in ALV is
@@ -97,44 +97,6 @@ function _add_iso_blocks!(M::AbstractMatrix, w, α::AbstractMatrix, β::Abstract
     end
     return M
 end
-
-# =============================================================================
-#  TI (transversely isotropic) — Walpole basis with axis n = e_z (canonical)
-# =============================================================================
-#
-#  A TI 4-tensor in the Walpole basis is described by 6 scalars
-#  `(ℓ₁, ℓ₂, ℓ₃, ℓ₄, ℓ₅, ℓ₆)`.  In the canonical axis n = e₃ the
-#  6×6 Mandel block has the structure (zero entries omitted):
-#
-#      M[1,1] = M[2,2] = (ℓ₂ + ℓ₅)/2
-#      M[1,2] = M[2,1] = (ℓ₂ − ℓ₅)/2
-#      M[3,3] = ℓ₁
-#      M[1,3] = M[2,3] = ℓ₄/√2     (W₄ = (nT⊗nₙ)/√2 → column 3)
-#      M[3,1] = M[3,2] = ℓ₃/√2     (W₃ = (nₙ⊗nT)/√2 → row 3)
-#      M[4,4] = M[5,5] = ℓ₆        (out-of-plane shear)
-#      M[6,6] = ℓ₅                 (in-plane shear)
-#
-#  Major symmetry of the elastic tensor implies ℓ₃ = ℓ₄.  In ALV the
-#  Volterra product of two major-symmetric TI tensors is generally NOT
-#  major-symmetric (because the synthetic Walpole 2×2 matrices may not
-#  commute when the time grid is non-uniform), so the 6-parameter form
-#  is used internally even when inputs are major-symmetric.
-#
-#  REPRESENTABILITY LIMIT — this 6-parameter TI block form captures the
-#  ℓ₃ ≠ ℓ₄ major-asymmetry but NOT the two antisymmetric azimuthal
-#  couplings (ℓ₇, ℓ₈ of the full 8-dim axially-invariant space; the t13 /
-#  t16 patterns of `Core.transverse_isotropify`).  Those appear when a
-#  concentration tensor is azimuthally averaged block-by-block on the ALV
-#  side (`homogenize_alv._ti_project_blocks`): such a result is kept as a
-#  FULL 6n×6n matrix, not routed through this 6-parameter closure.  The
-#  6-parameter form here is the fast path for the dedicated structured
-#  TI ALV pipeline (`ti_schemes_alv.jl`), where all operands are genuine
-#  TI(ez) stiffnesses/compliances (ℓ₇ = ℓ₈ = 0).
-# =============================================================================
-
-# The (row, column) slots of the 12 orthotropic parameters in a 6×6 block: the
-# normal 3×3 block row-major, then the shear diagonal.
-const _ORTHO_SLOTS = ((1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3), (3, 1), (3, 2), (3, 3), (4, 4), (5, 5), (6, 6))
 
 # ── Isotropy of a block matrix ──────────────────────────────────────────────
 

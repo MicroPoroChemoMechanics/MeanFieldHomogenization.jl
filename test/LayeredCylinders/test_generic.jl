@@ -78,7 +78,7 @@ end
     Jq_fd = reduce(hcat, [(q(h .* (1:3 .== j)) .- q(-h .* (1:3 .== j))) ./ 2h for j in 1:3])
     @test Jq ≈ Jq_fd rtol = 1.0e-6
     # a pointwise field differentiated in a modulus
-    E = MeanFieldHomogenization.Core._tens_in([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
+    E = TensND.static_tens([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
     s(x) = vec(lc_cc(local_flux(LayeredCylinder((0.5, 1.0), (lc_ti(30.0 + x, 12.0, 9.0, 150.0, 14.0), Cm)), C0, (0.2, 0.1, 0.0), E)))
     @test ForwardDiff.derivative(s, 0.0) ≈ (s(h) .- s(-h)) ./ 2h rtol = 1.0e-6
 end
@@ -133,7 +133,7 @@ end
     f_num = LayeredCylinderFields(LayeredCylinder((0.6, 1.0), (lc_tensor(LC_F), lc_tensor(LC_M))), lc_tensor(LC_M))
     @test [num(x, vals) for x in lc_cc(A_loc)] ≈ collect(lc_cc(local_gradient_gradient_concentration(f_num, 0.3, 0.3, 0.0))) rtol = 1.0e-10
     # a general tensor with symbolic entries is refused, not compared
-    @test_throws "symbolic property" LCyl._ti_part(MeanFieldHomogenization.Core._tens_in(Symbolics.Num[k₁ 0 0; 0 k₁ 0; 0 0 l₁], TensND.CanonicalBasis{3, Symbolics.Num}()), ez)
+    @test_throws "symbolic property" LCyl._ti_part(TensND.static_tens(Symbolics.Num[k₁ 0 0; 0 k₁ 0; 0 0 l₁], TensND.CanonicalBasis{3, Symbolics.Num}()), ez)
 end
 
 @testset "LayeredCylinder — SymPy closed forms" begin

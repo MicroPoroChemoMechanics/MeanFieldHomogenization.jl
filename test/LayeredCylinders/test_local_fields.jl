@@ -24,7 +24,7 @@ isdefined(@__MODULE__, :lc_ti) || include(joinpath(@__DIR__, "helpers.jl"))
     E0 = let M = randn(rng, 3, 3)
         (M + M') / 2
     end
-    E = MeanFieldHomogenization.Core._tens_in(E0, TensND.CanonicalBasis{3, Float64}())
+    E = TensND.static_tens(E0, TensND.CanonicalBasis{3, Float64}())
     n = collect(ax); t1 = collect(LCyl._transverse_direction(ax)); t2 = cross(n, t1)
     pt(r, θ, z) = r * (cos(θ) * t1 + sin(θ) * t2) + z * n
     @testset "compatibility, equilibrium, far field" begin
@@ -124,7 +124,7 @@ end
 @testset "LayeredCylinder — averages under a remote loading, regions" begin
     Cf = lc_ti(30.0, 12.0, 9.0, 150.0, 14.0); Cm = lc_ti(4.0, 2.0, 1.5, 7.0, 1.5); C0 = lc_ti(5.0, 1.0, 2.0, 9.0, 3.0)
     cyl = LayeredCylinder((0.6, 1.0), (Cf, Cm))
-    E = MeanFieldHomogenization.Core._tens_in([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
+    E = TensND.static_tens([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
     @test lc_cc(cylinder_strain_average(cyl, C0, E)) ≈ lc_cc(gradient_gradient_concentration(cyl, Cm, C0) ⊡ E)
     @test lc_cc(cylinder_stress_average(cyl, C0, E)) ≈ lc_cc(flux_gradient_concentration(cyl, Cm, C0) ⊡ E)
     @test lc_cc(layer_stress_average(cyl, C0, E, 1)) ≈ lc_cc(Cf ⊡ layer_strain_average(cyl, C0, E, 1))
@@ -183,7 +183,7 @@ end
     # a remote strain given in a rotated basis
     Cf, Cm, C0 = lc_tensor(LC_F), lc_tensor(LC_M), lc_tensor(LC_0)
     f = LayeredCylinderFields(LayeredCylinder((0.6, 1.0), (Cf, Cm)), C0)
-    E = MeanFieldHomogenization.Core._tens_in([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
+    E = TensND.static_tens([0.3 0.1 -0.2; 0.1 -0.4 0.25; -0.2 0.25 0.7], TensND.CanonicalBasis{3, Float64}())
     Er = TensND.express(E, TensND.RotatedBasis(0.3, 1.1, -0.4))
     @test !(TensND.get_array(Er) ≈ TensND.get_array(E))
     for x in ((0.3, 0.1, 0.2), (0.8, -0.3, 0.0), (1.5, 0.2, 0.1))

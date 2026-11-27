@@ -15,8 +15,9 @@ const _Plane2 = TensND.AbstractTens{2, 2}
 # Moduli of the plane of the stiffness 2k 𝕁 + 2m 𝕂. `l` multiplies the axial
 # strain in the kernel, which is zero in the plane.
 function _plane_moduli(C)
-    α, β = TensND.get_data(_plane_isotropic(C))
-    return (; k = α / 2, m = β / 2, l = zero(α))
+    P = _plane_isotropic(C)
+    k, m = TensND.bulk_shear(P)
+    return (; k, m, l = zero(eltype(P)))
 end
 _plane_conductivity(K) = first(TensND.get_data(_plane_isotropic(K)))
 
@@ -200,7 +201,7 @@ end
 function _plane_average(cyl::LayeredCylinder{T, N}, tensors::Tuple) where {T, N}
     f = _layer_fractions(cyl)
     data = reduce((x, y) -> x .+ y, ntuple(k -> f[k] .* TensND.get_data(tensors[k]), Val(N)))
-    return TensND.TensISO{2}(data...)
+    return TensND.rebuild(first(tensors), data)
 end
 layer_property_average(cyl::LayeredCylinder, ::TensND.AbstractTens{O, 2}) where {O} =
     _plane_average(cyl, map(_plane_isotropic, cyl.moduli))

@@ -28,7 +28,7 @@ _symmetry_defect(P₀::TensND.TensTI, sym::TISymmetrize) =
     _coaxial(TensND.axis(P₀), sym.axis) ? 0.0 : _average_distance(P₀, sym)
 _symmetry_defect(P₀, sym::AbstractSymmetrize) = _average_distance(P₀, sym)
 function _average_distance(P₀, sym)
-    A = map(_primal_value, TensND.canonical_components(P₀))
+    A = map(TensND.primal, TensND.canonical_components(P₀))
     return norm(A - TensND.canonical_components(_project_matrix(TensND.Tens(A), sym))) / norm(A)
 end
 
@@ -36,10 +36,6 @@ _symmetry_name(::IsoSymmetrize) = "every rotation (`symmetrize = :iso`)"
 _symmetry_name(sym::TISymmetrize) = "rotations about $(sym.axis) (`TISymmetrize`)"
 _symmetry_part(::IsoSymmetrize) = "isotropic average"
 _symmetry_part(::TISymmetrize) = "average about that axis"
-
-# The value of a number that may be a dual, nested or not.
-_primal_value(x::ForwardDiff.Dual) = _primal_value(ForwardDiff.value(x))
-_primal_value(x) = x
 
 # Far above the rounding of a reference that has the symmetry, far below any
 # anisotropy that matters.

@@ -248,15 +248,10 @@ struct AnisotropicTangentModel <: PolycrystalModel
 end
 AnisotropicTangentModel(; reltol::Real = 1.0e-10) = AnisotropicTangentModel(reltol)
 
-# An orthonormal basis of the deviators in Kelvin–Mandel components, and the
-# symmetric operators on the deviators by their 15 components in it.
-const _DEV_BASIS = SMatrix{6, 5, Float64}(
-    1 / sqrt(2), -1 / sqrt(2), 0, 0, 0, 0,
-    1 / sqrt(6), 1 / sqrt(6), -2 / sqrt(6), 0, 0, 0,
-    0, 0, 0, 1, 0, 0,
-    0, 0, 0, 0, 1, 0,
-    0, 0, 0, 0, 0, 1
-)
+# An orthonormal basis of the deviators in Kelvin–Mandel components, the
+# isotropic basis without its spherical direction, and the symmetric operators
+# on the deviators by their 15 components in it.
+const _DEV_BASIS = SMatrix{6, 5, Float64}(TensND.symmetry_basis(TensND.TensISO{3}(1.0, 1.0))[:, 2:6])
 _dev_operator(m::SVector{15}) = _DEV_BASIS * _sym_matrix(m, Val(5)) * transpose(_DEV_BASIS)
 _dev_components(M) = _sym_components(transpose(_DEV_BASIS) * M * _DEV_BASIS)
 

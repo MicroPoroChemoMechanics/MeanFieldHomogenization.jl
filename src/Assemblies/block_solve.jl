@@ -30,7 +30,7 @@ Size of the matrix of a tensor of the order and dimension of the reference
 property `P₀`: the Kelvin-Mandel components of a symmetric second-order tensor
 at order 4, the components of a vector at order 2.
 """
-_block_size(::TensND.AbstractTens{4, d}) where {d} = d * (d + 1) ÷ 2
+_block_size(::TensND.AbstractTens{4, d}) where {d} = TensND.mandel_length(d)
 _block_size(::TensND.AbstractTens{2, d}) where {d} = d
 
 # ─── Flattening ──────────────────────────────────────────────────────────────

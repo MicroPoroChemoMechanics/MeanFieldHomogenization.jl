@@ -35,9 +35,10 @@ const _TI_RTOL = 1.0e-8
 # it is the whole of it. Numbers only: the distance is compared.
 function _ti_part(P::TensND.AbstractTens, axis)
     is_hard_numeric(eltype(P)) || _symbolic_general(P)
-    Pti, _, drel = TensND.project(P, Val(:TI), axis)
-    drel ≤ _TI_RTOL || _not_ti(P, drel)
-    return Pti
+    Pti = TensND.project_exact(P, Val(:TI), axis; rtol = _TI_RTOL)
+    Pti === nothing || return Pti
+    # Refused: the distance is computed again only to be named in the message.
+    return _not_ti(P, last(TensND.project(P, Val(:TI), axis)))
 end
 
 """
@@ -50,23 +51,22 @@ Hill's moduli of a stiffness that is isotropic, or transversely isotropic about
 ``l`` for a stiffness and distinct from it for an operator without major symmetry
 (a running estimate in aging viscoelasticity).
 """
-function _hill_moduli(C::TensND.TensISO{4, 3}, axis)
-    h = TensND.hill_moduli(C)
-    return (; h..., lt = h.l)
-end
+_hill_moduli(C::TensND.TensISO{4, 3}, axis) = TensND.hill_moduli(C, Val(6))
 
 # Read on the Walpole coefficients, as the block matrices of aging
 # viscoelasticity are: ℓ₁ = n, ℓ₂ = 2k, ℓ₃ = √2 C₃₃₁₁, ℓ₄ = √2 C₁₁₃₃, ℓ₅ = 2m,
 # ℓ₆ = 2p. An operator without major symmetry (ℓ₃ ≠ ℓ₄) is read as it is; one
 # that is not invariant under the mirrors through the axis (ℓ₇, ℓ₈ ≠ 0) is not
 # transversely isotropic in the sense of the cylinder, and is refused at the
-# tolerance of a general tensor.
-function _hill_moduli(C::TensND.TensTI{4}, axis)
+# tolerance of a general tensor. TensND refuses ℓ₇, ℓ₈ at 16 ulps, finer than a
+# running estimate carries them: the moduli are read on the six other
+# coefficients once this check has passed.
+function _hill_moduli(C::TensND.TensTI{4, T}, axis) where {T}
     TensND.isparallel(TensND.axis(C), axis) || _not_coaxial(C, axis)
     ℓ = TensND.walpole_coeffs(C, Val(8))
     _check_mirror_invariant(C, ℓ)
-    sq2 = sqrt(oftype(ℓ[1], 2))
-    return (; k = ℓ[2] / 2, l = ℓ[4] / sq2, m = ℓ[5] / 2, n = ℓ[1], p = ℓ[6] / 2, lt = ℓ[3] / sq2)
+    six = TensND.TensTI{4, T, 6}(ntuple(i -> ℓ[i], Val(6)), TensND.axis(C))
+    return TensND.hill_moduli(six, Val(6))
 end
 
 _check_mirror_invariant(C, ℓ) = _check_mirror_invariant(Val(is_hard_numeric(eltype(ℓ))), C, ℓ)

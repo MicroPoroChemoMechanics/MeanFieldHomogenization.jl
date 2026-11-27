@@ -134,7 +134,7 @@ inclusion_volume(g::GaussianInclusion) = (l = first(g.levels); sum(l.θ) * l.gri
 
 # Matrix of a property in the frame of the inclusion: 3×3 in conduction,
 # Kelvin–Mandel 6×6 in elasticity.
-_local_matrix(P::TensND.AbstractTens{2, 3}, basis) = SMatrix{3, 3}(TensND.components(P, basis))
+_local_matrix(P::TensND.AbstractTens{2, 3}, basis) = TensND.operator_matrix(P, basis)
 _local_matrix(P::TensND.AbstractTens{4, 3}, basis) = SMatrix{6, 6}(TensND.mandel(P, basis))
 
 # The contrast is stiffer (+1), softer (-1) or neither (0), read on the values.

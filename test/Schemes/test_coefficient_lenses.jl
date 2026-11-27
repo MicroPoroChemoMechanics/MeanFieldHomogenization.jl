@@ -201,7 +201,7 @@ end
         @test_throws ArgumentError LENS.property_coefficient(lens_C, lens_p(:M3))
         # In the anisotropic class a coefficient is a Kelvin-Mandel component, not an index.
         @test_throws ArgumentError LENS.property_coefficient(lens_C, lens_p(1; symmetry = :ANISO))
-        # In the plane, no class of space.
+        # The plane has no transversely isotropic class.
         @test_throws ArgumentError LENS.property_coefficient(TensISO{2}(4.0, 2.0), lens_p(:ℓ₁; symmetry = (:TI, lens_n)))
     end
 end
