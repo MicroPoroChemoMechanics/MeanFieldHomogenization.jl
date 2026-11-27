@@ -1,0 +1,91 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "shafiro1997",
+  "doi": "10.1016/S0020-7683(96)00185-0",
+  "citation": "Shafiro, Boris, Kachanov, Mark (1997). Materials with fluid-filled pores of various shapes: Effective elastic properties and fluid pressure polarization. International Journal of Solids and Structures 34(27), 3517-3540.",
+  "location": "Eqs (6)-(14) (pp. 3521-3523), captions of Figs 4 and 5 and the text between them (pp. 3524-3525)"
+ },
+ "transcription": {
+  "from": "the published article (PDF), on page images rendered at 120 dpi; equations, captions and labels read on the images, the extracted text being garbled",
+  "checked_against_source": true,
+  "note": "The fluid is given by its compressibility kappa (MPa^-1), the matrix by E0 (MPa) and nu0. The pressure q in a cavity is q = Q : sigma, eq. (6), positive in compression, sigma being the remote stress (tension positive). The compressibility of the dry cavity is C_p = R/E0, that of the matrix C0 = 3(1 - 2 nu0)/E0, and delta = (kappa - C0)/C_p, eq. (8). The aspect ratio is zeta = a3/a, a3 the semi-axis along the axis of symmetry n of the spheroid. Fig. 4 plots q/T against the angle phi between n and the direction of a uniaxial compression T; Fig. 5 plots q/P against zeta under a hydrostatic pressure P."
+ },
+ "quantities": {
+  "E0": {
+   "value": 60000.0,
+   "unit": "MPa",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs 4, 6, 7 and 8; label of Fig. 5",
+   "description": "Young modulus of the granite matrix (6 x 10^4 MPa)."
+  },
+  "nu0": {
+   "value": 0.25,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs 4, 6, 7 and 8; label of Fig. 5",
+   "description": "Poisson ratio of the granite matrix."
+  },
+  "kappa_water": {
+   "value": 0.0005,
+   "unit": "MPa^-1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Captions of Figs 4, 6, 7 and 8; label of Fig. 5",
+   "description": "Compressibility of the water filling the pores (0.5 x 10^-3 MPa^-1), the inverse of its bulk modulus."
+  },
+  "amplification_sphere": {
+   "value": 3.0,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Text p. 3524 and Fig. 5",
+   "description": "Largest ratio q/P under hydrostatic pressure, reached by a sphere for an incompressible fluid (kappa = 0) and nu0 = 0."
+  },
+  "amplification_needle": {
+   "value": 2.5,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Text p. 3524 (\"almost as high (~2.5) in the limit of a needle\")",
+   "description": "Ratio q/P of a needle for kappa = 0 and nu0 = 0."
+  },
+  "amplification_crack_slope": {
+   "value": 2.36,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Text p. 3524 (\"[1 - 3 pi zeta/4]^-1 = 1 + 2.36 zeta\")",
+   "description": "Slope of q/P against the aspect ratio of a narrow crack-like spheroid, kappa = 0 and nu0 = 0."
+  }
+ },
+ "tables": {
+  "fig4_aspect_ratios": [
+   {"panel": "a (oblate)", "zeta": 0.01},
+   {"panel": "a (oblate)", "zeta": 0.1},
+   {"panel": "a (oblate)", "zeta": 0.2},
+   {"panel": "a (oblate)", "zeta": 0.3},
+   {"panel": "b (prolate)", "zeta": 1.5},
+   {"panel": "b (prolate)", "zeta": 2.0},
+   {"panel": "b (prolate)", "zeta": 5.0},
+   {"panel": "b (prolate)", "zeta": 10.0}
+  ],
+  "fig5_curves": [
+   {"kappa_per_MPa": 0.0, "nu0": 0.0},
+   {"kappa_per_MPa": 0.0, "nu0": 0.25},
+   {"kappa_per_MPa": 0.0, "nu0": 0.5},
+   {"kappa_per_MPa": 0.0005, "nu0": 0.25}
+  ],
+  "closed_forms": [
+   {"case": "sphere", "equation": "(10)", "page": 3522, "R": "9(1 - nu0)/2", "Q": "-I/(3(1 + delta)), delta = (2/9)(kappa E0 - 3(1 - 2 nu0))/(1 - nu0)"},
+   {"case": "narrow crack-like spheroid, zeta << 1", "equation": "(11)", "page": 3523, "R": "4(1 - nu0^2)/(zeta pi)", "Q": "-n n/(1 + delta), delta = zeta pi (kappa E0 - 3(1 - 2 nu0))/(4(1 - nu0^2))"},
+   {"case": "needle, zeta >> 1", "equation": "(13)", "page": 3523, "R": "5 - 4 nu0", "Q": "-[-(1 + nu0) n n + (2 - nu0) I]/((1 + delta)(5 - 4 nu0)), delta = (kappa E0 - 3(1 - 2 nu0))/(5 - 4 nu0)"},
+   {"case": "any ellipsoid, hydrostatic pressure P", "equation": "(14)", "page": 3523, "R": "", "Q": "q = P/(1 + delta) = C_p P/(C_p + kappa - C0)"}
+  ]
+ },
+ "notes": [
+  "The curve of Fig. 5 for kappa = 0 and nu0 = 0.5 (incompressible matrix) is q/P = 1 at every aspect ratio, as eq. (14) gives with C0 = 0."
+ ]
+}
