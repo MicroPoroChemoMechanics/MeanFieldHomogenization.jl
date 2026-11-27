@@ -214,7 +214,7 @@ How much the coefficient moves with the shape, at ``\nu_0 = 0.33``:
 ````@example cross_property
 ψs = ψ_spheroids[0.33]
 for (γmin, γmax) in ((0.5, 2.0), (0.2, 5.0), (0.01, 100.0))
-    sel = findall(γ -> γmin - 1e-9 ≤ γ ≤ γmax + 1e-9, γs)
+    sel = findall(γ -> γmin - 1.0e-9 ≤ γ ≤ γmax + 1.0e-9, γs)
     @printf "γ in [%5.2f, %6.1f]:  ψ from %.3f to %.3f\n" γmin γmax extrema(ψs[sel])...
 end
 ````

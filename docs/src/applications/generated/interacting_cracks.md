@@ -76,8 +76,10 @@ and ``K_{\mathrm I}^0 = p\sqrt{\pi(1 - k)/2}``. The right crack has its inner
 tip at ``x_1 = k``, its tip `minus`, and its outer tip at ``x_1 = 1``:
 
 ````@example interacting_cracks
-pair(k) = (c = (1 + k) / 2; l = (1 - k) / 2;
-    [[-c, 0.0] => RibbonCrack(l; angle = 0.0), [c, 0.0] => RibbonCrack(l; angle = 0.0)])
+pair(k) = (
+    c = (1 + k) / 2; l = (1 - k) / 2;
+    [[-c, 0.0] => RibbonCrack(l; angle = 0.0), [c, 0.0] => RibbonCrack(l; angle = 0.0)]
+)
 function collinear(k)
     right = sif(pair(k), C_iso, tension)[2]
     K₀ = sqrt(π * (1 - k) / 2)
@@ -125,8 +127,10 @@ form to the precision of the quadratures. Against Table 1:
 println("  k     inner: sif   eq.(6) printed  exact  printed     outer: sif  printed  exact  printed")
 for r in table1
     m, e = collinear(r["k"]), collinear_exact(r["k"])
-    @printf("%5.2f        %6.3f       %6.3f      %6.3f   %6.3f          %6.3f   %6.3f  %6.3f   %6.3f\n",
-        r["k"], m.inner, r["inner_method"], e.inner, r["inner_exact"], m.outer, r["outer_method"], e.outer, r["outer_exact"])
+    @printf(
+        "%5.2f        %6.3f       %6.3f      %6.3f   %6.3f          %6.3f   %6.3f  %6.3f   %6.3f\n",
+        r["k"], m.inner, r["inner_method"], e.inner, r["inner_exact"], m.outer, r["outer_method"], e.outer, r["outer_exact"]
+    )
 end
 ````
 
@@ -139,12 +143,16 @@ tip that faces it, and its mean misses that.
 ````@example interacting_cracks
 gaps = exp10.(range(-2.3, 0.5; length = 60))          ## 2k/(1 - k), gap over length
 k_of(g) = g / (2 + g)
-plot(gaps, [getfield.(collinear.(k_of.(gaps)), :inner) getfield.(collinear_exact.(k_of.(gaps)), :inner)];
+plot(
+    gaps, [getfield.(collinear.(k_of.(gaps)), :inner) getfield.(collinear_exact.(k_of.(gaps)), :inner)];
     xscale = :log10, lw = 2, ls = [:solid :dash], color = [1 1],
     label = ["inner tip, average tractions" "inner tip, exact"],
-    xlabel = "gap / crack length", ylabel = "K_I / K_I⁰", size = (700, 420))
-plot!(gaps, [getfield.(collinear.(k_of.(gaps)), :outer) getfield.(collinear_exact.(k_of.(gaps)), :outer)];
-    lw = 2, ls = [:solid :dash], color = [2 2], label = ["outer tip, average tractions" "outer tip, exact"])
+    xlabel = "gap / crack length", ylabel = "K_I / K_I⁰", size = (700, 420)
+)
+plot!(
+    gaps, [getfield.(collinear.(k_of.(gaps)), :outer) getfield.(collinear_exact.(k_of.(gaps)), :outer)];
+    lw = 2, ls = [:solid :dash], color = [2 2], label = ["outer tip, average tractions" "outer tip, exact"]
+)
 g1 = [2r["k"] / (1 - r["k"]) for r in table1]
 scatter!(g1, [r["inner_exact"] for r in table1]; color = 1, marker = :circle, label = "Table 1, exact")
 scatter!(g1, [r["outer_exact"] for r in table1]; color = 2, marker = :circle, label = "")
@@ -234,8 +242,10 @@ row_exact(ζ) = (x = π / (2ζ); sqrt(tan(x) / x))
 println("gap/length   eq.(10)  stopped at 75   printed     exact  printed")
 for r in table2
     ζ = 1 + r["gap_over_length"]
-    @printf("   %5.3f      %6.3f      %6.3f       %6.3f    %6.3f   %6.3f\n",
-        r["gap_over_length"], row_eq10(ζ), row_stopped(ζ, 75), r["method"], row_exact(ζ), r["exact"])
+    @printf(
+        "   %5.3f      %6.3f      %6.3f       %6.3f    %6.3f   %6.3f\n",
+        r["gap_over_length"], row_eq10(ζ), row_stopped(ζ, 75), r["method"], row_exact(ζ), r["exact"]
+    )
 end
 ````
 
@@ -261,8 +271,10 @@ function finite_row(N, ζ; l = 0.5)
 end
 Ns = [1, 2, 4, 8, 16]
 rows = [(ζ, [finite_row(N, ζ) for N in Ns], row_eq10(ζ)) for ζ in (1.5, 1.1)]
-fig = plot(; xscale = :log2, xlabel = "N (row of 2N + 1 cracks)", ylabel = "K_I / K_I⁰ of the central crack",
-    xticks = (Ns, string.(Ns)), legend = :right, size = (700, 420))
+fig = plot(;
+    xscale = :log2, xlabel = "N (row of 2N + 1 cracks)", ylabel = "K_I / K_I⁰ of the central crack",
+    xticks = (Ns, string.(Ns)), legend = :right, size = (700, 420)
+)
 for (i, (ζ, K, K∞)) in enumerate(rows)
     plot!(fig, Ns, K; marker = :circle, lw = 2, color = i, label = @sprintf("gap/length = %.1f", ζ - 1))
     hline!(fig, [K∞]; ls = :dash, color = i, label = "infinite row, eq. (10)")
@@ -286,9 +298,11 @@ C_ort90 = from_mandel([3.0 2.0 0.0; 2.0 10.0 0.0; 0.0 0.0 3.0])   ## the same tu
 stacked(s) = [[0.0, 0.0] => RibbonCrack(0.5; angle = 0.0), [0.0, s] => RibbonCrack(0.5; angle = 0.0)]
 shield(C, s) = sif(stacked(s), C, tension)[1].plus[1] / sqrt(π * 0.5)
 ss = range(0.1, 3.0; length = 59)
-plot(ss, [shield.(Ref(C), ss) for C in (C_iso, C_ort, C_ort90)];
+plot(
+    ss, [shield.(Ref(C), ss) for C in (C_iso, C_ort, C_ort90)];
     lw = 2, label = ["isotropic" "orthotropic, stiff along the cracks" "orthotropic, stiff across the cracks"],
-    xlabel = "spacing s / crack length", ylabel = "K_I / K_I⁰", legend = :bottomright, size = (700, 420))
+    xlabel = "spacing s / crack length", ylabel = "K_I / K_I⁰", legend = :bottomright, size = (700, 420)
+)
 ````
 
 The factor tends to 1 as the cracks move apart. The shielding depends on the
@@ -298,8 +312,10 @@ creates on its own line, ahead of its tips, is the same in every material
 [mauge1994](@cite):
 
 ````@example interacting_cracks
-(collinear = maximum(abs, sif(pair(0.1), C_ort, tension)[2].minus - sif(pair(0.1), C_iso, tension)[2].minus),
-    stacked = shield(C_ort, 0.4) - shield(C_iso, 0.4))
+(
+    collinear = maximum(abs, sif(pair(0.1), C_ort, tension)[2].minus - sif(pair(0.1), C_iso, tension)[2].minus),
+    stacked = shield(C_ort, 0.4) - shield(C_iso, 0.4),
+)
 ````
 
 ## An arbitrary array

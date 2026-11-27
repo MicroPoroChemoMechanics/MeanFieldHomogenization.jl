@@ -72,8 +72,10 @@ per_TPa(ΔS)
 # percentages (MON, the monoclinic class, is not computed here):
 
 distances(C) = [100 * project(C, class)[3] for class in (:ISO, :TI, :ORTHO)]
-printed(fig) = (r = only(filter(r -> r["figure"] == fig, lit["tables"]["deviations_from_higher_symmetries"]));
-    [r["ISO_percent"], r["TI_percent"], r["ORT_percent"]])
+printed(fig) = (
+    r = only(filter(r -> r["figure"] == fig, lit["tables"]["deviations_from_higher_symmetries"]));
+    [r["ISO_percent"], r["TI_percent"], r["ORT_percent"]]
+)
 for (fig, C) in (("5a", C_400), ("5b", C_10))
     @printf("Fig. %s  computed  ISO %5.2f  TI %5.2f  ORT %5.2f %%\n", fig, distances(C)...)
     @printf("         printed   ISO %5.1f  TI %5.1f  ORT %5.1f %%\n", printed(fig)...)
@@ -111,10 +113,12 @@ maximum(abs, voigt_stiffness(C_ic) - voigt("stiffness_iso_cracked_10MPa"))
 # 2.4 GPa.
 
 C_iso = best_fit_iso(C_400)                          ## projection of the stiffness
-(stiffness_projection = (C11 = pwave_modulus(C_iso), C44 = shear_modulus(C_iso)),
+(
+    stiffness_projection = (C11 = pwave_modulus(C_iso), C44 = shear_modulus(C_iso)),
     compliance_projection = (C11 = pwave_modulus(inv(S_iso)), C44 = shear_modulus(inv(S_iso))),
     printed = (C11 = lit["quantities"]["iso_C11_intact"]["value"], C44 = lit["quantities"]["iso_C44_intact"]["value"]),
-    Fig6a_with_stiffness_projection = maximum(abs, voigt_stiffness(inv(inv(C_iso) + ΔS)) - voigt("stiffness_iso_cracked_10MPa")))
+    Fig6a_with_stiffness_projection = maximum(abs, voigt_stiffness(inv(inv(C_iso) + ΔS)) - voigt("stiffness_iso_cracked_10MPa")),
+)
 
 # The distances of the isotropic cracked rock to the symmetry classes are those
 # printed in Fig. 6a:
@@ -136,8 +140,10 @@ F_found = vecbasis(TensND.frame(first(project(C_ic, :ORTHO))), :cov)
 F_printed = axes_of("crack_frame")
 nearest = [argmax(abs.(transpose(F_found) * F_printed)[:, j]) for j in 1:3]   ## the found axis nearest each printed one
 F = F_found[:, nearest] .* transpose(sign.(diag(transpose(F_found[:, nearest]) * F_printed)))
-(found = round.(F; digits = 3), printed = F_printed,
-    angle_deg = round.(acosd.(min.(1, abs.(diag(transpose(F) * F_printed)) ./ norm.(eachcol(F_printed)))); digits = 1))
+(
+    found = round.(F; digits = 3), printed = F_printed,
+    angle_deg = round.(acosd.(min.(1, abs.(diag(transpose(F) * F_printed)) ./ norm.(eachcol(F_printed)))); digits = 1),
+)
 
 # ``Z_c`` is nearly ``X``, ``Y_c`` nearly the vertical ``Z``: the most compliant
 # cracks, normal to ``Y_c``, lie in the foliation. The axes found here are
@@ -196,9 +202,11 @@ Z_N, Z_T = g.Z_N, g.Z_T
 pub = lit["tables"]["fracture_compliances_10MPa"]
 println("set   Z_N found  printed frame  printed    Z_T found  printed frame  printed")
 for i in 1:3
-    @printf(" %d    %6.3f     %6.3f       %5.2f      %6.3f     %6.3f       %5.2f\n", i,
+    @printf(
+        " %d    %6.3f     %6.3f       %5.2f      %6.3f     %6.3f       %5.2f\n", i,
         1.0e3 * Z_N[i], 1.0e3 * sets(F_printed).Z_N[i], pub[i]["S_N"],
-        1.0e3 * Z_T[i], 1.0e3 * sets(F_printed).Z_T[i], pub[i]["S_T"])
+        1.0e3 * Z_T[i], 1.0e3 * sets(F_printed).Z_T[i], pub[i]["S_T"]
+    )
 end
 
 # The frame found here gives back the six printed compliances to within
@@ -213,8 +221,10 @@ C11, C44 = pwave_modulus(C_iso), shear_modulus(C_iso)
 E_N, E_T = 100 .* Z_N .* C11, 100 .* Z_T .* C44           ## per cent
 nor = lit["tables"]["normalized_compliances_10MPa"]
 for i in 1:3
-    @printf("set %d   E_N %5.1f %% (printed %4.1f)   E_T %5.1f %% (printed %4.1f)\n",
-        i, E_N[i], nor[i]["E_N_percent"], E_T[i], nor[i]["E_T_percent"])
+    @printf(
+        "set %d   E_N %5.1f %% (printed %4.1f)   E_T %5.1f %% (printed %4.1f)\n",
+        i, E_N[i], nor[i]["E_N_percent"], E_T[i], nor[i]["E_T_percent"]
+    )
 end
 
 # ## The intact rock with three sets of fractures
@@ -320,8 +330,10 @@ R = E_N ./ E_T
 # isotropic intact rock, give its density of cracks, once from the normal
 # compliance and once from the tangential one:
 
-(from_normal = Z_N[2] / dry.Z_N, from_tangential = Z_T[2] / dry.Z_T,
-    printed = lit["quantities"]["crack_density_family2"]["value"])
+(
+    from_normal = Z_N[2] / dry.Z_N, from_tangential = Z_T[2] / dry.Z_T,
+    printed = lit["quantities"]["crack_density_family2"]["value"],
+)
 
 # The two readings differ because ``R_2`` differs from the ratio of dry penny
 # cracks. The density of 0.07 the article gives is the one read on the
@@ -347,8 +359,10 @@ R = E_N ./ E_T
 γ = lit["quantities"]["gamma"]["value"]
 iso_γ = iso_stiffness(1 - 4γ / 3, γ)                 ## C₁₁ = k + 4μ/3 = 1, C₄₄ = μ = γ
 d = dry_cracks(iso_γ)
-coefficients = (normal = d.Z_N * pwave_modulus(iso_γ), printed_normal = 4 / (3γ * (1 - γ)),
-    tangential = d.Z_T * shear_modulus(iso_γ), printed_tangential = 16 / (3 * (3 - 2γ)))
+coefficients = (
+    normal = d.Z_N * pwave_modulus(iso_γ), printed_normal = 4 / (3γ * (1 - γ)),
+    tangential = d.Z_T * shear_modulus(iso_γ), printed_tangential = 16 / (3 * (3 - 2γ)),
+)
 
 #-
 
@@ -376,18 +390,22 @@ end
 # from the measurements below 5 per cent; the relative differences of the P
 # velocities along the three axes are:
 
-[name => round(100 * (first(plane_waves(C_model, ρ, n).velocity) / first(plane_waves(C_10, ρ, n).velocity) - 1); digits = 1)
-    for (name, n) in directions]
+[
+    name => round(100 * (first(plane_waves(C_model, ρ, n).velocity) / first(plane_waves(C_10, ρ, n).velocity) - 1); digits = 1)
+        for (name, n) in directions
+]
 
 # In the vertical plane ``(X, Z)``:
 
 θs = range(0, 180; length = 181)
 vP(C, θ) = first(plane_waves(C, ρ, [sind(θ), 0.0, cosd(θ)]).velocity)
-plot(θs, [vP.(Ref(C_400), θs) vP.(Ref(C_10), θs) vP.(Ref(C_model), θs)];
+plot(
+    θs, [vP.(Ref(C_400), θs) vP.(Ref(C_10), θs) vP.(Ref(C_model), θs)];
     label = ["400 MPa, measured" "10 MPa, measured" "10 MPa, intact rock + three sets"],
     lw = [2 2 2], ls = [:solid :solid :dash],
     xlabel = "angle from the vertical Z, in the plane (X, Z) (°)", ylabel = "P velocity (km/s)",
-    xticks = 0:30:180, legend = :bottom, size = (700, 420))
+    xticks = 0:30:180, legend = :bottom, size = (700, 420)
+)
 
 # ## Where to go next
 #
