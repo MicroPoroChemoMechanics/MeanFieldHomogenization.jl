@@ -313,7 +313,7 @@ the closed forms are validated against.
 Everything above assumes an isotropic reference, whose Green operator is a closed
 form. That is not a restriction of the method, only of the kernel, and it is lifted by
 the Barnett line integral [barnettPSSB1972, willis1975](@cite): for an arbitrary anisotropic
-stiffness the displacement Green function is
+stiffness of space the displacement Green function is
 
 ```math
 G_{ij}(\underline{x}) = \frac{1}{8\pi^2 r}
@@ -328,7 +328,7 @@ circle in the plane perpendicular to ``\underline{n} = \underline{x}/r``. The
 integrand is smooth and periodic, so a Gauss-Legendre rule converges fast, and the
 whole expression is homogeneous of degree ``-1`` in ``\underline{x}``.
 
-The Green *operator* takes two more derivatives of this. They are obtained by
+In space, the Green *operator* takes two more derivatives of this. They are obtained by
 differentiating the quadrature itself with forward-mode AD rather than by
 differentiating the line integral by hand — exact, and reusing one verified
 expression instead of introducing a second. See
@@ -357,9 +357,177 @@ Two consequences worth keeping in mind when reading an anisotropic result:
   see the spatial arrangement. The statement "a cubic array keeps the Mori-Tanaka bulk
   modulus exactly" holds for an isotropic matrix only.
 
-The one case still open is **plane-strain elasticity with an anisotropic reference**,
-whose Green function needs the Stroh formalism rather than the Barnett integral;
-[`green_operator`](@ref) raises rather than returning an isotropic approximation.
+In the plane the contour normal to ``\underline{x}`` reduces to two points, and
+the Green function grows like ``\ln r`` instead of decaying: the anisotropic
+plane has a formula of its own, derived in the next section.
+
+### [The Green operator of an anisotropic plane](@id th-plane-green)
+
+This section derives the Green operator of a stiffness of the plane of any
+anisotropy, the kernel [`green_operator_aniso`](@ref) evaluates for a tensor of
+order 4 of dimension 2 and the interaction tensors of a cell of the plane are
+built on ([Problems of the plane](@ref th-plane-problems)).
+
+**The Green function.** ``G_{im}(\underline{x})`` is the displacement along
+``\underline{e}_i`` at ``\underline{x}`` under a unit force along
+``\underline{e}_m`` at the origin:
+
+```math
+C_{aijb}\,\partial_a\partial_b\,G_{jm}(\underline{x})+\delta_{im}\,\delta(\underline{x})=0 .
+```
+
+With the transform ``\hat f(\underline{k})=\int f(\underline{x})\,\mathrm{e}^{-\mathrm{i}\,\underline{k}\cdot\underline{x}}\,\mathrm{d}S``,
+this reads ``\boldsymbol{K}(\underline{k})\cdot\hat{\boldsymbol{G}}(\underline{k})=\boldsymbol{1}``,
+with the acoustic tensor ``K_{ij}(\underline{k})=k_a\,C_{aijb}\,k_b``,
+positive definite for every real ``\underline{k}\neq\underline{0}`` and
+homogeneous of degree 2. In polar coordinates,
+``\underline{k}=\rho\,\underline{\xi}(\varphi)`` with the unit vector
+``\underline{\xi}(\varphi)=\cos\varphi\,\underline{e}_1+\sin\varphi\,\underline{e}_2``,
+``\boldsymbol{K}(\underline{k})^{-1}=\boldsymbol{K}(\underline{\xi})^{-1}/\rho^2``
+and the inverse transform is
+
+```math
+\boldsymbol{G}(\underline{x})
+=\frac{1}{4\pi^2}\int_0^{2\pi}\boldsymbol{K}(\underline{\xi})^{-1}
+\int_0^{\infty}\frac{\mathrm{e}^{\mathrm{i}\rho\,\underline{\xi}\cdot\underline{x}}}{\rho}\,\mathrm{d}\rho\,\mathrm{d}\varphi .
+```
+
+The radial integral diverges at ``\rho\to0``, as ``\boldsymbol{G}`` grows at
+infinity; as a distribution it equals
+``-\ln|\underline{\xi}\cdot\underline{x}|+\tfrac{\mathrm{i}\pi}{2}\,\mathrm{sgn}(\underline{\xi}\cdot\underline{x})``
+up to a constant. The imaginary part is odd in ``\underline{\xi}`` and
+``\boldsymbol{K}^{-1}`` is even, so that it vanishes over a full turn:
+
+```math
+\boldsymbol{G}(\underline{x})
+=-\frac{1}{4\pi^2}\int_0^{2\pi}\boldsymbol{K}(\underline{\xi})^{-1}\,
+\ln|\underline{\xi}\cdot\underline{x}|\,\mathrm{d}\varphi+\boldsymbol{G}_\infty ,
+```
+
+``\boldsymbol{G}_\infty`` a constant tensor that no gradient sees. For one
+component and ``K=\sigma_0``, the integral of ``\ln|\cos\varphi|`` being a
+constant, it is ``-\ln r/(2\pi\sigma_0)``: the Green function of conduction
+in the plane.
+
+**A finite part.** The gradients of ``\ln|\underline{\xi}\cdot\underline{x}|``
+are ``\xi_l/(\underline{\xi}\cdot\underline{x})`` and
+``-\xi_k\,\xi_l/(\underline{\xi}\cdot\underline{x})^2``. The first has a simple
+pole at the two directions ``\underline{\xi}\perp\underline{x}``, and the first
+gradient of ``\boldsymbol{G}`` is a Cauchy principal value. Its derivative is
+the Hadamard finite part of the integral of the derivative:
+
+```math
+\partial_k\partial_l\,G_{ij}(\underline{x})
+=\frac{1}{4\pi^2}\;\mathrm{f.p.}\!\int_0^{2\pi}
+\frac{h_{ijkl}(\varphi)}{(\underline{\xi}\cdot\underline{x})^2}\,\mathrm{d}\varphi ,
+\qquad
+h_{ijkl}=K^{-1}_{ij}(\underline{\xi})\,\xi_k\,\xi_l ,
+```
+
+an integral with a double pole, on which no quadrature rule can be applied as
+it stands.
+
+**A regular integral.** ``h`` and ``(\underline{\xi}\cdot\underline{x})^2``
+are even in ``\underline{\xi}``: the full turn is twice a half turn, taken
+centered on the pole. With ``r=\|\underline{x}\|``,
+``\underline{n}=\underline{x}/r``, ``\underline{t}`` the unit vector at
+``+\pi/2`` from ``\underline{n}``, and
+``\underline{\xi}(\psi)=\cos\psi\,\underline{t}-\sin\psi\,\underline{n}``,
+``\underline{\xi}\cdot\underline{x}=-r\sin\psi`` and
+
+```math
+\partial_k\partial_l\,G_{ij}(\underline{x})
+=\frac{1}{2\pi^2r^2}\;\mathrm{f.p.}\!\int_{-\pi/2}^{\pi/2}\frac{h_{ijkl}(\psi)}{\sin^2\psi}\,\mathrm{d}\psi .
+```
+
+Since ``1/\sin^2\psi=-(\cot\psi)'``, an integration by parts outside
+``(-\varepsilon,\varepsilon)``, where ``\cot(\pm\pi/2)=0`` removes the ends,
+gives
+
+```math
+\int_{\varepsilon<|\psi|<\pi/2}\frac{h}{\sin^2\psi}\,\mathrm{d}\psi
+=\bigl(h(\varepsilon)+h(-\varepsilon)\bigr)\cot\varepsilon
++\int_{\varepsilon<|\psi|<\pi/2}h'(\psi)\cot\psi\,\mathrm{d}\psi .
+```
+
+The first term is ``2h(0)/\varepsilon+O(\varepsilon)``: its divergent part is
+what the finite part discards, and the rest vanishes. In the second,
+``\cot`` is odd, and folding ``\psi<0`` onto ``\psi>0`` leaves a regular
+integral over a quarter turn:
+
+```math
+\boxed{\;
+\partial_k\partial_l\,G_{ij}(\underline{x})
+=\frac{1}{2\pi^2r^2}\int_0^{\pi/2}\bigl[h'_{ijkl}(\psi)-h'_{ijkl}(-\psi)\bigr]\cot\psi\,\mathrm{d}\psi
+\;}
+```
+
+The bracket is odd in ``\psi``, of order ``2h''(0)\,\psi`` at the origin, so
+that the integrand is bounded there; it is analytic on ``[0,\pi/2]``, since
+``\boldsymbol{K}`` is positive definite on every real direction. The operator
+``\mathbb{G}^0`` follows by the symmetrization of section 1, and is
+homogeneous of degree ``-2`` in ``\underline{x}``.
+
+**The derivative of the integrand.** With
+``\underline{\eta}=\mathrm{d}\underline{\xi}/\mathrm{d}\psi=-\sin\psi\,\underline{t}-\cos\psi\,\underline{n}``
+and the derivative of an inverse,
+``(\boldsymbol{K}^{-1})'=-\boldsymbol{K}^{-1}\cdot\boldsymbol{K}'\cdot\boldsymbol{K}^{-1}``,
+
+```math
+K'_{ij}=(\eta_a\,\xi_b+\xi_a\,\eta_b)\,C_{aijb},
+\qquad
+h'_{ijkl}=-\bigl(\boldsymbol{K}^{-1}\cdot\boldsymbol{K}'\cdot\boldsymbol{K}^{-1}\bigr)_{ij}\,\xi_k\,\xi_l
++K^{-1}_{ij}\,(\eta_k\,\xi_l+\xi_k\,\eta_l) ,
+```
+
+in closed form: nothing is differentiated numerically.
+
+**The scalar case.** For one component, ``K=\sigma_0``, and
+``\underline{x}=r\,\underline{e}_1``: ``\underline{n}=\underline{e}_1``,
+``\underline{t}=\underline{e}_2``, ``h_{11}=\sin^2\psi/\sigma_0``, and the
+integrand is ``2\sin2\psi\cot\psi/\sigma_0=4\cos^2\psi/\sigma_0``, of integral
+``\pi/\sigma_0``. Hence ``\partial_1\partial_1G=1/(2\pi\sigma_0r^2)``, the
+second derivative along the radius of ``-\ln r/(2\pi\sigma_0)``.
+
+**No characteristic root.** The closed forms of the anisotropic plane write
+``\boldsymbol{G}`` with the roots ``p`` of
+``\det\boldsymbol{K}(\underline{e}_1+p\,\underline{e}_2)=0``, two pairs of
+complex conjugates. In an isotropic plane of Lamé constants ``\lambda`` and
+``\mu``, ``\det\boldsymbol{K}(\underline{e}_1+p\,\underline{e}_2)=\mu\,(\lambda+2\mu)\,(1+p^2)^2``:
+the roots are double, and those forms are taken to a limit there. The integral
+above inverts ``\boldsymbol{K}`` on real directions only: no root is computed,
+and the isotropic stiffness is an ordinary case. Typed as a general tensor, it
+gives the closed form of [`green_operator_iso`](@ref), to rounding:
+
+```@example thinteraction
+using MeanFieldHomogenization, TensND, LinearAlgebra, Printf
+x = [0.8, -0.3]
+C = iso_stiffness(Val(2), 5.0, 2.0)                  # bulk and shear moduli of the plane
+Cg = Tens(canonical_components(C))                    # the same stiffness, its class forgotten
+Γ₀ = get_array(green_operator_iso(C, x))
+norm(get_array(green_operator_aniso(Cg, x)) - Γ₀) / norm(Γ₀)
+```
+
+**The quadrature.** A Gauss–Legendre rule of ``N`` nodes on
+``(0,\pi/2)`` (the keyword `nodes`, 32 by default) integrates an analytic
+function with an error that decreases geometrically with ``N``, at a rate set
+by the distance to the interval of the nearest complex ``\psi`` where
+``\det\boldsymbol{K}(\underline{\xi}(\psi))=0``. A strong anisotropy brings it
+closer, and asks for more nodes. On an orthotropic stiffness of contrast 40/6
+between its axes, against 96 nodes:
+
+```@example thinteraction
+C₀ = TensOrtho(40.0, 6.0, 2.5, 3.0, Basis(0.37))       # C₁₁₁₁, C₂₂₂₂, C₁₁₂₂, C₁₂₁₂, frame at 0.37 rad
+Γ(nodes) = get_array(green_operator_aniso(C₀, x; nodes))
+Γ₉₆ = Γ(96)
+for nodes in (8, 16, 32, 48)
+    @printf "%2d nodes   relative error %.1e\n" nodes norm(Γ(nodes) - Γ₉₆) / norm(Γ₉₆)
+end
+```
+
+The interaction tensors of section 5 take this operator, and its two
+derivatives along the line of centers by automatic differentiation of the same
+quadrature, in place of the isotropic closed form.
 
 ### Consequence for multiscale chaining
 

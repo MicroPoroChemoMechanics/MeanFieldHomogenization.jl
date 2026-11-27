@@ -1,5 +1,74 @@
 # Changelog
 
+## v0.30.0 — cells of the plane with an anisotropic matrix
+
+A minor release: it needs TensND 0.17, whose orthotropic and cubic tensors
+carry their dimension. The package solves cells of space and cells of the
+plane; this release brings the plane closer to space.
+
+### Breaking
+
+- The compat bound of TensND is `0.17`. Code that names the type parameters of
+  `TensOrtho` or `TensCubic` follows TensND 0.17 (`TensOrtho{4, 3, T, 9}`,
+  `TensCubic{3, T}`); the constructors called with coefficients and a frame are
+  unchanged.
+- `green_operator` and `interaction_tensor` no longer refuse an anisotropic
+  elastic reference of the plane (see below): code that relied on the
+  `ArgumentError` gets an operator.
+
+### Added
+
+- **Green operator of an anisotropic elastic medium of the plane.**
+  `green_operator(C₀, x)`, `green_operator_aniso(C₀, x; nodes)` and
+  `interaction_tensor(…, C₀)` take any stiffness of the plane: orthotropic,
+  square or general. The second gradient of the Green function is a finite
+  part on the unit circle, integrated by parts into a regular integral over a
+  quarter turn; no characteristic root is needed, so that an isotropic
+  stiffness is an ordinary case and gives the closed form of the isotropic
+  operator. Assemblies of ellipses interact in an anisotropic plane as they do
+  in an anisotropic space.
+- **The orthotropic and the square classes of the plane** (TensND 0.17) are
+  properties of a two-dimensional cell as any other tensor of the plane: Hill
+  tensors of an ellipse, the schemes, ribbon cracks, conduction and interaction
+  tensors give the estimates of the general tensor of the same components.
+  Their coefficients are named in `property` (`:C1111`, `:C2222`, `:C1122`,
+  `:C1212`, `:C2211`; `:a1`, `:a2`; `:α`, `:β`, `:γ`), and a general tensor of
+  the plane is read in a class of the plane that contains it
+  (`symmetry = (:ORTHO, Basis(θ))`, `(:CUBIC, Basis(θ))`).
+
+### Fixed
+
+- A cubic matrix made the differential scheme fail, in space and in the plane:
+  its state is the full one, and was rebuilt as a cubic tensor from components
+  that are not its three coefficients.
+
+### Changed
+
+- **The Hill tensor of an ellipse in an isotropic plane is written on the
+  convention of the plane**, `α = 2κ` with `κ` the in-plane bulk modulus,
+  where its comments and its variables read `α` as `3k`. The values differ by
+  a rounding at most. The manual and the script `02_hill_elasticity.jl`, which
+  built a plane stiffness as `TensISO{2}(3k, 2μ)`, take the plane strain of the
+  3-D material, `plane_strain_stiffness(C₀)`: the plane tensor of that example
+  is another one.
+- **Tensor helpers come from TensND** where the result is the same to the bit:
+  typed constructors, the exact membership of a symmetry class, the
+  Kelvin-Mandel sizes, weights and identity, the adjugate of a symmetric
+  matrix, Hill's moduli without major symmetry, the in-plane bulk and shear
+  moduli, the basis of the deviators. The helpers whose replacement would
+  change a rounding, or add work on a hot path, stay as they are.
+
+### Documentation
+
+- The presentation of the package says at once that it solves cells of space
+  and cells of the plane, with a table of what each inclusion and each scheme
+  accepts in each.
+- The Theory gives the derivation of the Green operator of an anisotropic
+  plane; the manual page on plane problems lists the properties a plane cell
+  takes, the two conventions of the moduli of a tensor of the plane, the named
+  coefficients, and what remains restricted to a matrix isotropic in the plane
+  (conformal holes, layered cylinders) with the reason.
+
 ## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
 
 A patch release: no result changes beyond the last bit of a rounding. It

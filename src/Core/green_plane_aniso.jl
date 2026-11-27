@@ -3,8 +3,8 @@
 #  elastic medium of the plane.
 #
 #  In the plane the displacement Green function of a stiffness C is the
-#  integral over the unit circle (Fourier transform of K(ξ)⁻¹/|ξ|² in polar
-#  coordinates; Mura 1987, §5)
+#  integral over the unit circle (the inverse Fourier transform of K(k)⁻¹ in
+#  polar coordinates, the radial integral taken as a distribution)
 #
 #       G(x) = −1/(4π²) ∫₀^{2π} K(ξ)⁻¹ log|ξ·x| dφ + const ,
 #       K_ij(ξ) = ξ_a C_aijb ξ_b ,   ξ = (cos φ, sin φ) ,
@@ -98,7 +98,8 @@ stiffness `C₀` (any tensor of the plane: orthotropic, square, general),
 with ``K_{ij}(\\underline{\\xi}) = \\xi_a C_{aijb}\\,\\xi_b`` the acoustic tensor on
 the unit circle. The finite part is integrated by parts into a regular
 integral over a quarter turn, on which a Gauss-Legendre rule of `nodes` points
-converges geometrically ([Plane problems](@ref th-plane-green)). It is
+converges geometrically
+([The Green operator of an anisotropic plane](@ref th-plane-green)). It is
 homogeneous of degree ``-2`` in ``\\underline{x}``, and reduces to
 [`green_operator_iso`](@ref) for an isotropic `C₀`, which no step of the
 computation singles out.

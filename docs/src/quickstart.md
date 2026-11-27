@@ -8,6 +8,12 @@ elasticity; each quantity is defined in the chapter
 [Theory](@ref th-index), to which the text refers where the quantity is first
 needed.
 
+The example is a cell of space. A medium invariant along an axis, or a thin
+plate, is homogenized on a cell of the plane, in plane strain or in plane
+stress, with the same calls: its inclusions are ellipses, disks, segments,
+rings and holes, and its properties tensors of dimension 2
+([Plane problems](@ref man-plane-problems)).
+
 ## Installation
 
 `MeanFieldHomogenization` is registered in Julia's General registry and is

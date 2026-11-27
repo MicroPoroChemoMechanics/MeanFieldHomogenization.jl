@@ -206,7 +206,9 @@ introduced only on another page, even at the cost of repeating a definition.
 
 ## Where to go next
 
-The conventions fixed here are put to work on
+The next page, [Problems of the plane](@ref th-plane-problems), fixes what a
+tensor of the plane stands for in a cell of dimension 2. The conventions are
+then put to work on
 [The Eshelby inclusion problem](@ref th-eshelby-problem), the first page of the
 foundations, where the Hill tensor ``\mathbb{P}`` is defined from the uniformity
 of the strain inside an ellipsoid. Its closed forms follow in

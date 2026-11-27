@@ -3,7 +3,8 @@
 !!! info "Before this page"
     [Conventions](@ref th-notation), where the shape tensor of an ellipsoid and
     the sign under which elasticity and transport share one set of formulas are
-    fixed.
+    fixed, and [Problems of the plane](@ref th-plane-problems) for a cell of
+    dimension 2.
 
 Everything in this section rests on one result. This page states it, and defines
 the three tensors it produces — ``\mathbb{P}``, ``\mathbb{S}``, ``\mathbb{Q}``.

@@ -184,7 +184,8 @@ ForwardDiff.derivative(modulus, 0.1)
 ## What is not covered
 
 - a reference medium that is anisotropic in the plane of the section, refused
-  with a message;
+  with a message: the complex potentials of the hole rest on the isotropy of
+  that plane ([What is restricted, and why](@ref man-plane-restricted));
 - a section that conducts or carries stress: the hole is empty;
 - a corner, which a finite map rounds: the tensors converge with the number of
   terms ([Prismatic pores with corners](@ref app-conformal-holes));

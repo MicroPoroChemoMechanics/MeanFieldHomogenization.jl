@@ -1678,7 +1678,7 @@ tex = '\boldsymbol{K}'
 label = "<b>K</b>"
 name = "acoustic tensor, <u>n</u>·ℂ·<u>n</u>"
 unit = "Pa"
-pages = ["applications/generated/itz_elastic_limit.md"]
+pages = ["applications/generated/itz_elastic_limit.md", "theory/interaction_tensors.md"]
 
 [[symbol]]
 group = "Eshelby problem and concentration"

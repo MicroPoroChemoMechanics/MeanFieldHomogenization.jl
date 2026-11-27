@@ -45,6 +45,9 @@ pages = [
     "Theory" => [
         "theory/index.md",
         "theory/notation.md",
+        # What a cell of the plane stands for, and where each problem of the
+        # plane is treated: a convention of every chapter, read before them.
+        "theory/plane_problems.md",
         "The Eshelby problem" => [
             "theory/eshelby_problem.md",
             "theory/hill_tensors.md",

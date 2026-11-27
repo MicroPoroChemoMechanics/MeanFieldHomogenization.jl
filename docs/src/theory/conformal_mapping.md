@@ -417,8 +417,11 @@ about the axis of the cavity, and for a map with a finite number of terms. A cor
 rounds it, and the tensors converge with the number of terms
 ([Prismatic pores with corners](@ref app-conformal-holes)). The coefficients
 are numbers, dual numbers or symbols. [`ConformalHole`](@ref) is the
-inclusion; a matrix that is anisotropic in the plane of the section and holes
-that interact are outside the method as it is written here.
+inclusion. A matrix that is anisotropic in the plane of the section is outside
+the method as it is written here, since the potentials of section 3 rest on the
+isotropy of that plane: an anisotropic plane needs the potentials of
+Lekhnitskii, one complex variable per characteristic root. Holes that interact
+are outside it too.
 
 ## Where to go next
 
