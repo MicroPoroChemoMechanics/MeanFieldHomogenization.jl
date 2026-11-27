@@ -71,7 +71,7 @@ function matrix_stress(h::ConformalHole, Σ::TensND.AbstractTens{2, 2}, x, C₀:
                 "this map has $(length(h.coefficients))"
         )
     )
-    return _at_points(_AnisotropicField(first(h.coefficients), _characteristic_pair(C₀)..., _remote_stress(Σ)), x)
+    return _at_points(_AnisotropicField(first(h.coefficients), TensND.characteristic_pair(C₀)..., _remote_stress(Σ)), x)
 end
 
 _at_points(field, x::AbstractVector{<:Number}) = _stress_tensor(field(x[1], x[2]))

@@ -49,7 +49,7 @@ function contour_stress(h::ConformalHole, Σ::TensND.AbstractTens{2, 2}, θ, C�
                 "whose map has one term; this map has $(length(h.coefficients))"
         )
     )
-    return _evaluate(_AnisotropicContour(first(h.coefficients), _characteristic_pair(C₀)..., _remote_stress(Σ)), θ)
+    return _evaluate(_AnisotropicContour(first(h.coefficients), TensND.characteristic_pair(C₀)..., _remote_stress(Σ)), θ)
 end
 
 # (Σ₁₁, Σ₂₂, Σ₁₂) in the canonical axes; the symmetric part is the stress.

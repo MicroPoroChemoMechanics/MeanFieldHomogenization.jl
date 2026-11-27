@@ -51,7 +51,7 @@ const EHAS = MeanFieldHomogenization.ConformalHoles
     @test [value(x, at) for x in A] ≈ reference rtol = 1.0e-10
     M = EHAS._anisotropic_ellipse_concentration(complex(m), Ci)
     @test [value(x, at) for x in M] ≈ mandel(gradient_gradient_concentration(numeric_hole, 0 * Cin, Cin), CanonicalBasis{2, Float64}()) rtol = 1.0e-10
-    s, p = EHAS._characteristic_pair(Ci)
+    s, p = characteristic_pair(Ci)
     @test isequal(s, complex(Symbolics.Num(0), Symbolics.Num(2))) && isequal(p, complex(Symbolics.Num(-1)))
     @test value(contour_stress(hole, Σ, θ, Ci), at) ≈ contour_stress(numeric_hole, Σ, θ) rtol = 1.0e-10
 

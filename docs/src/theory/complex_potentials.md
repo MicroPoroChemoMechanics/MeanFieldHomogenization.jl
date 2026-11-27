@@ -556,7 +556,7 @@ l(μ) = a₁₁ * μ^4 - 2a₁₆ * μ^3 + (2a₁₂ + a₆₆) * μ^2 - 2a₂�
 energy(μ) = (σ = [μ^2, 1, -√2 * μ]; σ' * M * σ)   # (σ₁₁, σ₂₂, √2 σ₁₂)
 companion = [0 0 0 -a₂₂/a₁₁; 1 0 0 2a₂₆/a₁₁; 0 1 0 -(2a₁₂ + a₆₆)/a₁₁; 0 0 1 2a₁₆/a₁₁]
 μ₁, μ₂ = filter(μ -> imag(μ) > 0, eigvals(companion))
-s, p = MeanFieldHomogenization.ConformalHoles._characteristic_pair(C₀)
+s, p = characteristic_pair(C₀)
 round.((μ₁, μ₂); digits = 4), maximum(abs, (l(μ₁), l(0.7) - energy(0.7), s - (μ₁ + μ₂), p - μ₁ * μ₂))
 ```
 
@@ -946,7 +946,7 @@ ellipse, pull = ConformalHole((0.4,)), Tens([0.0 0.0; 0.0 1.0])
 tip(C) = contour_stress(ellipse, pull, 0.0, C)
 structured(c) = TensOrtho(c, 2.0, 1.0, 0.5, CanonicalBasis{2, Float64}())
 generic(c) = TensND.from_mandel(TensND.mandel(structured(c), CanonicalBasis{2, Float64}()))
-(MeanFieldHomogenization.ConformalHoles._characteristic_pair(iso),
+(characteristic_pair(iso),
     maximum(abs, contour_stress(ellipse, pull, θs, iso) .- contour_stress(ellipse, pull, θs)),
     ForwardDiff.derivative(tip ∘ structured, 2.0), ForwardDiff.derivative(tip ∘ generic, 2.0))
 ```
@@ -1022,7 +1022,7 @@ The closed forms against the roots of section 7:
 
 ```@example thpotentials
 E₁, E₂, G, ν₁ = 1.0, 0.3, 0.12, 0.25
-pair(γ) = MeanFieldHomogenization.ConformalHoles._characteristic_pair(sheet(E₁, E₂, G, ν₁, γ))
+pair(γ) = characteristic_pair(sheet(E₁, E₂, G, ν₁, γ))
 s′, p′ = pair(0.0)
 γ = 0.4
 d = cos(γ)^2 - s′ * cos(γ) * sin(γ) + p′ * sin(γ)^2
@@ -1437,7 +1437,7 @@ the formulas that divide by their difference are not exact to rounding:
 ```@example thpotentials
 iso_general = Tens(Array(canonical_components(iso_stiffness(Val(2), 5.0, 2.0))))   # its class forgotten
 isotropic_field = canonical_components(matrix_stress(hole, Σ, [x₁, x₂]))   # the isotropic matrix, any map
-sᵢ, pᵢ = CH._characteristic_pair(iso_general)
+sᵢ, pᵢ = characteristic_pair(iso_general)
 μᵢ = ((sᵢ + sqrt(sᵢ^2 - 4pᵢ)) / 2, (sᵢ - sqrt(sᵢ^2 - 4pᵢ)) / 2)
 S₀, S₁, S₂ = CH._field_by_roots(x₁, x₂, ξ, η, c₁, c₂, μᵢ, exterior_roots(x₁, x₂, μᵢ))
 by_two_roots = [Σ₁₁ + 2real(S₂) Σ₁₂ - 2real(S₁); Σ₁₂ - 2real(S₁) Σ₂₂ + 2real(S₀)]

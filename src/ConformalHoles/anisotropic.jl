@@ -34,108 +34,9 @@
 # not take.
 _cdiv(z₁, z₂) = (z₁ * conj(z₂)) / abs2(z₂)
 
-# The compliances (a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆) read on the Kelvin-Mandel
-# matrix `M` of the compliance of the plane.
-function _engineering_compliances(M::AbstractMatrix)
-    r = sqrt(2 * one(eltype(M)))
-    return (M[1, 1], M[2, 2], M[1, 2], 2 * M[3, 3], r * M[1, 3], r * M[2, 3])
-end
-
-_canonical_compliances(C₀::TensND.AbstractTens{4, 2}) =
-    _engineering_compliances(TensND.mandel(inv(C₀), TensND.CanonicalBasis{2, eltype(C₀)}()))
-
-# ── The characteristic pair ──────────────────────────────────────────────────
-
-# In the axes of an orthotropic matrix a₁₆ = a₂₆ = 0 and the equation is
-# biquadratic: p = −√(a₂₂/a₁₁), and s² = −(2a₁₂ + a₆₆)/a₁₁ + 2p, which is
-# negative for a positive definite compliance.
-function _material_pair(a₁₁, a₂₂, a₁₂, a₆₆)
-    ρ = sqrt(a₂₂ / a₁₁)
-    return complex(zero(ρ), sqrt((2 * a₁₂ + a₆₆) / a₁₁ + 2 * ρ)), complex(-ρ)
-end
-
-# The pair in axes from which the material ones are turned by the angle of
-# cosine c and sine n: x₁′ + μ′x₂′ is proportional to x₁ + μ x₂ with
-# μ = (μ′c + n)/(c − μ′n), whose sum and product are rational in (s′, p′).
-function _turned_pair(s′, p′, c, n)
-    d = c^2 - s′ * (c * n) + p′ * n^2
-    return _cdiv(s′ * (c^2 - n^2) + 2 * (c * n) * (1 - p′), d), _cdiv(p′ * c^2 + s′ * (c * n) + n^2, d)
-end
-
-"""
-    _characteristic_pair(C₀::AbstractTens{4,2}) -> (s, p)
-
-Sum and product of the two roots of positive imaginary part of the
-characteristic equation of the stiffness `C₀` of the plane, in the canonical
-axes.
-
-An isotropic matrix has the double root ``\\mathrm{i}``; an orthotropic or a
-square one has the pair of its own axes in closed form, turned to the
-canonical ones: these three accept symbols. Any other tensor has its equation
-solved numerically, and must be major-symmetric.
-"""
-_characteristic_pair(C₀::TensND.TensISO{4, 2}) = (complex(zero(eltype(C₀)), 2 * one(eltype(C₀))), complex(-one(eltype(C₀))))
-function _characteristic_pair(C₀::Union{TensND.TensOrtho{4, 2, <:Any, 4}, TensND.TensCubic{2}})
-    M = TensND.mandel_material(inv(C₀))
-    e = TensND.vecbasis(TensND.frame(C₀))
-    return _turned_pair(_material_pair(M[1, 1], M[2, 2], M[1, 2], 2 * M[3, 3])..., e[1, 1], e[2, 1])
-end
-_characteristic_pair(C₀::TensND.AbstractTens{4, 2}) = _characteristic_pair(Val(is_hard_numeric(eltype(C₀))), C₀)
-_characteristic_pair(::Val{false}, C₀) = throw(
-    ArgumentError(
-        "the characteristic equation of a symbolic $(nameof(typeof(C₀))) of the plane is not solved in closed form; " *
-            "give the matrix as a TensISO, a TensCubic or a TensOrtho"
-    )
-)
-function _characteristic_pair(::Val{true}, C₀)
-    # On the values: the norm of a null difference has no derivative.
-    M = TensND.primal.(TensND.mandel(C₀, TensND.CanonicalBasis{2, eltype(C₀)}()))
-    asym = maximum(abs, M - transpose(M)) / maximum(abs, M)
-    asym ≤ 1.0e-10 || throw(
-        ArgumentError(
-            "the elliptic hole in an anisotropic matrix of the plane takes a major-symmetric stiffness; " *
-                "got a relative asymmetry $asym"
-        )
-    )
-    return _characteristic_pair(_canonical_compliances(C₀))
-end
-
-# The quartic divided by a₁₁ is (μ² − sμ + p)(μ² − s̄μ + p̄): its coefficients
-# give Re s and three equations on (Im s, Re p, Im p). The roots of the
-# companion matrix, computed on the values, start a Newton iteration on these,
-# which brings the pair to the precision of its type and carries the
-# derivatives. The roots are sorted by a comparison: numbers only.
-function _characteristic_pair(a::NTuple{6, T}) where {T}
-    a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆ = a
-    c₃, c₂, c₁, c₀ = -2 * a₁₆ / a₁₁, (2 * a₁₂ + a₆₆) / a₁₁, -2 * a₂₆ / a₁₁, a₂₂ / a₁₁
-    f₃, f₂, f₁, f₀ = Float64.(TensND.primal.((c₃, c₂, c₁, c₀)))
-    roots = filter(μ -> imag(μ) > 0, eigvals([0.0 0.0 0.0 -f₀; 1.0 0.0 0.0 -f₁; 0.0 1.0 0.0 -f₂; 0.0 0.0 1.0 -f₃]))
-    length(roots) == 2 || throw(
-        DomainError(
-            (f₃, f₂, f₁, f₀),
-            "the characteristic equation of the matrix has real roots: its stiffness is not positive definite"
-        )
-    )
-    sᵣ, c = -c₃ / 2, (c₂, c₁, c₀)
-    x = SVector{3, T}(imag(roots[1] + roots[2]), real(roots[1] * roots[2]), imag(roots[1] * roots[2]))
-    # The start has half the digits at worst (the companion matrix of a double
-    # root) and each step doubles them: the values reach the precision of
-    # `Float64` in two steps, and each further step makes one more order of
-    # derivatives exact.
-    for _ in 1:5
-        x -= _pair_correction(x, sᵣ, c)
-    end
-    return complex(sᵣ, x[1]), complex(x[2], x[3])
-end
-
-# Newton correction of x = (Im s, Re p, Im p) on the three equations.
-function _pair_correction(x::SVector{3, T}, sᵣ, (c₂, c₁, c₀)) where {T}
-    sᵢ, pᵣ, pᵢ = x
-    F = SVector{3, T}(sᵣ^2 + sᵢ^2 + 2 * pᵣ - c₂, 2 * (sᵣ * pᵣ + sᵢ * pᵢ) + c₁, pᵣ^2 + pᵢ^2 - c₀)
-    J = SMatrix{3, 3, T}(2 * sᵢ, 2 * pᵢ, zero(T), 2 * one(T), 2 * sᵣ, 2 * pᵣ, zero(T), 2 * sᵢ, 2 * pᵢ)
-    return J \ F
-end
-
+# The characteristic pair (s, p) and the engineering compliances of the matrix
+# are TensND's (`characteristic_pair`, `engineering_compliances`), the static
+# limit of the slowness problem of its interface waves.
 # ── The solution on the contour ──────────────────────────────────────────────
 
 # The contour is x₁ = Re(ξ σ̄), x₂ = Re(η σ̄), σ = e^{iθ}, for the map ζ + m/ζ.
@@ -169,8 +70,8 @@ and the mean strain it adds to that of the matrix follows from the integral
 of ``\\underline{u}\\otimes\\underline{n}`` on the contour.
 """
 function _anisotropic_ellipse_concentration(m::Complex, C₀::TensND.AbstractTens{4, 2})
-    s, p = _characteristic_pair(C₀)
-    a₁₁, a₂₂, a₁₂, _, a₁₆, a₂₆ = _canonical_compliances(C₀)
+    s, p = TensND.characteristic_pair(C₀)
+    a₁₁, a₂₂, a₁₂, _, a₁₆, a₂₆ = TensND.engineering_compliances(C₀)
     ξ, η = _contour_vectors(m)
     area = 1 - abs2(m)
     T = promote_type(typeof(real(s)), typeof(a₁₁), typeof(area))
