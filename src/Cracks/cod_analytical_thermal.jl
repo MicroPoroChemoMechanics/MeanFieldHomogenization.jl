@@ -92,27 +92,6 @@ end
 # -----------------------------------------------------------------------------
 
 """
-    _adj3_sym(K) -> (a11, a22, a33, a12, a13, a23)
-
-The six independent entries of the adjugate
-``\\mathrm{adj}\\,\\boldsymbol{K} = (\\det\\boldsymbol{K})\\,\\boldsymbol{K}^{-1}`` of a
-**symmetric** 3×3, by cofactors. Division-free, hence stable at small
-``\\det\\boldsymbol{K}`` and evaluable on `ForwardDiff.Dual` and symbolic scalars —
-which `det` composed with `inv` would also be, but at the cost of a division
-the crack formulas immediately cancel.
-"""
-@inline function _adj3_sym(K)
-    return @inbounds (
-        K[2, 2] * K[3, 3] - K[2, 3] * K[2, 3],      # a11
-        K[1, 1] * K[3, 3] - K[1, 3] * K[1, 3],      # a22
-        K[1, 1] * K[2, 2] - K[1, 2] * K[1, 2],      # a33
-        K[1, 3] * K[2, 3] - K[1, 2] * K[3, 3],      # a12
-        K[1, 2] * K[2, 3] - K[1, 3] * K[2, 2],      # a13
-        K[1, 2] * K[1, 3] - K[1, 1] * K[2, 3],      # a23
-    )
-end
-
-"""
     _cod_aniso_ellipse_thermal(c::EllipticCrack, K₀) -> Real
 
 Closed-form thermal COD scalar of an elliptic crack in an **arbitrarily
@@ -175,7 +154,9 @@ function _cod_aniso_ellipse_thermal(c::EllipticCrack, K₀)
     # `adj` is a tensor under rotation, so the adjugate of the rotated
     # components is the rotated adjugate — the order does not matter.
     Kloc = TensND.express(K₀, crack_basis(c))
-    adj = _adj3_sym(Kloc)
+    # The adjugate (det K₀) K₀⁻¹, by cofactors: no division, which the formula
+    # below cancels, so duals and symbols go through.
+    adj = TensND.sym3_adj(Kloc[1, 1], Kloc[2, 2], Kloc[3, 3], Kloc[1, 2], Kloc[1, 3], Kloc[2, 3])
 
     A = adj[2]           # m̂·adj(K₀)·m̂
     B = adj[4]           # m̂·adj(K₀)·ℓ̂   (the (1,2) entry, adj being symmetric)

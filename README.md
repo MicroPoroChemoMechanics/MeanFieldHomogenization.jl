@@ -27,6 +27,13 @@ differential, PCW, or the classical bounds — into an effective stiffness or
 conductivity. That chain is the whole library: one abstraction hierarchy, a
 shared numerical core, and forward-mode automatic differentiation throughout.
 
+The cell is of space or of the plane. A medium invariant along an axis, or a
+thin plate, is homogenized on a cell of the plane, in plane strain or in plane
+stress: its inclusions are ellipses, disks, segments, rings and holes, its
+properties tensors of dimension 2, isotropic, square, orthotropic or of no
+symmetry, and the same schemes apply. What each inclusion accepts in the plane
+is listed in [Plane problems](https://MicroPoroChemoMechanics.github.io/MeanFieldHomogenization.jl/stable/manual/plane_problems).
+
 Everything else is that chain generalized in one direction at a time:
 
 - **a richer morphology in place of the ellipsoid** — composite `n`-layer

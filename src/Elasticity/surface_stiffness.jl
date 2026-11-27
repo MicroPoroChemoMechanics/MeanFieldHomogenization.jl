@@ -68,13 +68,8 @@ function surface_stiffness(ell::Ellipsoid{3}, κs, μs)
     a, c, axis = _spheroid_axes(ell)
     X = c / a
     C1111, C3333, C1133, C1122, C1313 = _surface_components(X, a, κs, μs)
-    # Walpole parameters of a transversely isotropic tensor, same mapping as
-    # everywhere else in the package: p₁ = C₃₃₃₃, p₂ = C₁₁₁₁+C₁₁₂₂,
-    # p₃ = √2 C₁₁₃₃, p₅ = C₁₁₁₁-C₁₁₂₂, p₆ = 2 C₁₃₁₃.
-    T = promote_type(typeof(a), typeof(κs), typeof(μs))
-    return TensND.TensTI{4}(
-        C3333, C1111 + C1122, sqrt(T(2)) * C1133, C1111 - C1122, 2 * C1313, axis
-    )
+    # C₁₃₁₃ = C₂₃₂₃ about the axis of symmetry.
+    return TensND.ti_from_constants(C1111, C1122, C1133, C3333, C1313, axis; form = :components)
 end
 
 """

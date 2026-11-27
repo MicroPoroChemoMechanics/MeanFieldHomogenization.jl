@@ -91,7 +91,7 @@ struct ScalarClass end
 const _StructuredClass = Union{
     TensISO{4}, TensISO{2}, TensCubic,
     TensTI{4, <:Any, 5}, TensTI{4, <:Any, 6}, TensTI{2, <:Any, 2},
-    TensOrtho{4}, TensOrtho{2},
+    TensOrtho{4, 3}, TensOrtho{2, 3},
 }
 const _OperatorClass = Union{_StructuredClass, DenseClass, ScalarClass}
 # The classes of the plane: its operators are stored by blocks of the plane.
@@ -135,11 +135,14 @@ _iso_class(::Val{2}, ::Val{D}) where {D} = TensISO{D}(1.0)
 
 # The number of components of the values of a history the operator acts on:
 # Kelvin-Mandel vectors of symmetric second-order tensors at order 4, vectors
-# at order 2. Written out for the two dimensions the package serves, so that
-# the sizes of the static blocks are constants of each method.
+# at order 2. The dimension is a parameter of the type, so that the sizes of
+# the static blocks are constants of each method.
 _value_dim(::ScalarClass) = 1
+_value_dim(::Union{TensND.AbstractTens{4, D}, DenseClass{4, D}}) where {D} = TensND.mandel_length(D)
+_value_dim(::Union{TensND.AbstractTens{2, D}, DenseClass{2, D}}) where {D} = D
 _block_sizes(c::_StructuredClass) = map(copies -> Val(length(first(copies))), TensND.symmetry_layout(c))
 _block_sizes(::ScalarClass) = (Val(1),)
+_block_sizes(c::DenseClass) = (Val(_value_dim(c)),)
 _val(::Val{m}) where {m} = m
 
 # The orthonormal basis of the values in which the blocks sit, and their places.
@@ -147,18 +150,11 @@ _class_basis(c::_StructuredClass) = TensND.symmetry_basis(c)
 _class_layout(c::_StructuredClass) = TensND.symmetry_layout(c)
 _class_basis(::ScalarClass) = SMatrix{1, 1, Float64}(I)
 _class_layout(::ScalarClass) = ((SVector(1),),)
+_class_basis(c::DenseClass) = (m = _value_dim(c); SMatrix{m, m, Float64}(I))
+_class_layout(c::DenseClass) = ((SVector(ntuple(identity, Val(_value_dim(c)))),),)
 
 # The full matrix of a value: Kelvin-Mandel at order 4, components at order 2.
 _value_matrix(x::AbstractMatrix) = SMatrix{size(x)...}(x)
-
-for (O, D, m) in ((4, 3, 6), (2, 3, 3), (4, 2, 3), (2, 2, 2))
-    @eval begin
-        _value_dim(::Union{TensND.AbstractTens{$O, $D}, DenseClass{$O, $D}}) = $m
-        _block_sizes(::DenseClass{$O, $D}) = (Val($m),)
-        _class_basis(::DenseClass{$O, $D}) = SMatrix{$m, $m, Float64}(I)
-        _class_layout(::DenseClass{$O, $D}) = ((SVector($(1:m...)),),)
-    end
-end
 _value_matrix(x::TensND.AbstractTens{4, 3}) = SMatrix{6, 6}(_to_mandel(x))
 _value_matrix(x::TensND.AbstractTens{4, 2}) = SMatrix{3, 3}(_to_mandel(x))
 _value_matrix(x::TensND.AbstractTens{2, D}) where {D} = SMatrix{D, D}(TensND.canonical_components(x))
@@ -509,7 +505,8 @@ linear in the blocks.
 function _iso_part(R::VolterraOperator)
     n = length(R.grid)
     Q = _class_basis(R.class)
-    s = transpose(Q) * _spherical_direction(R.class) / sqrt(_space_dim(R.class) * one(eltype(Q)))
+    # The spherical direction 𝟏/√d, written in the adapted basis of the class.
+    s = transpose(Q) * TensND.identity_mandel(Val(_space_dim(R.class)), Int) / sqrt(_space_dim(R.class) * one(eltype(Q)))
     T = promote_type(eltype(R), eltype(Q))
     α, trace = zeros(T, n, n), zeros(T, n, n)
     map(R.blocks, _class_layout(R.class)) do B, copies
@@ -524,10 +521,6 @@ function _iso_part(R::VolterraOperator)
     end
     return VolterraOperator(_iso_class(R.class), (α, (trace .- α) ./ (_value_dim(R.class) - 1)), R.grid)
 end
-
-# The identity of the space in Kelvin-Mandel components.
-_spherical_direction(::Union{TensND.AbstractTens{4, 3}, DenseClass{4, 3}}) = SVector(1, 1, 1, 0, 0, 0)
-_spherical_direction(::Union{TensND.AbstractTens{4, 2}, DenseClass{4, 2}}) = SVector(1, 1, 0)
 
 """
     _iso_part2(R::VolterraOperator) -> VolterraOperator

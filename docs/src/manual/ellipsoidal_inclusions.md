@@ -24,8 +24,8 @@ hill_tensor(Ellipsoid(1.0), C₀)
 # Prolate spheroid
 hill_tensor(Ellipsoid(3.0, 1.0, 1.0), C₀)
 
-# 2D ellipse
-hill_tensor(Ellipsoid(1.0, 0.5), TensISO{2}(3*(λ+2μ/3), 2μ))
+# 2D ellipse, in the plane strain of the same material
+hill_tensor(Ellipsoid(1.0, 0.5), plane_strain_stiffness(C₀))
 ```
 
 The two aspect ratios that recur everywhere are the in-plane ``\eta = b/a`` and

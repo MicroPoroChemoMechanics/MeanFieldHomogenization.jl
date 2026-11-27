@@ -191,7 +191,7 @@ function poroelastic_parameters(C_hom::StaticMatrix{N, N}, C_s::StaticMatrix{N, 
     s_s = inv(C_s)
     T = promote_type(eltype(C_hom), eltype(s_s), typeof(φ))
     # the identity: ones on the d normal components, N = d(d + 1)/2
-    d = (isqrt(8N + 1) - 1) ÷ 2
+    d = TensND.mandel_dimension(N)
     𝟏 = SVector{N, T}(ntuple(i -> i ≤ d ? one(T) : zero(T), Val(N)))
     B = 𝟏 - C_hom * (s_s * 𝟏)
     invM = transpose(𝟏) * (s_s * (B - φ * 𝟏))

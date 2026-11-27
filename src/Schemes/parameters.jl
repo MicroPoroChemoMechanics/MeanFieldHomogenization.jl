@@ -230,9 +230,16 @@ end
 
 const _ORTHO9 = (:C1111, :C2222, :C3333, :C1122, :C1133, :C2233, :C2323, :C1313, :C1212)
 const _ORTHO12 = (_ORTHO9..., :C2211, :C3311, :C3322)
-_coefficient(::TensND.TensOrtho{4, T, 9}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO9, "an orthotropic tensor of order 4")
-_coefficient(::TensND.TensOrtho{4, T, 12}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO12, "an orthotropic tensor of order 4 without major symmetry")
-_coefficient(::TensND.TensOrtho{2}, sel::Symbol) = _named_rank(sel, (:a1, :a2, :a3), "an orthotropic tensor of order 2")
+_coefficient(::TensND.TensOrtho{4, 3, T, 9}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO9, "an orthotropic tensor of order 4")
+_coefficient(::TensND.TensOrtho{4, 3, T, 12}, sel::Symbol) where {T} = _named_rank(sel, _ORTHO12, "an orthotropic tensor of order 4 without major symmetry")
+_coefficient(::TensND.TensOrtho{2, 3}, sel::Symbol) = _named_rank(sel, (:a1, :a2, :a3), "an orthotropic tensor of order 2")
+# In the plane: the normal block, then the shear modulus C₁₂₁₂.
+const _ORTHO4_PLANE = (:C1111, :C2222, :C1122, :C1212)
+_coefficient(::TensND.TensOrtho{4, 2, T, 4}, sel::Symbol) where {T} =
+    _named_rank(sel, _ORTHO4_PLANE, "an orthotropic tensor of order 4 of the plane")
+_coefficient(::TensND.TensOrtho{4, 2, T, 5}, sel::Symbol) where {T} =
+    _named_rank(sel, (_ORTHO4_PLANE..., :C2211), "an orthotropic tensor of order 4 of the plane without major symmetry")
+_coefficient(::TensND.TensOrtho{2, 2}, sel::Symbol) = _named_rank(sel, (:a1, :a2), "an orthotropic tensor of order 2 of the plane")
 _coefficient(::TensND.TensCubic, sel::Symbol) = _named_rank(sel, (:α, :β, :γ), "a cubic tensor")
 
 _coefficient(::Any, i::Int) = (i, 1)
@@ -305,29 +312,24 @@ _enclosing(t, ::Val{:ANISO}, b...) = _mandel_view(t, b...)
 _enclosing(t::TensND.TensTI, ::Val{:TI}) = t
 _enclosing(t::TensND.TensOrtho, ::Val{:ORTHO}) = t
 _enclosing(t::TensND.TensCubic, ::Val{:CUBIC}) = t
-_enclosing(t::TensND.TensCubic, class::Val{:ORTHO}) = _in_space_class(t, class, t.frame)
-_enclosing(t, class::Val, args...) = _in_space_class(t, class, args...)
-_in_space_class(t::TensND.AbstractTens{order, 3}, class::Val, args...) where {order} = _exact_projection(t, class, args...)
-_in_space_class(::TensND.AbstractTens{order, 2}, ::Val{S}, args...) where {order, S} = throw(
-    ArgumentError(
-        "symmetry = :$S: in the plane a coefficient is one of the tensor's own class or a " *
-            "Kelvin-Mandel component (`symmetry = :ANISO`, or a name `:Mij`)"
-    )
-)
+_enclosing(t::TensND.TensCubic, class::Val{:ORTHO}) = _exact_projection(t, class, t.frame)
+# Any other tensor is written in the class by its projection, with the axis or
+# the frame given; the plane has the isotropic, square and orthotropic classes,
+# and TensND refuses the transversely isotropic one there.
+_enclosing(t, class::Val, args...) = _exact_projection(t, class, args...)
 
 # The projection onto a class that contains the tensor returns the tensor. Not
 # containing it is refused: the derivative would be taken at another tensor.
-_exact_projection(t, class::Val, args...) = _project_contained(Val(is_hard_numeric(eltype(t))), t, class, args...)
-function _project_contained(::Val{true}, t, class::Val{S}, args...) where {S}
-    B, _, drel = TensND.project(t, class, args...)
-    drel ≤ 1.0e-10 || _not_contained(S, t, " (relative distance $drel)")
-    return B
+function _exact_projection(t, class::Val{S}, args...) where {S}
+    B = TensND.project_exact(t, class, args...; rtol = 1.0e-10)
+    B === nothing || return B
+    return _not_contained(S, t, _not_contained_reason(Val(is_hard_numeric(eltype(t))), t, class, args...))
 end
-# A symbolic distance cannot be compared: the isotropic tensor, which every class
-# contains, is the one case decided without it.
-_project_contained(::Val{false}, t::TensND.TensISO, class::Val, args...) = first(TensND.project(t, class, args...))
-_project_contained(::Val{false}, t, ::Val{S}, args...) where {S} =
-    _not_contained(S, t, ", which a symbolic tensor cannot show unless it is isotropic")
+# Why the tensor was refused, for the message only: the distance of a numerical
+# tensor (computed again on this error path), the reason for a symbolic one,
+# whose distance cannot be compared, so that only an isotropic one is accepted.
+_not_contained_reason(::Val{true}, t, class, args...) = " (relative distance $(last(TensND.project(t, class, args...))))"
+_not_contained_reason(::Val{false}, t, class, args...) = ", which a symbolic tensor cannot show unless it is isotropic"
 _not_contained(S, t, why) = throw(
     ArgumentError(
         "symmetry = :$S does not contain this $(nameof(typeof(t)))$why: name a class that " *

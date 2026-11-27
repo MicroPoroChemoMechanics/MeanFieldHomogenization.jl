@@ -76,6 +76,32 @@ inclusion; and finally the chain **generalized in one direction at a time**, a
 different physics for transport and a different time dependence for
 viscoelasticity.
 
+## Cells of space and cells of the plane
+
+A cell is of space or of the plane. A medium invariant along an axis, or a thin
+plate loaded in its plane, is homogenized on a cell of the plane, in plane
+strain or in plane stress: its inclusions are sections, its properties tensors
+of dimension 2, isotropic, square, orthotropic or of no symmetry, and the same
+schemes apply ([Plane problems](@ref man-plane-problems),
+[Problems of the plane](@ref th-plane-problems)). What each inclusion and each
+scheme accepts:
+
+| | space | plane, isotropic matrix | plane, anisotropic matrix |
+| :--- | :--- | :--- | :--- |
+| ellipsoid, spheroid, sphere; in the plane ellipse, disk ([`Ellipsoid`](@ref)) | yes | yes | yes |
+| cylinder ([`Cylinder`](@ref)) | yes | through its section, an ellipse | through its section, an ellipse |
+| crack: penny, elliptic, ribbon; in the plane the segment `RibbonCrack(b; angle)` | yes | yes, closed form | yes, computed numerically |
+| springs between the faces of a crack (`K_interface`) | yes | yes | yes |
+| layered sphere, spheroid, ellipsoid | yes | no | no |
+| layered cylinder ([`LayeredCylinder`](@ref)), with its interfaces | yes | yes, layers isotropic in the plane | no |
+| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse, in elasticity and in conduction; not a map of several terms |
+| torus, grid of Gaussians, mesh, network | yes | no | no |
+| Voigt, Reuss, dilute, Mori–Tanaka, self-consistent, differential | yes | yes | yes |
+| laminate | yes | no | no |
+| interaction tensors ([`interaction_tensor`](@ref)) | yes | yes | yes |
+| conduction | yes | ellipses, segments, rings, holes | ellipses, segments, elliptic holes |
+| aging viscoelasticity | yes | disks, ellipses, segments, rings | no |
+
 ## [Lineage: Echoes](@id index-lineage-echoes)
 
 `MeanFieldHomogenization` is the Julia successor of **Echoes** [echoes](@cite), the

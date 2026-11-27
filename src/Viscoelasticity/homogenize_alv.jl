@@ -515,7 +515,7 @@ function _candidate_classes(rve, prop, times)
     return Any[
         _ISO4, _ISO2, _ISO4_PLANE, _ISO2_PLANE, phase..., axes...,
         TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0)), TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0)),
-        TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
+        TensOrtho{4, 3, Float64}(ntuple(_ -> 1.0, 9), ℬ), TensOrtho{2, 3, Float64}((1.0, 1.0, 1.0), ℬ),
     ]
 end
 # The geometries of the phases of a cell (none for a cell without phases).

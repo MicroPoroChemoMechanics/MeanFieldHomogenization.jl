@@ -196,7 +196,7 @@ The same entry point, with 2-D inclusions and a 2-D reference.
 
 ````@example hill_tensors
 let
-    C_iso2 = TensISO{2}(3k_ref, 2μ_ref)
+    C_iso2 = plane_strain_stiffness(C_iso)          # 2(λ + μ) 𝕁 + 2μ 𝕂, a tensor of the plane
 
     P = hill_tensor(Ellipsoid(1.0; dim = 2), C_iso2)
     @printf "circle   : P[1111] = %.9e,  isotropy err = %.2e\n" P[1, 1, 1, 1] abs(P[1, 1, 1, 1] - P[2, 2, 2, 2])

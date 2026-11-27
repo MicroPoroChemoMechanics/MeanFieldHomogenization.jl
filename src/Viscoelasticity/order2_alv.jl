@@ -174,7 +174,7 @@ function _depolarization_blocks(IA, M, ell)
 end
 _frame_classes2(ℬ::TensND.OrthonormalBasis{3}) = (
     ntuple(k -> TensTI{2}(1.0, 1.0, Tuple(TensND.vecbasis(ℬ, Val(:cov))[:, k])), 3)...,
-    TensOrtho{2, Float64}((1.0, 1.0, 1.0), ℬ),
+    TensOrtho{2, 3, Float64}((1.0, 1.0, 1.0), ℬ),
 )
 _frame_classes2(ℬ) = ()
 

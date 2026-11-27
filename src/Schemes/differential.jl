@@ -431,11 +431,10 @@ _same_orientation(::Val{:ortho}, a, b) = isequal(TensND.frame(a), TensND.frame(b
 _same_orientation(::Val, a, b) = true
 
 _state_length(::Val, t) = length(TensND.get_data(t))
-# Size of a Kelvin-Mandel vector in the dimension of `t`: 6 in space, 3 in the plane.
-_mandel_size(t) = (d = TensND.get_dim(t); d * (d + 1) ÷ 2)
-_state_length(::Val{:full_4}, t) = _mandel_size(t)^2
+# The Kelvin-Mandel size in the dimension of `t`: 6 in space, 3 in the plane.
+_state_length(::Val{:full_4}, t) = TensND.mandel_length(TensND.get_dim(t))^2
 # A conductivity is symmetric: its state is its Mandel vector.
-_state_length(::Val{:full_2}, t) = _mandel_size(t)
+_state_length(::Val{:full_2}, t) = TensND.mandel_length(TensND.get_dim(t))
 
 _symmetry_tag(::TensND.TensISO{4}) = Val(:iso_4)
 _symmetry_tag(::TensND.TensISO{2}) = Val(:iso_2)
@@ -459,6 +458,9 @@ _get_state(::Val, t) = TensND.to_vector(t)
 _get_state(::_FullLayout, t) = TensND.to_vector(TensND.generic_tens(t))
 _set_state!(du, tag::Val, Δ) = (du .= _get_state(tag, Δ); nothing)
 _reconstruct_tens(::Val, proto::TensND.AbstractTens, u) = TensND.from_vector(proto, u)
+# A cubic matrix (square in the plane) has no layout of its own: its state is
+# the full one, of which its three coefficients are not the components.
+_reconstruct_tens(::_FullLayout, proto::TensND.TensCubic, u) = TensND.from_vector(TensND.generic_tens(proto), u)
 
 # ── Per-phase contribution helpers ──────────────────────────────────────────
 

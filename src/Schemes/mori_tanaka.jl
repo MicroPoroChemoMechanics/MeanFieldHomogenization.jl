@@ -79,7 +79,7 @@ _relative_asymmetry(P::T, P_sym::T) where {dim, T <: TensND.TensCanonical{4, dim
 
 function _warn_mt_gap(gap)
     gap > _MT_ASYMMETRY_TOL && @warn "The Mori–Tanaka estimate has no major symmetry (relative " *
-        "antisymmetric part $(_primal_value(gap))): the scheme is not consistent " *
+        "antisymmetric part $(TensND.primal(gap))): the scheme is not consistent " *
         "for inclusion families of different shapes or orientations. Its major-symmetric " *
         "part is returned; a self-consistent, Maxwell or Ponte Castañeda–Willis estimate " *
         "has no such defect."

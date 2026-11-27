@@ -385,14 +385,14 @@ homogenize(asm, ClusterModel(; method = :multipole, order = 2), :C)
 | `:multipole` | any ellipsoid pair | truncated expansion, default off the isotropic ball case |
 | `:quadrature` | anything | product rule on the definition; the reference solution for validation, far too slow to assemble a system |
 
-The reference medium may be anisotropic: 3D elasticity goes through the Barnett line
-integral ([`green_operator_aniso`](@ref)), conduction through a closed form in 2D and
-3D. Two consequences to keep in mind there — the *analytical* kernel no longer applies
-even to a ball pair (its exactness came from the isotropic Green function being
-biharmonic), and the isotropic part of `𝕋` no longer vanishes, so "a cubic array keeps
-the Mori-Tanaka bulk modulus" is an isotropic-matrix statement. The one remaining gap
-is **plane-strain elasticity with an anisotropic reference**, which needs the Stroh
-formalism and raises an `ArgumentError` naming the limitation.
+The reference medium may be anisotropic: elasticity in space goes through the Barnett
+line integral ([`green_operator_aniso`](@ref)), elasticity in the plane through a
+quadrature over the unit circle
+([The Green operator of an anisotropic plane](@ref th-plane-green)), conduction through
+a closed form in 2D and 3D. Two consequences to keep in mind there — the *analytical*
+kernel no longer applies even to a ball pair (its exactness came from the isotropic
+Green function being biharmonic), and the isotropic part of `𝕋` no longer vanishes, so
+"a cubic array keeps the Mori-Tanaka bulk modulus" is an isotropic-matrix statement.
 
 !!! warning "Two sign conventions exist"
     ``\mathbb{T}^{aa} = +\mathbb{P}``, i.e. the self term **is** the Hill tensor

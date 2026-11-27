@@ -24,6 +24,9 @@ earlier figures, whose origin is kept below.
 | `geometry/annular_crack.svg` | `geometry.jl` | new |
 | `geometry/arc_crack.svg` | `geometry.jl` | new |
 | `theory/gaussian_crack_grid.svg` | `theory.jl` | new |
+| `theory/holomorphic_map.svg` | `theory.jl` | new |
+| `theory/affine_ellipses.svg` | `theory.jl` | new |
+| `theory/contour_stress.svg` | `theory.jl` | new |
 | `geometry/layered_ellipsoid.svg` | `geometry.jl` | an earlier talk of the author's; the layers now drawn confocal, with their common foci |
 | `schemes/rve_decomposition.svg` | `schemes.jl` | Echoes book, `img/ver_ell_spn_dec.png` |
 | `schemes/rve_mori_tanaka.svg` | `schemes.jl` | Echoes book, `img/ver_ell_spn.png` |

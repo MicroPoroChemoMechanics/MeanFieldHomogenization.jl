@@ -322,7 +322,7 @@ function _crack_compliance_operator(crack::EllipticCrack{<:Number, Cracks.Penny}
 end
 # Any other ellipse, and a ribbon: orthotropic in its frame.
 function _crack_compliance_operator(crack::Union{EllipticCrack{<:Number, Cracks.EllipticShape}, RibbonCrack}, B, grid)
-    c = TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), crack_basis(crack))
+    c = TensOrtho{4, 3, Float64}(ntuple(_ -> 1.0, 9), crack_basis(crack))
     return _operator_from_units(
         c, grid,
         (B.B_ℓ, _unit_compliance(crack, 1, 0, 0)), (B.B_m, _unit_compliance(crack, 0, 1, 0)), (B.B_n, _unit_compliance(crack, 0, 0, 1))

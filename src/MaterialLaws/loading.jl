@@ -73,8 +73,9 @@ function _canonical_name(name::Symbol)
     return Symbol(s[1:prevind(s, lastindex(s), 2)], _SYMMETRIC_TWINS[tail])
 end
 
-# Factor from a tensor component to its Kelvin–Mandel counterpart.
-_mandel_factors(n::Int) = n == 6 ? (1.0, 1.0, 1.0, sqrt(2.0), sqrt(2.0), sqrt(2.0)) : ntuple(_ -> 1.0, n)
+# Factor from a tensor component to its Kelvin–Mandel counterpart: the weights
+# of a symmetric tensor of space for a field of six components, one otherwise.
+_mandel_factors(n::Int) = n == 6 ? TensND.mandel_weights(Val(3)) : ntuple(_ -> 1.0, n)
 
 """
     _resolve(path, gradients, fluxes) -> (driven, targets, factors)

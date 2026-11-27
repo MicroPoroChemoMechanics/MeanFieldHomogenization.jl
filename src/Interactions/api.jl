@@ -80,10 +80,8 @@ coincide with the interaction tensors of [molinari1996](@citet).
     taken from them — their Appendix A table in particular — must be flipped
     before it is compared with anything here.
 
-An anisotropic reference is supported in 3D elasticity and in conduction; only
-plane-strain elasticity with an anisotropic `P₀` is missing, and it raises an
-`ArgumentError` naming the limitation rather than falling back to an isotropic
-kernel.
+An anisotropic reference is supported in elasticity and in conduction, in the
+plane and in space.
 """
 Base.@constprop :aggressive @inline function interaction_tensor(
         incl_a::MFH_Core.AbstractInclusion,

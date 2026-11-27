@@ -3,13 +3,14 @@
 #
 #  Closed form derived from the Eshelby tensor of an elliptic cylinder,
 #  [mura1987; eq. 11.22](@cite), contracted with `C₀⁻¹`
-#  (`P = S : C₀⁻¹`).  With the package convention
-#  `C₀ = TensISO{2}(α, β) = α·𝕁₂ + β·𝕂₂`, `α = 3k`, `β = 2μ`, plane strain
-#  gives `α = 2(λ+μ)` and `β = 2μ`, hence `ν = (α-β)/(2α)`.
+#  (`P = S : C₀⁻¹`).  A stiffness of the plane is, in TensND's convention,
+#  `C₀ = TensISO{2}(α, β) = α·𝕁₂ + β·𝕂₂` with `α = 2κ` and `β = 2μ`, `κ` the
+#  in-plane bulk modulus: `κ = λ + μ` for the plane strain of a 3-D material,
+#  whose Poisson ratio is then `ν = (α-β)/(2α)`.
 #
 #  Everything is parametrized by
-#      s = 3k/(3k+2μ)      t = 2μ/(3k+2μ) = 1 - s
-#  which stay finite as `k → ∞` (`s → 1`, `t → 0`), so the incompressible
+#      s = κ/(κ+μ) = α/(α+β)      t = μ/(κ+μ) = β/(α+β) = 1 - s
+#  which stay finite as `κ → ∞` (`s → 1`, `t → 0`), so the incompressible
 #  case needs no separate formula beyond `1/α → 0`.
 #
 #  Cross-validated to machine precision against Mura's `S` and, over a sweep
@@ -18,41 +19,41 @@
 # =============================================================================
 
 # Shared (s, t, 1/α) triple; `isinf` is only meaningful for float moduli, so
-# symbolic `k` always takes the generic branch.
-@inline function _hill_2d_iso_coeffs(k, μ)
-    if isa(k, AbstractFloat) && isinf(k)
-        return one(typeof(μ)), zero(typeof(μ)), zero(typeof(μ))
+# a symbolic `α` always takes the generic branch.
+@inline function _hill_2d_iso_coeffs(α, β)
+    if isa(α, AbstractFloat) && isinf(α)
+        return one(typeof(β)), zero(typeof(β)), zero(typeof(β))
     end
-    d = 3k + 2μ
-    return 3k / d, 2μ / d, 1 / (3k)
+    d = α + β
+    return α / d, β / d, 1 / α
 end
 
 """
     _hill_2d_iso(ell::Ellipsoid{2}, C₀::TensISO{4,2}) -> AbstractTens{4,2}
 
 Analytical Hill polarization tensor of a 2-D ellipse in an isotropic
-plane-strain matrix ``\\mathbb{C}_0 = 3k\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}``,
+matrix of the plane ``\\mathbb{C}_0 = 2\\kappa\\,\\mathbb{J} + 2\\mu\\,\\mathbb{K}``
+(``\\kappa`` the in-plane bulk modulus, ``\\lambda + \\mu`` in plane strain),
 obtained from the elliptic-cylinder Eshelby tensor of
 [mura1987](@citet) through ``\\mathbb{P} = \\mathbb{S}^{\\mathrm{E}}:\\mathbb{C}_0^{-1}``.
+For a disc, ``\\mathbb{P} = \\mathbb{J}/(2(\\kappa+\\mu)) + (\\kappa+2\\mu)/(4\\mu(\\kappa+\\mu))\\,\\mathbb{K}``.
 
-Setting ``k = \\infty`` (`Inf`) gives the incompressible limit.
+Setting ``\\kappa = \\infty`` (`Inf`) gives the incompressible limit.
 """
 function _hill_2d_iso(ell::Ellipsoid{2, Circular}, C₀)
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
     α, β = C₀.data
-    k = α / 3
-    μ = β / 2
     # ρ = 1 specialization of the elliptic formulas below:
-    #   P = P_J·𝕁₂ + P_K·𝕂₂,  P_J = 1/(3k+2μ),  P_K = (3k+4μ)/(4μ(3k+2μ)).
+    #   P = P_J·𝕁₂ + P_K·𝕂₂,  P_J = 1/(α+β),  P_K = (α+2β)/(2β(α+β)).
     local P1111, P1122
-    if isa(k, AbstractFloat) && isinf(k)
-        den = 8μ
+    if isa(α, AbstractFloat) && isinf(α)
+        den = 4β
         P1111 = one(T) / den
         P1122 = -one(T) / den
     else
-        den = 8μ * (3k + 2μ)
-        P1111 = (3k + 8μ) / den
-        P1122 = -3k / den
+        den = 4β * (α + β)
+        P1111 = (α + 4β) / den
+        P1122 = -α / den
     end
     return TensND.TensISO{2}(T(P1111 + P1122), T(P1111 - P1122))
 end
@@ -60,14 +61,12 @@ end
 function _hill_2d_iso(ell::Ellipsoid{2, Elliptic}, C₀)
     T = promote_type(eltype(ell.semi_axes), eltype(C₀))
     α, β = C₀.data
-    k = α / 3
-    μ = β / 2
     ρ = T(ell.semi_axes[2] / ell.semi_axes[1])
     ρ2 = ρ * ρ
     up = 1 + ρ
     up2 = up * up
 
-    s, t, inv_α = _hill_2d_iso_coeffs(k, μ)
+    s, t, inv_α = _hill_2d_iso_coeffs(α, β)
 
     # Mura (1987) eq. 11.22 — elliptic cylinder, semi-axes (1, ρ).
     S1111 = s * (ρ2 + 2ρ) / up2 + t * ρ / up
@@ -91,5 +90,5 @@ function _hill_2d_iso(ell::Ellipsoid{2, Elliptic}, C₀)
     for (a, b, c_, d) in ((1, 2, 1, 2), (1, 2, 2, 1), (2, 1, 1, 2), (2, 1, 2, 1))
         P_arr[a, b, c_, d] = P1212
     end
-    return MFH_Core._sym_tens_in(P_arr, ell.basis)
+    return TensND.symmetric_tens(P_arr, ell.basis)
 end

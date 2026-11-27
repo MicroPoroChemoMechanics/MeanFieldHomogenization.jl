@@ -18,7 +18,7 @@ const _ORTHO_FRAME = random_basis(Xoshiro(20261031))
 # above, aging and relaxing.
 function _ortho_law(seed)
     c = (6.0, 7.0, 8.0, 1.0 + 0.1seed, 1.5, 2.0, 1.2, 2.2, 3.1, 0.8, 1.3, 1.9 - 0.1seed)
-    return ViscoLaw((t, tp) -> (1 + exp(-(t - tp) / (1 + seed))) * TensOrtho{4, Float64}(c, _ORTHO_FRAME))
+    return ViscoLaw((t, tp) -> (1 + exp(-(t - tp) / (1 + seed))) * TensOrtho{4, 3, Float64}(c, _ORTHO_FRAME))
 end
 
 @testset "ortho_alv — the algebra in a random frame matches the dense matrices" begin

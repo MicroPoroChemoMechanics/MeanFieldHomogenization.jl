@@ -200,10 +200,7 @@ This is the detail of what the references of the equivalent inclusion method
 and of the cluster model contain and the implementation does not. See
 [the theory page](@ref th-interaction) for the shared interaction kernel.
 
-- **Plane-strain elasticity with an anisotropic reference**, which needs the
-  Stroh formalism rather than the Barnett line integral of `Core/green_aniso.jl`,
-  and is refused with a message naming the limitation.
-- **The cost of the anisotropic operator.** It is a quadrature differentiated
+- **The cost of the anisotropic operator in space.** It is a quadrature differentiated
   twice with forward-mode AD: ~1.5 ms per interaction tensor against ~0.6 µs for
   the isotropic closed form. Deriving the second gradient of the line integral
   analytically (the classical approach) would recover most of that, and would

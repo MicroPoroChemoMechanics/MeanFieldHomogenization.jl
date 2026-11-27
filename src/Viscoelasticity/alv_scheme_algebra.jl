@@ -204,10 +204,10 @@ end
 
 const _ISO4 = TensISO{3}(1.0, 1.0)
 const _TI4_E3 = TensTI{4}(1.0, 1.0, 0.0, 1.0, 1.0, (0.0, 0.0, 1.0))
-const _ORTHO4_CANON = TensOrtho{4, Float64}(ntuple(_ -> 1.0, 9), TensND.CanonicalBasis{3, Float64}())
+const _ORTHO4_CANON = TensOrtho{4, 3, Float64}(ntuple(_ -> 1.0, 9), TensND.CanonicalBasis{3, Float64}())
 const _ISO2 = TensISO{3}(1.0)
 const _TI2_E3 = TensTI{2}(1.0, 1.0, (0.0, 0.0, 1.0))
-const _ORTHO2_CANON = TensOrtho{2, Float64}((1.0, 1.0, 1.0), TensND.CanonicalBasis{3, Float64}())
+const _ORTHO2_CANON = TensOrtho{2, 3, Float64}((1.0, 1.0, 1.0), TensND.CanonicalBasis{3, Float64}())
 # The isotropic classes of the plane; the plane has no other structured class here.
 const _ISO4_PLANE = TensISO{2}(1.0, 1.0)
 const _ISO2_PLANE = TensISO{2}(1.0)

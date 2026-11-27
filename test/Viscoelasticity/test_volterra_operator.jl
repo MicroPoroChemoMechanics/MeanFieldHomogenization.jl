@@ -28,11 +28,11 @@ vo_laws() = [
     "iso" => ViscoLaw((t, tp) -> TensISO{3}(3 * (2 + vo_decay(t, tp)), 2 * (1 + vo_decay(t, tp)))),
     "cubic" => ViscoLaw((t, tp) -> TensCubic(4 + vo_decay(t, tp), 2.0, 1 + 0.1tp, VO_FRAME)),
     "TI" => ViscoLaw((t, tp) -> TensTI{4}(5 + vo_decay(t, tp), 4.0, 1.0, 0.5 + 0.1tp, 2 + vo_decay(t, tp), 1.5, VO_AXIS)),
-    "ortho" => ViscoLaw((t, tp) -> TensOrtho{4, Float64}((5.0, 6.0, 7.0, 1.0, 2.0, 3.0, 1.5, 2.5, 3.5) .* (1 + vo_decay(t, tp)), VO_FRAME)),
+    "ortho" => ViscoLaw((t, tp) -> TensOrtho{4, 3, Float64}((5.0, 6.0, 7.0, 1.0, 2.0, 3.0, 1.5, 2.5, 3.5) .* (1 + vo_decay(t, tp)), VO_FRAME)),
     "dense" => ViscoLaw((t, tp) -> (1 + vo_decay(t, tp)) * mandel(canonical_components(TensTI{4}(5.0, 4.0, 1.0, 2.0, 1.5, VO_AXIS)); symmetrize = true) + 0.1I),
     "iso order 2" => ViscoLaw((t, tp) -> TensISO{3}(2 + vo_decay(t, tp))),
     "TI order 2" => ViscoLaw((t, tp) -> TensTI{2}(2 + vo_decay(t, tp), 1.0 + 0.1tp, VO_AXIS)),
-    "ortho order 2" => ViscoLaw((t, tp) -> TensOrtho{2, Float64}((1.0, 2.0, 3.0) .* (1 + vo_decay(t, tp)), VO_FRAME)),
+    "ortho order 2" => ViscoLaw((t, tp) -> TensOrtho{2, 3, Float64}((1.0, 2.0, 3.0) .* (1 + vo_decay(t, tp)), VO_FRAME)),
     "scalar" => ViscoLaw((t, tp) -> 2 + vo_decay(t, tp)),
 ]
 vo_dim(R) = size(R, 1) ÷ length(VO_TIMES)

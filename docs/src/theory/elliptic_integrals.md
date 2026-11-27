@@ -146,6 +146,9 @@ the integrals as unexpanded calls.
 The submodule is exercised on numerical, automatic-differentiation, arbitrary
 precision and symbolic inputs in
 [Elliptic integrals — examples](@ref man-elliptic-examples), and its entry
-points are listed in [Elliptic integrals — API](@ref api-elliptic). The theory
-chapter closes here; [Getting started](@ref getting-started) and the
-[Manual](@ref man-index) put the whole chain to use.
+points are listed in [Elliptic integrals — API](@ref api-elliptic). The last
+two appendices concern the plane:
+[Holomorphic functions and conformal maps](@ref th-holomorphic-functions)
+gives the complex variable and its maps, on which
+[Complex potentials of plane elasticity](@ref th-complex-potentials) builds
+the solutions of plane elasticity.

@@ -414,4 +414,213 @@ function theory_radial_problem(; path = "theory/radial_problem", panel::Bool = t
     end
 end
 
-theory_figures() = (theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(), theory_parameter_classes(), theory_radial_problem())
+# ── Appendices on the plane (theory/holomorphic_functions.md, complex_potentials.md) ──
+
+"The point of the sheet at the complex number `z` of a plane drawn around `c` at the scale `s`."
+plane_point(c::Point, s, z) = c + Point(s * real(z), -s * imag(z))
+
+"The direction on the sheet of the complex number `e` (the sheet's y axis points down)."
+plane_direction(e) = Point(real(e), -imag(e))
+
+"""
+The polar grid of the outside of the unit disk (left) and its image by the map
+of an ellipse, ζ + m/ζ (right): circles become confocal ellipses, rays confocal
+hyperbolas, and the two families still cross at right angles. One circle and
+one ray are picked out, with the frame (e_ρ, e_θ) where they cross.
+Docs: theory/holomorphic_functions.md.
+"""
+function theory_holomorphic_map(; path = "theory/holomorphic_map", panel::Bool = true)
+    m₁ = 0.35                                    # `m` is the label function of style.jl
+    disk_map, ellipse_map = [(1, 0.0)], [(1, m₁)]
+    ρmax, s = 2.2, 52.0
+    ρ₀, θ₀ = 1.5, 50 * π / 180
+    return sheet(path, 720, 340; panel = panel) do
+        for (c, ms) in ((Point(175, 165), disk_map), (Point(545, 165), ellipse_map))
+            @layer begin
+                setcolor(MATRIX)
+                poly(mapped_circle(c, s, ms, ρmax), :fill; close = true)
+                setcolor(PORE)
+                poly(mapped_circle(c, s, ms, 1.0), :fill; close = true)
+                setcolor(GUIDE)
+                setline(0.8)
+                foreach(ρ -> poly(mapped_circle(c, s, ms, ρ), :stroke; close = true), (1.25, 1.5, 1.8))
+                foreach(θ -> poly(mapped_ray(c, s, ms, θ, ρmax), :stroke), range(0, 2π; length = 25)[1:24])
+                # the circle ρ₀ and the ray θ₀
+                setcolor(HIGHLIGHT)
+                setline(2.0)
+                poly(mapped_circle(c, s, ms, ρ₀), :stroke; close = true)
+                poly(mapped_ray(c, s, ms, θ₀, ρmax), :stroke)
+                setcolor(INK)
+                setline(2.0)
+                poly(mapped_circle(c, s, ms, 1.0), :stroke; close = true)
+            end
+            # the frame where they cross: e_ρ along ζ ω′(ζ), e_θ a quarter turn further
+            ζ₀ = ρ₀ * cis(θ₀)
+            ω(ζ) = ζ + sum(mk * ζ^(-k) for (k, mk) in ms)
+            dω(ζ) = 1 - sum(k * mk * ζ^(-k - 1) for (k, mk) in ms)
+            e = ζ₀ * dω(ζ₀) / abs(ζ₀ * dω(ζ₀))
+            p = plane_point(c, s, ω(ζ₀))
+            eρ, eθ = plane_direction(e), plane_direction(im * e)
+            @layer begin
+                setcolor(INK)
+                setline(1.2)
+                poly([p + 9 * eρ, p + 9 * (eρ + eθ), p + 9 * eθ], :stroke)
+            end
+            arrow_ab(p, p + 38 * eρ; color = VECTOR, lw = 2.0)
+            arrow_ab(p, p + 38 * eθ; color = VECTOR, lw = 2.0)
+            label(m("underline(e)_rho"), p + 52 * eρ; size = 15, color = VECTOR, bg = MATRIX)
+            label(m("underline(e)_theta"), p + 52 * eθ; size = 15, color = VECTOR, bg = MATRIX)
+        end
+        # the foci of the confocal family, at ± 2 √m
+        for x in (-1, 1)
+            disk(Point(545 + x * s * 2 * sqrt(m₁), 165), 3.0; fill = INK, stroke = nothing)
+        end
+        label(m("plus.minus 2 sqrt(m)"), Point(545, 182); size = 13, color = MUTED)
+        arrow_ab(Point(300, 165), Point(412, 165); color = VECTOR, lw = 1.8)
+        label(m("omega(zeta) = zeta + m slash zeta"), Point(356, 146); size = 14, color = VECTOR)
+        label(m("zeta = rho thin e^(upright(i) theta)"), Point(175, 28); size = 15)
+        label(m("z = x_1 + upright(i) x_2"), Point(545, 28); size = 15)
+        label(txt("circles ") * m("rho") * txt(" and rays ") * m("theta"), Point(175, 312); size = 13, color = MUTED)
+        label(txt("confocal ellipses and hyperbolas"), Point(545, 312); size = 13, color = MUTED)
+    end
+end
+
+"""
+An ellipse of the physical plane and its affine images in the planes of
+z₁ = x₁ + μ₁x₂ and z₂ = x₁ + μ₂x₂ (bottom), each the image of the unit circle
+(top) by a map ασ + β/σ; the point σ of the circle goes to the three points
+that correspond to one another, which is why the ellipse is solved in an
+anisotropic matrix. The roots μ₁, μ₂ are illustrative values of positive
+imaginary part. Docs: theory/complex_potentials.md.
+"""
+function theory_affine_ellipses(; path = "theory/affine_ellipses", panel::Bool = true)
+    m₁, θ₀, s = 0.4, 1.0, 48.0                   # `m` is the label function of style.jl
+    ξ, η = complex(1 + m₁), im * (1 - m₁)
+    # the point x₁ + μ x₂ of the contour at θ: μ = i is the physical plane
+    image(μ, θ) = (x₁ = real(ξ * cis(-θ)); x₂ = real(η * cis(-θ)); x₁ + μ * x₂)
+    planes = (
+        (Point(130, 255), im, m("x_1 + upright(i) x_2"), m("sigma + m slash sigma")),
+        (Point(380, 255), 0.4 + 1.6im, m("z_1 = x_1 + mu_1 x_2"), m("alpha_1 sigma + beta_1 slash sigma")),
+        (Point(630, 255), -0.3 + 0.6im, m("z_2 = x_1 + mu_2 x_2"), m("alpha_2 sigma + beta_2 slash sigma")),
+    )
+    return sheet(path, 760, 365; panel = panel) do
+        # the unit circle and the point σ
+        c₀, r₀ = Point(380, 80), 42.0
+        @layer (setcolor(GUIDE); setline(0.8); line(c₀ - Point(58, 0), c₀ + Point(58, 0), :stroke))
+        disk(c₀, r₀; fill = nothing, stroke = INK, lw = 2.0)
+        q = plane_point(c₀, r₀, cis(θ₀))
+        @layer (setcolor(GUIDE); setline(1.0); setdash([3, 3]); line(c₀, q, :stroke))
+        disk(q, 4.5; fill = HIGHLIGHT, stroke = nothing)
+        label(m("sigma = e^(upright(i) theta)"), q + Point(14, -10); size = 15, halign = :left)
+        label(m("abs(zeta) = 1"), c₀ + Point(-r₀ - 14, -24); size = 13, color = MUTED, halign = :right)
+        for (c, μ, name, map) in planes
+            @layer begin
+                setcolor(MATRIX)
+                box(c, 220, 150, 10, :fill)
+                setcolor(GUIDE)
+                setline(0.8)
+                line(c - Point(100, 0), c + Point(100, 0), :stroke)
+            end
+            contour = [plane_point(c, s, image(μ, θ)) for θ in range(0, 2π; length = 241)]
+            @layer begin
+                setcolor(PORE)
+                poly(contour, :fill; close = true)
+                setcolor(INK)
+                setline(2.0)
+                poly(contour, :stroke; close = true)
+            end
+            p = plane_point(c, s, image(μ, θ₀))
+            @layer (setcolor(GUIDE); setline(1.0); setdash([3, 3]); line(c, p, :stroke))
+            disk(p, 4.5; fill = HIGHLIGHT, stroke = nothing)
+            label(name, c + Point(0, 92); size = 15)
+            # the map from the circle to this plane
+            d = (c + Point(0, -82)) - c₀
+            u = d / hypot(d.x, d.y)
+            a, b = c₀ + (r₀ + 8) * u, c + Point(0, -80)
+            arrow_ab(a, b; color = VECTOR, lw = 1.6)
+            mid = (a + b) / 2
+            side = c.x < c₀.x ? Point(-12, -6) : c.x > c₀.x ? Point(12, -6) : Point(12, 0)
+            label(map, mid + side; size = 13, color = VECTOR, halign = c.x < c₀.x ? :right : :left, bg = PANEL)
+        end
+    end
+end
+
+"""
+The contour of a hole and its sign conventions (left): the contour run
+counterclockwise, the hole on its left; at a point, the tangent t and the
+normal n pointing into the matrix; the remote stress, a tension p along d at
+the angle α. Right, magnified: the free facet of the contour and the hoop
+stress σ_tt on the facets normal to t. Docs: theory/complex_potentials.md.
+"""
+function theory_contour_stress(; path = "theory/contour_stress", panel::Bool = true)
+    c, a, b = Point(205, 165), 95.0, 50.0
+    contour_at(θ) = c + Point(a * cos(θ), -b * sin(θ))
+    θ₀, α = 40 * π / 180, 125 * π / 180
+    return sheet(path, 720, 330; panel = panel) do
+        rve_box(c, 340, 260)
+        hole = [contour_at(θ) for θ in range(0, 2π; length = 241)]
+        @layer (setcolor(PORE); poly(hole, :fill; close = true); setcolor(INK); setline(2.0); poly(hole, :stroke; close = true))
+        # the direction of travel, at the top of the contour
+        top = contour_at(π / 2)
+        @layer (setcolor(INK); poly([top + Point(-6, 0), top + Point(5, -5), top + Point(5, 5)], :fill; close = true))
+        # the remote tension along d, at the angle α
+        d = Point(cos(α), -sin(α))
+        across = Point(sin(α), cos(α))
+        @layer (setcolor(GUIDE); setline(1.0); setdash([4, 3]); line(c, c + 118 * d, :stroke); line(c, c + Point(118, 0), :stroke))
+        @layer (setcolor(MUTED); setline(1.2); arc(c, 34, -α, 0, :stroke))
+        label(m("alpha"), c + 20 * Point(cos(α / 2), -sin(α / 2)); size = 14, color = MUTED)
+        for sgn in (-1, 1), k in -1:1
+            base = c + sgn * 122 * d + 20k * across
+            arrow_ab(base, base + sgn * 26 * d; color = INK, lw = 1.6)
+        end
+        label(m("bold(Sigma) = p thin underline(d) times.circle underline(d)"), Point(205, 314); size = 14)
+        # tangent and normal at the point
+        p = contour_at(θ₀)
+        t = Point(-a * sin(θ₀), -b * cos(θ₀))
+        t = t / hypot(t.x, t.y)
+        n = Point(-t.y, t.x)                     # a quarter turn clockwise on the sheet: out of the hole
+        arrow_ab(p, p + 34 * t; color = VECTOR, lw = 2.0)
+        arrow_ab(p, p + 34 * n; color = VECTOR, lw = 2.0)
+        label(m("underline(t)"), p + 46 * t; size = 15, color = VECTOR)
+        label(m("underline(n)"), p + 46 * n; size = 15, color = VECTOR, bg = MATRIX)
+        label(txt("hole"), c + Point(-30, 18); size = 12, color = MUTED)
+        # magnified: the free facet and the hoop stress
+        rs, Z, R = 16.0, Point(555, 165), 112.0
+        k = R / rs
+        spot(p, rs)
+        zoom_cone(p, rs, Z, R)
+        @layer begin
+            circle(Z, R, :clip)
+            setcolor(MATRIX)
+            circle(Z, R, :fill)
+            setcolor(PORE)
+            poly([Z + k * (q - p) for q in hole], :fill; close = true)
+            setcolor(INK)
+            setline(2.2)
+            poly([Z + k * (q - p) for q in hole], :stroke; close = true)
+            # an element of matrix on the contour, its sides along t and n
+            h, w = 26.0, 40.0
+            corners = [Z + 4n - h * t, Z + 4n + h * t, Z + (4 + w) * n + h * t, Z + (4 + w) * n - h * t]
+            setcolor(tint(BLUE, 0.68))
+            poly(corners, :fill; close = true)
+            setcolor(INK)
+            setline(1.4)
+            poly(corners, :stroke; close = true)
+        end
+        disk(Z, R; fill = nothing, stroke = HIGHLIGHT, lw = 2.4)
+        for sgn in (-1, 1)
+            mid = Z + (4 + 40 / 2) * n + sgn * 26 * t
+            arrow_ab(mid, mid + sgn * 28 * t; color = CRACK, lw = 2.0)
+        end
+        label(m("sigma_(t t)"), Z + 22 * n + 70 * t; size = 15, color = CRACK, bg = MATRIX)
+        label(txt("free: ") * m("sigma_(n n) = sigma_(n t) = 0"), Z + Point(0, R + 22); size = 13, color = MUTED)
+        label(m("sigma_(t t) = underline(t) dot bold(sigma) dot underline(t)"), Point(555, 28); size = 14)
+        label(m("(n_1 + upright(i) n_2) dif s = - upright(i) dif z"), Point(555, 312); size = 13, color = MUTED)
+    end
+end
+
+theory_figures() = (
+    theory_residue_poles(), theory_gaussian_crack(), theory_conformal_map(), theory_plane_problem(),
+    theory_parameter_classes(), theory_radial_problem(),
+    theory_holomorphic_map(), theory_affine_ellipses(), theory_contour_stress(),
+)

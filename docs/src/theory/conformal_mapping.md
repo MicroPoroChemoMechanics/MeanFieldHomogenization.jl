@@ -10,7 +10,9 @@ Hill tensor. In a matrix that is isotropic in the plane of the section its
 response is nonetheless exact when the outside of the section is the image of
 the outside of a disk by a map with a finite number of terms: the complex
 potentials of plane elasticity are then finite sums. This page derives the
-concentration tensors of such a cavity. The complex representation of plane
+concentration tensors of such a cavity, then the stress along its contour and
+in the matrix, and the elliptic hole in a matrix of any anisotropy of the
+plane, in elasticity and in conduction. The complex representation of plane
 elasticity and its use with a conformal map are those of
 [Muskhelishvili](@cite muskhelishvili1977), whose sections and equations are
 quoted where they are used; the syntax is given in
@@ -101,7 +103,9 @@ Cut after a few terms, the map is a polygon with rounded corners.
 
 In plane strain the stress and the displacement derive from two functions
 ``\varphi`` and ``\psi``, holomorphic in the matrix ([muskhelishvili1977](@cite),
-section 32, equations (32.1) and (32.9)). With ``\kappa=3-4\nu``,
+section 32, equations (32.1) and (32.9)). The representation is derived in the
+appendix [Complex potentials](@ref th-complex-potentials); this section uses
+its results. With ``\kappa=3-4\nu``,
 
 ```math
 \sigma_{22}+\sigma_{33}=4\operatorname{Re}\varphi'(z),
@@ -351,7 +355,112 @@ plate is not the plane-strain one with a zero axial stress added as in
 section 6: there the axial stress vanishes on average only, and the two
 results differ except under a hydrostatic stress of the plane.
 
-## 9. Checks
+## 9. The stress along the contour
+
+The contour of the hole is free, and the stress is largest there: this
+section gives it. In the frame ``(\underline{n},\underline{t})`` of the
+normal and the tangent to the contour, the free surface leaves
+``\sigma_{nn}=\sigma_{nt}=0``; the only stress left is ``\sigma_{tt}``, the
+hoop stress, which is then the trace of the stress of the plane. By the
+representation of section 3,
+
+```math
+\sigma_{tt}=\sigma_{22}+\sigma_{33}=4\operatorname{Re}\varphi'(z)
+=4\operatorname{Re}\frac{\Phi'(\sigma)}{\omega'(\sigma)},
+\qquad \sigma=\mathrm{e}^{\mathrm{i}\theta},
+```
+
+with the two finite sums
+
+```math
+\Phi'(\zeta)=\Gamma-\sum_{k=1}^{N}k\,a_k\,\zeta^{-k-1},
+\qquad
+\omega'(\zeta)=1-\sum_{k=1}^{N}k\,m_k\,\zeta^{-k-1} .
+```
+
+The coefficients ``a_k`` solve the system of section 3, in which neither
+``\kappa`` nor ``\mu`` appears: the stress along the contour does not depend
+on the moduli. It is the same in plane strain and in a plate (section 8), and
+in the transversely isotropic matrix of section 7, whose law of the plane is
+that of an isotropic material.
+
+For the circle, ``a_1=-\overline{\Gamma'}`` and
+``\sigma_{tt}=\Sigma_{22}+\Sigma_{33}+4\operatorname{Re}\bigl(\overline{\Gamma'}\,\bar\sigma^2\bigr)``.
+Under a tension ``\Sigma_{22}=p``, ``\Gamma=p/4`` and ``\Gamma'=-p/2``, so
+that ``\sigma_{tt}=p\,(1-2\cos2\theta)``: ``3p`` where the contour is
+parallel to the tension, ``-p`` where it is normal to it. For the ellipse
+``\zeta+m/\zeta``, ``m`` real, under a tension ``p`` at the angle ``\alpha``
+from the major axis, the same computation gives
+([muskhelishvili1977](@cite), section 82a, example 1)
+
+```math
+\frac{\sigma_{tt}}{p}=\frac{1-m^2+2m\cos2\alpha-2\cos2(\theta-\alpha)}{1-2m\cos2\theta+m^2} ,
+```
+
+whose value at the end of the major axis under a tension across it,
+``\theta=0`` and ``\alpha=\pi/2``, is ``(3+m)/(1-m)=1+2a/b``.
+
+In a cell of the plane the variable is ``z=x_1+\mathrm{i}\,x_2`` and the
+remote stress a tensor of the plane; [`contour_stress`](@ref) evaluates the
+formula above.
+
+Away from the contour the stress needs the second potential ``\psi`` as well.
+The condition of the free contour, written between functions rational in
+``\sigma``, gives it in closed form in the whole matrix, and the powers of
+``\zeta`` that cancel in it are removed on the coefficients, so that the
+stress keeps its digits far from the hole; the derivation is in
+[The stress in the matrix](@ref th-matrix-stress), and
+[`matrix_stress`](@ref)`(hole, Σ, x)` gives the stress tensor at the point
+``x`` of the matrix, for a map of any number of terms.
+
+## 10. An anisotropic matrix of the plane
+
+This section says which holes are solved in a matrix of any anisotropy of the
+plane, and why. In such a matrix the stress derives from two holomorphic
+functions of the variables ``z_k=x_1+\mu_k\,x_2``, ``k=1,2``, where
+``\mu_1`` and ``\mu_2`` are the roots of positive imaginary part of the
+characteristic equation of the compliances
+([The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse)).
+At the point ``\omega(\sigma)`` of the contour,
+
+```math
+z_k=\frac{1-\mathrm{i}\mu_k}{2}\,\omega(\sigma)+\frac{1+\mathrm{i}\mu_k}{2}\,\overline{\omega(\sigma)}
+=\frac{1-\mathrm{i}\mu_k}{2}\Bigl(\sigma+\sum_{j=1}^{N}m_j\,\sigma^{-j}\Bigr)
++\frac{1+\mathrm{i}\mu_k}{2}\Bigl(\sigma^{-1}+\sum_{j=1}^{N}\overline{m_j}\,\sigma^{j}\Bigr) .
+```
+
+For the ellipse, ``N=1``, the right-hand side is ``A_k\,\sigma+B_k/\sigma``:
+the function ``A_k\,\zeta+B_k/\zeta`` maps the outside of the disk onto the
+outside of the image of the hole in the plane of ``z_k``, and takes on the
+circle the image of the same point of the contour as ``\omega``. The
+conditions on the contour are then written on the circle for the three
+functions at once, and solved in closed form. For ``N\ge2`` the powers
+``\sigma^{j}``, ``j\ge2``, keep the factor ``(1+\mathrm{i}\mu_k)/2``, which
+vanishes at isotropy only (``\mu_1=\mu_2=\mathrm{i}``): continued outside the
+disk, the right-hand side grows as ``\zeta^N`` and is not the map of the
+outside of the image, whose map is another function. A point of the circle no
+longer gives the same point of the contour in the three planes.
+
+The package therefore solves the elliptic hole, `ConformalHole((m,))`, in a
+cell of the plane whose matrix has any anisotropy: its strain concentration
+tensor, which is that of the ellipse given by its Hill tensor, the stress
+along its contour, and the stress in the matrix
+([The stress in the matrix](@ref th-matrix-stress)). The formulas are written
+with the sum and the product of ``\mu_1`` and ``\mu_2``, or with the mean and
+the divided difference of a quantity over the two roots, so that the
+isotropic matrix, where the two roots coincide, is an ordinary case.
+
+In conduction the temperature is the real part of a function of the one
+variable ``z_\mu=x_1+\mu\,x_2``, ``\mu`` the root of positive imaginary part
+of ``K_{22}\mu^2+2K_{12}\mu+K_{11}=0``, and the same argument holds with one
+plane instead of two: the insulating ellipse takes any symmetric conductivity
+of the plane, and its gradient concentration tensor, which is not symmetric
+in general, is in closed form
+([Conduction around the insulating ellipse](@ref th-ellipse-conduction)); for
+an isotropic conductivity it is the tensor of section 5. A map of several
+terms in an anisotropic matrix is refused, in elasticity and in conduction.
+
+## 11. Checks
 
 The ellipse is the elliptic cylinder of the package, obtained from its Hill
 tensor: the two routes agree on every component.
@@ -388,6 +497,18 @@ compressibility = sum(H[i, i, j, j] * Σ[j] for i in 2:3, j in 1:3)
 compressibility, 2 * (1 - ν) / μ * (1 + n * m^2) / (1 - n * m^2)
 ```
 
+The stress along the contour of the ellipse ``a/b=2``, ``m=1/3``, under a
+tension at ``\alpha=\pi/6`` from its major axis, against the closed form of
+section 9:
+
+```@example thconformal
+m, α = 1 / 3, π / 6
+d = [cos(α), sin(α)]
+θ = range(0, π; length = 7)
+contour_stress(ConformalHole((m,)), Tens(d * transpose(d)), θ) -
+    [(1 - m^2 + 2m * cos(2α) - 2cos(2(t - α))) / (1 - 2m * cos(2t) + m^2) for t in θ]
+```
+
 A transversely isotropic matrix about the axis: the circular cylinder of the
 package, from its Hill tensor in that matrix, agrees with the map on every
 component.
@@ -410,17 +531,36 @@ H = canonical_components(inverse_property_contribution(ConformalHole(()), 0 * c,
 E * H[1, 1, 1, 1], E * H[2, 2, 1, 1]
 ```
 
-## 10. Scope
+## 12. Scope
 
 The solution is exact for a matrix that is isotropic, or transversely isotropic
-about the axis of the cavity, and for a map with a finite number of terms. A corner is reached in the limit of an infinite map only: a cut map
-rounds it, and the tensors converge with the number of terms
+about the axis of the cavity, and for a map with a finite number of terms. A
+corner is reached in the limit of an infinite map only: a cut map rounds it,
+and the tensors converge with the number of terms
 ([Prismatic pores with corners](@ref app-conformal-holes)). The coefficients
 are numbers, dual numbers or symbols. [`ConformalHole`](@ref) is the
-inclusion; a matrix that is anisotropic in the plane of the section and holes
-that interact are outside the method as it is written here.
+inclusion, [`contour_stress`](@ref) the stress along the contour of a hole of
+the plane, and [`matrix_stress`](@ref) the stress at any point of its matrix,
+for numbers and dual numbers: the point of the circle that a point of the
+matrix comes from is chosen by a comparison of moduli. In a cell of the plane the ellipse is solved in a matrix of any
+anisotropy, in elasticity and in conduction (section 10). Outside the method
+are a map of several terms in a matrix anisotropic in the plane of the
+section, a cavity of space in such a matrix, for which the elliptic
+[`Cylinder`](@ref) has a Hill tensor, and holes that interact.
 
 ## Where to go next
+
+The complex representation used on this page is derived in the appendices
+[Holomorphic functions](@ref th-holomorphic-functions) and
+[Complex potentials](@ref th-complex-potentials), and its anisotropic
+counterpart, for the ellipse, in
+[The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse); the
+stress in the matrix and the insulating ellipse in an anisotropic conductor in
+[The stress in the matrix](@ref th-matrix-stress) and
+[Conduction around the insulating ellipse](@ref th-ellipse-conduction).
+The stress along the contour and ahead of the tip is computed in an isotropic
+and in a plywood plate
+in [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole).
 
 A shape with neither a closed form nor an exact series is the subject of the
 next chapter: [Approximation by Gaussians](@ref th-gaussian-approximation)

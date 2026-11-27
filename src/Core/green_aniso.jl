@@ -301,10 +301,9 @@ form [`green_operator_iso`](@ref), anything else to
 [`green_operator_aniso`](@ref); `green_nodes` sets the quadrature order of the
 latter (the name is distinct from the `nodes` of
 [`interaction_tensor`](@ref MeanFieldHomogenization.Interactions.interaction_tensor)'s own quadrature back-end, so both can be given at
-once). Elasticity and conduction, 2D and 3D, are all
-covered; the one gap is **plane-strain elasticity with an anisotropic
-reference**, whose Green function needs the Stroh formalism rather than the
-Barnett line integral, and which raises an `ArgumentError`.
+once). Elasticity and conduction, in the plane and in space, are all
+covered: an anisotropic elastic reference of the plane goes to the finite-part
+integral of `green_plane_aniso.jl`.
 
 This is the entry point the two-inclusion interaction kernels call — through
 its `SArray`-returning twin `_green_operator`, which is the same dispatch
@@ -326,10 +325,6 @@ _green_operator(P₀::TensND.AbstractTens{2, 3}, x::AbstractVector; kw...) =
 _green_operator(P₀::TensND.AbstractTens{2, 2}, x::AbstractVector; kw...) =
     _green_operator_aniso(P₀, x)
 
-_green_operator(P₀::TensND.AbstractTens{4, 2}, x::AbstractVector; kw...) = throw(
-    ArgumentError(
-        "green_operator: the plane-strain Green function of an anisotropic " *
-            "reference needs the Stroh formalism, which is not implemented; only an " *
-            "isotropic reference is supported in 2D elasticity."
-    )
-)
+_green_operator(
+    P₀::TensND.AbstractTens{4, 2}, x::AbstractVector; green_nodes::Int = 32, kw...
+) = _green_operator_aniso(P₀, x, green_nodes)

@@ -10,8 +10,10 @@ A [`ConformalHole`](@ref) is an infinite cylindrical cavity whose
 cross-section is given by a conformal map with a finite number of terms: a
 prismatic pore with rounded corners, a star-shaped channel, a slot. It is a
 cavity in elasticity and an insulator in conduction, in a matrix that is
-isotropic or transversely isotropic about the axis of the cavity. Its field is
-not uniform and it has no Hill tensor; its concentration tensors are exact.
+isotropic or transversely isotropic about the axis of the cavity; in a cell of
+the plane the elliptic hole takes a matrix of any anisotropy. Its field is
+not uniform and it has no Hill tensor; its concentration tensors are exact,
+and so is the stress along its edge and in the matrix around it.
 
 ```@example manconformal
 using MeanFieldHomogenization
@@ -167,6 +169,143 @@ add_phase!(plate, :holes, square, Dict(:C => 0 * c); fraction = 0.1)
 tidy(TensND.mandel(homogenize(plate, MoriTanaka(), :C)))
 ```
 
+## The stress along the contour
+
+The edge of a hole of the plane is free: the only stress left there is the
+normal stress ``\sigma_{tt}`` on the facets normal to the tangent, the hoop
+stress. [`contour_stress`](@ref) gives it under a remote stress of the plane,
+at the point ``\omega(\mathrm{e}^{\mathrm{i}\theta})`` of the edge, for an
+angle ``\theta`` or a collection of angles. The axes are those of the map,
+``z=x_1+\mathrm{i}\,x_2``, and the matrix is isotropic: its moduli do not
+enter ([Holes given by a conformal map](@ref th-conformal-mapping), section 9).
+The ellipse ``m_1=0.5`` pulled across its major axis carries
+``1+2a/b=7`` times the pull at the end of that axis:
+
+```@example manconformal
+Σ = Tens([0.0 0.0; 0.0 1.0])               # a unit pull along e₂
+contour_stress(ellipse, Σ, 0.0)
+```
+
+The point ``\theta=0`` is a corner of the square of [`polygon_map`](@ref): the
+stress at a corner grows with the number of terms of the map, which sharpen it.
+Along the edge of the square pulled along ``\underline{e}_2``:
+
+```@example manconformal
+θ = range(0, π; length = 361)
+plot(θ, [contour_stress(ConformalHole(polygon_map(4, n)...), Σ, θ) for n in (1, 3, 10, 30)];
+    lw = 2, label = ["1 term" "3 terms" "10 terms" "30 terms"], xlabel = "θ", ylabel = "σtt / Σ₂₂",
+    xticks = ([0, π / 2, π], ["0", "π/2", "π"]), size = (600, 320))
+```
+
+## The stress in the matrix
+
+[`matrix_stress`](@ref)`(hole, Σ, x)` gives the stress tensor at the point
+`x = [x₁, x₂]` of the matrix, in the axes and at the scale of the map; a
+collection of points gives a collection of tensors. The matrix is isotropic
+and the map has any number of terms
+([The stress in the matrix](@ref th-matrix-stress)). Ahead of the corner
+``\theta=0`` of the square, at ``x_1=\omega(1)=1+\sum_km_k`` on the axis
+``\underline{e}_1``, under the pull along ``\underline{e}_2``:
+
+```@example manconformal
+corner = 1 + real(sum(square.coefficients))        # the point ω(1) of the edge
+x₁ = corner .+ range(0, 3; length = 301)
+σ₂₂ = [canonical_components(σ)[2, 2] for σ in matrix_stress(square, Σ, [[x, 0.0] for x in x₁])]
+plot(x₁ .- corner, σ₂₂; lw = 2, label = false, xlabel = "distance to the corner", ylabel = "σ₂₂ / Σ₂₂", size = (600, 300))
+```
+
+On the edge the stress is the hoop stress of [`contour_stress`](@ref):
+
+```@example manconformal
+first(σ₂₂), contour_stress(square, Σ, 0.0)
+```
+
+A point inside the hole is refused:
+
+```@example manconformal
+try
+    matrix_stress(square, Σ, [0.5, 0.0])
+catch err
+    print(sprint(showerror, err))
+end
+```
+
+The point of the unit circle that a point of the matrix comes from is found by
+comparing moduli: the function takes numbers and dual numbers, not symbols.
+
+## An elliptic hole in an anisotropic matrix
+
+In a cell of the plane the elliptic hole, whose map has its first term only,
+takes a matrix of any anisotropy of the plane: orthotropic, square or of no
+symmetry. Its complex potentials are those of Lekhnitskii, in closed form for
+the ellipse ([The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse)).
+Its strain concentration tensor is that of the ellipse of the same
+semi-axes, `Ellipsoid(1 + m, 1 - m)`, whose Hill tensor is computed in the same
+matrix:
+
+```@example manconformal
+c₀ = TensOrtho(40.0, 6.0, 2.5, 3.0, Basis(0.37))      # C₁₁₁₁, C₂₂₂₂, C₁₁₂₂, C₁₂₁₂ in a frame at 0.37 rad
+A_map = gradient_gradient_concentration(ellipse, 0 * c₀, c₀)
+A_hill = gradient_gradient_concentration(Ellipsoid(1.5, 0.5), 0 * c₀, c₀)
+norm(canonical_components(A_map) - canonical_components(A_hill))
+```
+
+The stress along the edge, and in the matrix, take the stiffness as their
+last argument; they then depend on the anisotropy of the matrix:
+
+```@example manconformal
+plot(θ, [contour_stress(ellipse, Σ, θ) contour_stress(ellipse, Σ, θ, c₀)]; lw = 2,
+    label = ["isotropic matrix" "matrix c₀"], xlabel = "θ", ylabel = "σtt / Σ₂₂",
+    xticks = ([0, π / 2, π], ["0", "π/2", "π"]), size = (600, 320))
+```
+
+At the end of the major axis, ``x=(1.5,0)``, the edge is normal to
+``\underline{e}_1``: the stress in the matrix there has the one component
+``\sigma_{22}``, the hoop stress.
+
+```@example manconformal
+tidy(canonical_components(matrix_stress(ellipse, Σ, [1.5, 0.0], c₀))), contour_stress(ellipse, Σ, 0.0, c₀)
+```
+
+The hole enters a cell of the plane with such a matrix as any inclusion:
+
+```@example manconformal
+sheet = RVE()
+add_phase!(sheet, :matrix, Ellipsoid(1.0; dim = 2), Dict(:C => c₀); fraction = :rest)
+add_phase!(sheet, :holes, ellipse, Dict(:C => 0 * c₀); fraction = 0.1)
+tidy(TensND.mandel(homogenize(sheet, MoriTanaka(), :C), CanonicalBasis{2, Float64}()))
+```
+
+In conduction the insulating ellipse takes any symmetric conductivity of the
+plane ([Conduction around the insulating ellipse](@ref th-ellipse-conduction)).
+Its gradient concentration tensor is that of `Ellipsoid(1.5, 0.5)`, and is not
+symmetric when the axes of the conductivity are not those of the hole:
+
+```@example manconformal
+k₀ = TensOrtho{2}(3.0, 0.5, Basis(0.4))                # conductivities along and across a frame at 0.4 rad
+G_map = canonical_components(gradient_gradient_concentration(ellipse, 0 * k₀, k₀))
+G_hill = canonical_components(gradient_gradient_concentration(Ellipsoid(1.5, 0.5), 0 * k₀, k₀))
+tidy(G_map), norm(G_map - G_hill)
+```
+
+A numeric matrix of no symmetry has its characteristic roots solved
+numerically, and carries dual numbers; a symbolic matrix is given as a
+`TensISO`, a `TensCubic` or a `TensOrtho`, whose roots are in closed form, and
+a symbolic conductivity is accepted as it is. A hole of several terms is
+refused in an anisotropic matrix, in elasticity and in conduction:
+
+```@example manconformal
+try
+    contour_stress(square, Σ, 0.0, c₀)
+catch err
+    print(first(split(sprint(showerror, err), "; ")))
+end
+```
+
+The isotropic plate and the plywood plate of Lekhnitskii, with his tables
+recomputed, are in
+[The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole).
+
 ## Derivatives
 
 The coefficients of the map and the moduli of the matrix are differentiated
@@ -183,8 +322,18 @@ ForwardDiff.derivative(modulus, 0.1)
 
 ## What is not covered
 
-- a reference medium that is anisotropic in the plane of the section, refused
-  with a message;
+- a hole of several terms in a matrix anisotropic in the plane of the
+  section, in elasticity and in conduction, refused with a message: the
+  complex potentials of such a matrix are functions of other variables, which
+  one map brings to the same circle as the variable of the hole for the
+  ellipse only ([What is restricted, and why](@ref man-plane-restricted));
+- in three dimensions, a cavity in a matrix anisotropic in the plane of its
+  section, the elliptic one included: the elliptic [`Cylinder`](@ref) has a
+  Hill tensor in such a matrix;
+- the stress around a hole of space: [`contour_stress`](@ref) and
+  [`matrix_stress`](@ref) are written for a hole of the plane;
+- symbols in [`matrix_stress`](@ref), whose point of the circle is chosen by a
+  comparison; [`contour_stress`](@ref) accepts them;
 - a section that conducts or carries stress: the hole is empty;
 - a corner, which a finite map rounds: the tensors converge with the number of
   terms ([Prismatic pores with corners](@ref app-conformal-holes));
@@ -194,7 +343,12 @@ ForwardDiff.derivative(modulus, 0.1)
 
 ## Where to go next
 
-- [Holes given by a conformal map](@ref th-conformal-mapping): the derivation.
+- [Holes given by a conformal map](@ref th-conformal-mapping): the derivation,
+  and [The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse)
+  for an anisotropic matrix.
+- [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole):
+  the stress along the edge against the books of Muskhelishvili and
+  Lekhnitskii, the stress ahead of the tip, and the hole as an insulator.
 - [Prismatic pores with corners](@ref app-conformal-holes): published values,
   polygons, and the effect of the shape of the section.
 - [Plane problems](@ref man-plane-problems): sheets and long bodies with such

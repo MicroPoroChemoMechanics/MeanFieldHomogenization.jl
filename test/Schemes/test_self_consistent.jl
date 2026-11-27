@@ -503,11 +503,11 @@ end
     # symmetric part of the normal block is guarded, its skew part kept.
     R = TensND.RotatedBasis(0.3, 0.5, 0.2)
     ortho12 = TensOrtho(20.0, 25.0, 30.0, -4.0, 1.0, 3.0, 6.0, 7.0, 8.0, -2.0, 0.5, 2.0, R)
-    @test ortho12 isa TensND.TensOrtho{4, Float64, 12}
+    @test ortho12 isa TensND.TensOrtho{4, 3, Float64, 12}
     @test isposdef(Symmetric(sym(mandel(ortho12))))
     @test S._sc_pd_guard_apply(ortho12, ε) === ortho12
     y12 = check_clamped(TensOrtho(20.0, 25.0, 30.0, -34.0, 1.0, 3.0, 6.0, -7.0, 8.0, -26.0, 0.5, 2.0, R))
-    @test y12 isa TensND.TensOrtho{4, Float64, 12}
+    @test y12 isa TensND.TensOrtho{4, 3, Float64, 12}
     # Order 2, diagonal in its frame: its coefficients are its eigenvalues.
     o2 = S._sc_pd_guard_apply(TensND.TensOrtho{2}(-1.0, 2.0, 3.0, R), ε)
     @test TensND.get_data(o2) == (ε, 2.0, 3.0)

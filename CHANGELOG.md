@@ -1,5 +1,136 @@
 # Changelog
 
+## v0.30.0 — cells of the plane with an anisotropic matrix
+
+A minor release: it needs TensND 0.17, whose orthotropic and cubic tensors
+carry their dimension. The package solves cells of space and cells of the
+plane; this release brings the plane closer to space.
+
+### Breaking
+
+- The compat bound of TensND is `0.17`. Code that names the type parameters of
+  `TensOrtho` or `TensCubic` follows TensND 0.17 (`TensOrtho{4, 3, T, 9}`,
+  `TensCubic{3, T}`); the constructors called with coefficients and a frame are
+  unchanged.
+- `green_operator` and `interaction_tensor` no longer refuse an anisotropic
+  elastic reference of the plane (see below): code that relied on the
+  `ArgumentError` gets an operator.
+- An elliptic `ConformalHole`, whose map has its first term only, no longer
+  refuses an anisotropic stiffness or an anisotropic conductivity of a cell of
+  the plane (see below): code that relied on the `ArgumentError` gets the
+  concentration tensor. A map of several terms is refused as before.
+
+### Added
+
+- **Green operator of an anisotropic elastic medium of the plane.**
+  `green_operator(C₀, x)`, `green_operator_aniso(C₀, x; nodes)` and
+  `interaction_tensor(…, C₀)` take any stiffness of the plane: orthotropic,
+  square or general. The second gradient of the Green function is a finite
+  part on the unit circle, integrated by parts into a regular integral over a
+  quarter turn; no characteristic root is needed, so that an isotropic
+  stiffness is an ordinary case and gives the closed form of the isotropic
+  operator. Assemblies of ellipses interact in an anisotropic plane as they do
+  in an anisotropic space.
+- **The orthotropic and the square classes of the plane** (TensND 0.17) are
+  properties of a two-dimensional cell as any other tensor of the plane: Hill
+  tensors of an ellipse, the schemes, ribbon cracks, conduction and interaction
+  tensors give the estimates of the general tensor of the same components.
+  Their coefficients are named in `property` (`:C1111`, `:C2222`, `:C1122`,
+  `:C1212`, `:C2211`; `:a1`, `:a2`; `:α`, `:β`, `:γ`), and a general tensor of
+  the plane is read in a class of the plane that contains it
+  (`symmetry = (:ORTHO, Basis(θ))`, `(:CUBIC, Basis(θ))`).
+- **The elliptic hole in an anisotropic matrix of the plane.**
+  `ConformalHole((m,))` in a cell of the plane takes any stiffness of the
+  plane, orthotropic, square or general, through the complex potentials of
+  Lekhnitskii, which the ellipse alone brings to the circle of its map. Its
+  strain concentration tensor is that of `Ellipsoid(a, b; angle)` given by the
+  Hill tensor, to 1e-11. The formulas are written with the sum and the product
+  of the two characteristic roots, so that an isotropic matrix, where the roots
+  coincide, is an ordinary case rather than a limit: a general tensor that is
+  isotropic, as the estimate of a scheme can be, needs no special treatment.
+  A `TensISO`, `TensCubic` or `TensOrtho` has its roots in closed form and
+  accepts symbols; a general numeric tensor has them by a Newton iteration
+  that carries dual numbers, nested included.
+- **`contour_stress(hole, Σ, θ)`**, the stress along the free contour of a
+  hole of the plane under a remote stress of the plane: any map in an
+  isotropic matrix, whose moduli do not enter, and the ellipse in an
+  anisotropic one with `contour_stress(hole, Σ, θ, C₀)`. It gives the stress
+  concentration at the edge of the hole, which the concentration tensors,
+  averages over the hole, do not.
+- **`matrix_stress(hole, Σ, x)`**, the stress tensor at a point, or at each
+  of a collection of points, of the matrix around a free hole of the plane:
+  any map in an isotropic matrix, and the ellipse in an anisotropic one with
+  `matrix_stress(hole, Σ, x, C₀)`. It tells how far from the edge the stress
+  comes back to the remote one. The second potential is written so that the
+  powers of the variable of the map that cancel are removed on the
+  coefficients: a map of many terms keeps its digits far from the hole, where
+  the expression as it reads loses them all. In the anisotropic matrix the
+  stress is evaluated either with the two characteristic roots or on the mean
+  and the divided difference of each quantity over them, whichever divides by
+  the larger quantity: an isotropic stiffness given as a general tensor gives
+  the isotropic field to rounding, where the formulas with the two roots alone
+  lose about half the digits. Numbers and dual numbers; a point inside the hole
+  throws a `DomainError`.
+- **The insulating elliptic hole in an anisotropic conductor of the plane.**
+  `gradient_gradient_concentration(ConformalHole((m,)), K₁, K₀)` in a cell of
+  the plane takes any symmetric conductivity `K₀`, symbols included: the
+  temperature is the real part of a function of one complex variable, the
+  root of a quadratic in closed form, and the gradient concentration tensor,
+  not symmetric in general, is in closed form. It equals that of
+  `Ellipsoid(a, b; angle)` given by the Hill tensor. A map of several terms
+  still needs an isotropic conductivity.
+- `data/literature/lekhnitskii1981.json`: the constants of Lekhnitskii's birch
+  plywood and his Tables 8, 9 and 10, the largest stresses on the edge of an
+  elliptic hole in a plywood and in an isotropic plate.
+
+### Fixed
+
+- A cubic matrix made the differential scheme fail, in space and in the plane:
+  its state is the full one, and was rebuilt as a cubic tensor from components
+  that are not its three coefficients.
+
+### Changed
+
+- **The Hill tensor of an ellipse in an isotropic plane is written on the
+  convention of the plane**, `α = 2κ` with `κ` the in-plane bulk modulus,
+  where its comments and its variables read `α` as `3k`. The values differ by
+  a rounding at most. The manual and the script `02_hill_elasticity.jl`, which
+  built a plane stiffness as `TensISO{2}(3k, 2μ)`, take the plane strain of the
+  3-D material, `plane_strain_stiffness(C₀)`: the plane tensor of that example
+  is another one.
+- **Tensor helpers come from TensND** where the result is the same to the bit:
+  typed constructors, the exact membership of a symmetry class, the
+  Kelvin-Mandel sizes, weights and identity, the adjugate of a symmetric
+  matrix, Hill's moduli without major symmetry, the in-plane bulk and shear
+  moduli, the basis of the deviators. The helpers whose replacement would
+  change a rounding, or add work on a hot path, stay as they are.
+
+### Documentation
+
+- The presentation of the package says at once that it solves cells of space
+  and cells of the plane, with a table of what each inclusion and each scheme
+  accepts in each.
+- The Theory gives the derivation of the Green operator of an anisotropic
+  plane; the manual page on plane problems lists the properties a plane cell
+  takes, the two conventions of the moduli of a tensor of the plane, the named
+  coefficients, and what remains restricted to a matrix isotropic in the plane
+  (conformal holes of several terms, layered cylinders) with the reason.
+- Two appendices to the Theory derive the complex representation of plane
+  elasticity, from the holomorphic functions to the potentials of
+  Kolosov–Muskhelishvili and of Lekhnitskii, and the elliptic hole in an
+  anisotropic matrix, the stress in the matrix around a hole, and the
+  insulating ellipse in an anisotropic conductor. The theory and the manual of
+  conformal holes give the stress along the contour and in the matrix, and the
+  anisotropic ellipse in elasticity and in conduction.
+- The application *The elliptic hole, from an isotropic to an anisotropic
+  plate* (`scripts/90_elliptic_hole.jl`) computes the stress along the edge
+  against Muskhelishvili's closed form, Lekhnitskii's Eqs. (31.13)–(31.16) and
+  his Tables 8, 9 and 10, lists with both values the printed cells that
+  differ, follows the stress ahead of the tip against Kirsch's closed form for
+  the circle, and checks the hole as an inclusion and as an insulator against
+  the Hill tensor of the ellipse, its derivatives and its symbolic tip
+  stress.
+
 ## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
 
 A patch release: no result changes beyond the last bit of a rounding. It

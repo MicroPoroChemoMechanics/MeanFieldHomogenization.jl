@@ -2,8 +2,9 @@
 #  tensor_helpers.jl
 #
 #  Low-level helpers for 4th-order tensor assembly and simple utilities
-#  (Kronecker delta, 3×3×3×3 array extraction, symmetrization …).  Shared
-#  by every sub-module.
+#  (Kronecker delta, static arrays filled entry by entry, the fill of the
+#  eight entries a symmetric tensor shares), and the reading of a property of
+#  the plane as an isotropic tensor.  Shared by every sub-module.
 # =============================================================================
 
 """
@@ -20,22 +21,9 @@ Kronecker delta ``\\delta_{ij}`` in element type `T` — returns `one(T)` when
     ntuple(q -> f(Tuple(CartesianIndices(dims)[q])...), Val(prod(dims)))
 )
 
-# `primal(x)`, the value under every level of dual numbers, is TensND's.
-
-# The tensor of components `arr` in `basis`, of order and dimension known from
-# the types: built from a plain array, they are read from its size at run time,
-# and inference loses them, with the type of every Hill tensor built so.
-@inline _tens_in(arr::AbstractArray{T, order}, basis::TensND.AbstractBasis{dim}) where {T, order, dim} =
-    TensND.Tens(TensND._static_tensor(arr, Val(dim), Val(order)), basis)
-
-# The same for an array symmetric by construction (the transpose for order 2, the
-# minor symmetries for order 4), stored as a `SymmetricTensor`. `_tens_in` decides
-# the storage on the values, symmetric up to rounding or not, so that its type is
-# a `Union` of the two storages; here the storage, hence the type, is known before
-# the values. The components are those `_tens_in` gives a symmetric array, the
-# mean over the symmetries, without the comparison that decided the storage.
-@inline _sym_tens_in(arr::AbstractArray{T, order}, basis::TensND.AbstractBasis{dim}) where {T, order, dim} =
-    TensND.Tens(TensND.Tensors.symmetric(TensND.Tensors.Tensor{order, dim, T}(arr)), basis)
+# `primal(x)`, the value under every level of dual numbers, is TensND's, and so
+# are the inferred constructors from a component array (`static_tens`,
+# `symmetric_tens`) that every Hill tensor is built with.
 
 """
     _fill_sym4!(A, i, j, k, l, v)
@@ -70,14 +58,16 @@ function _plane_isotropic(P::TensND.AbstractTens{order, 2}) where {order}
                 "$(nameof(typeof(P))) would have to be compared with its isotropic part"
         )
     )
-    Piso, _, drel = TensND.project(P, Val(:ISO))
-    drel ≤ _PLANE_ISO_RTOL || throw(
+    Piso = TensND.project_exact(P, Val(:ISO); rtol = _PLANE_ISO_RTOL)
+    Piso === nothing || return Piso
+    # Refused: the distance is computed again only to be named in the message.
+    _, _, drel = TensND.project(P, Val(:ISO))
+    throw(
         ArgumentError(
             "an inclusion of the plane takes a property that is isotropic in the plane; " *
                 "the $(nameof(typeof(P))) it received is at a relative distance $drel from isotropy"
         )
     )
-    return Piso
 end
 _plane_isotropic(P) = throw(
     ArgumentError(

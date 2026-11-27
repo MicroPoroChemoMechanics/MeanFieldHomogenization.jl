@@ -360,11 +360,12 @@ end
     C₀ = _C3()
     # Overlapping regions
     @test_throws ArgumentError interaction_tensor(_ball(1.0), _ball(1.0), [0.0, 0.0, 1.5], C₀)
-    # An anisotropic reference in 2D ELASTICITY is still refused: its Green
-    # function needs the Stroh formalism. (3D elasticity and conduction accept
-    # any anisotropy — see the anisotropic testset below.)
-    C2aniso = Tens(get_array(TensISO{2}(3.0, 2.0)))
-    @test_throws ArgumentError interaction_tensor(_disk(1.0), _disk(1.0), [5.0, 0.0], C2aniso)
+    # An anisotropic reference of the plane is accepted: an isotropic stiffness
+    # typed as a general tensor gives the expansion of the isotropic reference.
+    C2iso = TensISO{2}(3.0, 2.0)
+    C2aniso = Tens(get_array(C2iso))
+    @test get_array(interaction_tensor(_disk(1.0), _disk(1.0), [5.0, 0.0], C2aniso)) ≈
+        get_array(interaction_tensor(_disk(1.0), _disk(1.0), [5.0, 0.0], C2iso; method = :multipole)) rtol = 1.0e-9
     # Non-spherical geometry forced onto the closed-form kernel
     @test_throws ArgumentError interaction_tensor(
         Ellipsoid(1.0, 0.5, 0.25), _ball(1.0), [0.0, 0.0, 5.0], C₀; method = :analytical

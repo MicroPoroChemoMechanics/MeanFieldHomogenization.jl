@@ -96,6 +96,15 @@ picture at tensor order 2, and aging viscoelasticity the same picture with
 Volterra products in place of tensor products. The interface is written up in
 [Adding a new inclusion](@ref dev-adding-inclusion).
 
+## Problems of the plane
+
+A medium invariant along an axis, or a thin plate, is homogenized on a cell of
+the plane, through the same chain with tensors of dimension 2.
+
+| Page | What it adds |
+| :--- | :----------- |
+| [Problems of the plane](@ref th-plane-problems) | plane strain and plane stress, the classes and the two pairs of moduli of a tensor of the plane, and the section of each chapter that treats the plane |
+
 ## The Eshelby problem
 
 | Page | What it adds |
@@ -103,7 +112,7 @@ Volterra products in place of tensor products. The interface is written up in
 | [The Eshelby inclusion problem](@ref th-eshelby-problem) | the uniform strain inside an ellipsoid, and the three tensors ``\mathbb{P}``, ``\mathbb{S}^{\mathrm{E}}``, ``\mathbb{Q}`` |
 | [Hill polarization tensors](@ref th-hill-tensors) | the closed forms of ``\mathbb{P}``, shape by shape and symmetry class by symmetry class |
 | [Concentration and contribution tensors](@ref th-concentration) | the response of an inhomogeneity to a remote load, and its contribution to the effective stiffness |
-| [Two-inclusion interaction tensors](@ref th-interaction) | the field one inclusion induces in another, through the Green operator — the ingredient of the N-body schemes |
+| [Two-inclusion interaction tensors](@ref th-interaction) | the field one inclusion induces in another, through the Green operator — the ingredient of the N-body schemes — and the Green operator of an anisotropic medium, in space and in the plane |
 
 ## Cracks and degenerate shapes
 
@@ -145,7 +154,7 @@ torus, elasticity and conduction for the cylindrical cavities.
 | Page | Inclusion |
 | :--- | :-------- |
 | [Toroidal inclusions](@ref th-toroidal-inclusions) | the insulating torus in conduction: a series of toroidal harmonics, and the same tensor from an integral over the torus |
-| [Holes given by a conformal map](@ref th-conformal-mapping) | a cylindrical cavity whose section is the image of a disk by a map with a finite number of terms: complex potentials in plane strain, antiplane shear, conduction and plane stress |
+| [Holes given by a conformal map](@ref th-conformal-mapping) | a cylindrical cavity whose section is the image of a disk by a map with a finite number of terms: complex potentials in plane strain, antiplane shear, conduction and plane stress; the stress along the contour |
 
 ## Arbitrary shapes by Gaussian approximation
 
@@ -240,6 +249,8 @@ problem itself that must be generalized.
 | :--- | :--- |
 | [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [concentration](@ref th-concentration) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
 | [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
+| [Holomorphic functions and conformal maps](@ref th-holomorphic-functions) | the complex variable of the plane: derivatives with respect to ``z`` and ``\bar z``, harmonic and biharmonic functions, series on the unit circle, conformal maps |
+| [Complex potentials of plane elasticity](@ref th-complex-potentials) | the stress and the displacement of a plane problem written with two holomorphic functions, in an isotropic and in an anisotropic medium, the elliptic hole solved in both, the stress in the matrix around a hole, and the insulating ellipse in an anisotropic conductor |
 
 ## Where the two physics meet
 

@@ -13,6 +13,10 @@
 #   5. a transversely isotropic matrix about the axis of the hole: the
 #      cylinder of the package in that matrix, the uniform solution under an
 #      axial stress, and the equation of the self-consistent scheme.
+#   6. the stress along the contour of a hole of the plane: 4 Re[φ′/ω′] with
+#      the potential found by collocation, Muskhelishvili's hoop stress of the
+#      elliptic hole (1977, section 82a, example 1), Inglis's stress at the tip
+#      and the circle of Kirsch.
 # =============================================================================
 
 using Test
@@ -72,6 +76,26 @@ function _ch_collocation(m::Vector{ComplexF64}, Γ, Γ′; M = 50, P = 500)
     x = A \ rhs
     return complex.(x[1:M], x[(M + 1):(2M)])
 end
+
+# The hoop stress 4 Re[φ′(σ)/ω′(σ)] on the contour, σ = e^{iθ}, with the
+# potential of the collocation above under the remote stress S (a 2×2 matrix of
+# the plane): Γ = (S₁₁ + S₂₂)/4 and Γ′ = (S₂₂ − S₁₁)/2 + i S₁₂.
+function _ch_collocation_hoop(m::Vector{ComplexF64}, S::AbstractMatrix, θs; M = 80, P = 800)
+    Γ = (S[1, 1] + S[2, 2]) / 4
+    Γ′ = complex((S[2, 2] - S[1, 1]) / 2, (S[1, 2] + S[2, 1]) / 2)
+    a = _ch_collocation(m, Γ, Γ′; M, P)
+    return map(θs) do θ
+        σ = cis(θ)
+        φ′ = Γ - sum(k * a[k] * σ^(-k - 1) for k in eachindex(a))
+        ω′ = 1 - sum(k * m[k] * σ^(-k - 1) for k in eachindex(m))
+        4 * real(φ′ / ω′)
+    end
+end
+
+# Muskhelishvili's hoop stress on the hole of map ζ + m/ζ, m real, under a unit
+# uniaxial tension at the angle α from e₁, at the point of parameter θ.
+_ch_muskhelishvili(m, α, θ) = (1 - m^2 + 2m * cos(2α) - 2cos(2(θ - α))) / (1 - 2m * cos(2θ) + m^2)
+_ch_uniaxial(α) = (d = [cos(α), sin(α)]; Tens(d * d'))
 
 @testset "Conformal holes" begin
 
@@ -316,6 +340,33 @@ end
         for scheme in (SelfConsistent(), DifferentialScheme())
             @test canonical_components(homogenize(cell(ConformalHole(())), scheme, :C)) ≈ canonical_components(homogenize(cell(Cylinder(1.0, 1.0)), scheme, :C)) rtol = 1.0e-6
         end
+    end
+
+    @testset "stress along the contour, isotropic" begin
+        θs = range(0, 2π; length = 25)[1:24] .+ 0.05
+        # maps of several terms, against the potential found by collocation
+        S = [0.7 0.3; 0.3 -0.4]
+        for hole in (ConformalHole(1 => 0.2, 3 => 0.1), ConformalHole(2 => 0.25), ConformalHole(1 => 0.1 + 0.15im, 2 => -0.2im))
+            reference = _ch_collocation_hoop(hole.coefficients, S, θs)
+            @test contour_stress(hole, Tens(S), θs) ≈ reference rtol = 1.0e-6
+        end
+        # the ellipse under a uniaxial tension at the angle α
+        for m in (0.3, -0.45), α in (0.0, 0.5, π / 2, 2.2)
+            @test contour_stress(ConformalHole((m,)), _ch_uniaxial(α), θs) ≈ _ch_muskhelishvili.(m, α, θs) rtol = 1.0e-12
+        end
+        # Inglis: pulled across its major axis, 1 + 2a/b at the tip
+        for m in (0.2, 0.5, 0.8)
+            a, b = 1 + m, 1 - m
+            @test contour_stress(ConformalHole((m,)), _ch_uniaxial(π / 2), 0.0) ≈ 1 + 2a / b rtol = 1.0e-12
+        end
+        @test contour_stress(ConformalHole((0.5,)), Tens([0.0 0.0; 0.0 1.0]), 0.0) ≈ 7
+        # the circle: 1 − 2 cos 2(θ − α)
+        for α in (0.0, 0.9)
+            @test contour_stress(ConformalHole(()), _ch_uniaxial(α), θs) ≈ (@. 1 - 2cos(2(θs - α)))
+        end
+        # the stress is the symmetric part of the tensor given
+        hole = ConformalHole(polygon_map(3, 2)...)
+        @test contour_stress(hole, Tens([0.7 0.5; 0.1 -0.4]), θs) ≈ contour_stress(hole, Tens(S), θs) rtol = 1.0e-14
     end
 
     @testset "what is refused" begin

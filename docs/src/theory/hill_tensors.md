@@ -1364,12 +1364,22 @@ Implementation: `src/Elasticity/hill_3d_cylinder_aniso.jl` (`CylinderQuadrature`
 trait). The in-plane components coincide with the solution of the 2-D
 plane-strain problem — the cylinder is the 3-D realization of the 2-D ellipse.
 
-### 2-D plane strain
+### [Ellipses of the plane](@id th-hill-plane)
 
-Plane strain is handled directly (extension over Echoes), integrating over
+An ellipse of a cell of the plane is handled directly (extension over Echoes),
+in any stiffness of the plane, that of a plane strain or of a plane stress
+alike ([Problems of the plane](@ref th-plane-problems)), by integrating over
 the unit circle ``\underline{\xi}\in S^{1}`` with a ``1/(2\pi)`` prefactor in
-place of ``1/(4\pi)``. The isotropic case is analytical; the anisotropic one
-uses the residue reduction on the line integral.
+place of ``1/(4\pi)``. The isotropic case,
+``\mathbb{C}_0=2k\,\mathbb{J}+2\mu\,\mathbb{K}`` with ``k`` the bulk modulus
+of the plane, is analytical [mura1987](@cite); for a disk,
+
+```math
+\mathbb{P}=\frac{1}{2(k+\mu)}\,\mathbb{J}+\frac{k+2\mu}{4\mu\,(k+\mu)}\,\mathbb{K} .
+```
+
+A square, orthotropic or general stiffness of the plane uses the residue
+reduction on the line integral.
 
 ## 3. Hill tensor in conductivity
 
@@ -1451,7 +1461,7 @@ geometric auxiliaries via [`tens_IA`](@ref), [`tens_UA`](@ref),
 | `Cylinder, TensISO` | `Analytical` | — | ✓ |
 | `Cylinder, AbstractTens{4,3}` | `CylinderQuadrature` | (residue degenerates) | ✓ |
 | `Ellipsoid{2}, TensISO` | `Analytical` | — | ✓ |
-| `Ellipsoid{2}, AbstractTens{4,2}` | `Analytical` (residue) | — | (Float64) |
+| `Ellipsoid{2}, AbstractTens{4,2}` | `Analytical` (residue) | — | ✓ |
 | `Ellipsoid{3}, AbstractTens{2,3}` | `Analytical` (``\boldsymbol{K}^{-1/2}``) | — | ✓ |
 | `Cylinder, AbstractTens{2,3}` | `Analytical` | — | ✓ |
 

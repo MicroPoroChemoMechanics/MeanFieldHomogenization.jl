@@ -1,0 +1,247 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "lekhnitskii1981",
+  "doi": null,
+  "citation": "Lekhnitskii, S. G. (1981). Theory of Elasticity of an Anisotropic Body. Mir Publishers, Moscow.",
+  "location": "Table 6, p. 64; Section 31, Eqs. (31.1), (31.17) and (31.18), Tables 8, 9 and 10, pp. 170-175"
+ },
+ "transcription": {
+  "from": "the book (scanned PDF), read on the images of the pages",
+  "checked_against_source": true,
+  "note": "An infinite plate with an elliptic hole of semi-axes a >= b, pulled by a uniform stress p at infinity, in generalized plane stress. phi is the angle of the pull with the major axis of the ellipse, psi the angle of the principal direction of elasticity of the larger Young modulus with that axis, both counted in the same sense (Fig. 46 of the book). The tables give the largest tensile stress and the largest compressive stress (as a positive number) along the edge of the hole, divided by p, for the ratio a/b = 2 and the three-ply birch plywood of Table 6; the book says that two decimals are kept. The moduli of Table 6 are printed as multiples of 10^5 kgf/cm^2 and are stored as these multiples: only their ratios enter."
+ },
+ "quantities": {
+  "E1": {
+   "value": 1.2,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 6, p. 64",
+   "description": "Young modulus of the birch plywood along the fibers of the outer plies, in 10^5 kgf/cm^2."
+  },
+  "E2": {
+   "value": 0.6,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 6, p. 64",
+   "description": "Young modulus across the fibers of the outer plies, in 10^5 kgf/cm^2."
+  },
+  "G": {
+   "value": 0.07,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 6, p. 64",
+   "description": "Shear modulus in the plane of the sheet, in 10^5 kgf/cm^2."
+  },
+  "nu1": {
+   "value": 0.071,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 6, p. 64",
+   "description": "Poisson ratio nu_1: the strain across the fibers under a stress along them is -nu_1/E_1 per unit stress."
+  },
+  "nu2": {
+   "value": 0.036,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Table 6, p. 64",
+   "description": "Poisson ratio nu_2, with nu_2/E_2 = nu_1/E_1 to the rounding of the table."
+  },
+  "axis_ratio": {
+   "value": 2,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 31, p. 174",
+   "description": "Ratio c = a/b of the semi-axes of the hole of Tables 8, 9 and 10."
+  },
+  "k": {
+   "value": 1.414,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Eq. (31.17), p. 174",
+   "description": "Parameter k = sqrt(E_1/E_2) of Eq. (31.1), the first axis along the larger modulus."
+  },
+  "n": {
+   "value": 4.453,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Eq. (31.17), p. 174",
+   "description": "Parameter n = sqrt(2k + E_1/G - 2 nu_1) of Eq. (31.1), the first axis along the larger modulus."
+  },
+  "mu1_imag": {
+   "value": 4.11,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Eq. (31.17), p. 174",
+   "description": "Imaginary part of the first complex parameter, which is purely imaginary, the first axis along the larger modulus."
+  },
+  "mu2_imag": {
+   "value": 0.343,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Eq. (31.17), p. 174",
+   "description": "Imaginary part of the second complex parameter, which is purely imaginary, the first axis along the larger modulus."
+  }
+ },
+ "tables": {
+  "max_tension_plywood": [
+   {
+    "phi_deg": 0,
+    "psi_0": 3.23,
+    "psi_30": 2.76,
+    "psi_45": 2.67,
+    "psi_60": 2.21,
+    "psi_90": 2.57,
+    "psi_120": 2.21,
+    "psi_135": 2.67,
+    "psi_150": 2.76,
+    "psi_180": 3.23
+   },
+   {
+    "phi_deg": 30,
+    "psi_0": 3.1,
+    "psi_30": 4.92,
+    "psi_45": 4.64,
+    "psi_60": 4.96,
+    "psi_90": 2.55,
+    "psi_120": 3.8,
+    "psi_135": 4.0,
+    "psi_150": 3.76,
+    "psi_180": 3.1
+   },
+   {
+    "phi_deg": 45,
+    "psi_0": 3.85,
+    "psi_30": 5.55,
+    "psi_45": 5.84,
+    "psi_60": 6.93,
+    "psi_90": 6.19,
+    "psi_120": 4.28,
+    "psi_135": 4.98,
+    "psi_150": 5.18,
+    "psi_180": 3.85
+   },
+   {
+    "phi_deg": 60,
+    "psi_0": 5.58,
+    "psi_30": 5.47,
+    "psi_45": 6.52,
+    "psi_60": 8.2,
+    "psi_90": 7.55,
+    "psi_120": 4.24,
+    "psi_135": 5.33,
+    "psi_150": 6.14,
+    "psi_180": 5.58
+   },
+   {
+    "phi_deg": 90,
+    "psi_0": 7.2,
+    "psi_30": 5.77,
+    "psi_45": 5.52,
+    "psi_60": 7.72,
+    "psi_90": 9.91,
+    "psi_120": 7.72,
+    "psi_135": 5.52,
+    "psi_150": 5.77,
+    "psi_180": 7.2
+   }
+  ],
+  "max_compression_plywood": [
+   {
+    "phi_deg": 0,
+    "psi_0": 0.71,
+    "psi_30": 0.94,
+    "psi_45": 1.18,
+    "psi_60": 1.38,
+    "psi_90": 1.41,
+    "psi_120": 1.38,
+    "psi_135": 1.18,
+    "psi_150": 0.94,
+    "psi_180": 0.71
+   },
+   {
+    "phi_deg": 30,
+    "psi_0": 0.98,
+    "psi_30": 0.77,
+    "psi_45": 0.79,
+    "psi_60": 1.24,
+    "psi_90": 1.24,
+    "psi_120": 1.54,
+    "psi_135": 1.8,
+    "psi_150": 1.83,
+    "psi_180": 0.98
+   },
+   {
+    "phi_deg": 45,
+    "psi_0": 1.41,
+    "psi_30": 0.76,
+    "psi_45": 0.46,
+    "psi_60": 1.09,
+    "psi_90": 1.16,
+    "psi_120": 1.38,
+    "psi_135": 1.57,
+    "psi_150": 1.82,
+    "psi_180": 1.41
+   },
+   {
+    "phi_deg": 60,
+    "psi_0": 1.6,
+    "psi_30": 0.89,
+    "psi_45": 0.63,
+    "psi_60": 1.11,
+    "psi_90": 1.13,
+    "psi_120": 1.24,
+    "psi_135": 1.37,
+    "psi_150": 1.53,
+    "psi_180": 1.6
+   },
+   {
+    "phi_deg": 90,
+    "psi_0": 1.41,
+    "psi_30": 1.29,
+    "psi_45": 1.13,
+    "psi_60": 0.92,
+    "psi_90": 0.71,
+    "psi_120": 0.92,
+    "psi_135": 1.13,
+    "psi_150": 1.29,
+    "psi_180": 1.41
+   }
+  ],
+  "max_tension_isotropic": [
+   {
+    "phi_deg": 0,
+    "sigma_max_over_p": 2.0
+   },
+   {
+    "phi_deg": 30,
+    "sigma_max_over_p": 2.86
+   },
+   {
+    "phi_deg": 45,
+    "sigma_max_over_p": 3.54
+   },
+   {
+    "phi_deg": 60,
+    "sigma_max_over_p": 4.29
+   },
+   {
+    "phi_deg": 90,
+    "sigma_max_over_p": 5.0
+   }
+  ]
+ },
+ "notes": [
+  "Table 8 is the table max_tension_plywood, Table 9 max_compression_plywood, Table 10 max_tension_isotropic. For the isotropic plate the book states that the largest compressive stress equals p in all cases."
+ ]
+}

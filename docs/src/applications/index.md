@@ -28,6 +28,7 @@ One inclusion whose shape is not an ellipsoid, or whose Hill tensor is derived s
 | [A concave pore through every route](@ref app-pore-routes) | one superspherical pore by a published table, a finite-element cell, a neural surrogate and a grid of Gaussians, with the deviations measured |
 | [Ring-shaped pores in a conducting matrix](@ref app-insulating-torus) | the toroidal pore in conduction, by a series of toroidal harmonics, against a published study and spheroids of the same volume |
 | [Prismatic pores with corners](@ref app-conformal-holes) | pores whose section is given by a conformal map, polygons included, against published compressibilities and shear compliances; perforated plates |
+| [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole) | the stress along the edge of an elliptic hole in an isotropic plate and in an orthotropic plywood sheet, against the closed forms and the tables of the two classical books; the stress ahead of the tip; the same hole as an inclusion and as an insulator |
 
 ## Interactions between particles
 

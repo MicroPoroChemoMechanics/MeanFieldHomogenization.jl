@@ -155,6 +155,7 @@ end
         include("Core/test_newton_cylinder.jl")
         include("Core/test_green_dipole.jl")
         include("Core/test_green_aniso.jl")
+        include("Core/test_green_plane_aniso.jl")
         include("Core/test_cluster_residues.jl")
         include("Core/test_counters.jl")
         include("Core/test_hot_paths.jl")
@@ -257,6 +258,7 @@ end
         include("Schemes/test_orientation.jl")
         include("Schemes/test_concentration_bundles.jl")
         include("Schemes/test_concentrations.jl")
+        include("Schemes/test_plane_classes.jl")
         include("Schemes/test_structured_phases.jl")
         include("Schemes/test_schemes_random_bases.jl")
         include("Schemes/test_schemes_complex_cells.jl")
@@ -276,6 +278,13 @@ end
         # Cylindrical cavities of conformal cross-section, likewise.
         include("CustomInclusions/test_conformal_holes.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_conformal_holes_symbolic.jl")
+        # The elliptic hole of the plane in an anisotropic matrix.
+        include("CustomInclusions/test_elliptic_hole_anisotropic.jl")
+        HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_elliptic_hole_anisotropic_symbolic.jl")
+        # The stress in the matrix around a hole of the plane, and the
+        # insulating ellipse in an anisotropic conductivity.
+        include("CustomInclusions/test_hole_matrix_stress.jl")
+        include("CustomInclusions/test_elliptic_hole_conduction.jl")
         # Two-dimensional problems through the three-dimensional schemes: their
         # phases are the cylinders and the holes above.
         include("Schemes/test_plane_problems.jl")

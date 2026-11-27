@@ -212,7 +212,7 @@ _transport_amplitudes(f::LayeredCylinderTransportFields, k::Int) =
 # 𝑨(x) = φ′ e_r ⊗ e_r + (φ/r) e_θ ⊗ e_θ + e_z ⊗ e_z, in canonical components.
 function _local_K(f::LayeredCylinderTransportFields, r, Q, k::Int)
     A = Q * _local_conduction_matrix(_two_mode_gradients(r, _transport_amplitudes(f, k)...)...) * transpose(Q)
-    return MFH_Core._tens_in(A, MFH_Core.inclusion_basis(f.cylinder))
+    return TensND.static_tens(A, MFH_Core.inclusion_basis(f.cylinder))
 end
 
 function _local_K_scaled(f::LayeredCylinderTransportFields, r, Q, k::Int, pre::Bool, post::Bool)

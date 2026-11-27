@@ -96,9 +96,9 @@ end
     @test_throws ArgumentError gradient_gradient_concentration(LayeredCylinder((1.0,), (lc_K(-1.0, 7.0),)), K0, K0)
     @test_throws "does not apply" gradient_gradient_concentration(LayeredCylinder((1.0,), (lc_K(5.0, 7.0),); interfaces = (SpringInterface(1.0, 1.0),)), K0, K0)
     # a reference given as a general tensor is read when it has the symmetry
-    Kgen = MeanFieldHomogenization.Core._tens_in([2.0 0.0 0.0; 0.0 2.0 0.0; 0.0 0.0 3.0], TensND.CanonicalBasis{3, Float64}())
+    Kgen = TensND.static_tens([2.0 0.0 0.0; 0.0 2.0 0.0; 0.0 0.0 3.0], TensND.CanonicalBasis{3, Float64}())
     @test gradient_gradient_concentration(c, K0, Kgen) ≈ gradient_gradient_concentration(c, K0, K0)
-    Kno = MeanFieldHomogenization.Core._tens_in([2.0 0.0 0.0; 0.0 2.5 0.0; 0.0 0.0 3.0], TensND.CanonicalBasis{3, Float64}())
+    Kno = TensND.static_tens([2.0 0.0 0.0; 0.0 2.5 0.0; 0.0 0.0 3.0], TensND.CanonicalBasis{3, Float64}())
     @test_throws "relative distance" gradient_gradient_concentration(c, K0, Kno)
 end
 

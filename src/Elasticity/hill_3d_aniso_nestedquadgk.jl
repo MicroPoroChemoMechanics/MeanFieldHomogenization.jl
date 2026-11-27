@@ -85,9 +85,10 @@ stiffness `C₀` need only be defined on deviators. Returned as
     return ntuple(q -> iM[q] - nn[q] / λ, Val(9))
 end
 
-# The six Voigt pairs of a symmetric 3×3 tensor, and the 21 pairs (I ≤ J) of
-# those in row order: the independent components of a Hill tensor.
-const _VOIGT_IJ = ((1, 1), (2, 2), (3, 3), (2, 3), (1, 3), (1, 2))
+# The six index pairs of a symmetric 3×3 tensor in the Kelvin-Mandel (Voigt)
+# order, and the 21 pairs (I ≤ J) of those in row order: the independent
+# components of a Hill tensor.
+const _VOIGT_IJ = TensND.mandel_pairs(Val(3))
 const _VOIGT_UPPER21 = Tuple((I, J) for I in 1:6 for J in I:6)
 
 """
@@ -226,5 +227,5 @@ function _hill_3d_aniso_nestedquadgk(
     # --- Un-permute back to original axis ordering ----------------------------
     # P[q[i], q[j], q[k], q[l]] = P_perm[i, j, k, l] with q = invperm(p), that is
     # P = P_perm[p, p, p, p].
-    return MFH_Core._sym_tens_in(P_perm[p, p, p, p], ell.basis)
+    return TensND.symmetric_tens(P_perm[p, p, p, p], ell.basis)
 end
