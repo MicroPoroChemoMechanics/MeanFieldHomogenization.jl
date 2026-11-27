@@ -278,6 +278,9 @@ end
         # Cylindrical cavities of conformal cross-section, likewise.
         include("CustomInclusions/test_conformal_holes.jl")
         HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_conformal_holes_symbolic.jl")
+        # The elliptic hole of the plane in an anisotropic matrix.
+        include("CustomInclusions/test_elliptic_hole_anisotropic.jl")
+        HAS_SYMBOLIC_BACKENDS && include("CustomInclusions/test_elliptic_hole_anisotropic_symbolic.jl")
         # Two-dimensional problems through the three-dimensional schemes: their
         # phases are the cylinders and the holes above.
         include("Schemes/test_plane_problems.jl")

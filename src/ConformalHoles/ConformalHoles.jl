@@ -25,6 +25,7 @@ Exports [`ConformalHole`](@ref), its shape tag [`ConformalShape`](@ref) and
 """
 module ConformalHoles
 
+using LinearAlgebra: I, eigvals
 using StaticArrays: SMatrix, SVector
 using TensND
 using TensND: is_hard_numeric
@@ -35,10 +36,12 @@ import ..Core
 import ..LayeredCylinders: _hill_moduli, _conductivities
 import ..Core: _plane_isotropic
 
-export ConformalHole, ConformalShape, polygon_map
+export ConformalHole, ConformalShape, polygon_map, contour_stress
 
-include("map.jl")        # the conformal map: validity, area, series
-include("hole.jl")       # the cavity and its tensors in three dimensions
-include("plane.jl")      # the same hole in a two-dimensional cell
+include("map.jl")         # the conformal map: validity, area, series
+include("hole.jl")        # the cavity and its tensors in three dimensions
+include("anisotropic.jl") # the elliptic hole in an anisotropic matrix of the plane
+include("plane.jl")       # the same hole in a two-dimensional cell
+include("contour.jl")     # the stress along the contour of a hole of the plane
 
 end # module

@@ -145,6 +145,11 @@ pages = [
         "Appendices" => [
             "theory/corrected_cell.md",
             "theory/elliptic_integrals.md",
+            # The complex variable of the plane, then the complex potentials of
+            # plane elasticity that rest on it: the support of the holes given by
+            # a conformal map, and of the elliptic hole in an anisotropic matrix.
+            "theory/holomorphic_functions.md",
+            "theory/complex_potentials.md",
         ],
     ],
     # Same principle: the inclusion families first, then the cells and
@@ -315,6 +320,7 @@ pages = [
             "applications/generated/pore_routes.md",
             "applications/generated/insulating_torus.md",
             "applications/generated/conformal_holes.md",
+            "applications/generated/elliptic_hole.md",
         ],
         "Interactions between particles" => [
             "applications/generated/cluster_model.md",

@@ -28,7 +28,7 @@ and the cell of the plane, whose matrix is isotropic in the plane or not.
 | springs between the faces of a crack (`K_interface`) | yes | yes | yes |
 | layered sphere, spheroid, ellipsoid | yes | no | no |
 | layered cylinder ([`LayeredCylinder`](@ref)), with its interfaces | yes | yes, layers isotropic in the plane | no |
-| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | no |
+| hole given by a conformal map ([`ConformalHole`](@ref)) | yes, matrix isotropic in the plane of the section | yes | the ellipse; not a map of several terms |
 | torus, grid of Gaussians, mesh, network | yes | no | no |
 | Voigt, Reuss, dilute, Mori–Tanaka, self-consistent, differential | yes | yes | yes |
 | laminate | yes | no | no |
@@ -38,7 +38,7 @@ and the cell of the plane, whose matrix is isotropic in the plane or not.
 
 Maxwell's scheme, that of Ponte Castañeda and Willis, the asymmetric
 self-consistent scheme and the particle assemblies take a cell of the plane
-with an isotropic matrix as well. Why holes, rings and aging
+with an isotropic matrix as well. Why holes of several terms, rings and aging
 viscoelasticity ask for a matrix isotropic in the plane is said in
 [What is restricted, and why](@ref man-plane-restricted).
 
@@ -332,7 +332,11 @@ end
 An ellipse and a segment accept a matrix of any anisotropy of the plane: the
 Hill tensor of the ellipse is computed by residues
 ([Ellipses of the plane](@ref th-hill-plane)), and the opening of the segment
-as that of the ribbon crack in the medium invariant along the axis. Stiff
+as that of the ribbon crack in the medium invariant along the axis. An elliptic
+hole given by its map, `ConformalHole((m,))`, accepts it too, and has the
+concentration tensor of the ellipse of the same semi-axes
+([Conformal holes](@ref man-conformal-holes)); its potentials give besides the
+stress along its edge, [`contour_stress`](@ref). Stiff
 ellipses in the orthotropic matrix `c₀`:
 
 ```@example manplane
@@ -495,16 +499,20 @@ end
 
 ## [What is restricted, and why](@id man-plane-restricted)
 
-**Holes given by a conformal map and concentric rings take a matrix isotropic
-in the plane**, and the rings layers isotropic in the plane. The hole is solved
-with the complex potentials of Kolosov and Muskhelishvili, the rings with
-radial problems that separate harmonic by harmonic: both rest on the isotropy
-of the plane. An anisotropic plane needs the potentials of Lekhnitskii, one
-complex variable per characteristic root, and couples the harmonics of the
-rings; neither is implemented. A general tensor that is isotropic to a
-relative ``10^{-8}``, as the estimate of a scheme can be, is accepted; a
-symbolic one must be given as a `TensISO`. Otherwise the inclusion refuses the
-matrix:
+**Holes given by a map of several terms and concentric rings take a matrix
+isotropic in the plane**, and the rings layers isotropic in the plane. The hole
+is solved with the complex potentials of Kolosov and Muskhelishvili, the rings
+with radial problems that separate harmonic by harmonic: both rest on the
+isotropy of the plane. An anisotropic plane needs the potentials of
+Lekhnitskii, functions of one complex variable per characteristic root, and
+couples the harmonics of the rings. The variable of the hole and the two of
+Lekhnitskii are brought to the same circle by one map for the ellipse only: the elliptic hole is solved in
+any matrix of the plane
+([The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse)),
+the hole of several terms and the rings are not. For these two, a general
+tensor that is isotropic to a relative ``10^{-8}``, as the estimate of a scheme
+can be, is accepted; a symbolic one must be given as a `TensISO`. Otherwise the
+inclusion refuses the matrix:
 
 ```@example manplane
 try
@@ -514,8 +522,8 @@ catch err
 end
 ```
 
-An ellipse and a segment accept any anisotropy of the plane. The other
-restrictions are these.
+An ellipse, the elliptic hole included, and a segment accept any anisotropy
+of the plane. The other restrictions are these.
 
 - **Aging viscoelasticity takes a matrix isotropic in the plane**: its Hill
   kernel is known against an isotropic reference only. The schemes it applies
@@ -542,7 +550,11 @@ restrictions are these.
 - [Cells of the plane](@ref man-visco-plane) in aging viscoelasticity: the
   operators of plane strain and of plane stress of an aging material.
 - [Holes given by a conformal map](@ref th-conformal-mapping), sections 7 and
-  8: the hole in a matrix isotropic in the plane, and in a plate.
+  8: the hole in a matrix isotropic in the plane, and in a plate;
+  [The elliptic hole in an anisotropic matrix](@ref th-lekhnitskii-ellipse):
+  the ellipse in any matrix of the plane.
+- [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole):
+  the stress along the edge of the hole in an isotropic and in a plywood plate.
 - [Prismatic pores with corners](@ref app-conformal-holes): sheets with
   polygonal holes.
 - TensND, for the tensors of the plane and the conversions between the two

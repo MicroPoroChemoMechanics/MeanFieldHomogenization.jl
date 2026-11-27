@@ -249,6 +249,8 @@ problem itself that must be generalized.
 | :--- | :--- |
 | [The finite Eshelby cell](@ref th-corrected-cell) | a numerical device supporting the finite-element inclusions: the inclusion is solved on a *finite* cell and the truncation bias removed by its own dipole far field. Written in the language of [concentration](@ref th-concentration) and [crack opening displacement](@ref th-cod-tensors), so it is read after both |
 | [Elliptic integrals](@ref th-elliptic-integrals) | the special functions the closed forms need |
+| [Holomorphic functions and conformal maps](@ref th-holomorphic-functions) | the complex variable of the plane: derivatives with respect to ``z`` and ``\bar z``, harmonic and biharmonic functions, series on the unit circle, conformal maps |
+| [Complex potentials of plane elasticity](@ref th-complex-potentials) | the stress and the displacement of a plane problem written with two holomorphic functions, in an isotropic and in an anisotropic medium, and the elliptic hole solved in both |
 
 ## Where the two physics meet
 

@@ -15,6 +15,10 @@ plane; this release brings the plane closer to space.
 - `green_operator` and `interaction_tensor` no longer refuse an anisotropic
   elastic reference of the plane (see below): code that relied on the
   `ArgumentError` gets an operator.
+- An elliptic `ConformalHole`, whose map has its first term only, no longer
+  refuses an anisotropic stiffness of a cell of the plane (see below): code
+  that relied on the `ArgumentError` gets the concentration tensor. A map of
+  several terms is refused as before.
 
 ### Added
 
@@ -35,6 +39,27 @@ plane; this release brings the plane closer to space.
   `:C1212`, `:C2211`; `:a1`, `:a2`; `:α`, `:β`, `:γ`), and a general tensor of
   the plane is read in a class of the plane that contains it
   (`symmetry = (:ORTHO, Basis(θ))`, `(:CUBIC, Basis(θ))`).
+- **The elliptic hole in an anisotropic matrix of the plane.**
+  `ConformalHole((m,))` in a cell of the plane takes any stiffness of the
+  plane, orthotropic, square or general, through the complex potentials of
+  Lekhnitskii, which the ellipse alone brings to the circle of its map. Its
+  strain concentration tensor is that of `Ellipsoid(a, b; angle)` given by the
+  Hill tensor, to 1e-11. The formulas are written with the sum and the product
+  of the two characteristic roots, so that an isotropic matrix, where the roots
+  coincide, is an ordinary case rather than a limit: a general tensor that is
+  isotropic, as the estimate of a scheme can be, needs no special treatment.
+  A `TensISO`, `TensCubic` or `TensOrtho` has its roots in closed form and
+  accepts symbols; a general numeric tensor has them by a Newton iteration
+  that carries dual numbers, nested included.
+- **`contour_stress(hole, Σ, θ)`**, the stress along the free contour of a
+  hole of the plane under a remote stress of the plane: any map in an
+  isotropic matrix, whose moduli do not enter, and the ellipse in an
+  anisotropic one with `contour_stress(hole, Σ, θ, C₀)`. It gives the stress
+  concentration at the edge of the hole, which the concentration tensors,
+  averages over the hole, do not.
+- `data/literature/lekhnitskii1981.json`: the constants of Lekhnitskii's birch
+  plywood and his Tables 8, 9 and 10, the largest stresses on the edge of an
+  elliptic hole in a plywood and in an isotropic plate.
 
 ### Fixed
 
@@ -67,7 +92,18 @@ plane; this release brings the plane closer to space.
   plane; the manual page on plane problems lists the properties a plane cell
   takes, the two conventions of the moduli of a tensor of the plane, the named
   coefficients, and what remains restricted to a matrix isotropic in the plane
-  (conformal holes, layered cylinders) with the reason.
+  (conformal holes of several terms, layered cylinders) with the reason.
+- Two appendices to the Theory derive the complex representation of plane
+  elasticity, from the holomorphic functions to the potentials of
+  Kolosov–Muskhelishvili and of Lekhnitskii, and the elliptic hole in an
+  anisotropic matrix. The theory and the manual of conformal holes give the
+  stress along the contour and the anisotropic ellipse.
+- The application *The elliptic hole, from an isotropic to an anisotropic
+  plate* (`scripts/90_elliptic_hole.jl`) computes the stress along the edge
+  against Muskhelishvili's closed form, Lekhnitskii's Eqs. (31.13)–(31.16) and
+  his Tables 8, 9 and 10, lists with both values the printed cells that
+  differ, and checks the hole as an inclusion against the Hill tensor of the
+  ellipse, its derivatives and its symbolic tip stress.
 
 ## v0.29.3 — layered spheres and cylinders: two strategies on one set of pages, layers in every notation
 

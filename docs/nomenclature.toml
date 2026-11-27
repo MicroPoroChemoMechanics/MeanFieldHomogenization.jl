@@ -2594,3 +2594,67 @@ label = "c<sub>0</sub>"
 name = "distance, in grid steps, between the edge of a Gaussian crack and the edge of its region"
 unit = "1"
 pages = ["theory/gaussian_cracks.md", "manual/planar_cracks.md"]
+
+[[symbol]]
+group = "Stiffness and elastic moduli"
+tex = '\kappa'
+label = "κ"
+name = "Kolosov's constant (k + 2μ)/k of an isotropic medium of the plane: 3 − 4ν in plane strain, (3 − ν)/(1 + ν) in plane stress"
+unit = "1"
+pages = ["theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = 'F'
+label = "F"
+name = "Airy stress function of a plane problem"
+unit = "N"
+pages = ["theory/holomorphic_functions.md", "theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\varphi'
+label = "φ"
+name = "first complex potential of plane elasticity"
+unit = ""
+pages = ["theory/holomorphic_functions.md", "theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\psi'
+label = "ψ"
+name = "second complex potential of plane elasticity, the derivative of χ"
+unit = ""
+pages = ["theory/holomorphic_functions.md", "theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\chi'
+label = "χ"
+name = "holomorphic function of Goursat's form of a biharmonic function"
+unit = ""
+pages = ["theory/holomorphic_functions.md"]
+
+[[symbol]]
+group = "Fields and loading"
+tex = '\Gamma'
+label = "Γ"
+name = "coefficient (Σ<sub>11</sub> + Σ<sub>22</sub>)/4 of the first complex potential at infinity"
+unit = "Pa"
+pages = ["theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\omega'
+label = "ω"
+name = "conformal map of the outside of the unit disk onto the outside of a hole"
+unit = ""
+pages = ["theory/holomorphic_functions.md", "theory/complex_potentials.md"]
+
+[[symbol]]
+group = "Geometry and amounts"
+tex = '\zeta'
+label = "ζ"
+name = "complex variable of the plane of the unit disk, mapped onto the plane of a hole"
+unit = "1"
+pages = ["theory/holomorphic_functions.md", "theory/complex_potentials.md"]
