@@ -53,6 +53,24 @@ const FLUID_SQ = [:c1, :c2, :p]
     end
 end
 
+# Two families on exactly orthogonal axes: Mori-Tanaka adds transversely
+# isotropic tensors of complex components on orthogonal axes.
+@testset "squirt flow: families on orthogonal axes" begin
+    rve = RVE()
+    add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C0_SQ); fraction = :rest)
+    add_phase!(rve, :c1, Spheroid(1.0e-3), Dict(:C => DRY_SQ); fraction = 6.0e-4)
+    add_phase!(rve, :c2, Spheroid(1.0e-3; euler_angles = (π / 2, 0.0, 0.0)), Dict(:C => DRY_SQ); fraction = 6.0e-4)
+    sealed = RVE()
+    add_phase!(sealed, :M, Ellipsoid(1.0), Dict(:C => C0_SQ); fraction = :rest)
+    for (name, angles) in ((:c1, ()), (:c2, (π / 2, 0.0, 0.0)))
+        add_phase!(sealed, name, Spheroid(1.0e-3; euler_angles = angles), Dict(:C => TensISO{3}(3 * KF_SQ, 0.0)); fraction = 6.0e-4)
+    end
+    hi = squirt_flow(rve, MoriTanaka(), Inf; fluid = [:c1, :c2], k_f = KF_SQ)
+    @test _rel(_km(hi.stiffness), _km(homogenize(sealed, MoriTanaka()))) < 1.0e-13
+    mid = squirt_flow(rve, MoriTanaka(), 1.0; fluid = [:c1, :c2], k_f = KF_SQ)
+    @test maximum(abs, imag(Matrix(_km(mid.stiffness)))) > 0
+end
+
 @testset "squirt flow: one aligned family does not disperse" begin
     rve = RVE()
     add_phase!(rve, :M, Ellipsoid(1.0), Dict(:C => C0_SQ); fraction = :rest)
