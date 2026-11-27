@@ -100,7 +100,7 @@ end
 const TEST_PARTS = Dict(
     "core" => (
         "Aqua", "Elliptic", "Core", "Elasticity", "Cracks", "Conductivity",
-        "Interactions", "Poromechanics", "Constitutive", "Regression", "Studio",
+        "Interactions", "Poromechanics", "Seismic", "Constitutive", "Regression", "Studio",
         "Documentation",
     ),
     # Its own part since 0.23.0, whose models took `core` past the 90-minute
@@ -444,6 +444,13 @@ end
     # `Schemes` to be exercised — same position as in the load order.
     rungroup("Poromechanics") && @testset "Poromechanics" begin
         include("Poromechanics/test_biot.jl")
+    end
+
+    # `Seismic` reads homogenized cells, after the schemes and the poromechanics.
+    rungroup("Seismic") && @testset "Seismic" begin
+        include("Seismic/test_density.jl")
+        include("Seismic/test_fracture_compliance.jl")
+        include("Seismic/test_fracture_sets.jl")
     end
 
     # `Constitutive` is the Gauss-point law built on a cell + scheme, so it runs
