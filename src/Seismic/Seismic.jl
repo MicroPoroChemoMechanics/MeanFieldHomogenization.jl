@@ -24,7 +24,7 @@ module Seismic
 
 using TensND
 using TensND: Tensors
-using TensND.Tensors: Vec, Tensor, SymmetricTensor, otimes, otimesl, dotdot, minorsymmetric
+using TensND.Tensors: Vec, Tensor, SymmetricTensor, otimes, otimesl, dotdot, dcontract, minorsymmetric
 using StaticArrays: SVector
 
 import ..Schemes
@@ -37,6 +37,7 @@ include("density.jl")
 include("fracture_compliance.jl")
 include("fracture_sets.jl")
 
-export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness
+export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness,
+    orthogonal_fracture_compliances
 
 end

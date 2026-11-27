@@ -60,3 +60,42 @@ length ``L``. Numbers, dual numbers and symbols.
 """
 fractured_stiffness(C_b::TensND.AbstractTens{4, 3}, sets::Pair...) =
     inv(inv(C_b) + mapreduce(((n, Z),) -> linear_slip_change(n, Z), +, sets))
+
+"""
+    orthogonal_fracture_compliances(Δ𝕊, frame) → (normals, Z_N, Z_T)
+
+The compliances of linear slip of three sets of fractures normal to the vectors
+of the orthonormal `frame` (the columns of a 3×3 matrix, or a basis of TensND),
+each invariant by rotation about its normal, read on a change of compliance
+`Δ𝕊`. A set of normal ``\\underline{e}_i`` changes ``\\Delta S_{iiii}`` by
+``Z_N^i`` and ``4\\,\\Delta S_{ijij}`` by ``Z_T^i`` for ``j \\neq i``
+([`linear_slip_change`](@ref)), and no other component of the frame, so that
+
+```math
+Z_N^i = \\Delta S_{iiii},
+\\qquad
+Z_T^i = 2\\,(\\Delta S_{ijij} + \\Delta S_{ikik} - \\Delta S_{jkjk}),
+```
+
+``(i, j, k)`` a permutation of ``(1, 2, 3)``, the components being those of the
+frame: the six moduli that best represent `Δ𝕊` by three such sets, the other
+components (couplings between normal compliances, components outside the
+orthotropic pattern of the frame) being left out. For three sets,
+`fractured_stiffness(ℂ_b, (eᵢ => (Z_N[i], Z_T[i]) for i in 1:3)...)` is the
+converse. The method of [rasolofosaonGJI2000](@citet), eq. (3), who find the frame
+as the best orthotropic one of the cracked medium
+([`project`](@extref TensND) with `:ORTHO` in TensND).
+"""
+function orthogonal_fracture_compliances(ΔS::TensND.AbstractTens{4, 3}, frame::AbstractMatrix)
+    D = _sym4(canonical_components(ΔS))
+    e = ntuple(i -> Vec{3}((frame[1, i], frame[2, i], frame[3, i])), Val(3))
+    q(a, b) = (P = otimes(a, b); dcontract(P, dcontract(D, P)))     # ΔS_abab in the frame
+    s = (q(e[2], e[3]), q(e[1], e[3]), q(e[1], e[2]))               # s[k] = ΔS_ijij, {i, j, k} = {1, 2, 3}
+    Z_N = ntuple(i -> q(e[i], e[i]), Val(3))
+    Z_T = ntuple(i -> 2 * (sum(s) - 2 * s[i]), Val(3))
+    return (normals = map(Tens, e), Z_N = Z_N, Z_T = Z_T)
+end
+orthogonal_fracture_compliances(ΔS::TensND.AbstractTens{4, 3}, frame::TensND.AbstractBasis{3}) =
+    orthogonal_fracture_compliances(ΔS, TensND.vecbasis(frame, :cov))
+
+_sym4(A) = SymmetricTensor{4, 3}((i, j, k, l) -> A[i, j, k, l])

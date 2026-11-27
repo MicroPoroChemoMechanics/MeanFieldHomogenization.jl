@@ -433,7 +433,8 @@ export undrained_stiffness, drained_stiffness, skempton_tensor
 export pore_volume_fraction, pore_pressure_tensor, squirt_flow
 
 # ── Seismic: what the waves see of a cell ────────────────────────────────────
-export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness
+export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness,
+    orthogonal_fracture_compliances
 
 # ── Viscoelasticity (ALV) ────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES
