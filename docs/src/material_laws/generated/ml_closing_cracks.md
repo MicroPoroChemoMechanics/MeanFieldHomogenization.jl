@@ -152,6 +152,7 @@ exponentially, with a mean of 20 MPa.
 
 ````@example ml_closing_cracks
 using MeanFieldHomogenization, TensND, Plots
+using StaticArrays: SMatrix
 
 C_s = TensISO{3}(3 * 40e3, 2 * 25e3)                                  # MPa
 rve = RVE()
@@ -238,6 +239,69 @@ pressure recovers only part of the volume that the confinement took. The strain
 rate is ``\mathbb{S}^{\mathrm{hom}}:(\dot{\boldsymbol{\Sigma}} + \boldsymbol{B}\,\dot p)``,
 and while most cracks are closed the Biot coefficient is small, so that the
 pore pressure acts on the deformation far less than on the cracks.
+
+### What a wave sees
+
+A wave samples the tangent stiffness of the state it crosses. Along an
+elastic wave of the [TensND waves](@extref TensND man-plane-waves), the drained
+stiffness gives the velocities of the dry rock, and the undrained one, with
+the bulk modulus of the fluid in the Biot modulus (Gassmann's relation of
+[Levin's theorem](@ref th-levin), §5), those of the rock saturated with water at
+low frequency. The density is not part of this law: the plots show the wave
+moduli ``\rho V^2``, the eigenvalues of the acoustic tensor.
+
+````@example ml_closing_cracks
+function wave_moduli(law, state, n; k_f = nothing)
+    _, 𝕂, _ = point_update(law, state.g, state, 1.0)
+    C = TensND.from_mandel(SMatrix{6, 6}(𝕂[1:6, 1:6]))
+    k_f === nothing && return plane_waves(C, 1.0, n).velocity .^ 2
+    par = poroelastic_parameters(C, C_s, 0.005; k_f)
+    return plane_waves(undrained_stiffness(C, par.B, par.modulus), 1.0, n).velocity .^ 2
+end
+e₁, e₃ = [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]
+dry = [wave_moduli(rock, st, e₃) for st in r.states]
+wet = [wave_moduli(rock, st, e₃; k_f = 2.2e3) for st in r.states]       # water, MPa
+p1 = plot(P, getindex.(dry, 1) / 1e3; lw = 2, label = "P, dry", xlabel = "confining pressure (MPa)",
+    ylabel = "ρV² (GPa)", legend = :right)
+plot!(p1, P, getindex.(wet, 1) / 1e3; lw = 2, ls = :dash, label = "P, saturated")
+plot!(p1, P, getindex.(dry, 2) / 1e3; lw = 2, label = "S, dry")
+plot!(p1, P, getindex.(wet, 2) / 1e3; lw = 2, ls = :dash, label = "S, saturated")
+hline!(p1, [40.0 + 4 * 25.0 / 3, 25.0]; ls = :dot, color = :gray, label = "solid without cracks")
+````
+
+The three families of cracks keep the rock isotropic under a hydrostatic
+loading. The fluid stiffens the P wave of the cracked rock, not the S wave
+(Gassmann's shear modulus is the drained one), and the difference vanishes as
+the cracks close: at high confinement the rock has the moduli of its solid,
+dry or saturated.
+
+A deviatoric loading closes the cracks of one family before the others, and
+the rock becomes anisotropic. After a confinement of 10 MPa, the axial stress
+rises to 60 MPa while the lateral stress is held:
+
+````@example ml_closing_cracks
+axial = LoadingPath(range(0, 1; length = 41); σ11 = -10.0, σ22 = -10.0, σ33 = t -> -10.0 - 50.0 * t,
+    σ23 = 0, σ13 = 0, σ12 = 0, p = 0)
+start = point_response(rock, LoadingPath(range(0, 1; length = 11); σ11 = t -> -10.0 * t, σ22 = t -> -10.0 * t,
+    σ33 = t -> -10.0 * t, σ23 = 0, σ13 = 0, σ12 = 0, p = 0))
+r3 = point_response(rock, axial; state = last(start.states))
+S₃ = -r3[:σ33]
+along = [wave_moduli(rock, st, e₃) for st in r3.states]
+across = [wave_moduli(rock, st, e₁) for st in r3.states]
+p2 = plot(S₃, getindex.(along, 1) / 1e3; lw = 2, label = "P along the load", xlabel = "axial stress (MPa)",
+    ylabel = "ρV² (GPa)", legend = :right)
+plot!(p2, S₃, getindex.(across, 1) / 1e3; lw = 2, label = "P across the load")
+plot!(p2, S₃, getindex.(across, 2) / 1e3; lw = 2, ls = :dash, label = "S across, fast")
+plot!(p2, S₃, getindex.(across, 3) / 1e3; lw = 2, ls = :dash, label = "S across, slow")
+plot(p1, p2; layout = (1, 2), size = (820, 340), left_margin = 3Plots.mm, bottom_margin = 4Plots.mm)
+````
+
+The cracks normal to the load close first: the P wave along the load stiffens
+faster than across it, and the S wave that crosses the load splits, the one
+polarized along the load being faster. This is the anisotropy induced by a
+stress through the closure of cracks; that of an intact solid, by the
+nonlinearity of its elasticity, is the subject of the
+[third-order elasticity of TensND](@extref TensND th-third-order).
 
 ### Checks
 

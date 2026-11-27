@@ -60,6 +60,10 @@ lets the cracks of a plane load each other.
   cracks, a closed-cell aluminum foam, plasma-sprayed coatings), interacting
   cracks after Kachanov, elliptical holes in an anisotropic plate after Tsukrov
   and Kachanov.
+- The law of a rock whose cracks close (`ClosingCrackPoroelasticity`) shows
+  what a wave sees along its loading paths: the wave moduli of the dry and the
+  saturated rock under confinement, and the anisotropy that an axial stress
+  induces by closing the cracks normal to it.
 
 ## v0.30.0 — cells of the plane with an anisotropic matrix
 

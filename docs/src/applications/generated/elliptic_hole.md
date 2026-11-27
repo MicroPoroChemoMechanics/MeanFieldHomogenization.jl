@@ -568,6 +568,9 @@ across_hole = Dict(E₁ => ply.E₂, E₂ => ply.E₁, G => ply.G, ν₁ => ply.
   corners, against published values.
 - [Plane problems](@ref man-plane-problems): cells of the plane with an
   anisotropic matrix.
+- [Elliptical holes and cracks in an anisotropic plate](@ref app-elliptical-holes-anisotropic):
+  the next page, the compliance of such holes and of cracks, and the anisotropy
+  of a plate with many of them.
 
 ---
 

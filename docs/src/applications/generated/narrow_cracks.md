@@ -263,6 +263,8 @@ is approached as the band lengthens, exactly as for the rectangle.
   same solver on a disk with islands.
 - [Planar cracks of any contour](@ref man-planar-cracks): the ways to describe
   a contour.
+- [Interacting cracks: the method of average tractions](@ref app-interacting-cracks):
+  the next page, several straight cracks of a plane that load each other.
 
 ---
 
