@@ -430,7 +430,7 @@ export derivative, gradient, jacobian, sensitivity, second_moment
 export terzaghi_stress, biot_effective_stress
 export biot_tensor, inverse_biot_modulus, biot_modulus, poroelastic_parameters
 export undrained_stiffness, drained_stiffness, skempton_tensor
-export pore_volume_fraction, pore_pressure_tensor
+export pore_volume_fraction, pore_pressure_tensor, squirt_flow
 
 # ── Seismic: what the waves see of a cell ────────────────────────────────────
 export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness

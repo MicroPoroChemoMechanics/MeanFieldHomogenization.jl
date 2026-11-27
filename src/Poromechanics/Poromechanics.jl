@@ -33,6 +33,7 @@ is solved: everything follows from `C_hom`, `C_s` and `φ`.
 | [`terzaghi_stress`](@ref) / [`biot_effective_stress`](@ref) | the two effective-stress measures |
 | [`pore_volume_fraction`](@ref) | ``\\varphi`` summed over declared pore phases |
 | [`pore_pressure_tensor`](@ref) | ``\\boldsymbol{B}^{\\mathrm{sk}}_r`` such that ``p_r = -\\boldsymbol{B}^{\\mathrm{sk}}_r:\\boldsymbol{\\Sigma}`` in a sealed pore |
+| [`squirt_flow`](@ref) | complex stiffness of pores exchanging fluid, from sealed (``\\omega\\tau\\to\\infty``) to Gassmann (``\\omega\\tau = 0``) |
 
 Everything is plain TensND algebra, hence type-generic (`Float64`, `BigFloat`,
 `ForwardDiff.Dual`, `ComplexF64`, `SymPyPythonCall.Sym`) at no cost.
@@ -58,11 +59,12 @@ include("effective_stress.jl")
 include("biot.jl")
 include("rve_interface.jl")
 include("closed_pores.jl")
+include("squirt_flow.jl")
 
 export terzaghi_stress, biot_effective_stress
 export biot_tensor, inverse_biot_modulus, biot_modulus, poroelastic_parameters
 export undrained_stiffness, drained_stiffness, skempton_tensor
 export pore_volume_fraction
-export pore_pressure_tensor
+export pore_pressure_tensor, squirt_flow
 
 end # module

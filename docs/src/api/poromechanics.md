@@ -25,6 +25,7 @@ skempton_tensor
 
 ```@docs
 pore_pressure_tensor
+squirt_flow
 ```
 
 ## Effective stresses and porosity

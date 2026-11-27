@@ -445,6 +445,7 @@ end
     rungroup("Poromechanics") && @testset "Poromechanics" begin
         include("Poromechanics/test_biot.jl")
         include("Poromechanics/test_closed_pores.jl")
+        include("Poromechanics/test_squirt_flow.jl")
     end
 
     # `Seismic` reads homogenized cells, after the schemes and the poromechanics.
