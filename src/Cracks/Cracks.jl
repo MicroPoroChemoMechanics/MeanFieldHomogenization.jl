@@ -50,6 +50,7 @@ include("arc.jl")
 include("saturn.jl")
 include("api.jl")
 include("plane.jl")           # the crack of a two-dimensional cell
+include("interacting_plane.jl") # interacting cracks of a plane, by average tractions
 
 # ── Geometry ─────────────────────────────────────────────────────────────────
 export CrackShape, Penny, EllipticShape, Ribbon

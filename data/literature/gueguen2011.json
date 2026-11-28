@@ -1,0 +1,133 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "gueguen2011",
+  "doi": "10.1016/j.tecto.2010.09.021",
+  "citation": "Guéguen, Yves, Sarout, Joël (2011). Characteristics of anisotropy and dispersion in cracked medium. Tectonophysics 503(1-2), 165-172.",
+  "location": "Section 3 and caption of Fig. 1 (p. 168), eq. (13) (p. 168), section 3.2 (p. 171), eqs (5)-(10) (p. 167), eq. (14) (p. 171)"
+ },
+ "transcription": {
+  "from": "the published article (PDF), on rendered page images; every value compared with the page image",
+  "checked_against_source": true,
+  "note": "The parameters are those of all the figures of the article (p. 168, repeated in the caption of Fig. 1). The ranges of crack density and aspect ratio are those of panels a-c of Figs 2-5. The dispersion is eq. (13), the difference of the high- and low-frequency velocities of one wave divided by its velocity in the uncracked solid. The S-wave dispersion and the ratio of the P- and S-wave dispersions are quoted in the text of section 3.2 (p. 171) for randomly oriented cracks; the article computes the velocities with the density of the solid, eq. (17). The crack density is rho = N a^3/V, eq. (3), and the aspect ratio xi is the ratio of the half-opening to the radius of a crack."
+ },
+ "quantities": {
+  "E0": {
+   "value": 70.0,
+   "unit": "GPa",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; caption of Fig. 1",
+   "description": "Young modulus of the uncracked solid."
+  },
+  "nu0": {
+   "value": 0.27,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; caption of Fig. 1",
+   "description": "Poisson ratio of the uncracked solid."
+  },
+  "Kf": {
+   "value": 2.3,
+   "unit": "GPa",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; caption of Fig. 1",
+   "description": "Bulk modulus of the pore fluid (water)."
+  },
+  "rho_s": {
+   "value": 2800.0,
+   "unit": "kg/m^3",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; caption of Fig. 1",
+   "description": "Mass density of the solid."
+  },
+  "rho_f": {
+   "value": 1000.0,
+   "unit": "kg/m^3",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; caption of Fig. 1",
+   "description": "Mass density of the fluid."
+  },
+  "crack_density_max": {
+   "value": 0.5,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panels a and b of Figs 2-5",
+   "description": "Largest crack density of the curves against the crack density (from 0)."
+  },
+  "aspect_ratio_a": {
+   "value": 0.001,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panel a of Figs 2-5",
+   "description": "Aspect ratio of the cracks in the curves against the crack density, panel a."
+  },
+  "aspect_ratio_b": {
+   "value": 0.01,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panel b of Figs 2-5",
+   "description": "Aspect ratio of the cracks in the curves against the crack density, panel b."
+  },
+  "aspect_ratio_min": {
+   "value": 0.0001,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panel c of Figs 2-5",
+   "description": "Smallest aspect ratio of the curves against the aspect ratio."
+  },
+  "aspect_ratio_max": {
+   "value": 0.1,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panel c of Figs 2-5",
+   "description": "Largest aspect ratio of the curves against the aspect ratio."
+  },
+  "crack_density_c": {
+   "value": 0.3,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3, p. 168; panel c of Figs 2-5",
+   "description": "Crack density of the curves against the aspect ratio."
+  },
+  "dispersion_S_random": {
+   "value": 0.05,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3.2, p. 171 (\"close to 5.10^-2\")",
+   "description": "Dispersion of the S waves, eq. (13), for randomly oriented cracks of aspect ratio 1e-3 at the crack density 0.3."
+  },
+  "dispersion_ratio_PS_random": {
+   "value": 0.4,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 3.2, p. 171 (\"Delta V_P = 0.4 Delta V_S\", approximate)",
+   "description": "Ratio of the P-wave dispersion to the S-wave dispersion for randomly oriented cracks."
+  },
+  "gamma_slope_printed_approx": {
+   "value": 1.1,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Eq. (14), p. 171",
+   "description": "Approximate value printed for the ratio of Thomsen's gamma to the crack density, dry aligned cracks."
+  }
+ },
+ "tables": {},
+ "notes": [
+  "Eq. (14) prints gamma = 8(1 - nu0) alpha33 / (3(1 - 2 nu0)), followed by the approximate value 1.1 alpha33; the fraction printed gives 4.2 at nu0 = 0.27, while 8(1 - nu0)/(3(2 - nu0)) gives 1.125. The latter follows from eq. (2) of the same article.",
+  "Section 3 gives the range of the fluid bulk modulus of panel d of Figs 2-5 as [1e-4, 1e1] MPa while the captions and the axes give it in GPa; panel d is not used here."
+ ]
+}

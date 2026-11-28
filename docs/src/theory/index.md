@@ -125,6 +125,7 @@ descriptor.
 | [Crack opening displacement](@ref th-cod-tensors) | the flat-inclusion limit: a crack has no volume, so it is described by ``\boldsymbol{B}`` and ``\mathbb{H}`` instead of a volume fraction |
 | [Thermal cracks](@ref th-thermal-cracks) | the same limit for scalar transport |
 | [Contributions from intensity factors](@ref th-rice-contributions) | the compliance of a crack whose opening is not known in closed form, by integration of its intensity factors along a growth of the crack |
+| [Interacting cracks](@ref th-interacting-cracks) | the intensity factors of cracks of a plane that load each other, by the method of average tractions, in an isotropic or anisotropic plane |
 | [Degenerate shapes](@ref th-degenerate-shapes) | the closed forms of the Hill, Eshelby and crack opening tensors at the shapes where they reach ``0/0`` limits: sphere, disc, needle |
 
 ## The generalized Eshelby problem: morphological patterns
@@ -199,6 +200,7 @@ then has its page, with its figure, its assumption and its equations.
 | [The multipole expansion method for ellipsoids in elasticity](@ref th-mem-ellipsoids-elasticity) | the Papkovich–Neuber potentials on the ellipsoidal harmonics, the response of an ellipsoid bonded by springs, and its spherical form |
 | [The multipole expansion method with anisotropic constituents](@ref th-mem-anisotropic) | the affine map that makes an orthotropic matrix isotropic, and the response of a particle of anisotropic conductivity |
 | [The multipole expansion method for penny-shaped cracks](@ref th-mem-cracks) | the crack as the focal disk of its oblate coordinates, its response in conduction and in elasticity, and the reading of a close neighbor through the flux or the traction on its plane |
+| [Cracks seen as fractures](@ref th-fracture-compliance) | the share of each crack family in the compliance under each scheme, read as the compliance of a set of fractures; sets of fractures, and three orthogonal ones |
 | [Levin's theorem](@ref th-levin) | the response to free strains and prestresses of the phases — thermal expansion, Biot tensor — from the concentration tensors of any scheme |
 
 The cluster model, the equivalent inclusion method and the multipole expansion
@@ -229,6 +231,7 @@ tensor of order two, then applied to a flow whose inclusions carry a size.
 | Page | What it adds |
 | :--- | :----------- |
 | [Extension to conductivity](@ref th-conductivity) | the order-4 ↔ order-2 dictionary stated once — Hooke against Fourier, Fick, Darcy and Ohm — what transposes untouched, and the two things that genuinely differ |
+| [Cross-property connections](@ref th-cross-property) | when the elastic and conductive contributions of the same pores and cracks are tied, exactly or approximately, and what the approximation drops |
 | [Permeability from Stokes flow](@ref th-brinkman) | Darcy's law at the scale of the pores does not hold: the permeability from the Brinkman inhomogeneity problem, whose solution depends on the size of the inclusion |
 
 ## Extension to viscoelasticity

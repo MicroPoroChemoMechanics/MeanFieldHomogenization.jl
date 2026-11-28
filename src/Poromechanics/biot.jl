@@ -70,7 +70,7 @@ function _biot_tensor(
 end
 
 """
-    inverse_biot_modulus(C_s, B, φ) -> Number
+    inverse_biot_modulus(C_s, B, φ; k_f = nothing) -> Number
 
 Inverse **Biot modulus** ``1/M`` (also written ``1/N``) of a porous medium with
 a homogeneous solid phase:
@@ -89,21 +89,24 @@ RVE alone (see [`pore_volume_fraction`](@ref)).
 For an isotropic medium this reduces to the textbook ``1/M = (b -
 \\varphi)/k_{\\mathrm s}``.
 
-!!! warning "Incompressible saturating fluid"
-    This expression assumes the pore fluid is **incompressible**, which is the
-    setting of [barthelemyARMA2011](@citet). A fluid of finite bulk modulus
-    ``k_{\\mathrm f}`` adds the storage term ``\\varphi/k_{\\mathrm f}``:
+!!! note "Compressible saturating fluid"
+    Without `k_f` the pore fluid is **incompressible**, the setting of
+    [barthelemyARMA2011](@citet). A fluid of finite bulk modulus
+    ``k_{\\mathrm f}``, given as the keyword `k_f`, adds the storage term
+    ``\\varphi/k_{\\mathrm f}``:
 
     ```math
     \\frac{1}{M} = \\boldsymbol{1} : \\mathbb{S}_{\\mathrm s} :
-    (\\boldsymbol{B} - \\varphi\\,\\boldsymbol{1}) + \\frac{\\varphi}{k_{\\mathrm f}}.
+    (\\boldsymbol{B} - \\varphi\\,\\boldsymbol{1}) + \\frac{\\varphi}{k_{\\mathrm f}} .
     ```
 
-    Add it yourself if the fluid compressibility matters — the function does
-    not, since it has no way of knowing ``k_{\\mathrm f}``. The distinction is not cosmetic:
-    with an incompressible fluid and a *compressible* solid the fluid is
-    effectively stiffer than the grains, and the Skempton coefficient then
-    exceeds one (see [`skempton_tensor`](@ref)).
+    The distinction is not cosmetic: with an incompressible fluid and a
+    *compressible* solid the fluid is effectively stiffer than the grains, and
+    the Skempton coefficient then exceeds one (see [`skempton_tensor`](@ref)).
+    With the fluid modulus, [`undrained_stiffness`](@ref) is the stiffness of
+    the saturated medium at low frequency, when the pressure of the fluid
+    equilibrates between all the pores: the anisotropic form of Gassmann's
+    relation, which follows from the poroelastic law above.
 
 The *inverse* is the primitive rather than ``M`` itself because it is the
 quantity that stays finite: an incompressible solid phase gives ``1/M = 0``,
@@ -114,19 +117,24 @@ See also [`biot_tensor`](@ref), [`biot_modulus`](@ref),
 [`poroelastic_parameters`](@ref).
 """
 inverse_biot_modulus(
-    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
-) = _inverse_biot_modulus(inv(C_s), B, φ)
+    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number; k_f = nothing
+) = _inverse_biot_modulus(inv(C_s), B, φ, k_f)
 
 function _inverse_biot_modulus(
-        s_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
+        s_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number, k_f = nothing
     )
     T = promote_type(eltype(s_s), eltype(B), typeof(φ))
     Id2 = TensND.tens_Id2(Val(TensND.get_dim(s_s)), Val(T))
-    return Id2 ⊡ s_s ⊡ (B - φ * Id2)
+    return _with_fluid(Id2 ⊡ s_s ⊡ (B - φ * Id2), φ, k_f)
 end
 
+# The storage of the fluid: none for an incompressible one (the value is then
+# exactly that of the solid alone), φ/k_f otherwise.
+_with_fluid(invM, φ, ::Nothing) = invM
+_with_fluid(invM, φ, k_f) = invM + φ / k_f
+
 """
-    biot_modulus(C_s, B, φ) -> Number
+    biot_modulus(C_s, B, φ; k_f = nothing) -> Number
 
 Biot modulus ``M = 1/(1/M)``, the reciprocal of
 [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus).
@@ -136,11 +144,11 @@ Returns `Inf` for an incompressible solid phase (``1/M = 0``). Prefer
 matrix.
 """
 biot_modulus(
-    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number
-) = inv(inverse_biot_modulus(C_s, B, φ))
+    C_s::TensND.AbstractTens{4}, B::TensND.AbstractTens{2}, φ::Number; k_f = nothing
+) = inv(inverse_biot_modulus(C_s, B, φ; k_f))
 
 """
-    poroelastic_parameters(C_hom, C_s, φ) -> NamedTuple
+    poroelastic_parameters(C_hom, C_s, φ; k_f = nothing) -> NamedTuple
 
 Every poroelastic parameter of a saturated medium with a homogeneous solid
 phase, in one pass:
@@ -153,7 +161,9 @@ with `B` the [`biot_tensor`](@ref), `inverse_modulus` the
 [`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus) ``1/M`` and `modulus` its reciprocal ``M``.
 
 `C_s` is inverted **once**, which is why this is the entry point the
-Gauss-point materials use rather than the three functions separately.
+Gauss-point materials use rather than the three functions separately. `k_f`
+is the bulk modulus of the saturating fluid, incompressible when absent
+([`inverse_biot_modulus`](@ref MeanFieldHomogenization.Poromechanics.inverse_biot_modulus)).
 
 ```jldoctest
 julia> using MeanFieldHomogenization, TensND
@@ -174,11 +184,11 @@ julia> round(par.B[1, 1], digits = 4)   # b = 1 - k_MT/k_s = 1 - 12.8/20
 ```
 """
 function poroelastic_parameters(
-        C_hom::TensND.AbstractTens{4}, C_s::TensND.AbstractTens{4}, φ::Number
+        C_hom::TensND.AbstractTens{4}, C_s::TensND.AbstractTens{4}, φ::Number; k_f = nothing
     )
     s_s = inv(C_s)
     B = _biot_tensor(C_hom, s_s)
-    invM = _inverse_biot_modulus(s_s, B, φ)
+    invM = _inverse_biot_modulus(s_s, B, φ, k_f)
     return (B = B, inverse_modulus = invM, modulus = inv(invM))
 end
 
@@ -187,14 +197,14 @@ end
 # Biot tensor), for callers that evaluate them inside nested dual numbers, as
 # the laws of MaterialLaws do, where the tensor path costs minutes of
 # compilation. Both stiffnesses being symmetric, 𝟏 : (𝕀 − 𝕊ₛ : ℂ) is 𝟏 − ℂ 𝕊ₛ 𝟏.
-function poroelastic_parameters(C_hom::StaticMatrix{N, N}, C_s::StaticMatrix{N, N}, φ::Number) where {N}
+function poroelastic_parameters(C_hom::StaticMatrix{N, N}, C_s::StaticMatrix{N, N}, φ::Number; k_f = nothing) where {N}
     s_s = inv(C_s)
     T = promote_type(eltype(C_hom), eltype(s_s), typeof(φ))
     # the identity: ones on the d normal components, N = d(d + 1)/2
     d = TensND.mandel_dimension(N)
     𝟏 = SVector{N, T}(ntuple(i -> i ≤ d ? one(T) : zero(T), Val(N)))
     B = 𝟏 - C_hom * (s_s * 𝟏)
-    invM = transpose(𝟏) * (s_s * (B - φ * 𝟏))
+    invM = _with_fluid(transpose(𝟏) * (s_s * (B - φ * 𝟏)), φ, k_f)
     return (B = B, inverse_modulus = invM, modulus = inv(invM))
 end
 

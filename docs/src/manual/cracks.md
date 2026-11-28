@@ -174,6 +174,32 @@ circles gives them to [`RiceCrack`](@ref); for any flat front,
 [`rice_cod_tensor`](@ref) takes the front point by point. Worked examples:
 [Cracks from their intensity factors](@ref tut-rice-cracks).
 
+## [Interacting cracks of a plane](@id man-interacting-cracks)
+
+A few cracks of a plane load each other: their intensity factors follow from
+the method of average tractions ([Interacting cracks](@ref th-interacting-cracks)),
+by [`sif`](@ref) on a list of `center => crack` pairs. Two collinear cracks of
+half-length 0.45, their inner tips 0.1 apart, under a tension normal to them:
+
+```@example cracks_interaction
+using MeanFieldHomogenization, TensND
+C₀ = TensISO{2}(2.0, 1.0)                       # isotropic plane: the result does not depend on it
+Σ = Tens([0.0 0.0; 0.0 1.0])
+pair = [[-0.55, 0.0] => RibbonCrack(0.45; angle = 0.0), [0.55, 0.0] => RibbonCrack(0.45; angle = 0.0)]
+r = sif(pair, C₀, Σ)
+K₀ = sqrt(π * 0.45)
+(inner = r[2].minus[1] / K₀, outer = r[2].plus[1] / K₀, mean_traction = r[2].traction[1])
+```
+
+The stiffness of an anisotropic plane gives the fields of its slit instead:
+
+```@example cracks_interaction
+C_ort = from_mandel([10.0 2.0 0.0; 2.0 3.0 0.0; 0.0 0.0 3.0])
+stack = [[0.0, 0.0] => RibbonCrack(0.5; angle = 0.0), [0.0, 0.4] => RibbonCrack(0.5; angle = 0.0)]
+K₀ = sqrt(π * 0.5)
+(isotropic = sif(stack, C₀, Σ)[1].plus / K₀, orthotropic = sif(stack, C_ort, Σ)[1].plus / K₀)
+```
+
 ## Where to go next
 
 [Layered inclusions](@ref man-layered) leaves the ellipsoid family for

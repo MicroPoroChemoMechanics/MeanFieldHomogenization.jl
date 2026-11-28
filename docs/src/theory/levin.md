@@ -255,6 +255,130 @@ shortcut: neither pores nor cracks carry stress, so that
 evaluated by [`biot_tensor`](@ref). With several solid phases the shortcut is
 lost, and the theorem in the form above is the general approach.
 
+### A compressible fluid: Gassmann's relation
+
+When the pores communicate, one pressure ``p`` reigns in all of them. Their
+volume changes by ``\delta\varphi = \boldsymbol B:\boldsymbol E + p/N``, with
+``1/N = \boldsymbol 1:\mathbb S_s:(\boldsymbol B - \varphi\,\boldsymbol 1)`` for a
+homogeneous solid [coussy2004](@cite), and the fluid they hold, of bulk modulus
+``k_f``, changes its density by ``p/k_f``: the fluid content
+``\zeta = \delta\varphi + \varphi\,p/k_f`` gives ``\zeta = \boldsymbol B:\boldsymbol E + p/M``
+with the Biot modulus
+
+```math
+\frac{1}{M} = \boldsymbol 1:\mathbb S_s:(\boldsymbol B - \varphi\,\boldsymbol 1) + \frac{\varphi}{k_f} .
+```
+
+Without drainage, ``\zeta = 0``, ``p = -M\,\boldsymbol B:\boldsymbol E`` and
+``\boldsymbol\Sigma = (\mathbb C^{\mathrm{hom}} + M\,\boldsymbol B\otimes\boldsymbol B):\boldsymbol E``.
+For an isotropic medium of drained bulk modulus ``k_d`` and solid of bulk
+modulus ``k_s``, ``\boldsymbol B = (1 - k_d/k_s)\,\boldsymbol 1`` and the undrained
+bulk modulus is Gassmann's
+
+```math
+k_u = k_d + \frac{(1 - k_d/k_s)^2}{\varphi/k_f + (1 - \varphi)/k_s - k_d/k_s^2} ,
+```
+
+the shear modulus being unchanged; the anisotropic form above is that of Brown
+and Korringa. The fluid is the same in all the pores and the answer does not
+depend on their shapes beyond ``\mathbb C^{\mathrm{hom}}``: the pressure has had
+the time to equalize.
+
+### Sealed pores: the pressure of each family
+
+When no fluid flows between pores, the fluid of a family ``r`` is a phase of
+stiffness ``3k_f\,\mathbb J``, without shear stiffness, that every scheme
+homogenizes like any other. Its pressure is the opposite of its mean stress
+trace, read on its stress concentration tensor:
+
+```math
+p_r = -\tfrac13\,\boldsymbol 1:\mathbb B_r:\boldsymbol\Sigma
+  = -\boldsymbol B^{\mathrm{sk}}_r:\boldsymbol\Sigma ,
+\qquad
+\boldsymbol B^{\mathrm{sk}}_r = \tfrac13\,\boldsymbol 1:\mathbb B_r .
+```
+
+Families of different shapes or orientations carry different pressures, the
+*pressure polarization* of [shafiro1997](@citet). For an isolated spherical pore in
+an isotropic solid ``(k_s, \mu_s)``, Eshelby's solution gives the volume strain
+of the pore ``(3k_s + 4\mu_s)/(3k_f + 4\mu_s)`` times the remote one,
+``\operatorname{tr}\boldsymbol\Sigma/(3k_s)``, hence
+``\boldsymbol B^{\mathrm{sk}} = \tfrac13\,B\,\boldsymbol 1`` with Skempton's coefficient
+
+```math
+B = \frac{k_f\,(3k_s + 4\mu_s)}{k_s\,(3k_f + 4\mu_s)} = \frac{C_p}{C_p + 1/k_f - 1/k_s},
+\qquad C_p = \frac{1}{k_s} + \frac{3}{4\mu_s} ,
+```
+
+``C_p`` being the compressibility of the dry pore: eq. (14) of
+[shafiro1997](@citet). With one family of pores, sealed or connected pores have
+the same pressure and the two answers coincide.
+
+### Pores that exchange fluid: squirt flow
+
+Between the two, the fluid flows from the pores that a wave compresses most to
+the others, with a delay. Following [jakobsen2009](@citet) (eq. 18, without the
+flow at the scale of the wave), the fluid content of family ``r``, of volume
+fraction ``\varphi_r``, relaxes towards the mean pressure ``\bar p`` with a time
+``\tau``, the total content being conserved; with a time dependence
+``e^{\mathrm{i}\omega t}``,
+
+```math
+\frac{\delta m_r}{\rho_f\,\varphi_r} = \operatorname{tr}\langle\boldsymbol\varepsilon\rangle_r + \frac{p_r}{k_f},
+\qquad
+\mathrm{i}\omega\,\delta m_r = -\frac{\rho_f\,\varphi_r}{k_f\,\tau}\,(p_r - \bar p),
+\qquad
+\sum_r \delta m_r = 0 .
+```
+
+Eliminating ``\delta m_r`` between the first two,
+``(1 + \mathrm{i}\omega\tau)\,p_r = -\mathrm{i}\omega\tau\,k_f\operatorname{tr}\langle\boldsymbol\varepsilon\rangle_r + \bar p``:
+with ``z = 1/(1 + \mathrm{i}\omega\tau)``, the fluid of every family is a phase
+of complex bulk modulus ``k_c = k_f\,(1 - z)`` prestressed by the common pressure
+``q = z\,\bar p``,
+
+```math
+\boldsymbol\sigma_r = 3k_c\,\mathbb J:\boldsymbol\varepsilon_r - q\,\boldsymbol 1 .
+```
+
+The prestress being the same in all the fluid phases and the solid
+homogeneous, Levin's uniform field solves its part exactly: the strain
+``q\,\boldsymbol\varepsilon_0`` with ``(\mathbb C_s - 3k_c\,\mathbb J):\boldsymbol\varepsilon_0 = -\boldsymbol 1``
+gives the same stress ``q\,\mathbb C_s:\boldsymbol\varepsilon_0`` in every
+phase. The remainder is the cell with complex moduli under the strain
+``\boldsymbol E - q\,\boldsymbol\varepsilon_0``, whose concentration tensors
+``\mathbb A_r`` and compliance ``\mathbb S^{\mathrm{hom}}`` any scheme gives:
+
+```math
+\boldsymbol E = q\,\boldsymbol\varepsilon_0 + \mathbb S^{\mathrm{hom}}:(\boldsymbol\Sigma - q\,\mathbb C_s:\boldsymbol\varepsilon_0),
+\qquad
+\operatorname{tr}\langle\boldsymbol\varepsilon\rangle_r = \boldsymbol g_r:\boldsymbol\Sigma + q\,a_r ,
+```
+
+with ``\boldsymbol g_r = \boldsymbol 1:\mathbb A_r:\mathbb S^{\mathrm{hom}}`` and
+``a_r = \boldsymbol 1:\boldsymbol\varepsilon_0 - \boldsymbol g_r:\mathbb C_s:\boldsymbol\varepsilon_0``.
+The conservation of the fluid, ``\sum_r\varphi_r\,(p_r - \bar p) = 0`` with
+``p_r = -k_c\operatorname{tr}\langle\boldsymbol\varepsilon\rangle_r + q``, fixes
+``q = \boldsymbol h:\boldsymbol\Sigma`` and, with
+``\Phi = \sum_r\varphi_r``, the complex compliance:
+
+```math
+\boldsymbol h = -\frac{k_f\,z\sum_r\varphi_r\,\boldsymbol g_r}{\Phi + k_f\,z\sum_r\varphi_r\,a_r},
+\qquad
+\mathbb S(\omega) = \mathbb S^{\mathrm{hom}} + (\boldsymbol\varepsilon_0 - \mathbb S^{\mathrm{hom}}:\mathbb C_s:\boldsymbol\varepsilon_0)\otimes\boldsymbol h ,
+```
+
+and the pressure of each family,
+``\boldsymbol B^{\mathrm{sk}}_r = k_c\,\boldsymbol g_r - (1 - k_c\,a_r)\,\boldsymbol h``.
+At ``\omega\tau \to \infty``, ``z = 0``: ``k_c = k_f``, ``\boldsymbol h = \boldsymbol 0``
+and the pores are sealed. At ``\omega\tau = 0``, ``z = 1`` and ``k_c = 0``: the
+cell is drained, the pressure is common, and ``\mathbb S(0)`` is the inverse of
+the undrained stiffness of the previous subsection. With one family the
+conservation forces ``\delta m = 0`` at every frequency and nothing disperses.
+For thin cracks in the non-interacting approximation, the difference between
+the two limits is eq. (10) of [gueguen2011](@citet). The imaginary part of
+``\mathbb S(\omega)^{-1}``, positive, is the dissipation of the flow.
+
 ## 6. Conduction
 
 The proof uses neither the order of the tensors nor the physics, only the
@@ -289,6 +413,14 @@ Such terms arise when a transport law carries, besides the gradient, a driving
 force that is uniform in each phase.
 
 ## 7. In the package
+
+[`poroelastic_parameters`](@ref) takes the bulk modulus of the fluid as the
+keyword `k_f`, [`pore_pressure_tensor`](@ref) reads ``\boldsymbol B^{\mathrm{sk}}_r``
+on the concentration tensors of a cell whose pores hold the fluid, and
+[`squirt_flow`](@ref) returns ``\mathbb S(\omega)``, its inverse and the
+pressures of the families at a dimensionless frequency ``\omega\tau``; their
+syntax is in [Poromechanics](@ref manual-poromechanics).
+
 
 [`concentration_tensors`](@ref) returns the concentration tensors of every phase
 under a scheme, and the theorem is applied by [`levin_preflux`](@ref) and

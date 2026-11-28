@@ -71,7 +71,7 @@ function matrix_stress(h::ConformalHole, Σ::TensND.AbstractTens{2, 2}, x, C₀:
                 "this map has $(length(h.coefficients))"
         )
     )
-    return _at_points(_AnisotropicField(first(h.coefficients), _characteristic_pair(C₀)..., _remote_stress(Σ)), x)
+    return _at_points(_AnisotropicField(first(h.coefficients), TensND.characteristic_pair(C₀)..., _remote_stress(Σ)), x)
 end
 
 _at_points(field, x::AbstractVector{<:Number}) = _stress_tensor(field(x[1], x[2]))
@@ -246,4 +246,30 @@ function _field_by_pairs(x₁, x₂, ξ, η, c₁, c₂, s, p, R₁::Complex, R�
     μT = _pair_product(μ, T, Δ₄)
     D₋₁, D₀, D₁, D₂ = _pair_product(_pair_inverse(μ, Δ₄), T, Δ₄).d, T.d, μT.d, _pair_product(μ, μT, Δ₄).d
     return (c₂ * D₀ - c₁ * p * D₋₁, c₂ * D₁ - c₁ * p * D₀, c₂ * D₂ - c₁ * p * D₁)
+end
+
+# The slit, the ellipse of parameter m = 1 whose half-length is 2 in the units
+# of the map, loaded on its faces: the field of a crack of an anisotropic plane
+# in the method of average tractions (`Cracks.sif` on interacting cracks), in
+# the frame (m, n) of the crack, as the field of the free slit under the remote
+# stress p e₂ ⊗ e₂ + τ (e₁ ⊗ e₂ + e₂ ⊗ e₁) minus that uniform stress. The roots are
+# those of the stiffness written in the frame of the crack.
+function Cracks._crack_field(C₀::TensND.AbstractTens{4, 2}, j::Cracks._PlacedSegment)
+    φ = atan(j.m[2], j.m[1])
+    # the components of C₀ in the frame of the crack, read as those of a tensor
+    # of the canonical frame, whose characteristic roots are then the crack's
+    C_crack = TensND.Tens(TensND.get_array(TensND.express(C₀, TensND.RotatedBasis(φ))))
+    s, p = TensND.characteristic_pair(C_crack)
+    m = complex(one(real(s)))
+    T = real(eltype(s))
+    opening = _AnisotropicField(m, s, p, _remote_stress(TensND.Tens(SMatrix{2, 2, T}(0, 0, 0, 1))))
+    sliding = _AnisotropicField(m, s, p, _remote_stress(TensND.Tens(SMatrix{2, 2, T}(0, 1, 1, 0))))
+    scale = 2 / j.l
+    return function (x, y, pI, pII)
+        a, b = opening(scale * x, scale * y), sliding(scale * x, scale * y)
+        σ₁₁ = pI * a[1] + pII * b[1]
+        σ₂₂ = pI * (a[2] - 1) + pII * b[2]
+        σ₁₂ = pI * a[3] + pII * (b[3] - 1)
+        return SMatrix{2, 2}(σ₁₁, σ₁₂, σ₁₂, σ₂₂)
+    end
 end

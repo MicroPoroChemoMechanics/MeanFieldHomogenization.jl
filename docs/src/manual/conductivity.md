@@ -141,7 +141,19 @@ Conduction and elasticity are not independent — a microstructure that stiffens
 material also changes how it conducts. Explicit cross-property correlations for
 two-phase composites are given in [sevostianov2002](@citet); the
 [Transport properties](@ref tut-transport) application page works
-through one.
+through one. The contributions of one inhomogeneity in both physics, and the
+connection they give, are set side by side in
+[Cross-property connections](@ref th-cross-property):
+
+```@example cross
+using MeanFieldHomogenization, TensND
+E₀, ν₀, k₀ = 70.0, 0.25, 3.0
+C₀, K₀ = TensISO{3}(E₀ / (1 - 2ν₀), E₀ / (1 + ν₀)), TensISO{3}(k₀)
+crack = PennyCrack(1.0)
+H, R = compliance_contribution(crack, C₀), resistivity_contribution(crack, K₀)
+(H₃₃₃₃ = canonical_components(H)[3, 3, 3, 3], R₃₃ = canonical_components(R)[3, 3])
+```
+
 
 ## Where to go next
 

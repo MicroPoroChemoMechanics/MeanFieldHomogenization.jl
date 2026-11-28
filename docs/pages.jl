@@ -61,6 +61,7 @@ pages = [
             "theory/cod_tensors.md",
             "theory/thermal_cracks.md",
             "theory/rice_crack_contributions.md",
+            "theory/interacting_cracks.md",
             "theory/degenerate_shapes.md",
         ],
         # A layered sphere or a confocal spheroid is not an inclusion with a
@@ -117,8 +118,10 @@ pages = [
             "theory/multipole_expansion_spheroids.md",
             "theory/multipole_expansion_anisotropic.md",
             "theory/multipole_expansion_cracks.md",
-            # Not a scheme: what every scheme's concentration tensors give
-            # beyond the effective stiffness.
+            # Not schemes: what the estimate of every scheme gives beyond the
+            # effective stiffness, the share of each crack family in the
+            # compliance, then the response to free strains and prestresses.
+            "theory/fracture_compliance.md",
             "theory/levin.md",
         ],
         # What the derivatives of an estimate are and what they give: how the
@@ -131,6 +134,7 @@ pages = [
         ],
         "Extension to conductivity" => [
             "theory/conductivity.md",
+            "theory/cross_property.md",
             # The permeability from the Stokes flow in the pores: the same
             # schemes, fed with size-dependent Brinkman inclusions.
             "theory/brinkman.md",
@@ -198,6 +202,7 @@ pages = [
             "manual/nonaging_viscoelasticity.md",
             "manual/aging_viscoelasticity.md",
             "manual/poromechanics.md",
+            "manual/seismic.md",
         ],
         "Differentiation" => [
             "manual/sensitivities.md",
@@ -321,6 +326,7 @@ pages = [
             "applications/generated/insulating_torus.md",
             "applications/generated/conformal_holes.md",
             "applications/generated/elliptic_hole.md",
+            "applications/generated/elliptical_holes_anisotropic.md",
         ],
         "Interactions between particles" => [
             "applications/generated/cluster_model.md",
@@ -331,6 +337,7 @@ pages = [
         "Cracks" => [
             "applications/generated/crack_contacts.md",
             "applications/generated/narrow_cracks.md",
+            "applications/generated/interacting_cracks.md",
         ],
         # A shell of uniform properties around the particle, then a graded
         # one, then the published closures set beside the exact solution, then
@@ -343,6 +350,10 @@ pages = [
         ],
         "Transport in pores" => [
             "applications/generated/stokes_darcy_permeability.md",
+        ],
+        # The same pores and cracks seen by elasticity and by conduction.
+        "Cross-property connections" => [
+            "applications/generated/cross_property.md",
         ],
         # Elasticity, then chemistry, then transport, then time, then failure;
         # the ITZ pages use the paste model of the strength page.
@@ -363,6 +374,14 @@ pages = [
             "applications/lamellar_clay.md",
             "applications/granular_friction.md",
             "applications/sandstone_strength.md",
+        ],
+        # What a wave sees of a rock whose cracks and pores hold a fluid: the
+        # pressure in sealed pores, the dispersion when the fluid flows between
+        # cracks, then the cracks read back on measured velocities.
+        "Cracked and saturated rocks" => [
+            "applications/generated/fluid_filled_pores.md",
+            "applications/generated/squirt_dispersion.md",
+            "applications/generated/ktb_cracks.md",
         ],
         "Bituminous materials" => [
             "applications/bituminous.md",
@@ -464,6 +483,7 @@ pages = [
         "api/interactions.md",
         "api/schemes.md",
         "api/poromechanics.md",
+        "api/seismic.md",
         "api/constitutive.md",
         "api/material_laws.md",
         "api/assemblies.md",

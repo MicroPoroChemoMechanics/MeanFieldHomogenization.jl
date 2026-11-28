@@ -29,6 +29,7 @@ One inclusion whose shape is not an ellipsoid, or whose Hill tensor is derived s
 | [Ring-shaped pores in a conducting matrix](@ref app-insulating-torus) | the toroidal pore in conduction, by a series of toroidal harmonics, against a published study and spheroids of the same volume |
 | [Prismatic pores with corners](@ref app-conformal-holes) | pores whose section is given by a conformal map, polygons included, against published compressibilities and shear compliances; perforated plates |
 | [The elliptic hole, from an isotropic to an anisotropic plate](@ref app-elliptic-hole) | the stress along the edge of an elliptic hole in an isotropic plate and in an orthotropic plywood sheet, against the closed forms and the tables of the two classical books; the stress ahead of the tip; the same hole as an inclusion and as an insulator |
+| [Elliptical holes and cracks in an anisotropic plate](@ref app-elliptical-holes-anisotropic) | the contributions of elliptic holes and cracks to the compliance of an orthotropic plate, the ellipse as a circle and two cracks, and the effective moduli of oriented and random families, after Tsukrov and Kachanov |
 
 ## Interactions between particles
 
@@ -49,6 +50,7 @@ Cracks whose faces touch, and narrow cracks of various contours.
 | :--- | :--- |
 | [Cracks with contacts between their faces](@ref app-crack-contacts) | a circular crack whose faces touch on islands: one contact, regular patterns, clusters and random sets, by the Gaussian approximation of the crack equation, against a published study |
 | [Narrow cracks: rings, rectangles, bands](@ref app-narrow-cracks) | the plane strain model of a narrow crack and its end effects, on rings, rectangles, ellipses and curved bands, against published fits, the annular crack and the closed form of the ellipse |
+| [Interacting cracks: the method of average tractions](@ref app-interacting-cracks) | cracks of a plane that amplify or shield each other: collinear cracks, a periodic row, stacked cracks, an anisotropic plane, against the tables of Kachanov |
 
 ## Coated inclusions and interphases
 
@@ -68,6 +70,12 @@ The Stokes flow in the pores and the permeability it gives.
 | Page | What it models |
 | :--- | :--- |
 | [Stokes-to-Darcy permeability of porous media](@ref app-stokes-darcy) | the permeability of granular, fibrous, tubular and double-porosity media from the Stokes flow in their pores, through size-dependent Brinkman inclusions |
+
+## Cross-property connections
+
+| Page | What it models |
+| :--- | :--- |
+| [Elastic and conductive properties of porous and cracked materials](@ref app-cross-property) | the stiffness inferred from the conductivity through the contributions of the same pores and cracks: dry cracks, a closed-cell aluminum foam, plasma-sprayed coatings |
 
 ## Cementitious materials
 
@@ -90,6 +98,14 @@ The Stokes flow in the pores and the permeability it gives.
 | [A lamellar porous material: swelling clays and C-S-H](@ref app-lamellar) | stacks of parallel platelets with water in between, over two scales chained on symbols |
 | [Friction of a granular medium from its contacts](@ref app-granular-friction) | rigid grains bonded by springs, the macroscopic friction coefficient they give, and how it falls as the medium loosens |
 | [The strength of a sandstone: crushing grains and sliding contacts](@ref app-sandstone-strength) | grains that yield and cemented contacts that slide, combined by the modified secant method |
+
+## Cracked and saturated rocks
+
+| Page | What it models |
+| :--- | :--- |
+| [Fluid-filled pores: pressure polarization](@ref app-fluid-filled-pores) | the pressure of a fluid sealed in pores of various shapes and orientations, and Skempton's coefficient, against the closed forms of Shafiro and Kachanov |
+| [Squirt flow in a cracked rock: dispersion and attenuation](@ref app-squirt-dispersion) | the velocities of a cracked rock from sealed to connected cracks, and the attenuation in between, against Guéguen and Sarout |
+| [Cracks of the KTB gneiss read on its velocities](@ref app-ktb-cracks) | three orthogonal sets of cracks read on the stiffness of a gneiss measured at two pressures, after Rasolofosaon et al. |
 
 ## Bituminous materials
 

@@ -33,7 +33,8 @@ Apply the **exact** orientation average declared by `sym` to `t`.
 (`TensISO`) ; `TISymmetrize(axis)` returns the azimuthal average about
 `axis` (`TensTI{4,T,8}` / `TensTI{2,T,3}`, non-major-symmetric content
 preserved). Implemented for tensor orders 4 (elasticity) and 2
-(conductivity).
+(conductivity); a scalar property, such as the mass density `:ρ`, is left as it
+is by every average.
 
 In a two-dimensional cell `IsoSymmetrize` is the average over the rotations
 and the reflections of the plane, the projection onto ``\\mathbb J`` and
@@ -41,6 +42,10 @@ and the reflections of the plane, the projection onto ``\\mathbb J`` and
 for a section that has a mirror line, as an ellipse has.
 """
 _apply_symmetrize(t::TensND.AbstractTens, ::NoSymmetrize) = t
+
+# A scalar property (a mass density) does not depend on the orientation: every
+# average of it over rotations is itself.
+_apply_symmetrize(x::Number, ::AbstractSymmetrize) = x
 
 _apply_symmetrize(t::TensND.AbstractTens{4}, ::IsoSymmetrize) =
     MFH_Core.isotropify(t)

@@ -341,6 +341,7 @@ The rigid-grain limit of this model, with frictional contacts only, is
 [Friction of a granular medium from its contacts](@ref app-granular-friction).
 The secant reasoning on the energy derivatives is the same as in
 [Quasi-brittle strength of cement paste and mortar](@ref app-strength), where it
-is applied to a brittle solid. The next application,
-[Viscoelastic complex modulus of a bituminous mixture](@ref app-bituminous),
-turns to time-dependent behavior.
+is applied to a brittle solid. The next applications stay with rocks and
+turn to what a wave sees of them, their cracks and pores holding a fluid:
+[Fluid-filled pores: pressure polarization](@ref app-fluid-filled-pores) opens
+the section.

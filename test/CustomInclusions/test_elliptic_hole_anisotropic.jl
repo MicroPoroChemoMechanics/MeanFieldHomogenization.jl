@@ -72,8 +72,8 @@ eha_n(E₁, E₂, G, ν₁) = sqrt(2 * eha_k(E₁, E₂) + E₁ / G - 2ν₁)
 # The characteristic quartic of the compliances of C at μ, factored with the
 # pair (s, p) and as it is written.
 function eha_quartic(C, μ)
-    a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆ = EHA._canonical_compliances(C)
-    s, p = EHA._characteristic_pair(C)
+    a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆ = engineering_compliances(C)
+    s, p = characteristic_pair(C)
     factored = a₁₁ * (μ^2 - s * μ + p) * (μ^2 - conj(s) * μ + conj(p))
     return factored, a₁₁ * μ^4 - 2a₁₆ * μ^3 + (2a₁₂ + a₆₆) * μ^2 - 2a₂₆ * μ + a₂₂
 end
@@ -91,15 +91,15 @@ eha_muskhelishvili(m, α, θ) =
         # the numeric roots of their general copies, in several frames
         for β in (0.0, 2π * rand(rng), 2π * rand(rng), 2π * rand(rng))
             for C in (eha_ortho(β), eha_square(β))
-                s, p = EHA._characteristic_pair(C)
-                s₀, p₀ = EHA._characteristic_pair(eha_copy(C))
+                s, p = characteristic_pair(C)
+                s₀, p₀ = characteristic_pair(eha_copy(C))
                 @test s ≈ s₀ rtol = 1.0e-12
                 @test p ≈ p₀ rtol = 1.0e-12
             end
         end
         # the compliances read as strains: ε = 𝕊 : σ under the three unit stresses
         C = eha_general()
-        a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆ = EHA._canonical_compliances(C)
+        a₁₁, a₂₂, a₁₂, a₆₆, a₁₆, a₂₆ = engineering_compliances(C)
         strain(S) = canonical_components(inv(C) ⊡ Tens(S))
         ε = strain([1.0 0.0; 0.0 0.0])
         @test [ε[1, 1], ε[2, 2], 2ε[1, 2]] ≈ [a₁₁, a₁₂, a₁₆] rtol = 1.0e-12
@@ -114,17 +114,17 @@ eha_muskhelishvili(m, α, θ) =
                 factored, quartic = eha_quartic(C, μ)
                 @test factored ≈ quartic rtol = 1.0e-11
             end
-            s, p = EHA._characteristic_pair(C)
+            s, p = characteristic_pair(C)
             δ = sqrt(s^2 - 4p)
             @test imag((s + δ) / 2) > 0 && imag((s - δ) / 2) > 0
         end
         # isotropy: the double root i, exactly
-        @test EHA._characteristic_pair(eha_iso()) === (complex(0.0, 2.0), complex(-1.0))
+        @test characteristic_pair(eha_iso()) === (complex(0.0, 2.0), complex(-1.0))
         # the plywood of Lekhnitskii, Eq. (31.17): s = i n and p = −k in the
         # axes of the sheet
         E₁, E₂, G, ν₁ = eha_quantity("E1"), eha_quantity("E2"), eha_quantity("G"), eha_quantity("nu1")
         k, n = eha_k(E₁, E₂), eha_n(E₁, E₂, G, ν₁)
-        s, p = EHA._characteristic_pair(eha_plywood(0.0))
+        s, p = characteristic_pair(eha_plywood(0.0))
         @test s ≈ im * n rtol = 1.0e-12
         @test p ≈ -k rtol = 1.0e-12
         @test n ≈ eha_quantity("n") rtol = 1.0e-3
@@ -139,9 +139,9 @@ eha_muskhelishvili(m, α, θ) =
         # positive definite (μ⁴ + 2μ² − 1 has two real roots)
         A = Array(canonical_components(eha_general()))
         A[1, 1, 2, 2] += 1.5
-        @test_throws ArgumentError EHA._characteristic_pair(Tens(A))
+        @test_throws ArgumentError characteristic_pair(Tens(A))
         @test_throws ArgumentError gradient_gradient_concentration(ConformalHole((0.3,)), 0 * Tens(A), Tens(A))
-        @test_throws DomainError EHA._characteristic_pair(from_mandel([1.0 0 0; 0 -1.0 0; 0 0 1.0]))
+        @test_throws DomainError characteristic_pair(from_mandel([1.0 0 0; 0 -1.0 0; 0 0 1.0]))
     end
 
     @testset "the ellipse against its Hill tensor" begin
@@ -174,7 +174,7 @@ eha_muskhelishvili(m, α, θ) =
         # the contour is free: with the tangent t = dω(e^{iθ})/dθ, the traction
         # σ·n, n ∝ (t₂, −t₁), vanishes
         C = eha_general()
-        s, p = EHA._characteristic_pair(C)
+        s, p = characteristic_pair(C)
         for m in (complex(0.4), 0.3 * cis(0.9)), Σ in ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.3, -0.7, 0.5))
             for θ in 2π .* rand(rng, 5)
                 (σ₁₁, σ₂₂, σ₁₂), (t₁′, t₂′) = EHA._anisotropic_ellipse_stress(m, s, p, Σ, θ)

@@ -123,10 +123,62 @@ stress increment, ``p = -\boldsymbol{B}^{\mathrm{sk}} : \boldsymbol{\Sigma}``.
     constituents needs the general Levin/eigenstrain approach, and ``\mathbb{C}_{\mathrm{s}}``
     is then not defined.
 
+## Fluid in the pores
+
+The relations above take the fluid as incompressible. Its bulk modulus enters
+the Biot modulus through the keyword `k_f`, and the undrained stiffness is then
+the anisotropic Gassmann (Brown–Korringa) relation; the derivations are in
+[Levin's theorem](@ref th-levin), §5.
+
+```@example poro
+k_f = 2.2                                    # water, same units as k_s
+C_d = homogenize(rve, MoriTanaka())
+p_f = poroelastic_parameters(C_d, C_s, φ; k_f)
+C_u = undrained_stiffness(C_d, p_f.B, p_f.modulus)
+(k_d = bulk_shear(best_fit_iso(C_d))[1], k_u = bulk_shear(best_fit_iso(C_u))[1])
+```
+
+A fluid **sealed** in its pores is a phase of stiffness ``3k_f\,\mathbb J``
+homogenized like any other, and [`pore_pressure_tensor`](@ref) reads its pressure
+``p = -\boldsymbol B^{\mathrm{sk}}:\boldsymbol\Sigma`` on the concentration
+tensors. For an isolated spherical pore, the stress-driven dilute scheme, all
+moduli symbolic, gives one third of Skempton's coefficient,
+``k_f(3k_s + 4\mu_s)/(3k_s(3k_f + 4\mu_s))``:
+
+```@example poro
+using Symbolics
+@variables ks μs kf
+sealed = RVE()
+add_phase!(sealed, :M, Ellipsoid(1.0), Dict(:C => TensISO{3}(3ks, 2μs)); fraction = :rest)
+add_phase!(sealed, :F, Ellipsoid(1.0), Dict(:C => TensISO{3}(3kf, 0)); fraction = 1 // 1000)
+Bsk = pore_pressure_tensor(concentration_tensors(sealed, DiluteDual()), :F)
+Symbolics.simplify(Symbolics.simplify_fractions(Bsk[1, 1]))
+```
+
+Pores that **exchange** fluid with a relaxation time ``\tau`` give a complex
+stiffness at the dimensionless frequency ``\omega\tau``, from Gassmann's at
+``\omega\tau = 0`` to the sealed pores at ``\omega\tau = \infty``
+([`squirt_flow`](@ref)). Two flat crack families and spherical pores:
+
+```@example poro
+cracked = RVE()
+add_phase!(cracked, :M, Ellipsoid(1.0), Dict(:C => C_s); fraction = :rest)
+add_phase!(cracked, :c1, Spheroid(1.0e-3), Dict(:C => C_s); fraction = 6.0e-4)
+add_phase!(cracked, :c2, Spheroid(1.0e-3; euler_angles = (π / 2, 0.0, 0.0)), Dict(:C => C_s); fraction = 6.0e-4)
+add_phase!(cracked, :p, Ellipsoid(1.0), Dict(:C => C_s); fraction = 0.05)
+C₃₃(ωτ) = mandel(squirt_flow(cracked, MoriTanaka(), ωτ; fluid = [:c1, :c2, :p], k_f).stiffness)[3, 3]
+[(ωτ = x, C₃₃ = C₃₃(x)) for x in (0.0, 0.1, 1.0, 10.0, Inf)]
+```
+
+The stiffness of the solid phases is ignored for the fluid families: their
+geometry and amounts are what `squirt_flow` reads.
+
 ## Where to go next
 
-[Sensitivities](@ref man-sensitivities) differentiates the effective
-properties of the preceding pages with respect to any input of their RVE. The
+[Seismic signatures](@ref man-seismic), the next page, gives what a wave sees
+of a cell, its fluid included. [Sensitivities](@ref man-sensitivities)
+differentiates the effective properties of the preceding pages with respect to
+any input of their RVE. The
 Biot coefficients of this page are the material side of
 [The coupled poroelastic problem](@ref fe-poro-coupling), where a
 finite-element code consumes them, and

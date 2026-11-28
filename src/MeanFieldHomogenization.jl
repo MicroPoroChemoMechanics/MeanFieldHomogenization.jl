@@ -113,6 +113,9 @@ include("Assemblies/Assemblies.jl")
 # to the Gauss-point constitutive laws further down.
 include("Poromechanics/Poromechanics.jl")
 include("Viscoelasticity/Viscoelasticity.jl")
+# `Seismic` reads homogenized cells and hands their stiffness and density to the
+# waves of TensND: a post-processor, after the schemes and the poromechanics.
+include("Seismic/Seismic.jl")
 
 using .Elliptic
 using .Core
@@ -129,6 +132,7 @@ using .Laminates
 using .Assemblies
 using .Poromechanics
 using .Viscoelasticity
+using .Seismic
 
 # ─── Concentration + contribution (top-level: need all sub-module APIs) ──────
 # Every generic is declared in `Core`; sub-modules (and user code) extend them
@@ -426,7 +430,11 @@ export derivative, gradient, jacobian, sensitivity, second_moment
 export terzaghi_stress, biot_effective_stress
 export biot_tensor, inverse_biot_modulus, biot_modulus, poroelastic_parameters
 export undrained_stiffness, drained_stiffness, skempton_tensor
-export pore_volume_fraction
+export pore_volume_fraction, pore_pressure_tensor, squirt_flow
+
+# ── Seismic: what the waves see of a cell ────────────────────────────────────
+export average_density, slip_compliance, fracture_compliance, linear_slip_change, fractured_stiffness,
+    orthogonal_fracture_compliances
 
 # ── Viscoelasticity (ALV) ────────────────────────────────────────────────────
 export AbstractViscoLaw, ViscoLaw, VALID_VISCO_MODES

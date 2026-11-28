@@ -39,7 +39,7 @@ const APPLICATION_MD_DIR = joinpath(@__DIR__, "src", "applications", "generated"
 # whereas these exist to reproduce a particular paper's numbers and are read for
 # the comparison. Listed by page name, so the routing is visible here rather
 # than implied by the navigation in `make.jl`.
-const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "conformal_holes", "elliptic_hole", "coated_inclusion_estimates", "aging_coated_spheres", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks"])
+const APPLICATION_PAGES = Set(["pore_routes", "insulating_torus", "conformal_holes", "elliptic_hole", "coated_inclusion_estimates", "aging_coated_spheres", "graded_interphase", "hill_transformation", "cluster_model", "eim_assembly", "multipole_spheres", "multipole_spheroids", "stokes_darcy_permeability", "itz_elastic_limit", "crack_contacts", "narrow_cracks", "squirt_dispersion", "ktb_cracks", "fluid_filled_pores", "interacting_cracks", "cross_property", "elliptical_holes_anisotropic"])
 
 # The chapter on material laws (`MaterialLaws`) is written as one script per
 # model, theory and code together, under `scripts/material_laws/`; its pages,
@@ -106,6 +106,12 @@ const PUBLISHED_SCRIPTS = [
     "103_layered_sphere_first_order_symbolic.jl" => "layered_sphere_first_order_symbolic",
     "104_layered_cylinder_first_order_symbolic.jl" => "layered_cylinder_first_order_symbolic",
     "105_graded_layers_interfaces.jl" => "graded_layers_interfaces",
+    "106_squirt_dispersion.jl" => "squirt_dispersion",
+    "107_ktb_crack_characterization.jl" => "ktb_cracks",
+    "108_fluid_filled_pores.jl" => "fluid_filled_pores",
+    "109_interacting_cracks.jl" => "interacting_cracks",
+    "110_cross_property_connections.jl" => "cross_property",
+    "111_elliptical_holes_anisotropic_plate.jl" => "elliptical_holes_anisotropic",
     "material_laws/01_plasticity.jl" => "ml_plasticity",
     "material_laws/02_damage.jl" => "ml_damage",
     "material_laws/03_biot.jl" => "ml_biot",

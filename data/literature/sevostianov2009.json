@@ -1,0 +1,396 @@
+{
+ "schema": "mfh-literature/1",
+ "source": {
+  "key": "sevostianov2009",
+  "doi": "10.1016/S0065-2156(08)00002-1",
+  "citation": "Sevostianov, Igor and Kachanov, Mark (2009). Connections between elastic and conductive properties of heterogeneous materials. Advances in Applied Mechanics 42, 69-252.",
+  "location": "Section 7.1, pp. 183-187 (Tables 7.1 and 7.2, Eq. (7.4) and the text below it); section 7.5.2, pp. 204-206 (Eqs. (7.15)-(7.16), Table 7.13)"
+ },
+ "transcription": {
+  "from": "the published chapter (PDF), tables read on the page images and compared value by value with the text layer",
+  "checked_against_source": true,
+  "note": "Aluminum foam AlMg1Si0.6: the conductivity (Table 7.1) and the Young modulus (Table 7.2) were measured on different specimens; the porosity is the volume fraction of pores, the last row of each table (porosity 0) is the bulk alloy. The coefficients psi are quoted in the text below Eq. (7.4): 1.33 for spherical pores and 1.34 for randomly oriented pores of aspect ratio 0.7 at nu0 = 0.33. YSZ coatings (Table 7.13): E1 is the Young modulus along the substrate, measured by laser ultrasound, k3 the thermal conductivity across it, from laser-flash diffusivity; the uncertainties are those printed with each value; 'E1_predicted' is the column computed by the authors from Eq. (7.16) with alpha11/alpha33 = 1.4. The same data are in Kachanov and Sevostianov (2018), sections 7.1 and 7.5."
+ },
+ "quantities": {
+  "aluminum_E0": {
+   "value": 70.0,
+   "unit": "GPa",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.1, p. 183",
+   "description": "Young modulus of the bulk AlMg1Si0.6 alloy."
+  },
+  "aluminum_nu0": {
+   "value": 0.33,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.1, p. 183",
+   "description": "Poisson ratio of the bulk alloy."
+  },
+  "aluminum_k0": {
+   "value": 37.6,
+   "unit": "MS/m",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.1, p. 183",
+   "description": "Electric conductivity of the bulk alloy."
+  },
+  "psi_sphere": {
+   "value": 1.33,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Below Eq. (7.4), p. 186",
+   "description": "Cross-property coefficient for spherical pores at nu0 = 0.33."
+  },
+  "psi_spheroid_07": {
+   "value": 1.34,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Below Eq. (7.4), p. 186",
+   "description": "Cross-property coefficient for randomly oriented spheroidal pores of aspect ratio 0.7."
+  },
+  "pore_aspect_ratio": {
+   "value": 0.7,
+   "unit": "1",
+   "kind": "measured",
+   "uncertainty": null,
+   "location": "Section 7.1, p. 184, Fig. 7.2",
+   "description": "Mean aspect ratio of the pores, from 2-D sections by Eqs. (7.1)-(7.2)."
+  },
+  "ysz_E0": {
+   "value": 210.0,
+   "unit": "GPa",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.5.2, p. 204",
+   "description": "Young modulus of dense yttria-stabilized zirconia."
+  },
+  "ysz_nu0": {
+   "value": 0.3,
+   "unit": "1",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.5.2, p. 204",
+   "description": "Poisson ratio of dense zirconia."
+  },
+  "ysz_k0": {
+   "value": 2.2,
+   "unit": "W/(m K)",
+   "kind": "published",
+   "uncertainty": null,
+   "location": "Section 7.5.2, p. 204",
+   "description": "Thermal conductivity of dense zirconia."
+  },
+  "ysz_alpha11_over_alpha33": {
+   "value": 1.4,
+   "unit": "1",
+   "kind": "measured",
+   "uncertainty": null,
+   "location": "Section 7.5.2, p. 204",
+   "description": "Ratio of the components of the crack density tensor, estimated from the micrographs of Figs. 7.13-7.16."
+  }
+ },
+ "tables": {
+  "aluminum_foam_conductivity": [
+   {
+    "porosity": 0.836,
+    "k": 2.234
+   },
+   {
+    "porosity": 0.826,
+    "k": 2.577
+   },
+   {
+    "porosity": 0.826,
+    "k": 2.628
+   },
+   {
+    "porosity": 0.818,
+    "k": 2.586
+   },
+   {
+    "porosity": 0.814,
+    "k": 2.579
+   },
+   {
+    "porosity": 0.812,
+    "k": 2.626
+   },
+   {
+    "porosity": 0.811,
+    "k": 2.346
+   },
+   {
+    "porosity": 0.811,
+    "k": 2.603
+   },
+   {
+    "porosity": 0.808,
+    "k": 2.772
+   },
+   {
+    "porosity": 0.803,
+    "k": 2.923
+   },
+   {
+    "porosity": 0.789,
+    "k": 2.961
+   },
+   {
+    "porosity": 0.788,
+    "k": 3.233
+   },
+   {
+    "porosity": 0.772,
+    "k": 3.193
+   },
+   {
+    "porosity": 0.769,
+    "k": 3.503
+   },
+   {
+    "porosity": 0.759,
+    "k": 3.475
+   },
+   {
+    "porosity": 0.707,
+    "k": 4.826
+   },
+   {
+    "porosity": 0.638,
+    "k": 5.394
+   },
+   {
+    "porosity": 0.551,
+    "k": 7.52
+   },
+   {
+    "porosity": 0.456,
+    "k": 10.025
+   },
+   {
+    "porosity": 0.0,
+    "k": 37.6
+   }
+  ],
+  "aluminum_foam_young": [
+   {
+    "porosity": 0.852,
+    "E": 3.04
+   },
+   {
+    "porosity": 0.84,
+    "E": 4.25
+   },
+   {
+    "porosity": 0.824,
+    "E": 4.18
+   },
+   {
+    "porosity": 0.823,
+    "E": 3.86
+   },
+   {
+    "porosity": 0.812,
+    "E": 3.54
+   },
+   {
+    "porosity": 0.811,
+    "E": 4.03
+   },
+   {
+    "porosity": 0.809,
+    "E": 4.6
+   },
+   {
+    "porosity": 0.809,
+    "E": 3.81
+   },
+   {
+    "porosity": 0.805,
+    "E": 5.12
+   },
+   {
+    "porosity": 0.798,
+    "E": 3.78
+   },
+   {
+    "porosity": 0.797,
+    "E": 3.76
+   },
+   {
+    "porosity": 0.796,
+    "E": 3.81
+   },
+   {
+    "porosity": 0.795,
+    "E": 4.32
+   },
+   {
+    "porosity": 0.794,
+    "E": 3.82
+   },
+   {
+    "porosity": 0.793,
+    "E": 4.21
+   },
+   {
+    "porosity": 0.784,
+    "E": 5.04
+   },
+   {
+    "porosity": 0.777,
+    "E": 5.53
+   },
+   {
+    "porosity": 0.762,
+    "E": 5.8
+   },
+   {
+    "porosity": 0.76,
+    "E": 5.35
+   },
+   {
+    "porosity": 0.756,
+    "E": 5.06
+   },
+   {
+    "porosity": 0.754,
+    "E": 5.76
+   },
+   {
+    "porosity": 0.745,
+    "E": 6.05
+   },
+   {
+    "porosity": 0.741,
+    "E": 6.2
+   },
+   {
+    "porosity": 0.732,
+    "E": 6.28
+   },
+   {
+    "porosity": 0.73,
+    "E": 8.01
+   },
+   {
+    "porosity": 0.727,
+    "E": 6.65
+   },
+   {
+    "porosity": 0.719,
+    "E": 6.42
+   },
+   {
+    "porosity": 0.708,
+    "E": 7.07
+   },
+   {
+    "porosity": 0.706,
+    "E": 7.36
+   },
+   {
+    "porosity": 0.703,
+    "E": 8.79
+   },
+   {
+    "porosity": 0.703,
+    "E": 10.06
+   },
+   {
+    "porosity": 0.702,
+    "E": 9.83
+   },
+   {
+    "porosity": 0.699,
+    "E": 8.39
+   },
+   {
+    "porosity": 0.698,
+    "E": 8.58
+   },
+   {
+    "porosity": 0.697,
+    "E": 8.9
+   },
+   {
+    "porosity": 0.696,
+    "E": 8.77
+   },
+   {
+    "porosity": 0.695,
+    "E": 8.55
+   },
+   {
+    "porosity": 0.694,
+    "E": 10.24
+   },
+   {
+    "porosity": 0.691,
+    "E": 8.8
+   },
+   {
+    "porosity": 0.687,
+    "E": 8.59
+   },
+   {
+    "porosity": 0.686,
+    "E": 11.54
+   },
+   {
+    "porosity": 0.685,
+    "E": 11.18
+   },
+   {
+    "porosity": 0.682,
+    "E": 8.47
+   },
+   {
+    "porosity": 0.0,
+    "E": 70.0
+   }
+  ],
+  "ysz_coatings": [
+   {
+    "specimen": "A",
+    "E1_measured": 51.0,
+    "E1_uncertainty": 5.1,
+    "E1_predicted": 56.98,
+    "k3": 1.16,
+    "k3_uncertainty": 0.16
+   },
+   {
+    "specimen": "B",
+    "E1_measured": 44.1,
+    "E1_uncertainty": 4.4,
+    "E1_predicted": 47.02,
+    "k3": 1.02,
+    "k3_uncertainty": 0.14
+   },
+   {
+    "specimen": "C",
+    "E1_measured": 34.2,
+    "E1_uncertainty": 3.4,
+    "E1_predicted": 33.64,
+    "k3": 0.8,
+    "k3_uncertainty": 0.11
+   },
+   {
+    "specimen": "D",
+    "E1_measured": 18.6,
+    "E1_uncertainty": 1.9,
+    "E1_predicted": 20.11,
+    "k3": 0.53,
+    "k3_uncertainty": 0.07
+   }
+  ]
+ },
+ "notes": [
+  "Table 7.1: porosity and electric conductivity k in MS/m (10^6 S/m). Table 7.2: porosity and Young modulus E in GPa.",
+  "Table 7.13: E1 in GPa, k3 in W/(m K)."
+ ]
+}

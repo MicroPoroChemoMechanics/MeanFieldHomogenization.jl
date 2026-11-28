@@ -155,5 +155,31 @@ end
     @test crack_family_residual(rve_mixed, sc, C_sc) < 1.0e-8
 
     # An unsupported scheme must say so.
-    @test_throws ArgumentError crack_family_compliances(rve_mixed, Dilute(), C_mixed)
+    @test_throws ArgumentError crack_family_compliances(rve_mixed, Reuss(), C_mixed)
+end
+
+# Dilute, Maxwell and Ponte Castañeda–Willis close as C₀ + Σ:R, DiluteDual adds
+# the compliances: the decomposition is exact for them, solid inclusions
+# included, the solid part being computed from the solid phases only.
+@testset "schemes of explicit closure — the decomposition identity" begin
+    rve = _fractured_rve()
+    add_phase!(rve, :I, Ellipsoid(1.0, 0.6, 0.4), Dict(:C => TensISO{3}(3 * 60.0, 2 * 30.0)); fraction = 0.15)
+    shaped = RVE(; distribution_shape = Ellipsoid(1.0, 1.0, 0.7))
+    for name in phase_names(rve)
+        p = rve.phases[name]
+        a = rve.amounts[name]
+        a isa CrackDensity ? add_phase!(shaped, name, p.geometry, p.properties; density = crack_density(rve, name)) :
+            add_phase!(shaped, name, p.geometry, p.properties; fraction = name === :M ? :rest : volume_fraction(rve, name))
+    end
+    for (cell, scheme) in ((rve, Dilute(:M)), (rve, DiluteDual(:M)), (shaped, Maxwell(:M)), (shaped, PonteCastanedaWillis(:M)))
+        C_hom = homogenize(cell, scheme)
+        dec = crack_family_compliances(cell, scheme, C_hom)
+        @test Set(keys(dec.families)) == Set((:F1, :F2, :F3))
+        @test _g(_assemble(cell, dec)) ≈ _g(inv(C_hom)) rtol = 1.0e-12
+        @test crack_family_residual(cell, scheme, C_hom) < 1.0e-12
+    end
+    # DiluteDual: the share of a family is its contribution in the matrix.
+    C_hom = homogenize(rve, DiluteDual(:M))
+    dec = crack_family_compliances(rve, DiluteDual(:M), C_hom)
+    @test _g(dec.families[:F2]) ≈ _g(inverse_property_contribution(rve.phases[:F2].geometry, CS_FAM)) rtol = 1.0e-12
 end

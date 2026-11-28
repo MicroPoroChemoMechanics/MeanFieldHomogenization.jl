@@ -67,6 +67,8 @@ which consumes them.
 |---|---|---|
 | [`SelfConsistent`](@ref) | ``\\langle\\mathbb{A}\\rangle : \\langle\\mathbb{C}:\\mathbb{A}\\rangle^{-1}`` | ``\\mathbb{C}^{\\mathrm{hom}} : \\langle\\mathbb{C}:\\mathbb{A}\\rangle^{-1}`` |
 | [`MoriTanaka`](@ref) | ``\\mathbb{S}_{\\mathrm s}`` | none (identity) |
+| [`Dilute`](@ref), [`Maxwell`](@ref), [`PonteCastanedaWillis`](@ref) | ``\\mathbb{S}_0`` and the shares of the solid phases | ``\\mathbb{S}^{\\mathrm{hom}}:\\mathbb{C}_0:\\,\\cdot\\,:\\mathbb{C}_0:\\mathbb{R}:\\mathbb{S}_0``, ``\\mathbb{R} = (\\mathbb{I} - \\mathbb{P}_{\\mathrm d}:\\boldsymbol{\\Sigma})^{-1}`` |
+| [`DiluteDual`](@ref) | ``\\mathbb{S}_0`` and the compliance contributions of the solid phases | none (identity) |
 
 For Mori-Tanaka the identity ``\\mathbb{S}^{\\mathrm{MT}} = \\mathbb{S}_{\\mathrm s} + \\sum_i
 (4\\pi/3)\\,\\varepsilon_i\\,\\mathbb{H}_i(\\mathbb{C}_{\\mathrm s})`` is exact — a two-line consequence of
@@ -91,8 +93,9 @@ function crack_family_compliances(
     return throw(
         ArgumentError(
             "crack_family_compliances is not implemented for $(typeof(scheme)); " *
-                "supported schemes are SelfConsistent and MoriTanaka (the latter for " *
-                "an RVE whose only volumetric phase is the matrix). The decomposition " *
+                "supported schemes are SelfConsistent, MoriTanaka (the latter for " *
+                "an RVE whose only volumetric phase is the matrix), Dilute, DiluteDual, " *
+                "Maxwell and PonteCastanedaWillis. The decomposition " *
                 "has to be derived from each scheme body separately — see " *
                 "src/Schemes/crack_families.jl."
         )
@@ -145,6 +148,73 @@ function crack_family_compliances(
         name => _crack_family_H(rve, name, property, C_s; kw...) for name in names
     )
     return (solid = inv(C_s), families = families)
+end
+
+# ── The schemes of explicit closure ─────────────────────────────────────────
+#
+# Dilute, Maxwell and Ponte Castañeda–Willis read
+#
+#     C_hom = C₀ + Σ : R ,   Σ = Σ_j N_j ,   R = (𝕀 − P_d : Σ)⁻¹
+#
+# with N_j the contribution of phase j per unit volume of the cell (a crack
+# family: its density times −C₀:ℍ_j:C₀, ℍ_j its compliance contribution per
+# unit density factor) and P_d = 0 for Dilute. Since S_hom − S₀ =
+# S_hom : (C₀ − C_hom) : S₀,
+#
+#     S_hom = S₀ + Σ_j (− S_hom : N_j : R : S₀) ,
+#
+# an exact decomposition, inclusions and cracks alike: the share of a crack
+# family per unit density factor is S_hom : C₀ : ℍ_j : C₀ : R : S₀. The solid
+# part is S₀ plus the shares of the phases that carry volume, computed from
+# their own contributions, so that `crack_family_residual` tests the identity.
+function _closure_family_compliances(rve::RVE, m::Symbol, property::Symbol, C_hom, R; kw...)
+    C₀ = phase_property(rve, m, property)
+    S₀, S_hom = inv(C₀), inv(C_hom)
+    W = R ⊡ S₀
+    families = Dict{Symbol, Any}(
+        name => S_hom ⊡ C₀ ⊡ _crack_family_H(rve, name, property, C₀; kw...) ⊡ C₀ ⊡ W
+            for name in _crack_family_names(rve)
+    )
+    solid = S₀
+    for name in _volume_phase_names(rve, m)
+        solid -= S_hom ⊡ _phase_stiffness_contribution(rve, name, property, C₀; kw...) ⊡ W
+    end
+    return (solid = solid, families = families)
+end
+
+function crack_family_compliances(
+        rve::RVE, scheme::Dilute, C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
+    )
+    m = matrix_name(scheme, rve)
+    return _closure_family_compliances(rve, m, property, C_hom, one(C_hom); kw...)
+end
+
+function crack_family_compliances(
+        rve::RVE, scheme::Union{Maxwell, PonteCastanedaWillis}, C_hom::TensND.AbstractTens{4};
+        property::Symbol = :C, kw...
+    )
+    m = matrix_name(scheme, rve)
+    C₀ = phase_property(rve, m, property)
+    Σ = _accumulate_contributions(rve, C₀, property, m; kw...)
+    P_d = hill_tensor(distribution_shape(rve, scheme).shape, C₀; kw...)
+    return _closure_family_compliances(rve, m, property, C_hom, _maxwell_remote_field(C₀, Σ, P_d); kw...)
+end
+
+# DiluteDual adds the compliance contributions: S_hom = S₀ + Σ_j ΔS_j, each
+# crack family with ℍ_j in the matrix, exactly.
+function crack_family_compliances(
+        rve::RVE, scheme::DiluteDual, C_hom::TensND.AbstractTens{4}; property::Symbol = :C, kw...
+    )
+    m = matrix_name(scheme, rve)
+    C₀ = phase_property(rve, m, property)
+    families = Dict{Symbol, Any}(
+        name => _crack_family_H(rve, name, property, C₀; kw...) for name in _crack_family_names(rve)
+    )
+    solid = inv(C₀)
+    for name in _volume_phase_names(rve, m)
+        solid += _phase_compliance_contribution(rve, name, property, C₀; kw...)
+    end
+    return (solid = solid, families = families)
 end
 
 """
