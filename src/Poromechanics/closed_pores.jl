@@ -23,7 +23,7 @@ p_r = -\\frac1d\\,\\operatorname{tr}\\langle\\boldsymbol{\\sigma}\\rangle_r
 ```
 
 in dimension ``d`` (3, or 2 for a cell of the plane), with ``\\mathbb{B}_r`` the stress concentration tensor of the phase
-([`stress_stress_concentration`](@ref)). When the phase is a fluid sealed in
+([`stress_stress_concentration`](@ref MeanFieldHomogenization.Core.stress_stress_concentration)). When the phase is a fluid sealed in
 its pores (stiffness ``d\\,k_f\\,\\mathbb{J}``), ``p_r`` is the fluid pressure:
 pores of different shapes or orientations carry different pressures, the
 *pressure polarization* of [shafiro1997](@citet), whose tensor ``\\boldsymbol{Q}``

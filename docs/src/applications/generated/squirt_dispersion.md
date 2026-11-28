@@ -167,7 +167,7 @@ moment(f) = sum(f, icosahedron) / length(icosahedron)
 
 A crack family adds to the compliance a tensor of degree four in its normal,
 so that six families give an isotropic rock. The distance of the two
-stiffnesses to their isotropic projection ([`best_fit_iso`](@ref)):
+stiffnesses to their isotropic projection ([`best_fit_iso`](@extref TensND TensND.best_fit_iso)):
 
 ````@example squirt_dispersion
 random = cracked_rock(icosahedron, 0.3, 1.0e-3)
